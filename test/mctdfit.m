@@ -1,15 +1,17 @@
-%% Monte Carlo simulation of time-domain fits
+%% Monte Carlo simulation of time-domain fit
 %
 tic
 %% Set initial parameters
 
-T=.05;           % sampling time [ps]
-N=256;          % number of sampled points
-SNR=2e3;        % signal to noise ratio
-w=0.2;          % pulse width [ps]
-t0=N*T/3;       % pulse center [ps]
-alpha = 0;    % offset of the refrence pulse
-beta = .004;     % offset of the sample pulse
+T=.05;              % sampling time [ps]
+N=256;              % number of sampled points
+sigma_alpha=1e-3;   % amplitude noise [units of time-domain peak]
+sigma_beta=1e-2;    % multiplicative noise [dimensionless]
+sigma_tau=1e-3;     % time base noise [ps]
+w=0.2;              % pulse width [ps]
+t0=N*T/3;           % pulse center [ps]
+alpha = 0;          % offset of the refrence pulse
+beta = .004;        % offset of the sample pulse
 nMC = pow2(10);
 
 %% Generate time array and two ideal pulses, y1 and y2
@@ -33,9 +35,9 @@ TDFit.options = optimoptions('lsqnonlin',...
 
 tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
 
-Noise = struct('add',{1/SNR,1e-3/SNR,1e-3/SNR,1/SNR/sqrt(3)},...
-    'mult',{0,8/SNR,0,8/SNR/sqrt(3)},...
-    'time',{0,0,0.8/SNR,0.8/SNR/sqrt(3)});
+Noise = struct('add',sigma_alpha,...
+    'mult',sigma_beta,...
+    'time',sigma_tau);
 nNoise = length(Noise);
 
 %%
@@ -168,4 +170,3 @@ end
 
 %%
 toc
-% $Id$

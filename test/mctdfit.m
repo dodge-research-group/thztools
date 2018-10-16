@@ -1,172 +1,177 @@
 %% Monte Carlo simulation of time-domain fit
 %
-tic
-%% Set initial parameters
 
+%% Preliminaries
+% Set path
+curpath = path;
+curDir = fileparts(mfilename('fullpath'));
+fs = strfind(curDir,filesep);
+topDir = fullfile(curDir(1:fs(end)));
+libDir = fullfile(curDir(1:fs(end)),'lib');
+if ~contains(curpath,libDir)
+    addpath(libDir);
+end
+
+%%
+% Initialize timer
+tic
+
+%%
+% Initialize RNG
+rng('default')
+
+%% Set initial parameters
+% Pulse measurement parameters
 T=.05;              % sampling time [ps]
 N=256;              % number of sampled points
+
+%%
+% Ideal pulse parameters
+A=1;                % pulse amplitude [arb. units]
+w=0.2;              % pulse width [ps]
+t0=N*T/3;           % pulse center [ps]
+alpha = 0;          % offset of the reference pulse
+beta = .004;        % offset of the sample pulse
+
+%%
+% Noise parameters
 sigma_alpha=1e-3;   % amplitude noise [units of time-domain peak]
 sigma_beta=1e-2;    % multiplicative noise [dimensionless]
 sigma_tau=1e-3;     % time base noise [ps]
-w=0.2;              % pulse width [ps]
-t0=N*T/3;           % pulse center [ps]
-alpha = 0;          % offset of the refrence pulse
-beta = .004;        % offset of the sample pulse
+
+%%
+% Transfer function definition and parameters
+
+tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
+
+A0 = 0.25;          % amplitude ratio between pulses
+eta0 = 2;           % delay between pulses [T]
+theta0 = [A0;eta0]; % Initial parameter vector
+
+%%
+% Number of Monte Carlo runs
 nMC = pow2(10);
 
 %% Generate time array and two ideal pulses, y1 and y2
+% Use |PULSEGEN| to produce reference pulse |y1| and time vector |t|, then
+% use |TDTF| to create a transfer matrix that shifts |y1| by |eta0| and
+% rescales it by |A0| to give |y2|.
+[y1,t]=pulsegen(N,t0,w,A,T);
 
-[y1,t]=pulsegen(N,t0,w,1,T);
+y2 = tdtf(tfun,theta0,N,T)*y1;
 
-
-ParmIn.eta=2;      % delay between pulses [T]
-ParmIn.a = 1;
-ParmIn.b = 0.25;      % amplitude ratio between pulses
-
-y2 = pulserationaldelay(y1,ParmIn) ;
-
-
-TDFit.x0 = [ParmIn.b(1);ParmIn.eta;0];
+%% Construct problem structure to determine the fit parameters
+% In addition to the transfer function parameters, we need an additional
+% offset parameter, which we set to zero for the initial guess.
+TDFit.x0 = [theta0;0];
 TDFit.lb = [];
 TDFit.ub = [];
 TDFit.solver = 'lsqnonlin';
 TDFit.options = optimoptions('lsqnonlin',...
     'Display','Off');
 
-tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
-
 Noise = struct('add',sigma_alpha,...
     'mult',sigma_beta,...
     'time',sigma_tau);
-nNoise = length(Noise);
 
-%%
-% Run Monte Carlo simulations with each noise model.
+Vx = diag(Noise.add^2 + (Noise.mult*y1).^2 + ...
+    (Noise.time*(gradient(y1,t))).^2);
+Vy = diag(Noise.add^2 + (Noise.mult*y2).^2 + ...
+    (Noise.time*(gradient(y2,t))).^2);
 
-Init = cell(nMC,nNoise);
-ParmOutFDnoise = struct('a',Init,'b',Init,'eta',Init);
-Fx = ParmIn;
-Fx.b = NaN;
-Fx.eta = NaN;
-Np = sum(isnan([Fx.a;Fx.b;Fx.eta]))+1;
-resnormFDnoise = zeros(nMC,nNoise);
-DiagnosticFDnoise = struct('exitflag',Init,...
-    'output',Init,...
-    'jacobian',Init,...
-    'covariance',Init,...
-    'chisqfn',Init,...
-    'noise',Init,...
-    'init',Init,...
-    'freq',Init);
+%% Run Monte Carlo simulations
 
-ParmOutTDnoise = zeros(nMC,nNoise,Np);
-resnormTDnoise = zeros(nMC,nNoise);
+Init = cell(nMC,1);
+Np = length(theta0) + 1;
+ParmOutTDnoise = zeros(nMC,Np);
+resnormTDnoise = zeros(nMC,1);
 DiagnosticTDnoise = struct('exitflag',Init,...
     'jacobian',Init);
 
-
-for iNoise = 1:nNoise
+for jMC=1:nMC
     
-    Vx = diag(Noise(iNoise).add^2 + (Noise(iNoise).mult*y1).^2 + ...
-        (Noise(iNoise).time*(gradient(y1,t))).^2);
-    Vy = diag(Noise(iNoise).add^2 + (Noise(iNoise).mult*y2).^2 + ...
-        (Noise(iNoise).time*(gradient(y2,t))).^2);
-
-    for jMC=1:nMC
-        
-        % Generate noisy data
-        yn1 = y1 + ...
-            Noise(iNoise).add*randn(N,1) + ...
-            Noise(iNoise).mult*y1.*randn(N,1) + ...
-            Noise(iNoise).time*(gradient(y1,t)).*randn(N,1) + alpha;
-        yn2 = y2 +  ...
-            Noise(iNoise).add*randn(N,1) + ...
-            Noise(iNoise).mult*y2.*randn(N,1) + ...
-            Noise(iNoise).time*(gradient(y2,t)).*randn(N,1) + beta;
-        
-        TDFit.objective = @(theta) ...
-            costfunwofflsq(tfun,theta(1:end-1),yn1,yn2,...
-            alpha,theta(end),Vx,Vy,T);
-        [ParmOutTDnoise(jMC,iNoise,:),...
-            resnormTDnoise(jMC,iNoise),~,...
-            DiagnosticTDnoise(jMC,iNoise).exitflag,~,~,...
-            DiagnosticTDnoise(jMC,iNoise).jacobian] = lsqnonlin(TDFit);
-        [Q,R]=qr(DiagnosticTDnoise(jMC,iNoise).jacobian);
-        DiagnosticTDnoise(jMC,iNoise).covariance = ...
-            full(eye(size(R,2))/(R'*R));
-
-    end
+    % Generate noisy data
+    yn1 = y1 + ...
+        Noise.add*randn(N,1) + ...
+        Noise.mult*y1.*randn(N,1) + ...
+        Noise.time*(gradient(y1,t)).*randn(N,1) + alpha;
+    yn2 = y2 +  ...
+        Noise.add*randn(N,1) + ...
+        Noise.mult*y2.*randn(N,1) + ...
+        Noise.time*(gradient(y2,t)).*randn(N,1) + beta;
     
-    cvTDnoise = ...
-        mean(reshape([DiagnosticTDnoise(:,iNoise).covariance],Np,Np,nMC),3);
-
-    figure('Name',['Delay histogram, time-domain fit, noise model'...
-        int2str(iNoise)]);
-    histogram(ParmOutTDnoise(:,iNoise,2)*T*1000)
-    xlabel('\eta (fs)')
-    ylabel('Occurence')
-    title(sprintf('TD Noise model %d',iNoise))
+    TDFit.objective = @(theta) ...
+        costfunwofflsq(tfun,theta(1:end-1),yn1,yn2,...
+        alpha,theta(end),Vx,Vy,T);
     
-    figure('Name',['Delay normal probability plot, ',...
-        'time-domain fit, noise model' int2str(iNoise)]);
-    normplot(ParmOutTDnoise(:,iNoise,2)*T*1000)
-    xlabel('\eta (fs)')
-    title(sprintf('TD Noise model %d',iNoise))
-    
-    figure('Name',['Amplitude histogram, time-domain fit, ',...
-        'noise model' int2str(iNoise)]);
-    histogram(ParmOutTDnoise(:,iNoise,1))
-    xlabel('b_0')
-    ylabel('Occurence')
-    title(sprintf('TD Noise model %d',iNoise))
-    
-    figure('Name',['Amplitude normal probability plot, ',...
-        'time-domain fit, noise model' int2str(iNoise)]);
-    normplot(ParmOutTDnoise(:,iNoise,1))
-    xlabel('b_0')
-    title(sprintf('TD Noise model %d',iNoise))
-    
-    figure('Name',['Cost-function histogram, time-domain fit, ',...
-        'noise model' int2str(iNoise)]);
-    histogram(resnormTDnoise(:,iNoise))
-    xlabel('Norm of residuals')
-    ylabel('Occurence')
-    title(sprintf('TD Noise model %d',iNoise))
-
-    figure('Name',['Cost-function cumulative distribution, ',...
-        'time-domain fit, noise model ' int2str(iNoise)]);
-    ecdf(resnormTDnoise(:,iNoise),'bounds','on');
-    hold on
-    r = floor(min(resnormTDnoise(:,iNoise))):...
-        ceil(max(resnormTDnoise(:,iNoise)));
-    nu = N-Np;
-    p = chi2cdf(r,nu);
-    plot(r,p,'k-')
-    legend('Empirical','LCB','UCB',...
-        '\chi^2(r | N_t - N_p)',...
-        'Location','SE')
-    xlabel('Norm of residuals')
-    hold off
-    title(sprintf('TD Noise model %d', iNoise))
-    
-    fprintf('***** NOISE MODEL %d *****\n',iNoise)
-    fprintf('nu:\t\t%.4g\n',nu)
-    fprintf('mean(resnormTD):\t%.4g\n\n',mean(resnormTDnoise(:,iNoise)))
-    
-    fprintf('mean(b0TD):\t\t%#.4g\n',mean(ParmOutTDnoise(:,iNoise,1)))
-    fprintf('std(b0TD), actual:\t%#.2g\n',...
-        std(ParmOutTDnoise(:,iNoise,1)))
-    fprintf('std(b0TD), mean estimate:\t%#.2g\n\n',sqrt(cvTDnoise(1,1)))
-    
-    fprintf('mean(etaTD*T):\t\t\t%#.4g\n',...
-        mean(ParmOutTDnoise(:,iNoise,2))*T)
-    fprintf('std(etaTD*T), actual:\t\t%#.2g\n',...
-        std(ParmOutTDnoise(:,iNoise,2))*T)
-    fprintf('std(etaTD*T), mean estimate:\t%#.2g\n\n',...
-        sqrt(cvTDnoise(2,2))*T)
+    [ParmOutTDnoise(jMC,:),...
+        resnormTDnoise(jMC),~,...
+        DiagnosticTDnoise(jMC).exitflag,~,~,...
+        DiagnosticTDnoise(jMC).jacobian] = lsqnonlin(TDFit);
+    [Q,R]=qr(DiagnosticTDnoise(jMC).jacobian);
+    DiagnosticTDnoise(jMC).covariance = ...
+        full(eye(size(R,2))/(R'*R));
     
 end
 
+cvTDnoise = ...
+    mean(reshape([DiagnosticTDnoise.covariance],Np,Np,nMC),3);
+
+%% Display results
+
+figure('Name','Delay histogram, time-domain fit');
+histogram(ParmOutTDnoise(:,2)*T*1000)
+xlabel('\eta (fs)')
+ylabel('Occurence')
+
+figure('Name','Delay normal probability plot, time-domain fit');
+normplot(ParmOutTDnoise(:,2)*T*1000)
+xlabel('\eta (fs)')
+
+figure('Name','Amplitude histogram, time-domain fit');
+histogram(ParmOutTDnoise(:,1))
+xlabel('A')
+ylabel('Occurence')
+
+figure('Name','Amplitude normal probability plot, time-domain fit');
+normplot(ParmOutTDnoise(:,1))
+xlabel('A')
+
+figure('Name','Cost-function histogram, time-domain fit');
+histogram(resnormTDnoise)
+xlabel('Norm of residuals')
+ylabel('Occurence')
+
+figure('Name','Cost-function cumulative distribution, time-domain fit');
+ecdf(resnormTDnoise,'bounds','on');
+hold on
+r = floor(min(resnormTDnoise)):...
+    ceil(max(resnormTDnoise));
+nu = N-Np;
+p = chi2cdf(r,nu);
+plot(r,p,'k-')
+legend('Empirical','LCB','UCB',...
+    '\chi^2(r | N_t - N_p)',...
+    'Location','SE')
+xlabel('Norm of residuals')
+hold off
+
+fprintf('%-30s%.4g\n','nu:',nu)
+fprintf('%-30s%.4g\n\n','mean(resnormTD):',mean(resnormTDnoise))
+
+fprintf('%-30s%#.4g\n','mean(A)',mean(ParmOutTDnoise(:,1)))
+fprintf('%-30s%#.2g\n',...
+    'std(A), actual:',std(ParmOutTDnoise(:,1)))
+fprintf('%-30s%#.2g\n\n','std(A), mean estimate:',sqrt(cvTDnoise(1,1)))
+
+fprintf('%-30s%#.4g\n',...
+    'mean(eta):',mean(ParmOutTDnoise(:,2))*T)
+fprintf('%-30s%#.2g\n',...
+    'std(eta), actual:',std(ParmOutTDnoise(:,2))*T)
+fprintf('%-30s%#.2g\n\n',...
+    'std(eta), mean estimate:',sqrt(cvTDnoise(2,2))*T)
+
 
 %%
+% Stop timer
 toc

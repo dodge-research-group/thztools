@@ -53,10 +53,10 @@ theta0 = [A0;eta0]; % Initial parameter vector
 nMC = pow2(10);
 
 %% Generate time array and two ideal pulses, y1 and y2
-% Use |PULSEGEN| to produce reference pulse |y1| and time vector |t|, then
+% Use |THZGEN| to produce reference pulse |y1| and time vector |t|, then
 % use |TDTF| to create a transfer matrix that shifts |y1| by |eta0| and
 % rescales it by |A0| to give |y2|.
-[y1,t]=pulsegen(N,t0,w,A,T);
+[y1,t]=thzgen(N,T,t0);
 
 y2 = tdtf(tfun,theta0,N,T)*y1;
 

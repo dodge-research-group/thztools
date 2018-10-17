@@ -1,4 +1,4 @@
-function [y,t] = thzgen(N,T,t0)
+function [y,t] = thzgen(N,T,t0,varargin)
 %THZGEN generate a terahertz pulse
 %
 % Syntax:   y = pulsegen(N,T,t0)
@@ -21,10 +21,31 @@ function [y,t] = thzgen(N,T,t0)
 % 
 % 
 
-A = 1;
-taur = 0.2;
-tauc = 0.1;
-taul = 0.05/sqrt(2*log(2));
+default_A = 1;
+default_taur = 0.2;
+default_tauc = 0.1;
+default_taul = 0.05/sqrt(2*log(2));
+
+validScalarPosNum = @(x) isnumeric(x) && isscalar(x) && (x > 0);
+
+Input = inputParser;
+
+addRequired(Input,'N',validScalarPosNum)
+addRequired(Input,'T',validScalarPosNum)
+addRequired(Input,'t0',validScalarPosNum)
+
+addParameter(Input,'A',default_A,validScalarPosNum)
+addParameter(Input,'taur',default_taur,validScalarPosNum)
+addParameter(Input,'tauc',default_tauc,validScalarPosNum)
+addParameter(Input,'taul',default_taul,validScalarPosNum)
+
+parse(Input,N,T,t0,varargin{:})
+
+A = Input.Results.A;
+taur = Input.Results.taur;
+tauc = Input.Results.tauc;
+taul = Input.Results.taul;
+
 
 f = fftfreq(N,T);
 w = 2*pi*f;

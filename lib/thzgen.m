@@ -22,7 +22,7 @@ function [y,t] = thzgen(N,T,t0,varargin)
 % 
 
 default_A = 1;
-default_taur = 0.2;
+default_taur = 0.3;
 default_tauc = 0.1;
 default_taul = 0.05/sqrt(2*log(2));
 

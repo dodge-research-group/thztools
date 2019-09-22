@@ -1,12 +1,12 @@
 function [y,t] = thzgen(N,T,t0,varargin)
 %THZGEN generate a terahertz pulse
 %
-% Syntax:   y = pulsegen(N,T,t0)
-%           [y,t] = pulsegen(N,T,t0)
+% Syntax:   y = thzgen(N,T,t0)
+%           [y,t] = thzgen(N,T,t0)
 % 
 % Description:
 % 
-% pulsegen(N,T,A,t0) generates terahertz pulse with N points at sampling
+% thzgen(N,T,t0) generates terahertz pulse with N points at sampling
 % interval T and centered at t0.
 % For use in tests of time-domain analysis.
 % 

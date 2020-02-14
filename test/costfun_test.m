@@ -13,6 +13,11 @@ if ~contains(curpath,libDir)
 end
 
 %%
+% Number of Monte Carlo runs
+nMC = pow2(10);
+Init = cell(nMC,1);
+
+%%
 % Initialize timer
 tic
 
@@ -47,10 +52,7 @@ tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
 A0 = 0.25;          % amplitude ratio between pulses
 eta0 = 2;           % delay between pulses [T]
 theta0 = [A0;eta0]; % Initial parameter vector
-
-%%
-% Number of Monte Carlo runs
-nMC = pow2(0);
+Np = length(theta0);
 
 %% Generate time array and two ideal pulses, y1 and y2
 % Use |THZGEN| to produce reference pulse |y1| and time vector |t|, then
@@ -73,21 +75,12 @@ isigmay2 = isigmagen(y2, sigma_alpha, sigma_beta, sigma_tau, T);
 
 for jMC=1:nMC
     
-    yn1(:,nMC) = ...
+    yn1(:,jMC) = ...
         mvnrnd(y1,sigmay1)';
-    yn2(:,nMC) = ...
+    yn2(:,jMC) = ...
         mvnrnd(y2,sigmay2)';
     
 end
-%% Construct MLE problem structure
-
-MLEFit.x0 = [theta0; y1];
-MLEFit.lb = [];
-MLEFit.ub = [];
-MLEFit.solver = 'fminunc';
-MLEFit.options = optimoptions('fminunc',...
-    'Display','off');
-
 %% Construct LSQ problem structure
 
 LSQFit.x0 = theta0;
@@ -95,13 +88,63 @@ LSQFit.lb = [];
 LSQFit.ub = [];
 LSQFit.solver = 'lsqnonlin';
 LSQFit.options = optimoptions('lsqnonlin',...
-    'Display','off');
+    'Display','off',...
+    'UseParallel',true);
 
+%% Construct MLE problem structure
+
+MLEFit.lb = [];
+MLEFit.ub = [];
+MLEFit.solver = 'fminunc';
+MLEFit.options = optimoptions('fminunc',...
+    'Display','off',...
+    'UseParallel',true);
+
+%% LSQ parameter estimates
+
+pLSQ = zeros(Np,nMC);
+muLSQ = zeros(N,nMC);
+resnormLSQ = zeros(1,nMC);
+DiagnosticLSQ = struct('exitflag',Init,...
+    'jacobian',Init);
+
+for jMC=1:nMC
+    
+   LSQFit.objective = @(theta) ...
+        costfunwofflsq(tfun,theta,yn1(:,jMC),yn2(:,jMC),...
+        0,0,sigmay1,sigmay2,T);
+    
+    [p, resnormLSQ(jMC),~,...
+        DiagnosticLSQ(jMC).exitflag,~,~,...
+        DiagnosticLSQ(jMC).jacobian] = lsqnonlin(LSQFit);
+    
+    p = p(:);
+    pLSQ(:,jMC) = p;
+    
+    H = tdtf(tfun,p,N,T);
+    
+    M1 = eye(N) + (sigmay1*H'*isigmay2*H);
+    iM1 = eye(N)/M1;
+    M2 = yn1(:,jMC) + sigmay1*H'*isigmay2*yn2(:,jMC);
+    
+    muLSQ(:,jMC) = iM1*M2;
+
+
+    str = ['LSQ progress: ', num2str(100*jMC/nMC,'%05.1f')];
+    bsp = repmat('\b',1,length(str));
+    wht = repmat(' ',1,length(str));
+    if jMC==1
+        fprintf(1,wht)
+    end
+    fprintf(1, [bsp,str])
+    if jMC==nMC
+        fprintf(1,[bsp, 'Done with LSQ\n'])
+    end
+
+end
 
 %% MLE parameter estimates
 
-Init = cell(nMC,1);
-Np = length(theta0);
 pMLE = zeros(Np,nMC);
 muMLE = zeros(N,nMC);
 FvalMLE = zeros(nMC,1);
@@ -111,6 +154,8 @@ DiagnosticMLE = struct('exitflag', Init,...
 
 for jMC=1:nMC
     
+    MLEFit.x0 = [pLSQ(:,jMC); muLSQ(:,jMC)];
+
     MLEFit.objective = @(theta) ...
         costfun(tfun,theta(3:end),theta(1:2),yn1(:,jMC),yn2(:,jMC),...
         sigma_alpha, sigma_beta, sigma_tau, T);
@@ -129,42 +174,24 @@ for jMC=1:nMC
     isigmamu = isigmagen(mu, sigma_alpha, sigma_beta, sigma_tau, T);
     isigmapsi = isigmagen(psi, sigma_alpha, sigma_beta, sigma_tau, T);
     
-    resnormMLE(jMC) = (yn1 - mu)'*isigmamu*(yn1 - mu) ...
-        + (yn2 - psi)'*isigmapsi*(yn2 - psi);
+    resnormMLE(jMC) = (yn1(:,jMC) - mu)'*isigmamu*(yn1(:,jMC) - mu) ...
+        + (yn2(:,jMC) - psi)'*isigmapsi*(yn2(:,jMC) - psi);
+
+    str = ['MLE progress: ', num2str(100*jMC/nMC,'%05.1f')];
+    bsp = repmat('\b',1,length(str));
+    wht = repmat(' ',1,length(str));
+    if jMC==1
+        fprintf(1,wht)
+    end
+    fprintf(1, [bsp,str])
+    if jMC==nMC
+        fprintf(1,[bsp, 'Done with MLE\n'])
+    end
 
 end
 
-%% LSQ parameter estimates
-
-pLSQ = zeros(Np,nMC);
-muLSQ = zeros(N,nMC);
-resnormLSQ = zeros(1,nMC);
-DiagnosticLSQ = struct('exitflag',Init,...
-    'jacobian',Init);
-
-for jMC=1:nMC
-    
-   LSQFit.objective = @(theta) ...
-        costfunwofflsq(tfun,theta,yn1,yn2,...
-        0,0,sigmay1,sigmay2,T);
-    
-    [p, resnormLSQ(jMC),~,...
-        DiagnosticLSQ(jMC).exitflag,~,~,...
-        DiagnosticLSQ(jMC).jacobian] = lsqnonlin(LSQFit);
-    
-    p = p(:);
-    pLSQ(:,jMC) = p;
-    
-    H = tdtf(tfun,p,N,T);
-    
-    M1 = eye(N) + (sigmay1*H'*isigmay2*H);
-    iM1 = eye(N)/M1;
-    M2 = yn1 + sigmay1*H'*isigmay2*yn2;
-    
-    muLSQ(:,jMC) = iM1*M2;
-
-end
 
 %%
 % Stop timer
 toc
+save('costfun_test_output')

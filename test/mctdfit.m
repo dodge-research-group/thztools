@@ -50,7 +50,7 @@ theta0 = [A0;eta0]; % Initial parameter vector
 
 %%
 % Number of Monte Carlo runs
-nMC = pow2(10);
+nMC = pow2(0);
 
 %% Generate time array and two ideal pulses, y1 and y2
 % Use |THZGEN| to produce reference pulse |y1| and time vector |t|, then

@@ -67,20 +67,16 @@ y2 = tdtf(tfun,theta0,N,T)*y1;
 yn1 = zeros(N, nMC);
 yn2 = zeros(N, nMC);
 
-sigmay1 = sigmagen(y1, sigma_alpha, sigma_beta, sigma_tau, T);
-sigmay2 = sigmagen(y2, sigma_alpha, sigma_beta, sigma_tau, T);
-
-isigmay1 = isigmagen(y1, sigma_alpha, sigma_beta, sigma_tau, T);
-isigmay2 = isigmagen(y2, sigma_alpha, sigma_beta, sigma_tau, T);
+Vy1 = noisevar(sigma, y1, T);
+Vy2 = noisevar(sigma, y2, T);
 
 for jMC=1:nMC
     
-    yn1(:,jMC) = ...
-        mvnrnd(y1,sigmay1)';
-    yn2(:,jMC) = ...
-        mvnrnd(y2,sigmay2)';
+    yn1(:,jMC) = mvnrnd(y1,Vy1)';
+    yn2(:,jMC) = mvnrnd(y2,Vy2)';
     
 end
+
 %% Construct LSQ problem structure
 
 LSQFit.x0 = theta0;

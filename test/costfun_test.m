@@ -14,7 +14,7 @@ end
 
 %%
 % Number of Monte Carlo runs
-nMC = pow2(10);
+nMC = pow2(0);
 Init = cell(nMC,1);
 
 %%
@@ -44,6 +44,8 @@ sigma_alpha=1e-3;   % amplitude noise [units of time-domain peak]
 sigma_beta=1e-2;    % multiplicative noise [dimensionless]
 sigma_tau=1e-3;     % time base noise [ps]
 
+sigma = [sigma_alpha; sigma_beta; sigma_tau];
+
 %%
 % Transfer function definition and parameters
 
@@ -67,18 +69,16 @@ y2 = tdtf(tfun,theta0,N,T)*y1;
 yn1 = zeros(N, nMC);
 yn2 = zeros(N, nMC);
 
-sigmay1 = sigmagen(y1, sigma_alpha, sigma_beta, sigma_tau, T);
-sigmay2 = sigmagen(y2, sigma_alpha, sigma_beta, sigma_tau, T);
+Vy1 = diag(noisevar(sigma, y1, T));
+Vy2 = diag(noisevar(sigma, y2, T));
 
-isigmay1 = isigmagen(y1, sigma_alpha, sigma_beta, sigma_tau, T);
-isigmay2 = isigmagen(y2, sigma_alpha, sigma_beta, sigma_tau, T);
+iVy1 = diag(1./noisevar(sigma, y1, T));
+iVy2 = diag(1./noisevar(sigma, y2, T));
 
 for jMC=1:nMC
     
-    yn1(:,jMC) = ...
-        mvnrnd(y1,sigmay1)';
-    yn2(:,jMC) = ...
-        mvnrnd(y2,sigmay2)';
+    yn1(:,jMC) = mvnrnd(y1,Vy1)';
+    yn2(:,jMC) = mvnrnd(y2,Vy2)';
     
 end
 %% Construct LSQ problem structure
@@ -112,7 +112,7 @@ for jMC=1:nMC
     
    LSQFit.objective = @(theta) ...
         costfunwofflsq(tfun,theta,yn1(:,jMC),yn2(:,jMC),...
-        0,0,sigmay1,sigmay2,T);
+        0,0,Vy1,Vy2,T);
     
     [p, resnormLSQ(jMC),~,...
         DiagnosticLSQ(jMC).exitflag,~,~,...
@@ -123,9 +123,9 @@ for jMC=1:nMC
     
     H = tdtf(tfun,p,N,T);
     
-    M1 = eye(N) + (sigmay1*H'*isigmay2*H);
+    M1 = eye(N) + (Vy1*H'*iVy2*H);
     iM1 = eye(N)/M1;
-    M2 = yn1(:,jMC) + sigmay1*H'*isigmay2*yn2(:,jMC);
+    M2 = yn1(:,jMC) + Vy1*H'*iVy2*yn2(:,jMC);
     
     muLSQ(:,jMC) = iM1*M2;
 
@@ -171,11 +171,11 @@ for jMC=1:nMC
 
     H = tdtf(tfun, pMLE(:,jMC), N, T);
     psi = H*mu;
-    isigmamu = isigmagen(mu, sigma_alpha, sigma_beta, sigma_tau, T);
-    isigmapsi = isigmagen(psi, sigma_alpha, sigma_beta, sigma_tau, T);
+    iVmu = diag(1./noisevar(sigma, mu, T));
+    iVpsi = diag(1./noisevar(sigma, psi, T));
     
-    resnormMLE(jMC) = (yn1(:,jMC) - mu)'*isigmamu*(yn1(:,jMC) - mu) ...
-        + (yn2(:,jMC) - psi)'*isigmapsi*(yn2(:,jMC) - psi);
+    resnormMLE(jMC) = (yn1(:,jMC) - mu)'*iVmu*(yn1(:,jMC) - mu) ...
+        + (yn2(:,jMC) - psi)'*iVpsi*(yn2(:,jMC) - psi);
 
     str = ['MLE progress: ', num2str(100*jMC/nMC,'%05.1f')];
     bsp = repmat('\b',1,length(str));

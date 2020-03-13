@@ -1,16 +1,24 @@
-function res = costfunlsq(fun,theta,xx,yy,covx,covy,ts)
+function res = costfunlsq_alt(fun,theta,xx,yy,sigmax,sigmay,wfft)
 
-n = length(xx);
-H = tdtf(fun,theta,n,ts);
+N = length(sigmax);
+H = conj(fun(theta, wfft));
+if rem(N,2)==0
+    kNy = N/2;
+    H(kNy+1) = real(H(kNy+1));
+end
 
-icovx = eye(n)/covx;
-icovy = eye(n)/covy;
+rx = xx - real(ifft(fft(yy)./H));
+Vx = diag(sigmax.^2);
 
-M1 = eye(n) + (covx*H'*icovy*H);
-iM1 = eye(n)/M1;
-M2 = xx + covx*H'*icovy*yy;
-iM1M2 = iM1*M2;
-HiM1M2 = H*iM1M2;
+Htildeinv = ifft(1./H);
 
-res = [sqrtm(icovx)*(xx-iM1M2); sqrtm(icovy)*(yy-HiM1M2)];
+Ux = zeros(N);
+for k = 1:N
+    Ux = Ux + real(circshift(Htildeinv,k-1)...
+        *(circshift(Htildeinv,k-1)'))*sigmay(k)^2;
+end
+
+W = eye(N)/sqrtm(Vx + Ux);
+
+res = W*rx;
 end

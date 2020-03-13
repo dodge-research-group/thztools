@@ -14,7 +14,7 @@ end
 
 %%
 % Number of Monte Carlo runs
-nMC = pow2(0);
+nMC = pow2(10);
 Init = cell(nMC,1);
 
 %%

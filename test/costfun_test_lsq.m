@@ -44,6 +44,8 @@ sigma_alpha=1e-3;   % amplitude noise [units of time-domain peak]
 sigma_beta=1e-2;    % multiplicative noise [dimensionless]
 sigma_tau=1e-3;     % time base noise [ps]
 
+sigma = [sigma_alpha; sigma_beta; sigma_tau];
+
 %%
 % Transfer function definition and parameters
 
@@ -67,8 +69,11 @@ y2 = tdtf(tfun,theta0,N,T)*y1;
 yn1 = zeros(N, nMC);
 yn2 = zeros(N, nMC);
 
-Vy1 = noisevar(sigma, y1, T);
-Vy2 = noisevar(sigma, y2, T);
+Vy1 = diag(noisevar(sigma, y1, T));
+Vy2 = diag(noisevar(sigma, y2, T));
+
+iVy1 = diag(1./noisevar(sigma, y1, T));
+iVy2 = diag(1./noisevar(sigma, y2, T));
 
 for jMC=1:nMC
     
@@ -104,24 +109,21 @@ DiagnosticLSQ_Vest = struct('exitflag',Init,...
 for jMC=1:nMC
     
     LSQFit.objective = @(theta) ...
-        costfunwofflsq(tfun,theta,yn1(:,jMC),yn2(:,jMC),...
-        0,0,sigmay1,sigmay2,T);
+        costfunwofflsq(tfun,theta,yn1(:,jMC),yn2(:,jMC),0,0,Vy1,Vy2,T);
     
     [p, resnormLSQ(jMC),~,...
         DiagnosticLSQ(jMC).exitflag,~,~,...
         DiagnosticLSQ(jMC).jacobian] = lsqnonlin(LSQFit);
     
-    sigmayn1 = sigmagen(yn1(:,jMC), sigma_alpha, sigma_beta, sigma_tau, T);
-    sigmayn2 = sigmagen(yn2(:,jMC), sigma_alpha, sigma_beta, sigma_tau, T);
+    Vyn1 = diag(noisevar(sigma, yn1(:,jMC), T));
+    Vyn2 = diag(noisevar(sigma, yn2(:,jMC), T));
 
-    isigmayn1 = ...
-        isigmagen(yn1(:,jMC), sigma_alpha, sigma_beta, sigma_tau, T);
-    isigmayn2 = ...
-        isigmagen(yn2(:,jMC), sigma_alpha, sigma_beta, sigma_tau, T);
+    iVyn1 = diag(1./noisevar(sigma, yn1(:,jMC), T));
+    iVyn2 = diag(1./noisevar(sigma, yn2(:,jMC), T));
     
     LSQFit.objective = @(theta) ...
         costfunwofflsq(tfun,theta,yn1(:,jMC),yn2(:,jMC),...
-        0,0,sigmayn1,sigmayn2,T);
+        0,0,Vyn1,Vyn2,T);
     
     [p_Vest, resnormLSQ_Vest(jMC),~,...
         DiagnosticLSQ_Vest(jMC).exitflag,~,~,...
@@ -132,9 +134,9 @@ for jMC=1:nMC
     
     H = tdtf(tfun,p,N,T);
     
-    M1 = eye(N) + (sigmay1*H'*isigmay2*H);
+    M1 = eye(N) + (Vy1*H'*iVy2*H);
     iM1 = eye(N)/M1;
-    M2 = yn1(:,jMC) + sigmay1*H'*isigmay2*yn2(:,jMC);
+    M2 = yn1(:,jMC) + Vy1*H'*iVy2*yn2(:,jMC);
     
     muLSQ(:,jMC) = iM1*M2;
     
@@ -143,9 +145,9 @@ for jMC=1:nMC
     
     H = tdtf(tfun,p_Vest,N,T);
     
-    M1 = eye(N) + (sigmayn1*H'*isigmayn2*H);
+    M1 = eye(N) + (Vyn1*H'*iVyn2*H);
     iM1 = eye(N)/M1;
-    M2 = yn1(:,jMC) + sigmayn1*H'*isigmayn2*yn2(:,jMC);
+    M2 = yn1(:,jMC) + Vyn1*H'*iVyn2*yn2(:,jMC);
     
     muLSQ_Vest(:,jMC) = iM1*M2;
     

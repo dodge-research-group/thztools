@@ -81,6 +81,7 @@ for jMC=1:nMC
     yn2(:,jMC) = mvnrnd(y2,Vy2)';
     
 end
+
 %% Construct LSQ problem structure
 
 LSQFit.x0 = theta0;

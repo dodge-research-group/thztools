@@ -44,6 +44,8 @@ sigma_alpha=1e-3;   % amplitude noise [units of time-domain peak]
 sigma_beta=1e-2;    % multiplicative noise [dimensionless]
 sigma_tau=1e-3;     % time base noise [ps]
 
+sigma = [sigma_alpha; sigma_beta; sigma_tau];
+
 %%
 % Transfer function definition and parameters
 
@@ -71,15 +73,19 @@ y2 = tdtf(tfun,theta0,N,T)*y1;
 yn1 = zeros(N, nMC);
 yn2 = zeros(N, nMC);
 
-sigmay1 = sigmagen(y1, sigma_alpha, sigma_beta, sigma_tau, T);
-sigmay2 = sigmagen(y2, sigma_alpha, sigma_beta, sigma_tau, T);
+Vy1 = diag(noisevar(sigma, y1, T));
+Vy2 = diag(noisevar(sigma, y2, T));
+
+iVy1 = diag(1./noisevar(sigma, y1, T));
+iVy2 = diag(1./noisevar(sigma, y2, T));
 
 for jMC=1:nMC
     
-    yn1(:,jMC) = mvnrnd(y1,sigmay1)';
-    yn2(:,jMC) = mvnrnd(y2,sigmay2)';
+    yn1(:,jMC) = mvnrnd(y1,Vy1)';
+    yn2(:,jMC) = mvnrnd(y2,Vy2)';
     
 end
+
 %% Construct LSQ problem structure
 
 LSQFit.x0 = theta0;
@@ -100,15 +106,14 @@ DiagnosticLSQ = struct('exitflag',Init,...
 
 for jMC=1:nMC
     
-    sigmayn1 = sigmagen(yn1(:,jMC), sigma_alpha, sigma_beta, sigma_tau, T);
-    sigmayn2 = sigmagen(yn2(:,jMC), sigma_alpha, sigma_beta, sigma_tau, T);
+    Vyn1 = diag(noisevar(sigma, yn1(:,jMC), T));
+    Vyn2 = diag(noisevar(sigma, yn2(:,jMC), T));
 
-    isigmayn1 = diag(1./diag(sigmayn1));
-    isigmayn2 = diag(1./diag(sigmayn2));
+    isigmayn1 = diag(1./diag(Vyn1));
+    isigmayn2 = diag(1./diag(Vyn2));
     
     LSQFit.objective = @(theta) ...
-        costfunlsq(tfun,theta,yn1(:,jMC),yn2(:,jMC),...
-        sigmayn1,sigmayn2,T);
+        costfunlsq(tfun,theta,yn1(:,jMC),yn2(:,jMC),Vyn1,Vyn2,T);
     
     [p, resnormLSQ(jMC),~,...
         DiagnosticLSQ(jMC).exitflag,~,~,...
@@ -119,9 +124,9 @@ for jMC=1:nMC
     
     H = tdtf(tfun,p,N,T);
     
-    M1 = eye(N) + (sigmayn1*H'*isigmayn2*H);
+    M1 = eye(N) + (Vyn1*H'*isigmayn2*H);
     iM1 = eye(N)/M1;
-    M2 = yn1(:,jMC) + sigmayn1*H'*isigmayn2*yn2(:,jMC);
+    M2 = yn1(:,jMC) + Vyn1*H'*isigmayn2*yn2(:,jMC);
     
     muLSQ(:,jMC) = iM1*M2;    
     
@@ -144,8 +149,8 @@ end
 k = 1;
 
 % Construct covariance matrices for data
-Vx = sigmagen(yn1(:,k),sigma_alpha, sigma_beta, sigma_tau, T);
-Vy = sigmagen(yn2(:,k),sigma_alpha, sigma_beta, sigma_tau, T);
+Vx = diag(noisevar(sigma, yn1(:,k), T));
+Vy = diag(noisevar(sigma, yn2(:,k), T));
 
 % Construct transfer matrix and transform Vy to Ux
 h = tdtf(tfun, pLSQ(:,k), N, T);

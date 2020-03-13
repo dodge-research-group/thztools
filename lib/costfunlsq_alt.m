@@ -2,8 +2,10 @@ function res = costfunlsq_alt(fun,theta,xx,yy,sigmax,sigmay,wfft)
 
 N = length(sigmax);
 H = conj(fun(theta, wfft));
-kNy = floor(N/2);
-H(kNy+1) = real(H(kNy+1));
+if rem(N,2)==0
+    kNy = N/2;
+    H(kNy+1) = real(H(kNy+1));
+end
 
 rx = xx - real(ifft(fft(yy)./H));
 Vx = diag(sigmax.^2);

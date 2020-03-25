@@ -1,4 +1,4 @@
-function res = costfunlsq_alt(fun,theta,xx,yy,sigmax,sigmay,wfft)
+function res = costfunlsq(fun,theta,xx,yy,sigmax,sigmay,wfft)
 
 N = length(sigmax);
 H = conj(fun(theta, wfft));

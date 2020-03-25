@@ -1,0 +1,196 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Compare approximate cost function distribution moments with simulation</title><meta name="generator" content="MATLAB 9.7"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-03-25"><meta name="DC.source" content="costfundist.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Compare approximate cost function distribution moments with simulation</h1><pre class="codeinput">tStart = tic;
+N = 256;
+T = 0.05;
+t0 = 2.5;
+[y, t]=thzgen(N, T, t0, <span class="string">'taur'</span>, 0.4);
+Nmc = pow2(18);
+rng(<span class="string">'default'</span>)
+
+sigbeta = (0:20)*1e-3;
+Nsig = length(sigbeta);
+C1MCbeta = zeros(Nsig,1);
+C1appxbeta = zeros(Nsig,1);
+<span class="keyword">for</span> i = 1:Nsig
+    sigma = [1e-4 sigbeta(i) 1e-3];
+    Vmu = noisevar(sigma,y,T);
+    sigmamu = noiseamp(sigma,y,T);
+    ym = repmat(y, 1, Nmc) + repmat(sigmamu, 1, Nmc).*randn(N, Nmc);
+    resnorm = zeros(Nmc,1);
+    <span class="keyword">for</span> k = 1:Nmc
+        resnorm(k) = sum((ym(:,k)-y).^2.*1./noisevar(sigma,ym(:,k),T));
+    <span class="keyword">end</span>
+
+    C1MCbeta(i) = mean(resnorm);
+
+    D = tdtf(@(theta, w) -1i*w, 0, N, T);
+    ydot = D*y;
+    C1appxbeta(i) = N - 9*N*sigma(2)^2 - 0.5*sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
+
+<span class="keyword">end</span>
+
+figure(<span class="string">'Name'</span>,<span class="string">'Expectation versus sigma_beta'</span>)
+plot(sigbeta,C1MCbeta,<span class="string">'ko'</span>, sigbeta, C1appxbeta, <span class="string">'-'</span>)
+xlabel(<span class="string">'\sigma_\beta'</span>)
+ylabel(<span class="string">'E(C)'</span>)
+
+sigtau = (0:20)*1e-4;
+Nsig = length(sigtau);
+C1MCtau = zeros(Nsig,1);
+C1appxtau = zeros(Nsig,1);
+<span class="keyword">for</span> i = 1:Nsig
+    sigma = [1e-4 1e-2 sigtau(i)];
+    Vmu = noisevar(sigma,y,T);
+    sigmamu = noiseamp(sigma,y,T);
+    ym = repmat(y, 1, Nmc) + repmat(sigmamu, 1, Nmc).*randn(N, Nmc);
+    resnorm = zeros(Nmc,1);
+    <span class="keyword">for</span> k = 1:Nmc
+        resnorm(k) = sum((ym(:,k)-y).^2.*1./noisevar(sigma,ym(:,k),T));
+    <span class="keyword">end</span>
+
+    C1MCtau(i) = mean(resnorm);
+
+    D = tdtf(@(theta, w) -1i*w, 0, N, T);
+    ydot = D*y;
+    C1appxtau(i) = N - 9*N*sigma(2)^2 - 0.5*sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
+<span class="keyword">end</span>
+
+figure(<span class="string">'Name'</span>,<span class="string">'Simulated expectation versus sigma_tau'</span>)
+plot(sigtau,C1MCtau,<span class="string">'ko'</span>, sigtau, C1appxtau, <span class="string">'-'</span>)
+xlabel(<span class="string">'\sigma_\tau'</span>)
+ylabel(<span class="string">'E(C)'</span>)
+toc(tStart)
+</pre><pre class="codeoutput">Elapsed time is 301.059812 seconds.
+</pre><img vspace="5" hspace="5" src="costfundist_01.png" alt=""> <img vspace="5" hspace="5" src="costfundist_02.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Compare approximate cost function distribution moments with simulation
+tStart = tic;
+N = 256;
+T = 0.05;
+t0 = 2.5;
+[y, t]=thzgen(N, T, t0, 'taur', 0.4);
+Nmc = pow2(18);
+rng('default')
+
+sigbeta = (0:20)*1e-3;
+Nsig = length(sigbeta);
+C1MCbeta = zeros(Nsig,1);
+C1appxbeta = zeros(Nsig,1);
+for i = 1:Nsig
+    sigma = [1e-4 sigbeta(i) 1e-3];
+    Vmu = noisevar(sigma,y,T);
+    sigmamu = noiseamp(sigma,y,T);
+    ym = repmat(y, 1, Nmc) + repmat(sigmamu, 1, Nmc).*randn(N, Nmc);
+    resnorm = zeros(Nmc,1);
+    for k = 1:Nmc
+        resnorm(k) = sum((ym(:,k)-y).^2.*1./noisevar(sigma,ym(:,k),T));
+    end
+    
+    C1MCbeta(i) = mean(resnorm);
+    
+    D = tdtf(@(theta, w) -1i*w, 0, N, T);
+    ydot = D*y;
+    C1appxbeta(i) = N - 9*N*sigma(2)^2 - 0.5*sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
+
+end
+
+figure('Name','Expectation versus sigma_beta')
+plot(sigbeta,C1MCbeta,'ko', sigbeta, C1appxbeta, '-')
+xlabel('\sigma_\beta')
+ylabel('E(C)')
+
+sigtau = (0:20)*1e-4;
+Nsig = length(sigtau);
+C1MCtau = zeros(Nsig,1);
+C1appxtau = zeros(Nsig,1);
+for i = 1:Nsig
+    sigma = [1e-4 1e-2 sigtau(i)];
+    Vmu = noisevar(sigma,y,T);
+    sigmamu = noiseamp(sigma,y,T);
+    ym = repmat(y, 1, Nmc) + repmat(sigmamu, 1, Nmc).*randn(N, Nmc);
+    resnorm = zeros(Nmc,1);
+    for k = 1:Nmc
+        resnorm(k) = sum((ym(:,k)-y).^2.*1./noisevar(sigma,ym(:,k),T));
+    end
+    
+    C1MCtau(i) = mean(resnorm);
+    
+    D = tdtf(@(theta, w) -1i*w, 0, N, T);
+    ydot = D*y;
+    C1appxtau(i) = N - 9*N*sigma(2)^2 - 0.5*sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
+end
+
+figure('Name','Simulated expectation versus sigma_tau')
+plot(sigtau,C1MCtau,'ko', sigtau, C1appxtau, '-')
+xlabel('\sigma_\tau')
+ylabel('E(C)')
+toc(tStart)
+##### SOURCE END #####
+--></body></html>

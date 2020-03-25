@@ -25,16 +25,10 @@ rng('default')
 % Pulse measurement parameters
 T=.05;              % sampling time [ps]
 N=256;              % number of sampled points
+t0=N*T/3;           % pulse center [ps]
+
 f = fftfreq(N,T);   % discrete frequency vector
 w = 2*pi*f;         % discrete angular frequency vector
-
-%%
-% Ideal pulse parameters
-A=1;                % pulse amplitude [arb. units]
-tw=0.2;             % pulse width [ps]
-t0=N*T/3;           % pulse center [ps]
-alpha = 0;          % offset of the reference pulse
-beta = .004;        % offset of the sample pulse
 
 %%
 % Noise parameters
@@ -165,3 +159,6 @@ ecdf(resnormLSQ)
 hold on
 x = (150:350);
 plot(x,chi2cdf(x,N-Np))
+
+fprintf('Degrees of freedom: %d\n', N - Np)
+fprintf('Mean of normed residuals: %.2f\n', mean(resnormLSQ))

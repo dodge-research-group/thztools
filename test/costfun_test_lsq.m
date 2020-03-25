@@ -14,7 +14,7 @@ end
 
 %%
 % Number of Monte Carlo runs
-nMC = pow2(10);
+nMC = pow2(9);
 Init = cell(nMC,1);
 
 %%
@@ -29,18 +29,14 @@ rng('default')
 % Pulse measurement parameters
 T=.05;              % sampling time [ps]
 N=256;              % number of sampled points
-
-%%
-% Ideal pulse parameters
-A=1;                % pulse amplitude [arb. units]
-w=0.2;              % pulse width [ps]
 t0=N*T/3;           % pulse center [ps]
-alpha = 0;          % offset of the reference pulse
-beta = .004;        % offset of the sample pulse
+
+f = fftfreq(N, T);
+w = 2*pi*f;
 
 %%
 % Noise parameters
-sigma_alpha=1e-3;   % amplitude noise [units of time-domain peak]
+sigma_alpha=1e-4;   % amplitude noise [units of time-domain peak]
 sigma_beta=1e-2;    % multiplicative noise [dimensionless]
 sigma_tau=1e-3;     % time base noise [ps]
 
@@ -51,8 +47,10 @@ sigma = [sigma_alpha; sigma_beta; sigma_tau];
 
 tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
 
-A0 = 0.25;          % amplitude ratio between pulses
-eta0 = 2;           % delay between pulses [T]
+% A0 = 0.25;          % amplitude ratio between pulses
+% eta0 = 2;           % delay between pulses [T]
+A0 = 1.;          % amplitude ratio between pulses
+eta0 = 0.;           % delay between pulses [T]
 theta0 = [A0;eta0]; % Initial parameter vector
 Np = length(theta0);
 
@@ -60,6 +58,7 @@ Np = length(theta0);
 % Use |THZGEN| to produce reference pulse |y1| and time vector |t|, then
 % use |TDTF| to create a transfer matrix that shifts |y1| by |eta0| and
 % rescales it by |A0| to give |y2|.
+
 [y1,t]=thzgen(N,T,t0);
 
 y2 = tdtf(tfun,theta0,N,T)*y1;
@@ -71,9 +70,6 @@ yn2 = zeros(N, nMC);
 
 Vy1 = diag(noisevar(sigma, y1, T));
 Vy2 = diag(noisevar(sigma, y2, T));
-
-iVy1 = diag(1./noisevar(sigma, y1, T));
-iVy2 = diag(1./noisevar(sigma, y2, T));
 
 for jMC=1:nMC
     
@@ -95,62 +91,24 @@ LSQFit.options = optimoptions('lsqnonlin',...
 %% LSQ parameter estimates
 
 pLSQ = zeros(Np,nMC);
-muLSQ = zeros(N,nMC);
+residualLSQ = zeros(N,nMC);
 resnormLSQ = zeros(1,nMC);
 DiagnosticLSQ = struct('exitflag',Init,...
     'jacobian',Init);
 
-pLSQ_Vest = zeros(Np,nMC);
-muLSQ_Vest = zeros(N,nMC);
-resnormLSQ_Vest = zeros(1,nMC);
-DiagnosticLSQ_Vest = struct('exitflag',Init,...
-    'jacobian',Init);
-
 for jMC=1:nMC
     
+    sigmayn1 = noiseamp(sigma, yn1(:,jMC), T);
+    sigmayn2 = noiseamp(sigma, yn2(:,jMC), T);
     LSQFit.objective = @(theta) ...
-        costfunwofflsq(tfun,theta,yn1(:,jMC),yn2(:,jMC),0,0,Vy1,Vy2,T);
+        costfunlsq(tfun,theta,yn1(:,jMC),yn2(:,jMC),sigmayn1,sigmayn2,w);
     
-    [p, resnormLSQ(jMC),~,...
+    [p, resnormLSQ(jMC), residualLSQ(:,jMC),...
         DiagnosticLSQ(jMC).exitflag,~,~,...
         DiagnosticLSQ(jMC).jacobian] = lsqnonlin(LSQFit);
     
-    Vyn1 = diag(noisevar(sigma, yn1(:,jMC), T));
-    Vyn2 = diag(noisevar(sigma, yn2(:,jMC), T));
-
-    iVyn1 = diag(1./noisevar(sigma, yn1(:,jMC), T));
-    iVyn2 = diag(1./noisevar(sigma, yn2(:,jMC), T));
-    
-    LSQFit.objective = @(theta) ...
-        costfunwofflsq(tfun,theta,yn1(:,jMC),yn2(:,jMC),...
-        0,0,Vyn1,Vyn2,T);
-    
-    [p_Vest, resnormLSQ_Vest(jMC),~,...
-        DiagnosticLSQ_Vest(jMC).exitflag,~,~,...
-        DiagnosticLSQ_Vest(jMC).jacobian] = lsqnonlin(LSQFit);
-    
     p = p(:);
     pLSQ(:,jMC) = p;
-    
-    H = tdtf(tfun,p,N,T);
-    
-    M1 = eye(N) + (Vy1*H'*iVy2*H);
-    iM1 = eye(N)/M1;
-    M2 = yn1(:,jMC) + Vy1*H'*iVy2*yn2(:,jMC);
-    
-    muLSQ(:,jMC) = iM1*M2;
-    
-    p_Vest = p_Vest(:);
-    pLSQ_Vest(:,jMC) = p_Vest;
-    
-    H = tdtf(tfun,p_Vest,N,T);
-    
-    M1 = eye(N) + (Vyn1*H'*iVyn2*H);
-    iM1 = eye(N)/M1;
-    M2 = yn1(:,jMC) + Vyn1*H'*iVyn2*yn2(:,jMC);
-    
-    muLSQ_Vest(:,jMC) = iM1*M2;
-    
     
     str = ['LSQ progress: ', num2str(100*jMC/nMC,'%05.1f')];
     bsp = repmat('\b',1,length(str));

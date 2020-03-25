@@ -71,7 +71,7 @@ N = 256;
 T = 0.05;
 t0 = 2.5;
 [y, t]=thzgen(N, T, t0, <span class="string">'taur'</span>, 0.4);
-Nmc = pow2(18);
+Nmc = pow2(20);
 rng(<span class="string">'default'</span>)
 
 sigbeta = (0:20)*1e-3;
@@ -127,7 +127,7 @@ plot(sigtau,C1MCtau,<span class="string">'ko'</span>, sigtau, C1appxtau, <span c
 xlabel(<span class="string">'\sigma_\tau'</span>)
 ylabel(<span class="string">'E(C)'</span>)
 toc(tStart)
-</pre><pre class="codeoutput">Elapsed time is 301.059812 seconds.
+</pre><pre class="codeoutput">Elapsed time is 8325.311942 seconds.
 </pre><img vspace="5" hspace="5" src="costfundist_01.png" alt=""> <img vspace="5" hspace="5" src="costfundist_02.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Compare approximate cost function distribution moments with simulation
@@ -136,7 +136,7 @@ N = 256;
 T = 0.05;
 t0 = 2.5;
 [y, t]=thzgen(N, T, t0, 'taur', 0.4);
-Nmc = pow2(18);
+Nmc = pow2(20);
 rng('default')
 
 sigbeta = (0:20)*1e-3;

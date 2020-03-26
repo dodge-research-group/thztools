@@ -77,18 +77,20 @@ rng(<span class="string">'default'</span>)
 sigbeta = (0:20)*1e-3;
 Nsig = length(sigbeta);
 C1MCbeta = zeros(Nsig,1);
+C2MCbeta = zeros(Nsig,1);
 C1appxbeta = zeros(Nsig,1);
 <span class="keyword">for</span> i = 1:Nsig
     sigma = [1e-4 sigbeta(i) 1e-3];
     Vmu = noisevar(sigma,y,T);
     sigmamu = noiseamp(sigma,y,T);
-    ym = repmat(y, 1, Nmc) + repmat(sigmamu, 1, Nmc).*randn(N, Nmc);
     resnorm = zeros(Nmc,1);
     <span class="keyword">for</span> k = 1:Nmc
-        resnorm(k) = sum((ym(:,k)-y).^2.*1./noisevar(sigma,ym(:,k),T));
+        ym = y + sigmamu.*randn(N, 1);
+        resnorm(k) = sum((ym-y).^2.*1./noisevar(sigma,ym,T));
     <span class="keyword">end</span>
 
     C1MCbeta(i) = mean(resnorm);
+    C2MCbeta(i) = var(resnorm);
 
     D = tdtf(@(theta, w) -1i*w, 0, N, T);
     ydot = D*y;
@@ -101,21 +103,28 @@ plot(sigbeta,C1MCbeta,<span class="string">'ko'</span>, sigbeta, C1appxbeta, <sp
 xlabel(<span class="string">'\sigma_\beta'</span>)
 ylabel(<span class="string">'E(C)'</span>)
 
+figure(<span class="string">'Name'</span>,<span class="string">'Simulated variance versus sigma_beta'</span>)
+plot(sigbeta,C2MCbeta,<span class="string">'ko'</span>)
+xlabel(<span class="string">'\sigma_\beta'</span>)
+ylabel(<span class="string">'Var(C)'</span>)
+
 sigtau = (0:20)*1e-4;
 Nsig = length(sigtau);
 C1MCtau = zeros(Nsig,1);
+C2MCtau = zeros(Nsig,1);
 C1appxtau = zeros(Nsig,1);
 <span class="keyword">for</span> i = 1:Nsig
     sigma = [1e-4 1e-2 sigtau(i)];
     Vmu = noisevar(sigma,y,T);
     sigmamu = noiseamp(sigma,y,T);
-    ym = repmat(y, 1, Nmc) + repmat(sigmamu, 1, Nmc).*randn(N, Nmc);
     resnorm = zeros(Nmc,1);
     <span class="keyword">for</span> k = 1:Nmc
-        resnorm(k) = sum((ym(:,k)-y).^2.*1./noisevar(sigma,ym(:,k),T));
+        ym = y + sigmamu.*randn(N, 1);
+        resnorm(k) = sum((ym-y).^2.*1./noisevar(sigma,ym,T));
     <span class="keyword">end</span>
 
     C1MCtau(i) = mean(resnorm);
+    C2MCtau(i) = var(resnorm);
 
     D = tdtf(@(theta, w) -1i*w, 0, N, T);
     ydot = D*y;
@@ -126,9 +135,15 @@ figure(<span class="string">'Name'</span>,<span class="string">'Simulated expect
 plot(sigtau,C1MCtau,<span class="string">'ko'</span>, sigtau, C1appxtau, <span class="string">'-'</span>)
 xlabel(<span class="string">'\sigma_\tau'</span>)
 ylabel(<span class="string">'E(C)'</span>)
+
+figure(<span class="string">'Name'</span>,<span class="string">'Simulated variance versus sigma_tau'</span>)
+plot(sigtau,C2MCtau,<span class="string">'ko'</span>)
+xlabel(<span class="string">'\sigma_\tau'</span>)
+ylabel(<span class="string">'Var(C)'</span>)
+
 toc(tStart)
-</pre><pre class="codeoutput">Elapsed time is 8325.311942 seconds.
-</pre><img vspace="5" hspace="5" src="costfundist_01.png" alt=""> <img vspace="5" hspace="5" src="costfundist_02.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
+</pre><pre class="codeoutput">Elapsed time is 930.298786 seconds.
+</pre><img vspace="5" hspace="5" src="costfundist_01.png" alt=""> <img vspace="5" hspace="5" src="costfundist_02.png" alt=""> <img vspace="5" hspace="5" src="costfundist_03.png" alt=""> <img vspace="5" hspace="5" src="costfundist_04.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Compare approximate cost function distribution moments with simulation
 tStart = tic;
@@ -142,18 +157,20 @@ rng('default')
 sigbeta = (0:20)*1e-3;
 Nsig = length(sigbeta);
 C1MCbeta = zeros(Nsig,1);
+C2MCbeta = zeros(Nsig,1);
 C1appxbeta = zeros(Nsig,1);
 for i = 1:Nsig
     sigma = [1e-4 sigbeta(i) 1e-3];
     Vmu = noisevar(sigma,y,T);
     sigmamu = noiseamp(sigma,y,T);
-    ym = repmat(y, 1, Nmc) + repmat(sigmamu, 1, Nmc).*randn(N, Nmc);
     resnorm = zeros(Nmc,1);
     for k = 1:Nmc
-        resnorm(k) = sum((ym(:,k)-y).^2.*1./noisevar(sigma,ym(:,k),T));
+        ym = y + sigmamu.*randn(N, 1);    
+        resnorm(k) = sum((ym-y).^2.*1./noisevar(sigma,ym,T));
     end
     
     C1MCbeta(i) = mean(resnorm);
+    C2MCbeta(i) = var(resnorm);
     
     D = tdtf(@(theta, w) -1i*w, 0, N, T);
     ydot = D*y;
@@ -166,21 +183,28 @@ plot(sigbeta,C1MCbeta,'ko', sigbeta, C1appxbeta, '-')
 xlabel('\sigma_\beta')
 ylabel('E(C)')
 
+figure('Name','Simulated variance versus sigma_beta')
+plot(sigbeta,C2MCbeta,'ko')
+xlabel('\sigma_\beta')
+ylabel('Var(C)')
+
 sigtau = (0:20)*1e-4;
 Nsig = length(sigtau);
 C1MCtau = zeros(Nsig,1);
+C2MCtau = zeros(Nsig,1);
 C1appxtau = zeros(Nsig,1);
 for i = 1:Nsig
     sigma = [1e-4 1e-2 sigtau(i)];
     Vmu = noisevar(sigma,y,T);
     sigmamu = noiseamp(sigma,y,T);
-    ym = repmat(y, 1, Nmc) + repmat(sigmamu, 1, Nmc).*randn(N, Nmc);
     resnorm = zeros(Nmc,1);
     for k = 1:Nmc
-        resnorm(k) = sum((ym(:,k)-y).^2.*1./noisevar(sigma,ym(:,k),T));
+        ym = y + sigmamu.*randn(N, 1);    
+        resnorm(k) = sum((ym-y).^2.*1./noisevar(sigma,ym,T));
     end
     
     C1MCtau(i) = mean(resnorm);
+    C2MCtau(i) = var(resnorm);
     
     D = tdtf(@(theta, w) -1i*w, 0, N, T);
     ydot = D*y;
@@ -191,6 +215,12 @@ figure('Name','Simulated expectation versus sigma_tau')
 plot(sigtau,C1MCtau,'ko', sigtau, C1appxtau, '-')
 xlabel('\sigma_\tau')
 ylabel('E(C)')
+
+figure('Name','Simulated variance versus sigma_tau')
+plot(sigtau,C2MCtau,'ko')
+xlabel('\sigma_\tau')
+ylabel('Var(C)')
+
 toc(tStart)
 ##### SOURCE END #####
 --></body></html>

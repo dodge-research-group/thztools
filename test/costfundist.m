@@ -4,7 +4,7 @@ N = 256;
 T = 0.05;
 t0 = 2.5;
 [y, t]=thzgen(N, T, t0, 'taur', 0.4);
-Nmc = pow2(16);
+Nmc = pow2(20);
 rng('default')
 
 sigbeta = (0:20)*1e-3;

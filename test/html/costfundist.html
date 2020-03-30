@@ -79,6 +79,8 @@ Nsig = length(sigbeta);
 C1MCbeta = zeros(Nsig,1);
 C2MCbeta = zeros(Nsig,1);
 C1appxbeta = zeros(Nsig,1);
+C1appxbeta2 = zeros(Nsig,1);
+C2appxbeta = zeros(Nsig,1);
 <span class="keyword">for</span> i = 1:Nsig
     sigma = [1e-4 sigbeta(i) 1e-3];
     Vmu = noisevar(sigma,y,T);
@@ -98,16 +100,20 @@ C1appxbeta = zeros(Nsig,1);
         + 36*sigma(2)^4*sum(y.^2./Vmu) <span class="keyword">...</span>
         + 4*sigma(3)^4*((D*y).^2./Vmu.^2)'*D.^2*Vmu <span class="keyword">...</span>
         - sigma(3)^4*(1./Vmu)'*D.^2*Vmu;
+    C1appxbeta2(i) = N - 9*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
+    C2appxbeta(i) = 2*N;
 
 <span class="keyword">end</span>
 
 figure(<span class="string">'Name'</span>,<span class="string">'Expectation versus sigma_beta'</span>)
-plot(sigbeta,C1MCbeta,<span class="string">'ko'</span>, sigbeta, C1appxbeta, <span class="string">'-'</span>)
+plot(sigbeta,C1MCbeta,<span class="string">'ko'</span>, sigbeta, C1appxbeta, <span class="string">'-'</span>, <span class="keyword">...</span>
+    sigbeta, C1appxbeta2, <span class="string">'-'</span>)
+legend(<span class="string">'MC'</span>,<span class="string">'Fourth order'</span>,<span class="string">'Second order'</span>)
 xlabel(<span class="string">'\sigma_\beta'</span>)
 ylabel(<span class="string">'E(C)'</span>)
 
 figure(<span class="string">'Name'</span>,<span class="string">'Simulated variance versus sigma_beta'</span>)
-plot(sigbeta,C2MCbeta,<span class="string">'ko'</span>)
+plot(sigbeta,C2MCbeta,<span class="string">'ko'</span>,sigbeta, C2appxbeta, <span class="string">'-'</span>)
 xlabel(<span class="string">'\sigma_\beta'</span>)
 ylabel(<span class="string">'Var(C)'</span>)
 
@@ -116,6 +122,8 @@ Nsig = length(sigtau);
 C1MCtau = zeros(Nsig,1);
 C2MCtau = zeros(Nsig,1);
 C1appxtau = zeros(Nsig,1);
+C1appxtau2 = zeros(Nsig,1);
+C2appxtau = zeros(Nsig,1);
 <span class="keyword">for</span> i = 1:Nsig
     sigma = [1e-4 1e-2 sigtau(i)];
     Vmu = noisevar(sigma,y,T);
@@ -135,20 +143,24 @@ C1appxtau = zeros(Nsig,1);
         + 36*sigma(2)^4*sum(y.^2./Vmu) <span class="keyword">...</span>
         + 4*sigma(3)^4*((D*y).^2./Vmu.^2)'*D.^2*Vmu <span class="keyword">...</span>
         - sigma(3)^4*(1./Vmu)'*D.^2*Vmu;
+    C1appxtau2(i) = N - 9*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
+    C2appxtau(i) = 2*N;
+
 <span class="keyword">end</span>
 
 figure(<span class="string">'Name'</span>,<span class="string">'Simulated expectation versus sigma_tau'</span>)
-plot(sigtau,C1MCtau,<span class="string">'ko'</span>, sigtau, C1appxtau, <span class="string">'-'</span>)
+plot(sigtau,C1MCtau,<span class="string">'ko'</span>, sigtau, C1appxtau, <span class="string">'-'</span>, sigtau, C1appxtau2, <span class="string">'-'</span>)
+legend(<span class="string">'MC'</span>,<span class="string">'Fourth order'</span>,<span class="string">'Second order'</span>)
 xlabel(<span class="string">'\sigma_\tau'</span>)
 ylabel(<span class="string">'E(C)'</span>)
 
 figure(<span class="string">'Name'</span>,<span class="string">'Simulated variance versus sigma_tau'</span>)
-plot(sigtau,C2MCtau,<span class="string">'ko'</span>)
+plot(sigtau,C2MCtau,<span class="string">'ko'</span>, sigtau, C2appxtau, <span class="string">'-'</span>)
 xlabel(<span class="string">'\sigma_\tau'</span>)
 ylabel(<span class="string">'Var(C)'</span>)
 
 toc(tStart)
-</pre><pre class="codeoutput">Elapsed time is 930.745137 seconds.
+</pre><pre class="codeoutput">Elapsed time is 920.237217 seconds.
 </pre><img vspace="5" hspace="5" src="costfundist_01.png" alt=""> <img vspace="5" hspace="5" src="costfundist_02.png" alt=""> <img vspace="5" hspace="5" src="costfundist_03.png" alt=""> <img vspace="5" hspace="5" src="costfundist_04.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Compare approximate cost function distribution moments with simulation
@@ -165,6 +177,8 @@ Nsig = length(sigbeta);
 C1MCbeta = zeros(Nsig,1);
 C2MCbeta = zeros(Nsig,1);
 C1appxbeta = zeros(Nsig,1);
+C1appxbeta2 = zeros(Nsig,1);
+C2appxbeta = zeros(Nsig,1);
 for i = 1:Nsig
     sigma = [1e-4 sigbeta(i) 1e-3];
     Vmu = noisevar(sigma,y,T);
@@ -184,16 +198,20 @@ for i = 1:Nsig
         + 36*sigma(2)^4*sum(y.^2./Vmu) ...
         + 4*sigma(3)^4*((D*y).^2./Vmu.^2)'*D.^2*Vmu ...
         - sigma(3)^4*(1./Vmu)'*D.^2*Vmu;
+    C1appxbeta2(i) = N - 9*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
+    C2appxbeta(i) = 2*N;
 
 end
 
 figure('Name','Expectation versus sigma_beta')
-plot(sigbeta,C1MCbeta,'ko', sigbeta, C1appxbeta, '-')
+plot(sigbeta,C1MCbeta,'ko', sigbeta, C1appxbeta, '-', ...
+    sigbeta, C1appxbeta2, '-')
+legend('MC','Fourth order','Second order')
 xlabel('\sigma_\beta')
 ylabel('E(C)')
 
 figure('Name','Simulated variance versus sigma_beta')
-plot(sigbeta,C2MCbeta,'ko')
+plot(sigbeta,C2MCbeta,'ko',sigbeta, C2appxbeta, '-')
 xlabel('\sigma_\beta')
 ylabel('Var(C)')
 
@@ -202,6 +220,8 @@ Nsig = length(sigtau);
 C1MCtau = zeros(Nsig,1);
 C2MCtau = zeros(Nsig,1);
 C1appxtau = zeros(Nsig,1);
+C1appxtau2 = zeros(Nsig,1);
+C2appxtau = zeros(Nsig,1);
 for i = 1:Nsig
     sigma = [1e-4 1e-2 sigtau(i)];
     Vmu = noisevar(sigma,y,T);
@@ -221,15 +241,19 @@ for i = 1:Nsig
         + 36*sigma(2)^4*sum(y.^2./Vmu) ...
         + 4*sigma(3)^4*((D*y).^2./Vmu.^2)'*D.^2*Vmu ...
         - sigma(3)^4*(1./Vmu)'*D.^2*Vmu;
+    C1appxtau2(i) = N - 9*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
+    C2appxtau(i) = 2*N;
+
 end
 
 figure('Name','Simulated expectation versus sigma_tau')
-plot(sigtau,C1MCtau,'ko', sigtau, C1appxtau, '-')
+plot(sigtau,C1MCtau,'ko', sigtau, C1appxtau, '-', sigtau, C1appxtau2, '-')
+legend('MC','Fourth order','Second order')
 xlabel('\sigma_\tau')
 ylabel('E(C)')
 
 figure('Name','Simulated variance versus sigma_tau')
-plot(sigtau,C2MCtau,'ko')
+plot(sigtau,C2MCtau,'ko', sigtau, C2appxtau, '-')
 xlabel('\sigma_\tau')
 ylabel('Var(C)')
 

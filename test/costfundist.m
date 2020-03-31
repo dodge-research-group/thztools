@@ -34,7 +34,7 @@ for i = 1:Nsig
         + 4*sigma(3)^4*((D*y).^2./Vmu.^2)'*D.^2*Vmu ...
         - sigma(3)^4*(1./Vmu)'*D.^2*Vmu;
     C1appxbeta2(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
-    C2appxbeta(i) = 2*N;
+    C2appxbeta(i) = 2*(2*N - C1appxbeta(i));
 
 end
 
@@ -77,7 +77,7 @@ for i = 1:Nsig
         + 4*sigma(3)^4*((D*y).^2./Vmu.^2)'*D.^2*Vmu ...
         - sigma(3)^4*(1./Vmu)'*D.^2*Vmu;
     C1appxtau2(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
-    C2appxtau(i) = 2*N;
+    C2appxtau(i) = 2*(2*N - C1appxtau(i));
 
 end
 

@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>Compare approximate cost function distribution moments with simulation</title><meta name="generator" content="MATLAB 9.7"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-03-30"><meta name="DC.source" content="costfundist.m"><style type="text/css">
+      --><title>Compare approximate cost function distribution moments with simulation</title><meta name="generator" content="MATLAB 9.7"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-04-05"><meta name="DC.source" content="costfundist.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -66,197 +66,328 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h1>Compare approximate cost function distribution moments with simulation</h1><pre class="codeinput">tStart = tic;
+  </style></head><body><div class="content"><h1>Compare approximate cost function distribution moments with simulation</h1><pre class="codeinput"><span class="comment">% Start timer</span>
+tStart = tic;
+
+<span class="comment">% Create ideal input pulse</span>
 N = 256;
 T = 0.05;
 t0 = 2.5;
-[y, t]=thzgen(N, T, t0, <span class="string">'taur'</span>, 0.4);
-Nmc = pow2(20);
+[mu, t] = thzgen(N, T, t0, <span class="string">'taur'</span>, 0.4);
+
+f = fftfreq(N, T);
+w = 2*pi*f;
+
+<span class="comment">% % Define transfer function, ideal output pulse</span>
+<span class="comment">% tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);</span>
+<span class="comment">%</span>
+<span class="comment">% A0 = 1;          % amplitude ratio between pulses</span>
+<span class="comment">% eta0 = 0;           % delay between pulses [T]</span>
+<span class="comment">% theta0 = [A0;eta0]; % Initial parameter vector</span>
+<span class="comment">% Np = length(theta0);</span>
+<span class="comment">%</span>
+<span class="comment">% h = tdtf(tfun, theta0, N, T);</span>
+<span class="comment">% g = eye(N)/h;</span>
+<span class="comment">%</span>
+<span class="comment">% psi = h*mu;</span>
+
+<span class="comment">% Run Monte Carlo</span>
+Nmc = pow2(14);
 rng(<span class="string">'default'</span>)
 
-sigbeta = (0:20)*1e-3;
+sigbeta = (0:2:20)*1e-2;
 Nsig = length(sigbeta);
-C1MCbeta = zeros(Nsig,1);
-C2MCbeta = zeros(Nsig,1);
-C1appxbeta = zeros(Nsig,1);
-C1appxbeta2 = zeros(Nsig,1);
-C2appxbeta = zeros(Nsig,1);
+EQ = zeros(Nsig, 1);
+VQ = zeros(Nsig, 1);
+EQappx = zeros(Nsig, 1);
+EQappx2 = zeros(Nsig, 1);
+
 <span class="keyword">for</span> i = 1:Nsig
-    sigma = [1e-4 sigbeta(i) 1e-3];
-    Vmu = noisevar(sigma,y,T);
-    sigmamu = noiseamp(sigma,y,T);
-    resnorm = zeros(Nmc,1);
-    <span class="keyword">for</span> k = 1:Nmc
-        ym = y + sigmamu.*randn(N, 1);
-        resnorm(k) = sum((ym-y).^2.*1./noisevar(sigma,ym,T));
+    sigma = [1e-4, sigbeta(i), 0];
+    Q = zeros(Nmc,1);
+    sigmu = noiseamp(sigma, mu, T);
+<span class="comment">%     sigpsi = noiseamp(sigma, psi, T);</span>
+    Vmu = diag(sigmu.^2);
+<span class="comment">%     Vpsi = diag(sigpsi.^2);</span>
+<span class="comment">%     Vt = Vmu + g*Vpsi*g';</span>
+<span class="comment">%     Vti = eye(N)/Vt;</span>
+    <span class="keyword">parfor</span> k = 1:Nmc
+        x = mu + sigmu.*randn(N, 1);
+<span class="comment">%         y = psi + sigpsi.*randn(N, 1);</span>
+        y = mu + sigmu.*randn(N, 1);
+        Vx = diag(noisevar(sigma, x, T));
+        Vy = diag(noisevar(sigma, y, T));
+<span class="comment">%         Q(k) = (x - g*y)'*(eye(N)/(Vx + g*Vy*g'))*(x - g*y);</span>
+        Q(k) = (x - y)'*(eye(N)/(Vx + Vy))*(x - y);
     <span class="keyword">end</span>
-
-    C1MCbeta(i) = mean(resnorm);
-    C2MCbeta(i) = var(resnorm);
-
-    D = tdtf(@(theta, w) -1i*w, 0, N, T);
-    ydot = D*y;
-    C1appxbeta(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu <span class="keyword">...</span>
-        + 12*sigma(2)^4*sum(y.^2./Vmu) <span class="keyword">...</span>
-        + 4*sigma(3)^4*((D*y).^2./Vmu.^2)'*D.^2*Vmu <span class="keyword">...</span>
-        - sigma(3)^4*(1./Vmu)'*D.^2*Vmu;
-    C1appxbeta2(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
-    C2appxbeta(i) = 2*(2*N - C1appxbeta(i));
-
+    EQ(i) = mean(Q);
+    VQ(i) = var(Q);
+    EQappx(i) = N - sigma(2)^2*N + 2*sigma(2)^4*sum(mu.^2./sigmu.^2);
+    EQappx2(i) = N - sigma(2)^2*N;
 <span class="keyword">end</span>
 
 figure(<span class="string">'Name'</span>,<span class="string">'Expectation versus sigma_beta'</span>)
-plot(sigbeta,C1MCbeta,<span class="string">'ko'</span>, sigbeta, C1appxbeta, <span class="string">'-'</span>, <span class="keyword">...</span>
-    sigbeta, C1appxbeta2, <span class="string">'-'</span>)
-legend(<span class="string">'MC'</span>,<span class="string">'Fourth order'</span>,<span class="string">'Second order'</span>)
+plot(sigbeta, EQ, <span class="string">'ko'</span>, sigbeta, EQappx, <span class="string">'-'</span>, sigbeta, EQappx2, <span class="string">'-'</span>)
+legend(<span class="string">'Simulated'</span>,<span class="string">'Fourth order'</span>,<span class="string">'Second order'</span>)
 xlabel(<span class="string">'\sigma_\beta'</span>)
-ylabel(<span class="string">'E(C)'</span>)
+ylabel(<span class="string">'E(Q)'</span>)
 
-figure(<span class="string">'Name'</span>,<span class="string">'Simulated variance versus sigma_beta'</span>)
-plot(sigbeta,C2MCbeta,<span class="string">'ko'</span>,sigbeta, C2appxbeta, <span class="string">'-'</span>)
-xlabel(<span class="string">'\sigma_\beta'</span>)
-ylabel(<span class="string">'Var(C)'</span>)
+<span class="comment">% figure('Name','Variance versus sigma_beta')</span>
+<span class="comment">% plot(sigbeta, VQ, 'ko')</span>
+<span class="comment">% xlabel('\sigma_\beta')</span>
+<span class="comment">% ylabel('Var(Q)')</span>
 
-sigtau = (0:20)*1e-4;
-Nsig = length(sigtau);
-C1MCtau = zeros(Nsig,1);
-C2MCtau = zeros(Nsig,1);
-C1appxtau = zeros(Nsig,1);
-C1appxtau2 = zeros(Nsig,1);
-C2appxtau = zeros(Nsig,1);
-<span class="keyword">for</span> i = 1:Nsig
-    sigma = [1e-4 1e-2 sigtau(i)];
-    Vmu = noisevar(sigma,y,T);
-    sigmamu = noiseamp(sigma,y,T);
-    resnorm = zeros(Nmc,1);
-    <span class="keyword">for</span> k = 1:Nmc
-        ym = y + sigmamu.*randn(N, 1);
-        resnorm(k) = sum((ym-y).^2.*1./noisevar(sigma,ym,T));
-    <span class="keyword">end</span>
 
-    C1MCtau(i) = mean(resnorm);
-    C2MCtau(i) = var(resnorm);
+<span class="comment">% sigbeta = (0:20)*1e-3;</span>
+<span class="comment">% Nsig = length(sigbeta);</span>
+<span class="comment">% C1MCbeta = zeros(Nsig,1);</span>
+<span class="comment">% C2MCbeta = zeros(Nsig,1);</span>
+<span class="comment">% C1appxbeta = zeros(Nsig,1);</span>
+<span class="comment">% C1appxbeta2 = zeros(Nsig,1);</span>
+<span class="comment">% C2appxbeta = zeros(Nsig,1);</span>
+<span class="comment">% for i = 1:Nsig</span>
+<span class="comment">%     sigma = [1e-4 sigbeta(i) 1e-3];</span>
+<span class="comment">%     Vmu = noisevar(sigma,y,T);</span>
+<span class="comment">%     sigmamu = noiseamp(sigma,y,T);</span>
+<span class="comment">%     resnorm = zeros(Nmc,1);</span>
+<span class="comment">%     for k = 1:Nmc</span>
+<span class="comment">%         ym = y + sigmamu.*randn(N, 1);</span>
+<span class="comment">%         resnorm(k) = sum((ym-y).^2.*1./noisevar(sigma,ym,T));</span>
+<span class="comment">%     end</span>
+<span class="comment">%</span>
+<span class="comment">%     C1MCbeta(i) = mean(resnorm);</span>
+<span class="comment">%     C2MCbeta(i) = var(resnorm);</span>
+<span class="comment">%</span>
+<span class="comment">%     D = tdtf(@(theta, w) -1i*w, 0, N, T);</span>
+<span class="comment">%     ydot = D*y;</span>
+<span class="comment">%     C1appxbeta(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu ...</span>
+<span class="comment">%         + 12*sigma(2)^4*sum(y.^2./Vmu) ...</span>
+<span class="comment">%         + 4*sigma(3)^4*((D*y).^2./Vmu.^2)'*D.^2*Vmu ...</span>
+<span class="comment">%         - sigma(3)^4*(1./Vmu)'*D.^2*Vmu;</span>
+<span class="comment">%     C1appxbeta2(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu;</span>
+<span class="comment">%     C2appxbeta(i) = 2*(2*N - C1appxbeta(i));</span>
+<span class="comment">%</span>
+<span class="comment">% end</span>
 
-    D = tdtf(@(theta, w) -1i*w, 0, N, T);
-    ydot = D*y;
-    C1appxtau(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu <span class="keyword">...</span>
-        + 12*sigma(2)^4*sum(y.^2./Vmu) <span class="keyword">...</span>
-        + 4*sigma(3)^4*((D*y).^2./Vmu.^2)'*D.^2*Vmu <span class="keyword">...</span>
-        - sigma(3)^4*(1./Vmu)'*D.^2*Vmu;
-    C1appxtau2(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
-    C2appxtau(i) = 2*(2*N - C1appxtau(i));
+<span class="comment">% figure('Name','Expectation versus sigma_beta')</span>
+<span class="comment">% plot(sigbeta,C1MCbeta,'ko', sigbeta, C1appxbeta, '-', ...</span>
+<span class="comment">%     sigbeta, C1appxbeta2, '-')</span>
+<span class="comment">% legend('MC','Fourth order','Second order')</span>
+<span class="comment">% xlabel('\sigma_\beta')</span>
+<span class="comment">% ylabel('E(C)')</span>
+<span class="comment">%</span>
+<span class="comment">% figure('Name','Simulated variance versus sigma_beta')</span>
+<span class="comment">% plot(sigbeta,C2MCbeta,'ko',sigbeta, C2appxbeta, '-')</span>
+<span class="comment">% xlabel('\sigma_\beta')</span>
+<span class="comment">% ylabel('Var(C)')</span>
 
-<span class="keyword">end</span>
+<span class="comment">% sigtau = (0:20)*1e-4;</span>
+<span class="comment">% Nsig = length(sigtau);</span>
+<span class="comment">% C1MCtau = zeros(Nsig,1);</span>
+<span class="comment">% C2MCtau = zeros(Nsig,1);</span>
+<span class="comment">% C1appxtau = zeros(Nsig,1);</span>
+<span class="comment">% C1appxtau2 = zeros(Nsig,1);</span>
+<span class="comment">% C2appxtau = zeros(Nsig,1);</span>
+<span class="comment">% for i = 1:Nsig</span>
+<span class="comment">%     sigma = [1e-4 1e-2 sigtau(i)];</span>
+<span class="comment">%     Vmu = noisevar(sigma,y,T);</span>
+<span class="comment">%     sigmamu = noiseamp(sigma,y,T);</span>
+<span class="comment">%     resnorm = zeros(Nmc,1);</span>
+<span class="comment">%     for k = 1:Nmc</span>
+<span class="comment">%         ym = y + sigmamu.*randn(N, 1);</span>
+<span class="comment">%         resnorm(k) = sum((ym-y).^2.*1./noisevar(sigma,ym,T));</span>
+<span class="comment">%     end</span>
+<span class="comment">%</span>
+<span class="comment">%     C1MCtau(i) = mean(resnorm);</span>
+<span class="comment">%     C2MCtau(i) = var(resnorm);</span>
+<span class="comment">%</span>
+<span class="comment">%     D = tdtf(@(theta, w) -1i*w, 0, N, T);</span>
+<span class="comment">%     ydot = D*y;</span>
+<span class="comment">%     C1appxtau(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu ...</span>
+<span class="comment">%         + 12*sigma(2)^4*sum(y.^2./Vmu) ...</span>
+<span class="comment">%         + 4*sigma(3)^4*((D*y).^2./Vmu.^2)'*D.^2*Vmu ...</span>
+<span class="comment">%         - sigma(3)^4*(1./Vmu)'*D.^2*Vmu;</span>
+<span class="comment">%     C1appxtau2(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu;</span>
+<span class="comment">%     C2appxtau(i) = 2*(2*N - C1appxtau(i));</span>
+<span class="comment">%</span>
+<span class="comment">% end</span>
 
-figure(<span class="string">'Name'</span>,<span class="string">'Simulated expectation versus sigma_tau'</span>)
-plot(sigtau,C1MCtau,<span class="string">'ko'</span>, sigtau, C1appxtau, <span class="string">'-'</span>, sigtau, C1appxtau2, <span class="string">'-'</span>)
-legend(<span class="string">'MC'</span>,<span class="string">'Fourth order'</span>,<span class="string">'Second order'</span>)
-xlabel(<span class="string">'\sigma_\tau'</span>)
-ylabel(<span class="string">'E(C)'</span>)
+<span class="comment">% figure('Name','Simulated expectation versus sigma_tau')</span>
+<span class="comment">% plot(sigtau,C1MCtau,'ko', sigtau, C1appxtau, '-', sigtau, C1appxtau2, '-')</span>
+<span class="comment">% legend('MC','Fourth order','Second order')</span>
+<span class="comment">% xlabel('\sigma_\tau')</span>
+<span class="comment">% ylabel('E(C)')</span>
+<span class="comment">%</span>
+<span class="comment">% figure('Name','Simulated variance versus sigma_tau')</span>
+<span class="comment">% plot(sigtau,C2MCtau,'ko', sigtau, C2appxtau, '-')</span>
+<span class="comment">% xlabel('\sigma_\tau')</span>
+<span class="comment">% ylabel('Var(C)')</span>
 
-figure(<span class="string">'Name'</span>,<span class="string">'Simulated variance versus sigma_tau'</span>)
-plot(sigtau,C2MCtau,<span class="string">'ko'</span>, sigtau, C2appxtau, <span class="string">'-'</span>)
-xlabel(<span class="string">'\sigma_\tau'</span>)
-ylabel(<span class="string">'Var(C)'</span>)
-
+<span class="comment">% Stop timer</span>
 toc(tStart)
-</pre><pre class="codeoutput">Elapsed time is 980.092241 seconds.
-</pre><img vspace="5" hspace="5" src="costfundist_01.png" alt=""> <img vspace="5" hspace="5" src="costfundist_02.png" alt=""> <img vspace="5" hspace="5" src="costfundist_03.png" alt=""> <img vspace="5" hspace="5" src="costfundist_04.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
+</pre><pre class="codeoutput">Elapsed time is 59.548339 seconds.
+</pre><img vspace="5" hspace="5" src="costfundist_01.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Compare approximate cost function distribution moments with simulation
+
+% Start timer
 tStart = tic;
+
+% Create ideal input pulse
 N = 256;
 T = 0.05;
 t0 = 2.5;
-[y, t]=thzgen(N, T, t0, 'taur', 0.4);
-Nmc = pow2(20);
+[mu, t] = thzgen(N, T, t0, 'taur', 0.4);
+
+f = fftfreq(N, T);
+w = 2*pi*f;
+
+% % Define transfer function, ideal output pulse
+% tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
+% 
+% A0 = 1;          % amplitude ratio between pulses
+% eta0 = 0;           % delay between pulses [T]
+% theta0 = [A0;eta0]; % Initial parameter vector
+% Np = length(theta0);
+% 
+% h = tdtf(tfun, theta0, N, T);
+% g = eye(N)/h;
+% 
+% psi = h*mu;
+
+% Run Monte Carlo
+Nmc = pow2(14);
 rng('default')
 
-sigbeta = (0:20)*1e-3;
+sigbeta = (0:2:20)*1e-2;
 Nsig = length(sigbeta);
-C1MCbeta = zeros(Nsig,1);
-C2MCbeta = zeros(Nsig,1);
-C1appxbeta = zeros(Nsig,1);
-C1appxbeta2 = zeros(Nsig,1);
-C2appxbeta = zeros(Nsig,1);
-for i = 1:Nsig
-    sigma = [1e-4 sigbeta(i) 1e-3];
-    Vmu = noisevar(sigma,y,T);
-    sigmamu = noiseamp(sigma,y,T);
-    resnorm = zeros(Nmc,1);
-    for k = 1:Nmc
-        ym = y + sigmamu.*randn(N, 1);    
-        resnorm(k) = sum((ym-y).^2.*1./noisevar(sigma,ym,T));
-    end
-    
-    C1MCbeta(i) = mean(resnorm);
-    C2MCbeta(i) = var(resnorm);
-    
-    D = tdtf(@(theta, w) -1i*w, 0, N, T);
-    ydot = D*y;
-    C1appxbeta(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu ...
-        + 12*sigma(2)^4*sum(y.^2./Vmu) ...
-        + 4*sigma(3)^4*((D*y).^2./Vmu.^2)'*D.^2*Vmu ...
-        - sigma(3)^4*(1./Vmu)'*D.^2*Vmu;
-    C1appxbeta2(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
-    C2appxbeta(i) = 2*(2*N - C1appxbeta(i));
+EQ = zeros(Nsig, 1);
+VQ = zeros(Nsig, 1);
+EQappx = zeros(Nsig, 1);
+EQappx2 = zeros(Nsig, 1);
 
+for i = 1:Nsig
+    sigma = [1e-4, sigbeta(i), 0];
+    Q = zeros(Nmc,1);
+    sigmu = noiseamp(sigma, mu, T);
+%     sigpsi = noiseamp(sigma, psi, T);
+    Vmu = diag(sigmu.^2);
+%     Vpsi = diag(sigpsi.^2);
+%     Vt = Vmu + g*Vpsi*g';
+%     Vti = eye(N)/Vt;
+    parfor k = 1:Nmc
+        x = mu + sigmu.*randn(N, 1);
+%         y = psi + sigpsi.*randn(N, 1);
+        y = mu + sigmu.*randn(N, 1);
+        Vx = diag(noisevar(sigma, x, T));
+        Vy = diag(noisevar(sigma, y, T));
+%         Q(k) = (x - g*y)'*(eye(N)/(Vx + g*Vy*g'))*(x - g*y);
+        Q(k) = (x - y)'*(eye(N)/(Vx + Vy))*(x - y);
+    end
+    EQ(i) = mean(Q);
+    VQ(i) = var(Q);
+    EQappx(i) = N - sigma(2)^2*N + 2*sigma(2)^4*sum(mu.^2./sigmu.^2);
+    EQappx2(i) = N - sigma(2)^2*N;
 end
 
 figure('Name','Expectation versus sigma_beta')
-plot(sigbeta,C1MCbeta,'ko', sigbeta, C1appxbeta, '-', ...
-    sigbeta, C1appxbeta2, '-')
-legend('MC','Fourth order','Second order')
+plot(sigbeta, EQ, 'ko', sigbeta, EQappx, '-', sigbeta, EQappx2, '-')
+legend('Simulated','Fourth order','Second order')
 xlabel('\sigma_\beta')
-ylabel('E(C)')
+ylabel('E(Q)')
 
-figure('Name','Simulated variance versus sigma_beta')
-plot(sigbeta,C2MCbeta,'ko',sigbeta, C2appxbeta, '-')
-xlabel('\sigma_\beta')
-ylabel('Var(C)')
+% figure('Name','Variance versus sigma_beta')
+% plot(sigbeta, VQ, 'ko')
+% xlabel('\sigma_\beta')
+% ylabel('Var(Q)')
 
-sigtau = (0:20)*1e-4;
-Nsig = length(sigtau);
-C1MCtau = zeros(Nsig,1);
-C2MCtau = zeros(Nsig,1);
-C1appxtau = zeros(Nsig,1);
-C1appxtau2 = zeros(Nsig,1);
-C2appxtau = zeros(Nsig,1);
-for i = 1:Nsig
-    sigma = [1e-4 1e-2 sigtau(i)];
-    Vmu = noisevar(sigma,y,T);
-    sigmamu = noiseamp(sigma,y,T);
-    resnorm = zeros(Nmc,1);
-    for k = 1:Nmc
-        ym = y + sigmamu.*randn(N, 1);    
-        resnorm(k) = sum((ym-y).^2.*1./noisevar(sigma,ym,T));
-    end
-    
-    C1MCtau(i) = mean(resnorm);
-    C2MCtau(i) = var(resnorm);
-    
-    D = tdtf(@(theta, w) -1i*w, 0, N, T);
-    ydot = D*y;
-    C1appxtau(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu ...
-        + 12*sigma(2)^4*sum(y.^2./Vmu) ...
-        + 4*sigma(3)^4*((D*y).^2./Vmu.^2)'*D.^2*Vmu ...
-        - sigma(3)^4*(1./Vmu)'*D.^2*Vmu;
-    C1appxtau2(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
-    C2appxtau(i) = 2*(2*N - C1appxtau(i));
 
-end
+% sigbeta = (0:20)*1e-3;
+% Nsig = length(sigbeta);
+% C1MCbeta = zeros(Nsig,1);
+% C2MCbeta = zeros(Nsig,1);
+% C1appxbeta = zeros(Nsig,1);
+% C1appxbeta2 = zeros(Nsig,1);
+% C2appxbeta = zeros(Nsig,1);
+% for i = 1:Nsig
+%     sigma = [1e-4 sigbeta(i) 1e-3];
+%     Vmu = noisevar(sigma,y,T);
+%     sigmamu = noiseamp(sigma,y,T);
+%     resnorm = zeros(Nmc,1);
+%     for k = 1:Nmc
+%         ym = y + sigmamu.*randn(N, 1);    
+%         resnorm(k) = sum((ym-y).^2.*1./noisevar(sigma,ym,T));
+%     end
+%     
+%     C1MCbeta(i) = mean(resnorm);
+%     C2MCbeta(i) = var(resnorm);
+%     
+%     D = tdtf(@(theta, w) -1i*w, 0, N, T);
+%     ydot = D*y;
+%     C1appxbeta(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu ...
+%         + 12*sigma(2)^4*sum(y.^2./Vmu) ...
+%         + 4*sigma(3)^4*((D*y).^2./Vmu.^2)'*D.^2*Vmu ...
+%         - sigma(3)^4*(1./Vmu)'*D.^2*Vmu;
+%     C1appxbeta2(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
+%     C2appxbeta(i) = 2*(2*N - C1appxbeta(i));
+% 
+% end
 
-figure('Name','Simulated expectation versus sigma_tau')
-plot(sigtau,C1MCtau,'ko', sigtau, C1appxtau, '-', sigtau, C1appxtau2, '-')
-legend('MC','Fourth order','Second order')
-xlabel('\sigma_\tau')
-ylabel('E(C)')
+% figure('Name','Expectation versus sigma_beta')
+% plot(sigbeta,C1MCbeta,'ko', sigbeta, C1appxbeta, '-', ...
+%     sigbeta, C1appxbeta2, '-')
+% legend('MC','Fourth order','Second order')
+% xlabel('\sigma_\beta')
+% ylabel('E(C)')
+% 
+% figure('Name','Simulated variance versus sigma_beta')
+% plot(sigbeta,C2MCbeta,'ko',sigbeta, C2appxbeta, '-')
+% xlabel('\sigma_\beta')
+% ylabel('Var(C)')
 
-figure('Name','Simulated variance versus sigma_tau')
-plot(sigtau,C2MCtau,'ko', sigtau, C2appxtau, '-')
-xlabel('\sigma_\tau')
-ylabel('Var(C)')
+% sigtau = (0:20)*1e-4;
+% Nsig = length(sigtau);
+% C1MCtau = zeros(Nsig,1);
+% C2MCtau = zeros(Nsig,1);
+% C1appxtau = zeros(Nsig,1);
+% C1appxtau2 = zeros(Nsig,1);
+% C2appxtau = zeros(Nsig,1);
+% for i = 1:Nsig
+%     sigma = [1e-4 1e-2 sigtau(i)];
+%     Vmu = noisevar(sigma,y,T);
+%     sigmamu = noiseamp(sigma,y,T);
+%     resnorm = zeros(Nmc,1);
+%     for k = 1:Nmc
+%         ym = y + sigmamu.*randn(N, 1);    
+%         resnorm(k) = sum((ym-y).^2.*1./noisevar(sigma,ym,T));
+%     end
+%     
+%     C1MCtau(i) = mean(resnorm);
+%     C2MCtau(i) = var(resnorm);
+%     
+%     D = tdtf(@(theta, w) -1i*w, 0, N, T);
+%     ydot = D*y;
+%     C1appxtau(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu ...
+%         + 12*sigma(2)^4*sum(y.^2./Vmu) ...
+%         + 4*sigma(3)^4*((D*y).^2./Vmu.^2)'*D.^2*Vmu ...
+%         - sigma(3)^4*(1./Vmu)'*D.^2*Vmu;
+%     C1appxtau2(i) = N - 3*N*sigma(2)^2 - sigma(3)^2*(1./Vmu)'*D.^2*Vmu;
+%     C2appxtau(i) = 2*(2*N - C1appxtau(i));
+% 
+% end
 
+% figure('Name','Simulated expectation versus sigma_tau')
+% plot(sigtau,C1MCtau,'ko', sigtau, C1appxtau, '-', sigtau, C1appxtau2, '-')
+% legend('MC','Fourth order','Second order')
+% xlabel('\sigma_\tau')
+% ylabel('E(C)')
+% 
+% figure('Name','Simulated variance versus sigma_tau')
+% plot(sigtau,C2MCtau,'ko', sigtau, C2appxtau, '-')
+% xlabel('\sigma_\tau')
+% ylabel('Var(C)')
+
+% Stop timer
 toc(tStart)
 ##### SOURCE END #####
 --></body></html>

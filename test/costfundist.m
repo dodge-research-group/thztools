@@ -12,18 +12,18 @@ t0 = 2.5;
 f = fftfreq(N, T);
 w = 2*pi*f;
 
-% % Define transfer function, ideal output pulse
-% tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
-% 
-% A0 = 1;          % amplitude ratio between pulses
-% eta0 = 0;           % delay between pulses [T]
-% theta0 = [A0;eta0]; % Initial parameter vector
-% Np = length(theta0);
-% 
-% h = tdtf(tfun, theta0, N, T);
-% g = eye(N)/h;
-% 
-% psi = h*mu;
+% Define transfer function, ideal output pulse
+tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
+
+A0 = 0.25;          % amplitude ratio between pulses
+eta0 = 1;           % delay between pulses [T]
+theta0 = [A0;eta0]; % Initial parameter vector
+Np = length(theta0);
+
+h = tdtf(tfun, theta0, N, T);
+g = eye(N)/h;
+
+psi = h*mu;
 
 % Run Monte Carlo
 Nmc = pow2(16);
@@ -40,29 +40,28 @@ for i = 1:Nsig
     sigma = [1e-4, sigbeta(i), 0];
     Q = zeros(Nmc,1);
     sigmu = noiseamp(sigma, mu, T);
-%     sigpsi = noiseamp(sigma, psi, T);
+    sigpsi = noiseamp(sigma, psi, T);
     Vmu = diag(sigmu.^2);
-%     Vpsi = diag(sigpsi.^2);
-%     Vt = Vmu + g*Vpsi*g';
-%     Vti = eye(N)/Vt;
+    Vpsi = diag(sigpsi.^2);
+    Vt = Vmu + g*Vpsi*g';
+    Vti = eye(N)/Vt;
     parfor k = 1:Nmc
         x = mu + sigmu.*randn(N, 1);
-%         y = psi + sigpsi.*randn(N, 1);
-        y = mu + sigmu.*randn(N, 1);
+        y = psi + sigpsi.*randn(N, 1);
         Vx = diag(noisevar(sigma, x, T));
         Vy = diag(noisevar(sigma, y, T));
-%         Q(k) = (x - g*y)'*(eye(N)/(Vx + g*Vy*g'))*(x - g*y);
-        Q(k) = (x - y)'*(eye(N)/(Vx + Vy))*(x - y);
+        Q(k) = (x - g*y)'*(eye(N)/(Vx + g*Vy*g'))*(x - g*y);
     end
     EQ(i) = mean(Q);
     VQ(i) = var(Q);
-    EQappx(i) = N - 2*sigma(2)^2*N + 2*sigma(2)^4*sum(mu.^2./sigmu.^2);
-    EQappx2(i) = N - 2*sigma(2)^2*N;
+    EQappx(i) = N - sigma(2)^2*(3*sum(diag(Vmu).^2.*diag(Vti).^2) ...
+        + 2*sum(diag(Vmu).*diag(Vpsi).*diag(Vti*g).^2) ...
+        + 3*sum(diag(Vpsi).^2.*diag(g'*Vti*g).^2));
 end
 
 figure('Name','Expectation versus sigma_beta')
-plot(sigbeta, EQ, 'ko', sigbeta, EQappx, '-', sigbeta, EQappx2, '-')
-legend('Simulated','Fourth order','Second order')
+plot(sigbeta, EQ, 'ko', sigbeta, EQappx, '-')
+legend('Simulated','Approximate')
 xlabel('\sigma_\beta')
 ylabel('E(Q)')
 

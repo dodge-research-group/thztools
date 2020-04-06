@@ -78,18 +78,18 @@ t0 = 2.5;
 f = fftfreq(N, T);
 w = 2*pi*f;
 
-<span class="comment">% % Define transfer function, ideal output pulse</span>
-<span class="comment">% tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);</span>
-<span class="comment">%</span>
-<span class="comment">% A0 = 1;          % amplitude ratio between pulses</span>
-<span class="comment">% eta0 = 0;           % delay between pulses [T]</span>
-<span class="comment">% theta0 = [A0;eta0]; % Initial parameter vector</span>
-<span class="comment">% Np = length(theta0);</span>
-<span class="comment">%</span>
-<span class="comment">% h = tdtf(tfun, theta0, N, T);</span>
-<span class="comment">% g = eye(N)/h;</span>
-<span class="comment">%</span>
-<span class="comment">% psi = h*mu;</span>
+<span class="comment">% Define transfer function, ideal output pulse</span>
+tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
+
+A0 = 0.25;          <span class="comment">% amplitude ratio between pulses</span>
+eta0 = 1;           <span class="comment">% delay between pulses [T]</span>
+theta0 = [A0;eta0]; <span class="comment">% Initial parameter vector</span>
+Np = length(theta0);
+
+h = tdtf(tfun, theta0, N, T);
+g = eye(N)/h;
+
+psi = h*mu;
 
 <span class="comment">% Run Monte Carlo</span>
 Nmc = pow2(16);
@@ -106,29 +106,28 @@ EQappx2 = zeros(Nsig, 1);
     sigma = [1e-4, sigbeta(i), 0];
     Q = zeros(Nmc,1);
     sigmu = noiseamp(sigma, mu, T);
-<span class="comment">%     sigpsi = noiseamp(sigma, psi, T);</span>
+    sigpsi = noiseamp(sigma, psi, T);
     Vmu = diag(sigmu.^2);
-<span class="comment">%     Vpsi = diag(sigpsi.^2);</span>
-<span class="comment">%     Vt = Vmu + g*Vpsi*g';</span>
-<span class="comment">%     Vti = eye(N)/Vt;</span>
+    Vpsi = diag(sigpsi.^2);
+    Vt = Vmu + g*Vpsi*g';
+    Vti = eye(N)/Vt;
     <span class="keyword">parfor</span> k = 1:Nmc
         x = mu + sigmu.*randn(N, 1);
-<span class="comment">%         y = psi + sigpsi.*randn(N, 1);</span>
-        y = mu + sigmu.*randn(N, 1);
+        y = psi + sigpsi.*randn(N, 1);
         Vx = diag(noisevar(sigma, x, T));
         Vy = diag(noisevar(sigma, y, T));
-<span class="comment">%         Q(k) = (x - g*y)'*(eye(N)/(Vx + g*Vy*g'))*(x - g*y);</span>
-        Q(k) = (x - y)'*(eye(N)/(Vx + Vy))*(x - y);
+        Q(k) = (x - g*y)'*(eye(N)/(Vx + g*Vy*g'))*(x - g*y);
     <span class="keyword">end</span>
     EQ(i) = mean(Q);
     VQ(i) = var(Q);
-    EQappx(i) = N - 2*sigma(2)^2*N + 2*sigma(2)^4*sum(mu.^2./sigmu.^2);
-    EQappx2(i) = N - 2*sigma(2)^2*N;
+    EQappx(i) = N - sigma(2)^2*(3*sum(diag(Vmu).^2.*diag(Vti).^2) <span class="keyword">...</span>
+        + 2*sum(diag(Vmu).*diag(Vpsi).*diag(Vti*g).^2) <span class="keyword">...</span>
+        + 3*sum(diag(Vpsi).^2.*diag(g'*Vti*g).^2));
 <span class="keyword">end</span>
 
 figure(<span class="string">'Name'</span>,<span class="string">'Expectation versus sigma_beta'</span>)
-plot(sigbeta, EQ, <span class="string">'ko'</span>, sigbeta, EQappx, <span class="string">'-'</span>, sigbeta, EQappx2, <span class="string">'-'</span>)
-legend(<span class="string">'Simulated'</span>,<span class="string">'Fourth order'</span>,<span class="string">'Second order'</span>)
+plot(sigbeta, EQ, <span class="string">'ko'</span>, sigbeta, EQappx, <span class="string">'-'</span>)
+legend(<span class="string">'Simulated'</span>,<span class="string">'Approximate'</span>)
 xlabel(<span class="string">'\sigma_\beta'</span>)
 ylabel(<span class="string">'E(Q)'</span>)
 
@@ -225,7 +224,7 @@ ylabel(<span class="string">'E(Q)'</span>)
 
 <span class="comment">% Stop timer</span>
 toc(tStart)
-</pre><pre class="codeoutput">Elapsed time is 190.463056 seconds.
+</pre><pre class="codeoutput">Elapsed time is 773.847736 seconds.
 </pre><img vspace="5" hspace="5" src="costfundist_01.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Compare approximate cost function distribution moments with simulation
@@ -242,18 +241,18 @@ t0 = 2.5;
 f = fftfreq(N, T);
 w = 2*pi*f;
 
-% % Define transfer function, ideal output pulse
-% tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
-% 
-% A0 = 1;          % amplitude ratio between pulses
-% eta0 = 0;           % delay between pulses [T]
-% theta0 = [A0;eta0]; % Initial parameter vector
-% Np = length(theta0);
-% 
-% h = tdtf(tfun, theta0, N, T);
-% g = eye(N)/h;
-% 
-% psi = h*mu;
+% Define transfer function, ideal output pulse
+tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
+
+A0 = 0.25;          % amplitude ratio between pulses
+eta0 = 1;           % delay between pulses [T]
+theta0 = [A0;eta0]; % Initial parameter vector
+Np = length(theta0);
+
+h = tdtf(tfun, theta0, N, T);
+g = eye(N)/h;
+
+psi = h*mu;
 
 % Run Monte Carlo
 Nmc = pow2(16);
@@ -270,29 +269,28 @@ for i = 1:Nsig
     sigma = [1e-4, sigbeta(i), 0];
     Q = zeros(Nmc,1);
     sigmu = noiseamp(sigma, mu, T);
-%     sigpsi = noiseamp(sigma, psi, T);
+    sigpsi = noiseamp(sigma, psi, T);
     Vmu = diag(sigmu.^2);
-%     Vpsi = diag(sigpsi.^2);
-%     Vt = Vmu + g*Vpsi*g';
-%     Vti = eye(N)/Vt;
+    Vpsi = diag(sigpsi.^2);
+    Vt = Vmu + g*Vpsi*g';
+    Vti = eye(N)/Vt;
     parfor k = 1:Nmc
         x = mu + sigmu.*randn(N, 1);
-%         y = psi + sigpsi.*randn(N, 1);
-        y = mu + sigmu.*randn(N, 1);
+        y = psi + sigpsi.*randn(N, 1);
         Vx = diag(noisevar(sigma, x, T));
         Vy = diag(noisevar(sigma, y, T));
-%         Q(k) = (x - g*y)'*(eye(N)/(Vx + g*Vy*g'))*(x - g*y);
-        Q(k) = (x - y)'*(eye(N)/(Vx + Vy))*(x - y);
+        Q(k) = (x - g*y)'*(eye(N)/(Vx + g*Vy*g'))*(x - g*y);
     end
     EQ(i) = mean(Q);
     VQ(i) = var(Q);
-    EQappx(i) = N - 2*sigma(2)^2*N + 2*sigma(2)^4*sum(mu.^2./sigmu.^2);
-    EQappx2(i) = N - 2*sigma(2)^2*N;
+    EQappx(i) = N - sigma(2)^2*(3*sum(diag(Vmu).^2.*diag(Vti).^2) ...
+        + 2*sum(diag(Vmu).*diag(Vpsi).*diag(Vti*g).^2) ...
+        + 3*sum(diag(Vpsi).^2.*diag(g'*Vti*g).^2));
 end
 
 figure('Name','Expectation versus sigma_beta')
-plot(sigbeta, EQ, 'ko', sigbeta, EQappx, '-', sigbeta, EQappx2, '-')
-legend('Simulated','Fourth order','Second order')
+plot(sigbeta, EQ, 'ko', sigbeta, EQappx, '-')
+legend('Simulated','Approximate')
 xlabel('\sigma_\beta')
 ylabel('E(Q)')
 

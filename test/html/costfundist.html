@@ -92,7 +92,7 @@ w = 2*pi*f;
 <span class="comment">% psi = h*mu;</span>
 
 <span class="comment">% Run Monte Carlo</span>
-Nmc = pow2(14);
+Nmc = pow2(16);
 rng(<span class="string">'default'</span>)
 
 sigbeta = (0:2:20)*1e-2;
@@ -122,8 +122,8 @@ EQappx2 = zeros(Nsig, 1);
     <span class="keyword">end</span>
     EQ(i) = mean(Q);
     VQ(i) = var(Q);
-    EQappx(i) = N - sigma(2)^2*N + 2*sigma(2)^4*sum(mu.^2./sigmu.^2);
-    EQappx2(i) = N - sigma(2)^2*N;
+    EQappx(i) = N - 2*sigma(2)^2*N + 2*sigma(2)^4*sum(mu.^2./sigmu.^2);
+    EQappx2(i) = N - 2*sigma(2)^2*N;
 <span class="keyword">end</span>
 
 figure(<span class="string">'Name'</span>,<span class="string">'Expectation versus sigma_beta'</span>)
@@ -225,7 +225,7 @@ ylabel(<span class="string">'E(Q)'</span>)
 
 <span class="comment">% Stop timer</span>
 toc(tStart)
-</pre><pre class="codeoutput">Elapsed time is 59.548339 seconds.
+</pre><pre class="codeoutput">Elapsed time is 190.463056 seconds.
 </pre><img vspace="5" hspace="5" src="costfundist_01.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Compare approximate cost function distribution moments with simulation
@@ -256,7 +256,7 @@ w = 2*pi*f;
 % psi = h*mu;
 
 % Run Monte Carlo
-Nmc = pow2(14);
+Nmc = pow2(16);
 rng('default')
 
 sigbeta = (0:2:20)*1e-2;
@@ -286,8 +286,8 @@ for i = 1:Nsig
     end
     EQ(i) = mean(Q);
     VQ(i) = var(Q);
-    EQappx(i) = N - sigma(2)^2*N + 2*sigma(2)^4*sum(mu.^2./sigmu.^2);
-    EQappx2(i) = N - sigma(2)^2*N;
+    EQappx(i) = N - 2*sigma(2)^2*N + 2*sigma(2)^4*sum(mu.^2./sigmu.^2);
+    EQappx2(i) = N - 2*sigma(2)^2*N;
 end
 
 figure('Name','Expectation versus sigma_beta')

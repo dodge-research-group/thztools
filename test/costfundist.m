@@ -26,7 +26,7 @@ w = 2*pi*f;
 % psi = h*mu;
 
 % Run Monte Carlo
-Nmc = pow2(14);
+Nmc = pow2(16);
 rng('default')
 
 sigbeta = (0:2:20)*1e-2;
@@ -56,8 +56,8 @@ for i = 1:Nsig
     end
     EQ(i) = mean(Q);
     VQ(i) = var(Q);
-    EQappx(i) = N - sigma(2)^2*N + 2*sigma(2)^4*sum(mu.^2./sigmu.^2);
-    EQappx2(i) = N - sigma(2)^2*N;
+    EQappx(i) = N - 2*sigma(2)^2*N + 2*sigma(2)^4*sum(mu.^2./sigmu.^2);
+    EQappx2(i) = N - 2*sigma(2)^2*N;
 end
 
 figure('Name','Expectation versus sigma_beta')

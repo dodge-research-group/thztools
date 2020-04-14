@@ -18,11 +18,11 @@ tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
 D = tdtf(@(theta, w) -1i*w, 0, N, T);
 
 % Run Monte Carlo
-Nmc = pow2(14);
+Nmc = pow2(18);
 rng('default')
 
 A = [1, 0.25];
-eta = [0 1];
+eta = [0, 1];
 sigbeta = (0:2:20)*1e-3;
 Nbeta = length(sigbeta);
 EQbeta = zeros(Nbeta, 1);
@@ -142,8 +142,7 @@ for m = 1:length(A)
         ylabel('V(Q)')
         title(sprintf('Var(Q) A = %.2f, eta = %.1f',A0,eta0))
         
+        fprintf("Finished loop: %d, %d\n", m, n)
+        toc(tStart)
     end
 end
-
-% Stop timer
-toc(tStart)

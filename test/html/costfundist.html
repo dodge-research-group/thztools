@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>Compare approximate cost function distribution moments with simulation</title><meta name="generator" content="MATLAB 9.7"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-04-06"><meta name="DC.source" content="costfundist.m"><style type="text/css">
+      --><title>Compare approximate cost function distribution moments with simulation</title><meta name="generator" content="MATLAB 9.8"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-04-13"><meta name="DC.source" content="costfundist.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -23,7 +23,7 @@ a:visited { color:#004aa0; text-decoration:none; }
 
 p { padding:0px; margin:0px 0px 20px; }
 img { padding:0px; margin:0px 0px 20px; border:none; }
-p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
 
 ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
 ul li { padding:0px; margin:0px 0px 7px 0px; }
@@ -52,6 +52,7 @@ span.comment { color:#228B22 }
 span.string { color:#A020F0 }
 span.untermstring { color:#B20000 }
 span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
 
 .footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
 .footer p { margin:0px; }
@@ -84,11 +85,11 @@ tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
 D = tdtf(@(theta, w) -1i*w, 0, N, T);
 
 <span class="comment">% Run Monte Carlo</span>
-Nmc = pow2(14);
+Nmc = pow2(18);
 rng(<span class="string">'default'</span>)
 
 A = [1, 0.25];
-eta = [0 1];
+eta = [0, 1];
 sigbeta = (0:2:20)*1e-3;
 Nbeta = length(sigbeta);
 EQbeta = zeros(Nbeta, 1);
@@ -208,13 +209,19 @@ EQbetaAppx = zeros(Nbeta, 1);
         ylabel(<span class="string">'V(Q)'</span>)
         title(sprintf(<span class="string">'Var(Q) A = %.2f, eta = %.1f'</span>,A0,eta0))
 
+        fprintf(<span class="string">"Finished loop: %d, %d\n"</span>, m, n)
+        toc(tStart)
     <span class="keyword">end</span>
 <span class="keyword">end</span>
-
-<span class="comment">% Stop timer</span>
-toc(tStart)
-</pre><pre class="codeoutput">Elapsed time is 1541.960135 seconds.
-</pre><img vspace="5" hspace="5" src="costfundist_01.png" alt=""> <img vspace="5" hspace="5" src="costfundist_02.png" alt=""> <img vspace="5" hspace="5" src="costfundist_03.png" alt=""> <img vspace="5" hspace="5" src="costfundist_04.png" alt=""> <img vspace="5" hspace="5" src="costfundist_05.png" alt=""> <img vspace="5" hspace="5" src="costfundist_06.png" alt=""> <img vspace="5" hspace="5" src="costfundist_07.png" alt=""> <img vspace="5" hspace="5" src="costfundist_08.png" alt=""> <img vspace="5" hspace="5" src="costfundist_09.png" alt=""> <img vspace="5" hspace="5" src="costfundist_10.png" alt=""> <img vspace="5" hspace="5" src="costfundist_11.png" alt=""> <img vspace="5" hspace="5" src="costfundist_12.png" alt=""> <img vspace="5" hspace="5" src="costfundist_13.png" alt=""> <img vspace="5" hspace="5" src="costfundist_14.png" alt=""> <img vspace="5" hspace="5" src="costfundist_15.png" alt=""> <img vspace="5" hspace="5" src="costfundist_16.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019b</a><br></p></div><!--
+</pre><pre class="codeoutput">Finished loop: 1, 1
+Elapsed time is 4247.994346 seconds.
+Finished loop: 1, 2
+Elapsed time is 17087.626080 seconds.
+Finished loop: 2, 1
+Elapsed time is 21465.224984 seconds.
+Finished loop: 2, 2
+Elapsed time is 28076.376743 seconds.
+</pre><img vspace="5" hspace="5" src="costfundist_01.png" alt=""> <img vspace="5" hspace="5" src="costfundist_02.png" alt=""> <img vspace="5" hspace="5" src="costfundist_03.png" alt=""> <img vspace="5" hspace="5" src="costfundist_04.png" alt=""> <img vspace="5" hspace="5" src="costfundist_05.png" alt=""> <img vspace="5" hspace="5" src="costfundist_06.png" alt=""> <img vspace="5" hspace="5" src="costfundist_07.png" alt=""> <img vspace="5" hspace="5" src="costfundist_08.png" alt=""> <img vspace="5" hspace="5" src="costfundist_09.png" alt=""> <img vspace="5" hspace="5" src="costfundist_10.png" alt=""> <img vspace="5" hspace="5" src="costfundist_11.png" alt=""> <img vspace="5" hspace="5" src="costfundist_12.png" alt=""> <img vspace="5" hspace="5" src="costfundist_13.png" alt=""> <img vspace="5" hspace="5" src="costfundist_14.png" alt=""> <img vspace="5" hspace="5" src="costfundist_15.png" alt=""> <img vspace="5" hspace="5" src="costfundist_16.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Compare approximate cost function distribution moments with simulation
 
@@ -236,11 +243,11 @@ tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
 D = tdtf(@(theta, w) -1i*w, 0, N, T);
 
 % Run Monte Carlo
-Nmc = pow2(14);
+Nmc = pow2(18);
 rng('default')
 
 A = [1, 0.25];
-eta = [0 1];
+eta = [0, 1];
 sigbeta = (0:2:20)*1e-3;
 Nbeta = length(sigbeta);
 EQbeta = zeros(Nbeta, 1);
@@ -360,10 +367,9 @@ for m = 1:length(A)
         ylabel('V(Q)')
         title(sprintf('Var(Q) A = %.2f, eta = %.1f',A0,eta0))
         
+        fprintf("Finished loop: %d, %d\n", m, n)
+        toc(tStart)
     end
 end
-
-% Stop timer
-toc(tStart)
 ##### SOURCE END #####
 --></body></html>

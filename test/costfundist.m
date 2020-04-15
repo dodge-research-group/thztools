@@ -18,7 +18,7 @@ tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
 D = tdtf(@(theta, w) -1i*w, 0, N, T);
 
 % Run Monte Carlo
-Nmc = pow2(18);
+Nmc = pow2(6);
 rng('default')
 
 A = [1, 0.25];
@@ -28,6 +28,7 @@ Nbeta = length(sigbeta);
 EQbeta = zeros(Nbeta, 1);
 VQbeta = zeros(Nbeta, 1);
 EQbetaAppx = zeros(Nbeta, 1);
+EQbetaAppxTrace = zeros(Nbeta, 1);
 
 for m = 1:length(A)
     for n = 1:length(eta)
@@ -73,10 +74,16 @@ for m = 1:length(A)
                 + diag(Vpsi)'*((g'*Vti*g).^2)*(D.^2)*diag(Vpsi) ...
                 + 2*diag(Vpsi)'*((g'*Vti*g).*(D'))*((g'*Vti*g).*D)...
                 *diag(Vpsi));
+            EQbetaAppxTrace(i) = N - sigma(2)^2*trace(3*(Vmu.*Vti).^2 ...
+                + 2*(Vmu.*(Vti*g))*(Vpsi.*(Vti*g)) ...
+                + 3*(Vpsi.*(g'*Vti*g)).^2) ...
+                - sigma(3)^2*trace((D*Vmu*D' + g*D*Vpsi*D'*g')*Vti ...
+                + 2*(Vti*Vmu*D').^2 + 2*(g'*Vti*g*Vpsi*D').^2);
         end
         
         figure('Name','Expectation versus sigma_beta')
-        plot(sigbeta, EQbeta, 'ko', sigbeta, EQbetaAppx, '-')
+        plot(sigbeta, EQbeta, 'ko', sigbeta, EQbetaAppx, '-', ...
+            sigbeta, EQbetaAppxTrace, ':')
         legend('Simulated','Approximate')
         xlabel('\sigma_\beta')
         ylabel('E(Q)')
@@ -94,6 +101,7 @@ for m = 1:length(A)
         EQtau = zeros(Ntau, 1);
         VQtau = zeros(Ntau, 1);
         EQtauAppx = zeros(Ntau, 1);
+        EQtauAppxTrace = zeros(Ntau, 1);
         
         for i = 1:Ntau
             sigma = [1e-4, 1e-2, sigtau(i)];
@@ -126,10 +134,16 @@ for m = 1:length(A)
                 + diag(Vpsi)'*((g'*Vti*g).^2)*(D.^2)*diag(Vpsi) ...
                 + 2*diag(Vpsi)'*((g'*Vti*g).*(D'))*((g'*Vti*g).*D)...
                 *diag(Vpsi));
-        end
+             EQtauAppxTrace(i) = N - sigma(2)^2*trace(3*(Vmu.*Vti).^2 ...
+                + 2*(Vmu.*(Vti*g))*(Vpsi.*(Vti*g)) ...
+                + 3*(Vpsi.*(g'*Vti*g)).^2) ...
+                - sigma(3)^2*trace((D*Vmu*D' + g*D*Vpsi*D'*g')*Vti ...
+                + 2*(Vti*Vmu*D').^2 + 2*(g'*Vti*g*Vpsi*D').^2);
+       end
         
         figure('Name','Expectation versus sigma_tau')
-        plot(sigtau, EQtau, 'ko', sigtau, EQtauAppx, '-')
+        plot(sigtau, EQtau, 'ko', sigtau, EQtauAppx, '-', ...
+            sigtau, EQtauAppxTrace, ':')
         legend('Simulated','Approximate')
         xlabel('\sigma_\tau')
         ylabel('E(Q)')

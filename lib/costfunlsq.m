@@ -1,4 +1,4 @@
-function res = costfunlsq(fun,theta,xx,yy,sigmax,sigmay,wfft)
+function res = costfunlsqalt(fun,theta,xx,yy,sigmax,sigmay,wfft)
 
 N = length(sigmax);
 H = conj(fun(theta, wfft));
@@ -7,18 +7,18 @@ if rem(N,2)==0
     H(kNy+1) = real(H(kNy+1));
 end
 
-rx = xx - real(ifft(fft(yy)./H));
-Vx = diag(sigmax.^2);
+ry = yy - real(ifft(fft(xx).*H));
+Vy = diag(sigmay.^2);
 
-Htildeinv = ifft(1./H);
+Htilde = ifft(H);
 
-Ux = zeros(N);
+Uy = zeros(N);
 for k = 1:N
-    Ux = Ux + real(circshift(Htildeinv,k-1)...
-        *(circshift(Htildeinv,k-1)'))*sigmay(k)^2;
+    Uy = Uy + real(circshift(Htilde,k-1)...
+        *(circshift(Htilde,k-1)'))*sigmax(k)^2;
 end
 
-W = eye(N)/sqrtm(Vx + Ux);
+W = eye(N)/sqrtm(Uy + Vy);
 
-res = W*rx;
+res = W*ry;
 end

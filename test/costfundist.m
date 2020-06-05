@@ -18,7 +18,7 @@ tfun = @(theta,w) theta(1)*exp(1i*theta(2)*w*T);
 D = tdtf(@(theta, w) -1i*w, 0, N, T);
 
 % Run Monte Carlo
-Nmc = pow2(6);
+Nmc = pow2(5);
 rng('default')
 
 A = [1, 0.25];
@@ -29,6 +29,7 @@ EQbeta = zeros(Nbeta, 1);
 VQbeta = zeros(Nbeta, 1);
 EQbetaAppx = zeros(Nbeta, 1);
 EQbetaAppxTrace = zeros(Nbeta, 1);
+EQbetaAppxTraceNew = zeros(Nbeta, 1);
 
 for m = 1:length(A)
     for n = 1:length(eta)
@@ -52,6 +53,8 @@ for m = 1:length(A)
             Vpsi = diag(sigpsi.^2);
             Vt = Vmu + g*Vpsi*g';
             Vti = eye(N)/Vt;
+            W = h*Vmu*h' + Vpsi;
+            Wi = eye(N)/W;
             parfor k = 1:Nmc
                 xbeta = mu + sigmu.*randn(N, 1);
                 ybeta = psi + sigpsi.*randn(N, 1);
@@ -75,10 +78,15 @@ for m = 1:length(A)
                 + 2*diag(Vpsi)'*((g'*Vti*g).*(D'))*((g'*Vti*g).*D)...
                 *diag(Vpsi));
             EQbetaAppxTrace(i) = N - sigma(2)^2*trace(3*(Vmu.*Vti).^2 ...
-                + 2*(Vmu.*(Vti*g))*(Vpsi.*(Vti*g)) ...
+                + 2*Vmu*Vti*g*Vpsi*g'*Vti ...
                 + 3*(Vpsi.*(g'*Vti*g)).^2) ...
                 - sigma(3)^2*trace((D*Vmu*D' + g*D*Vpsi*D'*g')*Vti ...
                 + 2*(Vti*Vmu*D').^2 + 2*(g'*Vti*g*Vpsi*D').^2);
+            EQbetaAppxTraceNew(i) = N - sigma(2)^2*(...
+                N + 2*trace((h'*Wi*h*Vmu).^2 + (Wi*Vpsi).^2)) ...
+                - sigma(3)^2*trace(Wi.*(D*Vpsi*D') ...
+                + (h'*Wi*h).*(D*Vmu*D') + 2*(h'*Wi*h*Vmu*D').^2 ...
+                + 2*(Wi*Vpsi*D').^2);
         end
         
         figure('Name','Expectation versus sigma_beta')
@@ -102,6 +110,7 @@ for m = 1:length(A)
         VQtau = zeros(Ntau, 1);
         EQtauAppx = zeros(Ntau, 1);
         EQtauAppxTrace = zeros(Ntau, 1);
+        EQtauAppxTraceNew = zeros(Ntau, 1);
         
         for i = 1:Ntau
             sigma = [1e-4, 1e-2, sigtau(i)];
@@ -112,6 +121,8 @@ for m = 1:length(A)
             Vpsi = diag(sigpsi.^2);
             Vt = Vmu + g*Vpsi*g';
             Vti = eye(N)/Vt;
+            W = h*Vmu*h' + Vpsi;
+            Wi = eye(N)/W;
             parfor k = 1:Nmc
                 xtau = mu + sigmu.*randn(N, 1);
                 ytau = psi + sigpsi.*randn(N, 1);
@@ -135,10 +146,15 @@ for m = 1:length(A)
                 + 2*diag(Vpsi)'*((g'*Vti*g).*(D'))*((g'*Vti*g).*D)...
                 *diag(Vpsi));
              EQtauAppxTrace(i) = N - sigma(2)^2*trace(3*(Vmu.*Vti).^2 ...
-                + 2*(Vmu.*(Vti*g))*(Vpsi.*(Vti*g)) ...
+                + 2*Vmu*Vti*g*Vpsi*g'*Vti ...
                 + 3*(Vpsi.*(g'*Vti*g)).^2) ...
                 - sigma(3)^2*trace((D*Vmu*D' + g*D*Vpsi*D'*g')*Vti ...
                 + 2*(Vti*Vmu*D').^2 + 2*(g'*Vti*g*Vpsi*D').^2);
+            EQtauAppxTraceNew(i) = N - sigma(2)^2*(...
+                N + 2*trace((h'*Wi*h*Vmu).^2 + (Wi*Vpsi).^2)) ...
+                - sigma(3)^2*trace(Wi.*(D*Vpsi*D') ...
+                + (h'*Wi*h).*(D*Vmu*D') + 2*(h'*Wi*h*Vmu*D').^2 ...
+                + 2*(Wi*Vpsi*D').^2);
        end
         
         figure('Name','Expectation versus sigma_tau')

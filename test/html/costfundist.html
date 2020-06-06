@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>Compare approximate cost function distribution moments with simulation</title><meta name="generator" content="MATLAB 9.8"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-04-13"><meta name="DC.source" content="costfundist.m"><style type="text/css">
+      --><title>Compare approximate cost function distribution moments with simulation</title><meta name="generator" content="MATLAB 9.8"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2020-06-05"><meta name="DC.source" content="costfundist.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -116,30 +116,24 @@ EQbetaAppx = zeros(Nbeta, 1);
             sigpsi = noiseamp(sigma, psi, T);
             Vmu = diag(sigmu.^2);
             Vpsi = diag(sigpsi.^2);
-            Vt = Vmu + g*Vpsi*g';
-            Vti = eye(N)/Vt;
+            W = h*Vmu*h' + Vpsi;
+            Wi = eye(N)/W;
             <span class="keyword">parfor</span> k = 1:Nmc
                 xbeta = mu + sigmu.*randn(N, 1);
                 ybeta = psi + sigpsi.*randn(N, 1);
                 Vxbeta = diag(noisevar(sigma, xbeta, T));
                 Vybeta = diag(noisevar(sigma, ybeta, T));
-                Qbeta(k) = (xbeta - g*ybeta)'*(eye(N)<span class="keyword">...</span>
-                    /(Vxbeta + g*Vybeta*g'))<span class="keyword">...</span>
-                    *(xbeta - g*ybeta);
+                Qbeta(k) = (h*xbeta - ybeta)'*(eye(N)<span class="keyword">...</span>
+                    /(h*Vxbeta*h' + Vybeta))<span class="keyword">...</span>
+                    *(h*xbeta - ybeta);
             <span class="keyword">end</span>
             EQbeta(i) = mean(Qbeta);
             VQbeta(i) = var(Qbeta);
             EQbetaAppx(i) = N - sigma(2)^2*(<span class="keyword">...</span>
-                3*sum(diag(Vmu).^2.*diag(Vti).^2) <span class="keyword">...</span>
-                + 2*sum(diag(Vmu).*diag(Vpsi).*diag(Vti*g).^2) <span class="keyword">...</span>
-                + 3*sum(diag(Vpsi).^2.*diag(g'*Vti*g).^2)) <span class="keyword">...</span>
-                - sigma(3)^2*(diag(Vmu)'*(Vti.^2)*(D.^2)*diag(Vmu) <span class="keyword">...</span>
-                + 2*diag(Vmu)'*(Vti.*(D'))*(Vti.*D)*diag(Vmu) <span class="keyword">...</span>
-                + diag(Vmu)'*((Vti*g).^2)*(D.^2)*diag(Vpsi) <span class="keyword">...</span>
-                + diag(Vmu)'*((D').^2)*((Vti*g).^2)*diag(Vpsi) <span class="keyword">...</span>
-                + diag(Vpsi)'*((g'*Vti*g).^2)*(D.^2)*diag(Vpsi) <span class="keyword">...</span>
-                + 2*diag(Vpsi)'*((g'*Vti*g).*(D'))*((g'*Vti*g).*D)<span class="keyword">...</span>
-                *diag(Vpsi));
+                N + 2*trace((h'*Wi*h*Vmu).^2 + (Wi*Vpsi).^2)) <span class="keyword">...</span>
+                - sigma(3)^2*trace(Wi.*(D*Vpsi*D') <span class="keyword">...</span>
+                + (h'*Wi*h).*(D*Vmu*D') + 2*(h'*Wi*h*Vmu*D').^2 <span class="keyword">...</span>
+                + 2*(Wi*Vpsi*D').^2);
         <span class="keyword">end</span>
 
         figure(<span class="string">'Name'</span>,<span class="string">'Expectation versus sigma_beta'</span>)
@@ -169,31 +163,25 @@ EQbetaAppx = zeros(Nbeta, 1);
             sigpsi = noiseamp(sigma, psi, T);
             Vmu = diag(sigmu.^2);
             Vpsi = diag(sigpsi.^2);
-            Vt = Vmu + g*Vpsi*g';
-            Vti = eye(N)/Vt;
+            W = h*Vmu*h' + Vpsi;
+            Wi = eye(N)/W;
             <span class="keyword">parfor</span> k = 1:Nmc
                 xtau = mu + sigmu.*randn(N, 1);
                 ytau = psi + sigpsi.*randn(N, 1);
                 Vxtau = diag(noisevar(sigma, xtau, T));
                 Vytau = diag(noisevar(sigma, ytau, T));
-                Qtau(k) = (xtau - g*ytau)'<span class="keyword">...</span>
-                    *(eye(N)/(Vxtau + g*Vytau*g'))<span class="keyword">...</span>
-                    *(xtau - g*ytau);
+                Qtau(k) = (h*xtau - ytau)'<span class="keyword">...</span>
+                    *(eye(N)/(h*Vxtau*h' + Vytau))<span class="keyword">...</span>
+                    *(h*xtau - ytau);
             <span class="keyword">end</span>
             EQtau(i) = mean(Qtau);
             VQtau(i) = var(Qtau);
             EQtauAppx(i) = N - sigma(2)^2*(<span class="keyword">...</span>
-                3*sum(diag(Vmu).^2.*diag(Vti).^2) <span class="keyword">...</span>
-                + 2*sum(diag(Vmu).*diag(Vpsi).*diag(Vti*g).^2) <span class="keyword">...</span>
-                + 3*sum(diag(Vpsi).^2.*diag(g'*Vti*g).^2)) <span class="keyword">...</span>
-                - sigma(3)^2*(diag(Vmu)'*(Vti.^2)*(D.^2)*diag(Vmu) <span class="keyword">...</span>
-                + 2*diag(Vmu)'*(Vti.*(D'))*(Vti.*D)*diag(Vmu) <span class="keyword">...</span>
-                + diag(Vmu)'*((Vti*g).^2)*(D.^2)*diag(Vpsi) <span class="keyword">...</span>
-                + diag(Vmu)'*((D').^2)*((Vti*g).^2)*diag(Vpsi) <span class="keyword">...</span>
-                + diag(Vpsi)'*((g'*Vti*g).^2)*(D.^2)*diag(Vpsi) <span class="keyword">...</span>
-                + 2*diag(Vpsi)'*((g'*Vti*g).*(D'))*((g'*Vti*g).*D)<span class="keyword">...</span>
-                *diag(Vpsi));
-        <span class="keyword">end</span>
+                N + 2*trace((h'*Wi*h*Vmu).^2 + (Wi*Vpsi).^2)) <span class="keyword">...</span>
+                - sigma(3)^2*trace(Wi.*(D*Vpsi*D') <span class="keyword">...</span>
+                + (h'*Wi*h).*(D*Vmu*D') + 2*(h'*Wi*h*Vmu*D').^2 <span class="keyword">...</span>
+                + 2*(Wi*Vpsi*D').^2);
+       <span class="keyword">end</span>
 
         figure(<span class="string">'Name'</span>,<span class="string">'Expectation versus sigma_tau'</span>)
         plot(sigtau, EQtau, <span class="string">'ko'</span>, sigtau, EQtauAppx, <span class="string">'-'</span>)
@@ -214,13 +202,13 @@ EQbetaAppx = zeros(Nbeta, 1);
     <span class="keyword">end</span>
 <span class="keyword">end</span>
 </pre><pre class="codeoutput">Finished loop: 1, 1
-Elapsed time is 4247.994346 seconds.
+Elapsed time is 4254.644922 seconds.
 Finished loop: 1, 2
-Elapsed time is 17087.626080 seconds.
+Elapsed time is 12731.425372 seconds.
 Finished loop: 2, 1
-Elapsed time is 21465.224984 seconds.
+Elapsed time is 18369.995060 seconds.
 Finished loop: 2, 2
-Elapsed time is 28076.376743 seconds.
+Elapsed time is 24965.892059 seconds.
 </pre><img vspace="5" hspace="5" src="costfundist_01.png" alt=""> <img vspace="5" hspace="5" src="costfundist_02.png" alt=""> <img vspace="5" hspace="5" src="costfundist_03.png" alt=""> <img vspace="5" hspace="5" src="costfundist_04.png" alt=""> <img vspace="5" hspace="5" src="costfundist_05.png" alt=""> <img vspace="5" hspace="5" src="costfundist_06.png" alt=""> <img vspace="5" hspace="5" src="costfundist_07.png" alt=""> <img vspace="5" hspace="5" src="costfundist_08.png" alt=""> <img vspace="5" hspace="5" src="costfundist_09.png" alt=""> <img vspace="5" hspace="5" src="costfundist_10.png" alt=""> <img vspace="5" hspace="5" src="costfundist_11.png" alt=""> <img vspace="5" hspace="5" src="costfundist_12.png" alt=""> <img vspace="5" hspace="5" src="costfundist_13.png" alt=""> <img vspace="5" hspace="5" src="costfundist_14.png" alt=""> <img vspace="5" hspace="5" src="costfundist_15.png" alt=""> <img vspace="5" hspace="5" src="costfundist_16.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Compare approximate cost function distribution moments with simulation
@@ -274,30 +262,24 @@ for m = 1:length(A)
             sigpsi = noiseamp(sigma, psi, T);
             Vmu = diag(sigmu.^2);
             Vpsi = diag(sigpsi.^2);
-            Vt = Vmu + g*Vpsi*g';
-            Vti = eye(N)/Vt;
+            W = h*Vmu*h' + Vpsi;
+            Wi = eye(N)/W;
             parfor k = 1:Nmc
                 xbeta = mu + sigmu.*randn(N, 1);
                 ybeta = psi + sigpsi.*randn(N, 1);
                 Vxbeta = diag(noisevar(sigma, xbeta, T));
                 Vybeta = diag(noisevar(sigma, ybeta, T));
-                Qbeta(k) = (xbeta - g*ybeta)'*(eye(N)...
-                    /(Vxbeta + g*Vybeta*g'))...
-                    *(xbeta - g*ybeta);
+                Qbeta(k) = (h*xbeta - ybeta)'*(eye(N)...
+                    /(h*Vxbeta*h' + Vybeta))...
+                    *(h*xbeta - ybeta);
             end
             EQbeta(i) = mean(Qbeta);
             VQbeta(i) = var(Qbeta);
             EQbetaAppx(i) = N - sigma(2)^2*(...
-                3*sum(diag(Vmu).^2.*diag(Vti).^2) ...
-                + 2*sum(diag(Vmu).*diag(Vpsi).*diag(Vti*g).^2) ...
-                + 3*sum(diag(Vpsi).^2.*diag(g'*Vti*g).^2)) ...
-                - sigma(3)^2*(diag(Vmu)'*(Vti.^2)*(D.^2)*diag(Vmu) ...
-                + 2*diag(Vmu)'*(Vti.*(D'))*(Vti.*D)*diag(Vmu) ...
-                + diag(Vmu)'*((Vti*g).^2)*(D.^2)*diag(Vpsi) ...
-                + diag(Vmu)'*((D').^2)*((Vti*g).^2)*diag(Vpsi) ...
-                + diag(Vpsi)'*((g'*Vti*g).^2)*(D.^2)*diag(Vpsi) ...
-                + 2*diag(Vpsi)'*((g'*Vti*g).*(D'))*((g'*Vti*g).*D)...
-                *diag(Vpsi));
+                N + 2*trace((h'*Wi*h*Vmu).^2 + (Wi*Vpsi).^2)) ...
+                - sigma(3)^2*trace(Wi.*(D*Vpsi*D') ...
+                + (h'*Wi*h).*(D*Vmu*D') + 2*(h'*Wi*h*Vmu*D').^2 ...
+                + 2*(Wi*Vpsi*D').^2);
         end
         
         figure('Name','Expectation versus sigma_beta')
@@ -327,31 +309,25 @@ for m = 1:length(A)
             sigpsi = noiseamp(sigma, psi, T);
             Vmu = diag(sigmu.^2);
             Vpsi = diag(sigpsi.^2);
-            Vt = Vmu + g*Vpsi*g';
-            Vti = eye(N)/Vt;
+            W = h*Vmu*h' + Vpsi;
+            Wi = eye(N)/W;
             parfor k = 1:Nmc
                 xtau = mu + sigmu.*randn(N, 1);
                 ytau = psi + sigpsi.*randn(N, 1);
                 Vxtau = diag(noisevar(sigma, xtau, T));
                 Vytau = diag(noisevar(sigma, ytau, T));
-                Qtau(k) = (xtau - g*ytau)'...
-                    *(eye(N)/(Vxtau + g*Vytau*g'))...
-                    *(xtau - g*ytau);
+                Qtau(k) = (h*xtau - ytau)'...
+                    *(eye(N)/(h*Vxtau*h' + Vytau))...
+                    *(h*xtau - ytau);
             end
             EQtau(i) = mean(Qtau);
             VQtau(i) = var(Qtau);
             EQtauAppx(i) = N - sigma(2)^2*(...
-                3*sum(diag(Vmu).^2.*diag(Vti).^2) ...
-                + 2*sum(diag(Vmu).*diag(Vpsi).*diag(Vti*g).^2) ...
-                + 3*sum(diag(Vpsi).^2.*diag(g'*Vti*g).^2)) ...
-                - sigma(3)^2*(diag(Vmu)'*(Vti.^2)*(D.^2)*diag(Vmu) ...
-                + 2*diag(Vmu)'*(Vti.*(D'))*(Vti.*D)*diag(Vmu) ...
-                + diag(Vmu)'*((Vti*g).^2)*(D.^2)*diag(Vpsi) ...
-                + diag(Vmu)'*((D').^2)*((Vti*g).^2)*diag(Vpsi) ...
-                + diag(Vpsi)'*((g'*Vti*g).^2)*(D.^2)*diag(Vpsi) ...
-                + 2*diag(Vpsi)'*((g'*Vti*g).*(D'))*((g'*Vti*g).*D)...
-                *diag(Vpsi));
-        end
+                N + 2*trace((h'*Wi*h*Vmu).^2 + (Wi*Vpsi).^2)) ...
+                - sigma(3)^2*trace(Wi.*(D*Vpsi*D') ...
+                + (h'*Wi*h).*(D*Vmu*D') + 2*(h'*Wi*h*Vmu*D').^2 ...
+                + 2*(Wi*Vpsi*D').^2);
+       end
         
         figure('Name','Expectation versus sigma_tau')
         plot(sigtau, EQtau, 'ko', sigtau, EQtauAppx, '-')

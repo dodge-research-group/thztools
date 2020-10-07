@@ -110,10 +110,6 @@ end
 res = x - zeta;
 ressq = res.^2;
 
-excludeNyquist = ones(N,1);
-if ~rem(N,2)
-    excludeNyquist(N/2+1) = 0;
-end
 % Simplest case: just variance and signal parameters, A and eta fixed at
 % defaults
 if Ignore.A && Ignore.eta
@@ -149,7 +145,7 @@ if Ignore.A && Ignore.eta
 % Alternative case: A, eta, or both are not set to defaults
 else
     
-    Dzeta = real(ifft(1i*w(:,ones(1,M)).*zeta_f.*excludeNyquist));
+    Dzeta = real(ifft(1i*w(:,ones(1,M)).*zeta_f));
  
     valpha = v(1);
     vbeta = v(2)*zeta.^2;
@@ -176,7 +172,7 @@ else
         if gradcalc(2)
             % Gradient wrt mu
             P = fft(v(2)*dvar.*zeta - reswt) ...
-                -1i*v(3)*w.*fft(dvar.*Dzeta).*excludeNyquist;
+                -1i*v(3)*w.*fft(dvar.*Dzeta);
             gradnll(nStart:nStart+N-1) = ...
                 sum(A'.*real(ifft(exp_iweta.*P)),2);
             nStart = nStart + N;
@@ -190,7 +186,7 @@ else
         if gradcalc(4)
             % Gradient wrt eta
             DDzeta = ...
-                real(ifft(-w(:,ones(1,M)).^2.*zeta_f.*excludeNyquist));
+                real(ifft(-w(:,ones(1,M)).^2.*zeta_f));
             gradnll(nStart + (0:M-1)) = ...
                 -sum(dvar.*(zeta.*Dzeta*v(2) + Dzeta.*DDzeta*v(3))...
                 - reswt.*Dzeta);

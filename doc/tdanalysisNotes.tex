@@ -1,0 +1,199 @@
+\documentclass[aps, prb, onecolumn, floatfix, amssymb, superscriptaddress, nofootinbib, longbibliography]{revtex4-2}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{bm}
+%\usepackage{eucal}
+\usepackage{xspace}
+
+\usepackage{graphicx}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\vectorize}{vec}
+
+\begin{document}
+
+\title{Notes on time-domain analysis for terahertz spectroscopy}
+
+\author{J.~Steven~Dodge}
+\email{jsdodge@sfu.ca}
+\affiliation{Department of Physics, Simon Fraser University, Burnaby, BC, Canada}
+
+
+\maketitle
+
+\section{Parameter estimation}
+Consider two $N$-dimensional vectors $\bm{x}$ and $\bm{y}$ that satisfy $\bm{y} = \bm{H}(\bm{\theta})\bm{x}$, where $\bm{\theta}$ is an $M$-dimensional parameter vector for the transformation matrix $\bm{H}$. Let $\bm{x_m} = \bm{x} + \bm{\epsilon_x}$ and $\bm{y_m} = \bm{y} + \bm{\epsilon_y}$ be noisy measurements of these vectors, where $\bm{\epsilon_x}$ and $\bm{\epsilon_y}$ are $N$-dimensional vectors of $N(0,1)$ random variables with  known covariance matrices  $\bm{V_x}$ and $\bm{V_y}$. The negative-log-likelihood function is
+\[
+-\log L(\mathbf{x},\mathbf{y},\boldsymbol{\theta}) = \frac{1}{2}\left[(\mathbf{x_{m}} - \mathbf{x})^\intercal\,\mathbf{V_x}^{-1}(\mathbf{x_{m}} - \mathbf{x}) + (\mathbf{y_{m}} - \mathbf{y})^\intercal\,\mathbf{V_y}^{-1}(\mathbf{y_{m}} - \mathbf{y})\right], \text{with } \mathbf{y} = \mathbf{H}(\boldsymbol{\theta})\mathbf{x}.
+\]
+
+Assuming for simplicity that $\bm{V_x}$ and $\bm{V_y}$ are diagnonal, and introducing an $N$-dimensional vector of Lagrange parameters $\bm{\lambda}$ to implement the constraints, we can define the maximum-likelihood cost function
+\[
+K(\mathbf{x},\mathbf{y},\boldsymbol{\theta},\boldsymbol{\lambda}) = \sum_k\left\{\frac{(x_{mk} - x_{k})^2}{2\sigma_{xk}^2} + \frac{(y_{mk} - y_{k})^2}{2\sigma_{yk}^2} + \lambda_k\left[y_k - \sum_{l}H_{kl}(\boldsymbol{\theta})x_l\right]\right\},
+\]
+and minimize with respect to $\bm{x}$, $\bm{y}$, $\bm{\theta}$, and $\bm{\lambda}$. The parameters of interest are $\bm{\theta}$; minimizing with respect to the remaining parameters gives the equations
+\begin{align}
+\frac{\partial K}{\partial x_j} & = -\frac{x_{mj} - x_{j}}{\sigma_{xj}^2} - \sum_{k}\lambda_{k}H_{kj}(\boldsymbol{\theta}) = 0,\\
+\frac{\partial K}{\partial y_j} & = -\frac{y_{mj} - y_{j}}{\sigma_{yj}^2} + \lambda_{j} = 0,\\
+\frac{\partial K}{\partial \lambda_j} & = y_{j} - \sum_{l}H_{jl}(\boldsymbol{\theta})x_l = 0,\\
+\end{align}
+which we can use to eliminate the dependence of $K$ on $\bm{x}$, $\bm{y}$, and $\bm{\lambda}$. The algebra is given below.
+\begin{align}
+y_j &= \sum_{l}H_{jl}(\boldsymbol{\theta})x_l,\\
+\lambda_j &= \sigma_{yj}^{-2}(y_{mj} - y_j),\\
+x_j &= x_{mj} + \sigma_{xj}^2\sum_{k}\lambda_k H_{kj}(\boldsymbol{\theta})\\
+&= x_{mj} + \sigma_{xj}^2\sum_k\sigma_{yk}^{-2}(y_{mk} - y_k)H_{kj}(\boldsymbol{\theta})\\
+&= x_{mj} + \sigma_{xj}^2\sum_k\sigma_{yk}^{-2}\left[y_{mk} - \sum_l H_{kl}(\boldsymbol{\theta})x_l\right]H_{kj}(\boldsymbol{\theta})\\
+&= x_{mj} + \sigma_{xj}^2\sum_k\sigma_{yk}^{-2}\left[y_{mk}H_{kj}(\boldsymbol{\theta}) - \sum_l H_{jk}^\intercal(\boldsymbol{\theta})H_{kl}(\boldsymbol{\theta})x_l\right],\\
+\Rightarrow x_j &+ \sigma_{xj}^2\sum_{kl}H_{jk}^\intercal(\boldsymbol{\theta})\sigma_{yk}^{-2}H_{kl}(\boldsymbol{\theta})x_l = x_{mj} + \sigma_{xj}^2\sum_k y_{mk}\sigma_{yk}^{-2}H_{kj}(\boldsymbol{\theta}).
+\end{align}
+In vector notation, we have
+\begin{align}
+\mathbf{y} &= \mathbf{H}(\boldsymbol{\theta})\mathbf{x},\\
+\boldsymbol{\lambda} &= \mathbf{V_{y}}^{-1}(\mathbf{y_{m}} - \mathbf{y}),\\
+\mathbf{x} &+ \mathbf{V_{x}}\mathbf{H}^\intercal(\boldsymbol{\theta})\mathbf{V_{y}}^{-1}\mathbf{H}(\boldsymbol{\theta})\mathbf{x} = \mathbf{x_{m}} + \mathbf{V_{x}}\mathbf{H}^\intercal(\boldsymbol{\theta})\mathbf{V_{y}}^{-1}\mathbf{y_{m}}\\
+\Rightarrow \mathbf{x} &= \left[\mathbf{1} + \mathbf{V_{x}}\mathbf{H}^\intercal(\boldsymbol{\theta})\mathbf{V_{y}}^{-1}\mathbf{H}(\boldsymbol{\theta})\right]^{-1}\left[\mathbf{x_{m}} + \mathbf{V_{x}}\mathbf{H}^\intercal(\boldsymbol{\theta})\mathbf{V_{y}}^{-1}\mathbf{y_{m}}\right].
+\end{align}
+
+Substituting for $\bm{x}$, $\bm{y}$, and $\bm{\lambda}$ in $K$ yields a new cost function, $K'(\bm{\theta})$, that involves only the parameters of interest:
+\begin{align}
+K'(\boldsymbol{\theta}) &= \frac{1}{2}\left\{\mathbf{x_m} - \left[\mathbf{1} + \mathbf{V_{x}}\mathbf{H}^\intercal(\boldsymbol{\theta})\mathbf{V_{y}}^{-1}\mathbf{H}(\boldsymbol{\theta})\right]^{-1}\left[\mathbf{x_{m}} + \mathbf{V_{x}}\mathbf{H}^\intercal(\boldsymbol{\theta})\mathbf{V_{y}}^{-1}\mathbf{y_{m}}\right]\right\}^\intercal\times\\
+&\qquad\mathbf{V_x}^{-1}\left\{\mathbf{x_m} - \left[\mathbf{1} + \mathbf{V_{x}}\mathbf{H}^\intercal(\boldsymbol{\theta})\mathbf{V_{y}}^{-1}\mathbf{H}(\boldsymbol{\theta})\right]^{-1}\left[\mathbf{x_{m}} + \mathbf{V_{x}}\mathbf{H}^\intercal(\boldsymbol{\theta})\mathbf{V_{y}}^{-1}\mathbf{y_{m}}\right]\right\}\\
+&+ \frac{1}{2}\left\{\mathbf{y_m} - \mathbf{H}(\boldsymbol{\theta})\left[\mathbf{1} + \mathbf{V_{x}}\mathbf{H}^\intercal(\boldsymbol{\theta})\mathbf{V_{y}}^{-1}\mathbf{H}(\boldsymbol{\theta})\right]^{-1}\left[\mathbf{x_{m}} + \mathbf{V_{x}}\mathbf{H}^\intercal(\boldsymbol{\theta})\mathbf{V_{y}}^{-1}\mathbf{y_{m}}\right]\right\}^\intercal\times\\
+&\qquad\mathbf{V_y}^{-1}\left\{\mathbf{y_m} - \mathbf{H}(\boldsymbol{\theta})\left[\mathbf{1} + \mathbf{V_{x}}\mathbf{H}^\intercal(\boldsymbol{\theta})\mathbf{V_{y}}^{-1}\mathbf{H}(\boldsymbol{\theta})\right]^{-1}\left[\mathbf{x_{m}} + \mathbf{V_{x}}\mathbf{H}^\intercal(\boldsymbol{\theta})\mathbf{V_{y}}^{-1}\mathbf{y_{m}}\right]\right\}.
+\end{align}
+For a frequency-domain transmission amplitude function $t(\bm{\theta};\omega)$, the time-domain transfer matrix $\bm{H}(\bm{\theta})$ is
+\[
+\mathbf{H}(\boldsymbol{\theta}) = \frac{1}{N}\bm{F}_N^\dagger \mathbf{t}(\boldsymbol{\theta};\boldsymbol{\omega}) \bm{F}_N,
+\]
+where $\bm{F}_N$ is the FFT matrix (generated for the $+i\omega t$ convention with \texttt{dftmtx} in \texttt{MATLAB}) and $t(\bm{\theta};\omega)$ is the diagonal matrix of the amplitude function evaluated at $\bm{\omega} = 2\pi\bm{F}$, where $\bm{f}$ is the vector of positive and negative frequencies associated with the $N$-dimensional FFT (see, for example, \href{https://www.mathworks.com/matlabcentral/answers/141271-what-are-the-frequencies-when-n-in-fft-x-n-is-odd here}{here}).
+
+\section{Noise model}
+Consider $M$ measurements of an unknown, band-limited signal $\mu(t)$ subject to amplitude drift and temporal drift, so that the signal associated with measurement $j = 0, 1,\ldots, M-1$ is
+\begin{equation}
+\zeta(t;A_{j},\eta_{j}) = A_{j}\mu(t - \eta_{j}).
+\label{eq:zeta}
+\end{equation}
+For each signal measurement we obtain $N$ noisy samples at the nominal times $t_n = nT, n = 0, 1,\ldots, N-1$, which we arrange $N\times M$ matrix $\mathbf{x}$:
+\begin{align}
+x_{ij} &= (1 + \beta_{ij})\zeta(t_{i} + \tau_{ij};A_{j},\eta_{j}) + \alpha_{ij} \label{eq:xzeta}\\
+&= A_{j}(1 + \beta_{ij})\mu(t_{i} - \eta_{j} + \tau_{ij}) + \alpha_{ij},\label{eq:xmu}
+\end{align}
+where the random variables $\alpha_{ij}\sim \mathcal{N}(0,\sigma_\alpha^2)$, $\beta_{ij}\sim \mathcal{N}(0,\sigma_\beta^2)$, and $\tau_{ij}\sim \mathcal{N}(0,\sigma_\tau^2)$ are fully independent and account for additive, multiplicative, and timebase noise, respectively. To fix the scale and location of $\mu(t)$, we set $(1/M)\sum A_j = 1$ and $\sum \eta_j = 0$, but otherwise make no assumptions about their distribution.
+
+
+Expanding around the ideal value to first order in the random variables and introducing the notation, $\zeta_{ij} = \zeta(t_{i};A_{j},\eta_{j})$ and $\dot{\zeta}_{ij} = \dot{\zeta}(t_{i};A_{j},\eta_{j})$, gives
+\begin{align}
+x_{ij} &\approx (1 + \beta_{ij})(\zeta_{ij} + \tau_{ij}\dot{\zeta}_{ij}) + \alpha_{ij}\nonumber\\
+&= \zeta_{ij} + \alpha_{ij} + \beta_{ij}\zeta_{ij} + \tau_{ij}\dot{\zeta}_{ij}.\label{eq:noisemodel}
+\end{align}
+We can further relate $\zeta_{ij}$ and $\dot{\zeta}_{ij}$ to the ideal signal samples, $\mu_i = \mu(t_i)$ by defining the shift matrix $\mathbf{S}(\eta)$ and the derivative matrix $\mathbf{D}$, so that
+\begin{align}
+\zeta_{ij} &= A_j\sum_{k=0}^{N-1} S_{ik}(\eta_j)\mu_k,\label{eq:zetaij}\\
+\dot{\zeta}_{ij} &= A_j\sum_{k,l=0}^{N-1} S_{ik}(\eta_j)D_{kl}\mu_{l}.\label{eq:zetadotij}
+\end{align}
+
+We can compute the matrix elements of $\mathbf{S}(\eta)$, $\mathbf{S}'(\eta)$, and $\mathbf{D}$, by recognizing that in general, a frequency-response function $H(\omega)$ can be represented in the time domain as transfer matrix $\mathbf{h}$,
+\begin{align}
+h_{jk} = \frac{1}{N}\sum_{l = -(N-1)/2}^{(N-1)/2} H(\omega_l)e^{2\pi i(j-k)l/N}
+\end{align}
+where we let $\omega_l = 2\pi l/NT$, $T$ is the sampling time, and we have assumed $N$ to be odd (the trigonometric interpolation for even $N$ yields a slightly different expression that I'll incorporate later).
+
+This gives (in the $+i\omega t$ convention used by MATLAB)
+\begin{align}
+S_{jk}(\eta) &= \frac{1}{N}\sum_{l = -(N-1)/2}^{(N-1)/2} \exp(-i\omega_l\eta)e^{2\pi i(j-k)l/N},\label{eq:sjk}\\
+S'_{jk}(\eta) &= \frac{1}{N}\sum_{l = -(N-1)/2}^{(N-1)/2} -i\omega_l\exp(-i\omega_l\eta)e^{2\pi i(j-k)l/N},\ \text{and}\label{eq:sdotjk}\\
+D_{jk} &= \frac{1}{N}\sum_{l = -(N-1)/2}^{(N-1)/2} i\omega_l e^{2\pi i(j-k)l/N},\label{eq:djk}
+\end{align}
+which we can all compute using the same (FFT) algorithm.
+
+We get estimates $\boldsymbol{\hat{\mu}}$, $\widehat{\sigma_\alpha^2}$, $\widehat{\sigma_\beta^2}$, $\widehat{\sigma_\tau^2}$, $\mathbf{\hat{A}}$, and $\boldsymbol{\hat{\eta}}$ of the unknown parameters by maximizing the likelihood function,
+\begin{equation}
+\mathcal{L}(\mathbf{x};\boldsymbol{\mu},\sigma_\alpha^2,\sigma_\beta^2,\sigma_\tau^2,\mathbf{A},\boldsymbol{\eta}) = \prod_{i,j}\left(2\pi\sigma_{ij}^2\right)^{-1/2}
+\exp\left[-\frac{(x_{ij} - \zeta_{ij})^2}{2\sigma_{ij}^2}\right],\label{eq:likelihood}
+\end{equation}
+with
+\begin{equation}
+\sigma_{ij}^2 = \sigma_\alpha^2 + \sigma_\beta^2\zeta_{ij}^2 + \sigma_\tau^2\dot{\zeta}_{ij}^2.\label{eq:noisevar}
+\end{equation}
+Alternatively, we may also minimize the negative log-likelihood cost function,
+\begin{align}
+C(\mathbf{x};\boldsymbol{\mu},\sigma_\alpha^2,\sigma_\beta^2,\sigma_\tau^2,\mathbf{A},\boldsymbol{\eta}) &=-\log\mathcal{L}(\mathbf{x};\boldsymbol{\mu},\sigma_\alpha^2,\sigma_\beta^2,\sigma_\tau^2,\mathbf{A},\boldsymbol{\eta})\nonumber\\
+&= \frac{MN}{2}\log(2\pi) + \frac{1}{2}\sum_{i,j}\log(\sigma_{ij}^2) + \frac{1}{2}\sum_{i,j}\frac{(x_{ij} - \zeta_{ij})^2}{\sigma_{ij}^2},\label{eq:nll}
+\end{align}
+which is more computationally convenient.
+
+To minimize $C$ in practice, we use a trust-region reflective algorithm that relies on the function gradient, given analytically below.
+\begin{subequations}
+\begin{align}
+\frac{\partial C}{\partial \mu_n} &= \frac{1}{2}\sum_{i,j}\left[\frac{1}{\sigma_{ij}^2} - \frac{(x_{ij} - \zeta_{ij})^2}{\left(\sigma_{ij}^2\right)^2}\right]\frac{\partial\sigma_{ij}^2}{\partial\mu_n} - \sum_{i,j}\frac{x_{ij} - \zeta_{ij}}{\sigma_{ij}^2}\frac{\partial\zeta_{ij}}{\partial\mu_n},\\
+\frac{\partial C}{\partial \sigma_\alpha^2} &= \frac{1}{2}\sum_{i,j}\left[\frac{1}{\sigma_{ij}^2} - \frac{(x_{ij} - \zeta_{ij})^2}{\left(\sigma_{ij}^2\right)^2}\right]\frac{\partial\sigma_{ij}^2}{\partial\sigma_\alpha^2},\\
+\frac{\partial C}{\partial \sigma_\beta^2} &= \frac{1}{2}\sum_{i,j}\left[\frac{1}{\sigma_{ij}^2} - \frac{(x_{ij} - \zeta_{ij})^2}{\left(\sigma_{ij}^2\right)^2}\right]\frac{\partial\sigma_{ij}^2}{\partial\sigma_\beta^2},\\
+\frac{\partial C}{\partial \sigma_\tau^2} &= \frac{1}{2}\sum_{i,j}\left[\frac{1}{\sigma_{ij}^2} - \frac{(x_{ij} - \zeta_{ij})^2}{\left(\sigma_{ij}^2\right)^2}\right]\frac{\partial\sigma_{ij}^2}{\partial\sigma_\tau^2},\\
+\frac{\partial C}{\partial A_m} &= \frac{1}{2}\sum_{i,j}\left[\frac{1}{\sigma_{ij}^2} - \frac{(x_{ij} - \zeta_{ij})^2}{\left(\sigma_{ij}^2\right)^2}\right]\frac{\partial\sigma_{ij}^2}{\partial A_m} - \sum_{i,j}\frac{x_{ij} - \zeta_{ij}}{\sigma_{ij}^2}\frac{\partial\zeta_{ij}}{\partial A_m},\\
+\frac{\partial C}{\partial \eta_m} &= \frac{1}{2}\sum_{i,j}\left[\frac{1}{\sigma_{ij}^2} - \frac{(x_{ij} - \zeta_{ij})^2}{\left(\sigma_{ij}^2\right)^2}\right]\frac{\partial\sigma_{ij}^2}{\partial \eta_m} - \sum_{i,j}\frac{x_{ij} - \zeta_{ij}}{\sigma_{ij}^2}\frac{\partial\zeta_{ij}}{\partial \eta_m}.
+\end{align}
+\label{eq:dCdtheta}
+\end{subequations}
+From Eq.~\ref{eq:zetaij},
+\begin{subequations}
+\begin{align}
+\frac{\partial\zeta_{ij}}{\partial\mu_n} &= \frac{\partial}{\partial \mu_n}\left[A_j\sum_{k=0}^{N-1} S_{ik}(\eta_j)\mu_k\right] = A_j\sum_{k=0}^{N-1} S_{ik}(\eta_j)\delta_{kn}= A_j S_{in}(\eta_j),\\
+\frac{\partial\zeta_{ij}}{\partial A_m} &= \frac{\partial}{\partial A_m}\left[A_j\sum_{k=0}^{N-1} S_{ik}(\eta_j)\mu_k\right] = \delta_{jm}\sum_{k=0}^{N-1} S_{ik}(\eta_j)\mu_{k}= \delta_{jm}\frac{\zeta_{ij}}{A_j},\quad\text{and}\\
+\frac{\partial\zeta_{ij}}{\partial \eta_m} &= \frac{\partial}{\partial \eta_m}\left[A_j\sum_{k=0}^{N-1} S_{ik}(\eta_j)\mu_k\right] = \delta_{jm}A_j\sum_{k=0}^{N-1} S'_{ik}(\eta_j)\mu_{k}.
+\end{align}
+\label{eq:dzetadmuAeta}
+\end{subequations}
+From Eq.~\ref{eq:zetadotij},
+\begin{subequations}
+\begin{align}
+\frac{\partial\dot{\zeta}_{ij}}{\partial\mu_n} &= \frac{\partial}{\partial \mu_n}\left[A_j\sum_{k,l=0}^{N-1} S_{ik}(\eta_j)D_{kl}\mu_{l}\right] = A_j\sum_{k,l=0}^{N-1} S_{ik}(\eta_j)D_{kl}\delta_{ln}= A_j\sum_{k=0}^{N-1} S_{ik}(\eta_j)D_{kn},\\
+\frac{\partial\dot{\zeta}_{ij}}{\partial A_m} &= \frac{\partial}{\partial A_m}\left[A_j\sum_{k,l=0}^{N-1} S_{ik}(\eta_j)D_{kl}\mu_{l}\right] = \delta_{jm}\sum_{k,l=0}^{N-1} S_{ik}(\eta_j)D_{kl}\mu_{l} = \delta_{jm}\frac{\dot{\zeta}_{ij}}{A_j},\quad\text{and}\\
+\frac{\partial\dot{\zeta}_{ij}}{\partial \eta_m} &= \frac{\partial}{\partial \eta_m}\left[A_j\sum_{k,l=0}^{N-1} S_{ik}(\eta_j)D_{kl}\mu_{l}\right] = \delta_{jm}A_j\sum_{k,l=0}^{N-1} S'_{ik}(\eta_j)D_{kl}\mu_{l}.
+\end{align}
+\label{eq:dzetadotdmuAeta}
+\end{subequations}
+From Eq.~\ref{eq:noisevar},
+\begin{align}
+\frac{\partial\sigma_{ij}^2}{\partial\sigma_\alpha^2} &= 1, &
+\frac{\partial\sigma_{ij}^2}{\partial\sigma_\beta^2} &= \zeta_{ij}^2,&\text{and}\quad
+\frac{\partial\sigma_{ij}^2}{\partial\sigma_\tau^2} &= \dot{\zeta}_{ij}^2.
+\end{align}
+Also from Eq.~\ref{eq:noisevar},
+\begin{subequations}
+\begin{align}
+\frac{\partial\sigma_{ij}^2}{\partial \mu_n} &= 2\sigma_\beta^2\zeta_{ij}\frac{\partial\zeta_{ij}}{\partial\mu_n} + 2\sigma_\tau^2\dot{\zeta}_{ij}\frac{\partial\dot{\zeta}_{ij}}{\partial \mu_n},\\
+\frac{\partial\sigma_{ij}^2}{\partial A_m} &= 2\sigma_\beta^2\zeta_{ij}\frac{\partial\zeta_{ij}}{\partial A_m} + 2\sigma_\tau^2\dot{\zeta}_{ij}\frac{\partial\dot{\zeta}_{ij}}{\partial A_m},\quad\text{and}\\
+\frac{\partial\sigma_{ij}^2}{\partial \eta_m} &= 2\sigma_\beta^2\zeta_{ij}\frac{\partial\zeta_{ij}}{\partial \eta_m} + 2\sigma_\tau^2\dot{\zeta}_{ij}\frac{\partial\dot{\zeta}_{ij}}{\partial \eta_m}.
+\end{align}
+\label{eq:dsigmadmuAeta1}
+\end{subequations}
+We can further simplify Eqs.~\ref{eq:dsigmadmuAeta1} using Eqs.~\ref{eq:dzetadmuAeta} and Eqs.~\ref{eq:dzetadotdmuAeta},
+\begin{subequations}
+\begin{align}
+\frac{\partial\sigma_{ij}^2}{\partial \mu_n} &= 2A_j\left[\sigma_\beta^2\zeta_{ij} S_{in}(\eta_j)+ \sigma_\tau^2\dot{\zeta}_{ij}\sum_{k=0}^{N-1}S_{ik}(\eta_j)D_{kn}\right],\\
+\frac{\partial\sigma_{ij}^2}{\partial A_m} &= (2\delta_{jm}/A_m)(\sigma_\beta^2\zeta_{im}^2 + \sigma_\tau^2\dot{\zeta}_{im}^2),\quad\text{and}\\
+\frac{\partial\sigma_{ij}^2}{\partial \eta_m} &= 2A_m\delta_{jm}\left[\sigma_\beta^2\zeta_{im}\sum_{k=0}^{N-1} S'_{ik}(\eta_m)\mu_{k} + \sigma_\tau^2\dot{\zeta}_{im}\sum_{k,l=0}^{N-1} S'_{ik}(\eta_m)D_{kl}\mu_{l}\right].
+\end{align}
+\label{eq:dsigmadmuAeta2}
+\end{subequations}
+
+Substituting in Eqs.~\ref{eq:dCdtheta}, we get
+\begin{subequations}
+\begin{align}
+\frac{\partial C}{\partial \mu_n} &= \sum_{i,j}A_j\left\{\left[\frac{\sigma_{ij}^2 - (x_{ij} - \zeta_{ij})^2}{\left(\sigma_{ij}^2\right)^2}\right]\left[\sigma_\beta^2\zeta_{ij} S_{in}(\eta_j)+ \sigma_\tau^2\dot{\zeta}_{ij}\sum_{k=0}^{N-1}S_{ik}(\eta_j)D_{kn}\right] \right.\nonumber\\
+&\qquad \left.- \frac{x_{ij} - \zeta_{ij}}{\sigma_{ij}^2}S_{in}(\eta_j)\right\},\\
+\frac{\partial C}{\partial \sigma_\alpha^2} &=\frac{1}{2}\sum_{i,j}\frac{\sigma_{ij}^2 - (x_{ij} - \zeta_{ij})^2}{\left(\sigma_{ij}^2\right)^2},\\
+\frac{\partial C}{\partial \sigma_\beta^2} &=\frac{1}{2}\sum_{i,j}\zeta_{ij}^2\frac{\sigma_{ij}^2 - (x_{ij} - \zeta_{ij})^2}{\left(\sigma_{ij}^2\right)^2},\\
+\frac{\partial C}{\partial \sigma_\tau^2} &=\frac{1}{2}\sum_{i,j}\dot{\zeta}_{ij}^2\frac{\sigma_{ij}^2 - (x_{ij} - \zeta_{ij})^2}{\left(\sigma_{ij}^2\right)^2},\\
+\frac{\partial C}{\partial A_m} &= \frac{1}{A_m}\sum_{i}\left\{(\sigma_\beta^2\zeta_{im}^2 + \sigma_\tau^2\dot{\zeta}_{im}^2)\left[\frac{\sigma_{im}^2 - (x_{im} - \zeta_{im})^2}{\left(\sigma_{im}^2\right)^2}\right] - \frac{x_{im} - \zeta_{im}}{\sigma_{im}^2}\zeta_{im}\right\},\\
+\frac{\partial C}{\partial \eta_m} &= A_m\left\{\sum_{i}\left[\frac{\sigma_{im}^2 - (x_{im} - \zeta_{im})^2}{\left(\sigma_{im}^2\right)^2}\right]\left[\sigma_\beta^2\zeta_{im}\sum_{k=0}^{N-1} S'_{ik}(\eta_m)\mu_{k} + \sigma_\tau^2\dot{\zeta}_{im}\sum_{k,l=0}^{N-1} S'_{ik}(\eta_m)D_{kl}\mu_{l}\right]\right. \nonumber\\
+&\qquad - \left.\sum_{i,k}\frac{x_{im} - \zeta_{im}}{\sigma_{im}^2}S'_{ik}(\eta_m)\mu_{k}\right\}.
+\end{align}
+\end{subequations}
+
+
+\bibliography{tdanalysis}
+
+\end{document}

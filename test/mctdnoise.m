@@ -13,7 +13,7 @@ M=10;           % number of traces to compare
 SNR=2e3;        % signal to noise ratio
 w=0.2;          % pulse width [ps]
 tc=N*T/3;       % pulse center [ps]
-nMC = pow2(5); % number of Monte Carlo runs
+nMC = pow2(10); % number of Monte Carlo runs
 
 % Generate ideal time-domain pulse and pulse derivative
 t=T*(0:N-1);
@@ -132,9 +132,8 @@ histogram(vEst(1,:));
 xlabel('\sigma_\alpha^2')
 
 fprintf('Mean sigma_alpha^2: %.4g\n', mean(vEst(1,:)));
-fprintf('Bias corrected mean: %.4g\n',...
-    mean(vEst(1,:))*(M/(M-1)));
 fprintf('True value: %.4g\n',Noise.add^2)
+fprintf('Relative bias: %.4f\n', mean(vEst(1,:))/Noise.add^2);
 fprintf('Standard deviation sigma_alpha^2: %.4g\n',std(vEst(1,:)));
 fprintf('Mean standard error sigma_alpha^2: %.4g\n\n',mean(vErr(1,:)));
 fprintf('\n')
@@ -144,9 +143,8 @@ histogram(vEst(2,:));
 xlabel('\sigma_\beta^2')
 
 fprintf('Mean sigma_beta^2: %.4g\n', mean(vEst(2,:)));
-fprintf('Bias corrected mean: %.4g\n',...
-    mean(vEst(2,:))*(M/(M-1)));
 fprintf('True value: %.4g\n',Noise.mult^2)
+fprintf('Relative bias: %.4f\n', mean(vEst(2,:))/Noise.mult^2);
 fprintf('Standard deviation sigma_beta^2: %.4g\n',std(vEst(2,:)));
 fprintf('Mean standard error sigma_beta^2: %.4g\n\n',mean(vErr(2,:)));
 fprintf('\n')
@@ -156,9 +154,8 @@ histogram(vEst(3,:));
 xlabel('\sigma_\tau^2')
 
 fprintf('Mean sigma_tau^2: %.4g\n', mean(vEst(3,:)));
-fprintf('Bias corrected mean: %.4g\n',...
-    mean(vEst(3,:))*(M/(M-1)));
 fprintf('True value: %.4g\n',Noise.time^2)
+fprintf('Relative bias: %.4f\n', mean(vEst(3,:))/Noise.time^2);
 fprintf('Standard deviation sigma_tau^2: %.4g\n',std(vEst(3,:)));
 fprintf('Mean standard error sigma_tau^2: %.4g\n\n',mean(vErr(3,:)));
 fprintf('\n')
@@ -189,6 +186,6 @@ fprintf('Number of run test rejections (alpha = 5%%): %d/%d\n',...
 toc(tStart)
 
 %% Save results
-% strNow = char(datetime('now','Format','yyyy-MM-dd''T''HHmmss'));
+strNow = char(datetime('now','Format','yyyy-MM-dd''T''HHmmss'));
 % save(['mctdnoise-' strNow])
-% disp(strNow)
+disp(strNow)

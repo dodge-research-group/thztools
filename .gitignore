@@ -1,5 +1,2 @@
 mctdfit.html
-costfun_test_output.mat
-test/costfun_test_lsq_output.mat
-mctdnoise_err_dump.mat
-tdnll_grad.mat
+*.mat

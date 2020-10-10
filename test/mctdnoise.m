@@ -9,11 +9,11 @@ warning('off','all')
 
 T=.05;          % sampling time [ps]
 N=256;          % number of sampled points
-M=10;           % number of traces to compare
+M=100;           % number of traces to compare
 SNR=2e3;        % signal to noise ratio
 w=0.2;          % pulse width [ps]
 tc=N*T/3;       % pulse center [ps]
-nMC = pow2(10); % number of Monte Carlo runs
+nMC = pow2(5); % number of Monte Carlo runs
 
 % Generate ideal time-domain pulse and pulse derivative
 t=T*(0:N-1);

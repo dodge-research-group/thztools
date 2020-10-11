@@ -35,7 +35,8 @@ sigma_beta = Noise.mult;
 sigma_tau = Noise.time;
 Init = cell(nMC,1);
 
-ParmOut = zeros(nMC,N+3);
+v0Est = zeros(3,nMC);
+
 muEst = zeros(N,nMC);
 vEst = zeros(3,nMC);
 AEst = zeros(M,nMC);
@@ -86,6 +87,8 @@ for iMC=1:nMC
     P0 = tdnoisefit(Xn{iMC},Options);
     v0 = P0.var;
     
+    v0Est(:,iMC) = P0.var;
+
     Fix = struct('logv',false,'mu',false,'A',false,'eta',false);
     Ignore = struct('A',false,'eta',false);
     Options = struct('v0',v0,'mu0',mu0, ...
@@ -131,6 +134,7 @@ figure('Name','sigma_alpha^2');
 histogram(vEst(1,:));
 xlabel('\sigma_\alpha^2')
 
+fprintf('Mean sigma0_alpha^2: %.4g\n', mean(v0Est(1,:)));
 fprintf('Mean sigma_alpha^2: %.4g\n', mean(vEst(1,:)));
 fprintf('True value: %.4g\n',Noise.add^2)
 fprintf('Relative bias: %.4f\n', mean(vEst(1,:))/Noise.add^2);
@@ -142,6 +146,7 @@ figure('Name','sigma_beta^2');
 histogram(vEst(2,:));
 xlabel('\sigma_\beta^2')
 
+fprintf('Mean sigma0_beta^2: %.4g\n', mean(v0Est(2,:)));
 fprintf('Mean sigma_beta^2: %.4g\n', mean(vEst(2,:)));
 fprintf('True value: %.4g\n',Noise.mult^2)
 fprintf('Relative bias: %.4f\n', mean(vEst(2,:))/Noise.mult^2);
@@ -153,6 +158,7 @@ figure('Name','sigma_tau^2');
 histogram(vEst(3,:));
 xlabel('\sigma_\tau^2')
 
+fprintf('Mean sigma0_tau^2: %.4g\n', mean(v0Est(3,:)));
 fprintf('Mean sigma_tau^2: %.4g\n', mean(vEst(3,:)));
 fprintf('True value: %.4g\n',Noise.time^2)
 fprintf('Relative bias: %.4f\n', mean(vEst(3,:))/Noise.time^2);

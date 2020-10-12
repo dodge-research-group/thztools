@@ -21,9 +21,9 @@ t=t(:);
 
 xfun = @(t,t0,w) (1-2*((t-t0)/w).^2).*exp(-((t-t0)/w).^2);
 
-% Compute derivative matrix
-fun = @(theta,w) -1i*w;
-D = tdtf(fun,0,N,T);
+% % Compute derivative matrix
+% fun = @(theta,w) -1i*w;
+% D = tdtf(fun,0,N,T);
 
 %% Run Monte Carlo simulation
 
@@ -38,21 +38,16 @@ Init = cell(nMC,1);
 sigma_A = 0.05;
 sigma_eta = 0.1*T;
 
-v0Est = zeros(3,nMC);
-nll0 = zeros(nMC,1);
-Diagnostic0 = struct('exitflag',Init,...
-    'output',Init,'grad',Init,'hessian',Init,'Err',Init);
-
 v0Err = zeros(3,nMC);
 
 muEst = zeros(N,nMC);
 vEst = zeros(3,nMC);
 AEst = zeros(M,nMC);
 etaEst = zeros(M,nMC);
-muErr = zeros(N,nMC);
+% muErr = zeros(N,nMC);
 vErr = zeros(3,nMC);
-AErr = zeros(M-1,nMC);
-etaErr = zeros(M-1,nMC);
+% AErr = zeros(M-1,nMC);
+% etaErr = zeros(M-1,nMC);
 nll = zeros(nMC,1);
 Diagnostic = struct('exitflag',Init,...
     'output',Init,'grad',Init,'hessian',Init,'Err',Init);
@@ -75,7 +70,7 @@ Diagnostic = struct('exitflag',Init,...
 
 Xn = cell(nMC,1);
 
-A = zeros(nMC,M);
+A = ones(nMC,M);
 eta = zeros(nMC,M);
 
 for iMC=1:nMC
@@ -83,32 +78,62 @@ for iMC=1:nMC
     if ~mod(iMC,round(nMC/10))
         fprintf('Monte Carlo run: %d/%d\n',iMC,nMC)
     end
+    
     % Generate noisy data
     x = zeros(N,M);
-    A(iMC,:) = sigma_A*randn(1,M);
-    eta(iMC,:) = sigma_eta*randn(1,M);
+    A(iMC, 2:M) = 1 + sigma_A*randn(1,M-1);
+    eta(iMC, 2:M) = sigma_eta*randn(1,M-1);
     for jj = 1:M
-        x(:,jj)=A(iMC,jj)*xfun(t,tc+sigma_tau*randn(N,1)+eta(iMC,jj),w);
+        x(:,jj) = A(iMC,jj)...
+            *xfun(t, tc + sigma_tau*randn(N,1) + eta(iMC,jj), w);
     end
     Xn{iMC} = x + sigma_alpha*randn(N,M) + sigma_beta*x.*randn(N,M);
 
-    Fix = struct('logv',true,'mu',true,'A',false,'eta',false);
-    Ignore = struct('A',false,'eta',false);
-    v0 = [1;1;1];
+    % Fit for A and eta, holding logv and mu constant
+    Fix = struct('logv', true, ...
+        'mu', true, ...
+        'A', false, ...
+        'eta', false);
+    Ignore = struct('A', false, ...
+        'eta', false);
+    v0 = mean(var(Xn{iMC},1,2))*[1;eps;eps];
     mu0 = Xn{iMC}(:,1);
-    Options = struct('v0',v0,'mu0',mu0,'ts',T,'Fix',Fix,'Ignore',Ignore);
-    [P0, nll0(iMC), Diagnostic0(iMC)] = tdnoisefit(Xn{iMC},Options);
-    v0 = P0.var;
-    
-    v0Est(:,iMC) = P0.var;
-    v0Err(:,iMC) = Diagnostic0(iMC).Err.var;
+    Options = struct('v0', v0, ...
+        'mu0', mu0, ...
+        'ts', T, ...
+        'Fix', Fix, ...
+        'Ignore', Ignore);
+    P0 = tdnoisefit(Xn{iMC},Options);
 
-    Fix = struct('logv',false,'mu',false,'A',false,'eta',false);
-    Ignore = struct('A',false,'eta',false);
-    Options = struct('v0',v0,'mu0',mu0, ...
-        'A0',ones(M,1),'eta0',zeros(M,1),'ts',T,'Fix',Fix,'Ignore',Ignore);
-    [P,nll(iMC),Diagnostic(iMC)] ...
-        = tdnoisefit(Xn{iMC},Options);
+    % Fit for mu, A, and eta together
+    Fix = struct('logv' ,true, ...
+        'mu', false, ...
+        'A', false, ...
+        'eta', false);
+    Options = struct('v0', v0, ...
+        'mu0', mu0, ...
+        'A0', P0.A, ...
+        'eta0', P0.eta, ...
+        'ts', T, ...
+        'Fix', Fix, ...
+        'Ignore', Ignore);
+    P1 = tdnoisefit(Xn{iMC},Options);
+
+    % Fit for variance parameters, holding everything else constant
+    Fix = struct('logv', false, ...
+        'mu', true, ...
+        'A', true, ...
+        'eta', true);
+    Ignore = struct('A', false, ...
+        'eta', false);
+    Options = struct('v0', v0(1)*[1;1;1], ...
+        'mu0', P1.mu, ...
+        'A0', P1.A, ...
+        'eta0', P1.eta, ...
+        'ts', T, ...
+        'Fix', Fix, ...
+        'Ignore', Ignore);
+    [P,nll(iMC),Diagnostic(iMC)] = tdnoisefit(Xn{iMC},Options);
     
     vEst(:,iMC) = P.var;
     muEst(:,iMC) = P.mu;
@@ -117,8 +142,8 @@ for iMC=1:nMC
     
     vErr(:,iMC) = Diagnostic(iMC).Err.var;
 %     muErr(:,iMC) = Diagnostic(iMC).Err.mu;
-    AErr(:,iMC) = Diagnostic(iMC).Err.A;
-    etaErr(:,iMC) = Diagnostic(iMC).Err.eta;
+%     AErr(:,iMC) = Diagnostic(iMC).Err.A;
+%     etaErr(:,iMC) = Diagnostic(iMC).Err.eta;
 % 
 %     zeta = zeros(N,M);
 %     S = zeros(N,N,M);
@@ -149,11 +174,8 @@ end
 % xlabel('\sigma_\alpha^2')
 % 
 fprintf('True value: %.4g\n',Noise.add^2)
-fprintf('Mean sigma0_alpha^2: %.4g\n', mean(v0Est(1,:)));
-fprintf('Relative bias: %.4f\n', mean(v0Est(1,:))/Noise.add^2);
-fprintf('\n')
 fprintf('Mean sigma_alpha^2: %.4g\n', mean(vEst(1,:)));
-fprintf('Relative bias: %.4f\n', mean(v0Est(1,:))/Noise.add^2);
+fprintf('Relative bias: %.4f\n', mean(vEst(1,:))/Noise.add^2);
 % fprintf('Standard deviation sigma_alpha^2: %.4g\n',std(v0Est(1,:)));
 % fprintf('Mean standard error sigma_alpha^2: %.4g\n\n',mean(v0Err(1,:)));
 fprintf('\n')
@@ -163,9 +185,6 @@ fprintf('\n')
 % xlabel('\sigma_\beta^2')
 % 
 fprintf('True value: %.4g\n',Noise.mult^2)
-fprintf('Mean sigma0_beta^2: %.4g\n', mean(v0Est(2,:)));
-fprintf('Relative bias: %.4f\n', mean(v0Est(2,:))/Noise.mult^2);
-fprintf('\n')
 fprintf('Mean sigma_beta^2: %.4g\n', mean(vEst(2,:)));
 fprintf('Relative bias: %.4f\n', mean(vEst(2,:))/Noise.mult^2);
 % fprintf('Standard deviation sigma_beta^2: %.4g\n',std(v0Est(2,:)));
@@ -177,9 +196,6 @@ fprintf('\n')
 % xlabel('\sigma_\tau^2')
 % 
 fprintf('True value: %.4g\n',Noise.time^2)
-fprintf('Mean sigma0_tau^2: %.4g\n', mean(v0Est(3,:)));
-fprintf('Relative bias: %.4f\n', mean(v0Est(3,:))/Noise.time^2);
-fprintf('\n')
 fprintf('Mean sigma_tau^2: %.4g\n', mean(vEst(3,:)));
 fprintf('Relative bias: %.4f\n', mean(vEst(3,:))/Noise.time^2);
 % fprintf('Standard deviation sigma_tau^2: %.4g\n',std(v0Est(3,:)));

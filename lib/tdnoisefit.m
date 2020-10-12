@@ -202,15 +202,18 @@ if nargout > 2
     if paramTest(1)
         Diagnostic.Err.var = ...
             sqrt(diag(diag(P.var)*V(1:3,1:3)*diag(P.var)));
+        idxStart = idxStart + 3;
     end
     if paramTest(2)
-        Diagnostic.Err.mu = err(3+(1:N));
+        Diagnostic.Err.mu = err(idxStart+(0:N-1));
+        idxStart = idxStart + N;
     end
     if paramTest(3)
-        Diagnostic.Err.A = err(3+N+(1:M-1));
+        Diagnostic.Err.A = err(idxStart+(0:M-2));
+        idxStart = idxStart + M - 1;
     end
     if paramTest(4)
-        Diagnostic.Err.eta = err(3+N+M-1+(1:M-1));
+        Diagnostic.Err.eta = err(idxStart+(0:M-2));
     end
 
 end

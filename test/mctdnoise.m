@@ -81,8 +81,8 @@ for iMC=1:nMC
     
     % Generate noisy data
     x = zeros(N,M);
-    A(iMC, 2:M) = 1 + sigma_A*randn(1,M-1);
-    eta(iMC, 2:M) = sigma_eta*randn(1,M-1);
+    A(iMC, :) = 1 + sigma_A*randn(1,M);
+    eta(iMC, :) = sigma_eta*randn(1,M);
     for jj = 1:M
         x(:,jj) = A(iMC,jj)...
             *xfun(t, tc + sigma_tau*randn(N,1) + eta(iMC,jj), w);

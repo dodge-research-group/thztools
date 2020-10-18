@@ -110,7 +110,7 @@ end
 if Fix.mu
     setPmu = @(p) mu0;
 else
-    MLE.x0 = [MLE.x0;mu0];
+    MLE.x0 = [MLE.x0; mu0(:)];
     idxEnd = idxStart+N-1;
     idxRange = idxStart:idxEnd;
     setPmu = @(p) p(idxRange);
@@ -121,10 +121,10 @@ if Ignore.A
 elseif Fix.A
     setPA = @(p) A0(:);
 else
-    MLE.x0 = [MLE.x0;A0(2:end)];
-    idxEnd = idxStart+M-2;
+    MLE.x0 = [MLE.x0; A0(:)];
+    idxEnd = idxStart+M-1;
     idxRange = idxStart:idxEnd;
-    setPA = @(p) [A0(1);p(idxRange)];
+    setPA = @(p) p(idxRange);
     idxStart = idxEnd + 1;
 end
 if Ignore.eta
@@ -132,17 +132,17 @@ if Ignore.eta
 elseif Fix.eta
     setPeta = @(p) eta0(:);
 else
-    MLE.x0 = [MLE.x0;eta0(2:end)];
-    idxEnd = idxStart+M-2;
+    MLE.x0 = [MLE.x0; eta0(:)];
+    idxEnd = idxStart+M-1;
     idxRange = idxStart:idxEnd;
-    setPeta = @(p) [eta0(1);p(idxRange)];
+    setPeta = @(p) p(idxRange);
 end
 
 D = tdtf(@(theta,w) -1i*w,0,N,ts);
 
 parseIn = @(p) struct('logv',setPlogv(p),'mu',setPmu(p),...
     'A',setPA(p),'eta',setPeta(p),'ts',ts,'D',D);
-MLE.objective = @(p) tdnllfixedeffects(x,parseIn(p),Fix);
+MLE.objective = @(p) tdnll(x,parseIn(p),Fix);
 
 [pOut,fval,exitflag,output,grad,hessian] = fminunc(MLE);
 
@@ -167,17 +167,17 @@ end
 if Ignore.A || Fix.A
     P.A = A0;
 else
-    idxEnd = idxStart+M-2;
+    idxEnd = idxStart+M-1;
     idxRange = idxStart:idxEnd;
     idxStart = idxEnd + 1;
-    P.A = [A0(1);pOut(idxRange)];
+    P.A = pOut(idxRange);
 end
 if Ignore.eta || Fix.eta
     P.eta = eta0;
 else
-    idxEnd = idxStart+M-2;
+    idxEnd = idxStart+M-1;
     idxRange = idxStart:idxEnd;
-    P.eta = [eta0(1);pOut(idxRange)];
+    P.eta = pOut(idxRange);
 end
 
 P.ts = ts;
@@ -194,7 +194,7 @@ if nargout > 2
         (Fix.A || Ignore.A) ;...
         (Fix.eta || Ignore.eta)];
     
-    Nparam = sum(paramTest.*[3;N;M-1;M-1]);
+    Nparam = sum(paramTest.*[3;N;M;M]);
     V = speye(Nparam)/Diagnostic.hessian;
     err = sqrt(diag(V));
     
@@ -209,11 +209,11 @@ if nargout > 2
         idxStart = idxStart + N;
     end
     if paramTest(3)
-        Diagnostic.Err.A = err(idxStart+(0:M-2));
-        idxStart = idxStart + M - 1;
+        Diagnostic.Err.A = err(idxStart+(0:M-1));
+        idxStart = idxStart + M;
     end
     if paramTest(4)
-        Diagnostic.Err.eta = err(idxStart+(0:M-2));
+        Diagnostic.Err.eta = err(idxStart+(0:M-1));
     end
 
 end
@@ -232,11 +232,11 @@ end
         end
         if ~Fix.A
             gradnll(idxStart) = [];
-            idxStart = idxStart + M - 1;
+            idxStart = idxStart + M;
         end
         if ~Fix.eta
             gradnll(idxStart) = [];
-            idxStart = idxStart + M - 1;
+            idxStart = idxStart + M;
         end        
     end
 

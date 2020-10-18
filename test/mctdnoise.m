@@ -13,7 +13,7 @@ M=10;           % number of traces to compare
 SNR=2e3;        % signal to noise ratio
 w=0.2;          % pulse width [ps]
 tc=N*T/3;       % pulse center [ps]
-nMC = pow2(5); % number of Monte Carlo runs
+nMC = pow2(10); % number of Monte Carlo runs
 
 % Generate ideal time-domain pulse and pulse derivative
 t=T*(0:N-1);
@@ -73,10 +73,6 @@ Xn = cell(nMC,1);
 A = ones(nMC,M);
 eta = zeros(nMC,M);
 
-windowSize = 6;
-b = (1/windowSize)*ones(1,windowSize);
-a = 1;
-
 for iMC=1:nMC
     rng(iMC)
     if ~mod(iMC,round(nMC/10))
@@ -93,9 +89,7 @@ for iMC=1:nMC
     end
     Xn{iMC} = x + sigma_alpha*randn(N,M) + sigma_beta*x.*randn(N,M);
     
-    Xfil = filter(b,a,Xn{iMC});
-
-    % Fit filtered Xn for A and eta, holding logv and mu constant
+    % Fit Xn for A and eta, holding logv constant and using known mu
     Fix = struct('logv', true, ...
         'mu', true, ...
         'A', false, ...
@@ -103,20 +97,19 @@ for iMC=1:nMC
     Ignore = struct('A', false, ...
         'eta', false);
     v0 = mean(var(Xn{iMC},1,2))*[1;eps;eps];
-    mu0 = Xfil(:,1);
+    mu0 = xfun(t, tc, w);
     Options = struct('v0', v0, ...
         'mu0', mu0, ...
         'ts', T, ...
         'Fix', Fix, ...
         'Ignore', Ignore);
-    P0 = tdnoisefit(Xfil, Options);
+    P0 = tdnoisefit(Xn{iMC}, Options);
 
-    % Fit for v, mu, and eta, holding A constant
-    mu0 = mean(Xn{iMC},2);
+    % Fit for v, eta, and A
     Fix = struct('logv', false, ...
-        'mu', false, ...
+        'mu', true, ...
         'A', true, ...
-        'eta', false);
+        'eta', true);
     Ignore = struct('A', false, ...
         'eta', false);
     Options = struct('v0', v0(1)*[1;1;1], ...
@@ -162,9 +155,6 @@ end
 
 %% Plot parameter distributions
 
-fprintf('\n')
-fprintf('Window size: %d\n', windowSize)
-fprintf('\n')
 % figure('Name','sigma_alpha^2');
 % histogram(vEst(1,:));
 % xlabel('\sigma_\alpha^2')

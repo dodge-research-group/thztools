@@ -1,0 +1,45 @@
+Opening log file:  /tmp/java.log.37265
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2020 The MathWorks, Inc.
+                  R2020a (9.8.0.1323502) 64-bit (glnxa64)
+                             February 25, 2020
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Iteration: 1/30
+Starting parallel pool (parpool) using the 'local' profile ...
+Connected to the parallel pool (number of workers: 12).
+Iteration: 2/30
+Iteration: 3/30
+Iteration: 4/30
+Iteration: 5/30
+Iteration: 6/30
+Iteration: 7/30
+Iteration: 8/30
+Iteration: 9/30
+Iteration: 10/30
+Iteration: 11/30
+Iteration: 12/30
+Iteration: 13/30
+Iteration: 14/30
+Iteration: 15/30
+Iteration: 16/30
+Iteration: 17/30
+Iteration: 18/30
+Iteration: 19/30
+Iteration: 20/30
+Iteration: 21/30
+Iteration: 22/30
+Iteration: 23/30
+Iteration: 24/30
+Iteration: 25/30
+Iteration: 26/30
+Iteration: 27/30
+Iteration: 28/30
+Iteration: 29/30
+Iteration: 30/30
+Elapsed time is 70564.752026 seconds.
+2020-10-20T165330

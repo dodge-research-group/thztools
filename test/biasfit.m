@@ -9,7 +9,7 @@ warning('off','all')
 
 T = .05;            % sampling time [ps]
 N = 256;            % number of sampled points
-Mvec = (10:10:300); % number of traces to compare
+Mvec = (10:10:100); % number of traces to compare
 Mnum = length(Mvec);
 SNR = 2e3;          % signal to noise ratio
 w = 0.2;            % pulse width [ps]

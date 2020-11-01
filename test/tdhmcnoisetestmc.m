@@ -11,7 +11,7 @@ M=10;           % number of traces to compare
 SNR=2e3;        % signal to noise ratio
 w=0.2;          % pulse width [ps]
 tc=N*T/3;       % pulse center [ps]
-nMC = pow2(10); % number of Monte Carlo runs
+nMC = pow2(14); % number of Monte Carlo runs
 
 % Generate ideal time-domain pulse and pulse derivative
 t=T*(0:N-1);
@@ -40,6 +40,7 @@ mean_exp_logv = zeros(nMC,3);
 exp_mean_logv = zeros(nMC,3);
 
 parfor iMC = 1:nMC
+  try
     % Simulate data
     epsilon_alpha = sigma_alpha*randn(N,M);
     epsilon_beta = sigma_beta*randn(N,M);
@@ -114,6 +115,11 @@ parfor iMC = 1:nMC
     concatenatedSamples = vertcat(chains{:});
     mean_exp_logv(iMC,:) = mean(exp(concatenatedSamples(:,1:3)));
     exp_mean_logv(iMC,:) = exp(mean(concatenatedSamples(:,1:3)));
+
+    catch
+       disp("Error encountered in iteration number:")
+       disp(iMC)
+    end
     
 end
 

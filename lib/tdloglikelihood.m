@@ -1,12 +1,12 @@
 function [loglik,gradll] = tdloglikelihood(Param, x, ts)
-%TDNLL computes negative log-likelihood for the time-domain noise model
+%TDLOGLIKELIHOOD computes log-likelihood for the time-domain noise model
 %
 % Syntax:   loglik = tdloglikelihood(Param, x, ts)
 %
 % Description:
 %
-% TDNLL computes the negative log-likelihood function for obtaining the
-% data matrix x, given the parameter structure Param.
+% TDLOGLIKELIHOOD computes the log-likelihood function for obtaining the
+% data matrix x, given the parameter vector Param.
 %  
 % Inputs:
 %   x       Data matrix                 [NxM double]
@@ -19,7 +19,7 @@ function [loglik,gradll] = tdloglikelihood(Param, x, ts)
 %
 % Outputs: 
 %   loglik     log-likelihood function
-%   gradll     Gradient of the negative log-likelihood function
+%   gradll     Gradient of the log-likelihood function
 %
 
 % Parse function inputs

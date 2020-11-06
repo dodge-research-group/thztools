@@ -20,10 +20,7 @@ t=T*(0:N-1);
 t=t(:);
 
 xfun = @(t,t0,w) (1-2*((t-t0)/w).^2).*exp(-((t-t0)/w).^2);
-
-% % Compute derivative matrix
-% fun = @(theta,w) -1i*w;
-% D = tdtf(fun,0,N,T);
+mu = xfun(t, tc, w);
 
 %% Run Monte Carlo simulation
 

@@ -7,8 +7,8 @@ tStart = tic;
 warning('off','all')
 %% Set initial parameters
 
-T=.05;          % sampling time [ps]
-N=256;          % number of sampled points
+T=.05/2;          % sampling time [ps]
+N=256*2;          % number of sampled points
 M=10;           % number of traces to compare
 SNR=2e3;        % signal to noise ratio
 w=0.2;          % pulse width [ps]
@@ -30,14 +30,14 @@ mu = xfun(t,tc,w);
 
 Noise.add = 1/SNR;
 Noise.mult = 10/SNR;
-Noise.time = 10*T/SNR;
+Noise.time = 10*T*1/SNR;
 sigma_alpha = Noise.add;
 sigma_beta = Noise.mult;
 sigma_tau = Noise.time;
 Init = cell(nMC,1);
 
 sigma_A = 0.05;
-sigma_eta = 0.1*T;
+sigma_eta = 0.1*T*2;
 
 v0Err = zeros(3,nMC);
 

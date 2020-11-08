@@ -7,14 +7,14 @@ tStart = tic;
 warning('off','all')
 %% Set initial parameters
 
-density = 2;
+density = 1;
 T=.05/density;          % sampling time [ps]
 N=256*density;          % number of sampled points
 M=10;           % number of traces to compare
 SNR=2e3;        % signal to noise ratio
 w=0.2;          % pulse width [ps]
 tc=N*T/3;       % pulse center [ps]
-nMC = pow2(5); % number of Monte Carlo runs
+nMC = pow2(10); % number of Monte Carlo runs
 
 % Generate ideal time-domain pulse and pulse derivative
 t=T*(0:N-1);
@@ -75,7 +75,7 @@ Xn = cell(nMC,1);
 A = ones(nMC,M);
 eta = zeros(nMC,M);
 
-for iMC=1:nMC
+parfor iMC=1:nMC
     rng(iMC)
     if ~mod(iMC,round(nMC/10))
         fprintf('Monte Carlo run: %d/%d\n',iMC,nMC)
@@ -83,11 +83,11 @@ for iMC=1:nMC
     
     % Generate noisy data
     x = zeros(N,M);
-    A(iMC, 2:M) = 1 + sigma_A*randn(1,M-1);
-    eta(iMC, 2:M) = sigma_eta*randn(1,M-1);
+    Ai = [1, 1 + sigma_A*randn(1,M-1)];
+    etai = [0, sigma_eta*randn(1,M-1)];
     for jj = 1:M
-        x(:,jj) = A(iMC,jj)...
-            *xfun(t, tc + sigma_tau*randn(N,1) + eta(iMC,jj), w);
+        x(:,jj) = Ai(jj)...
+            *xfun(t, tc + sigma_tau*randn(N,1) + etai(jj), w);
     end
     Xn{iMC} = x + sigma_alpha*randn(N,M) + sigma_beta*x.*randn(N,M);
 
@@ -172,6 +172,9 @@ for iMC=1:nMC
     muEst(:,iMC) = P.mu;
     AEst(:,iMC) = P.A;
     etaEst(:,iMC) = P.eta;
+    
+    A(iMC,:) = Ai';
+    eta(iMC,:) = etai';
     
     vErr(:,iMC) = Diagnostic(iMC).Err.var;
 %     muErr(:,iMC) = Diagnostic(iMC).Err.mu;

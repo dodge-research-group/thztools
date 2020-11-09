@@ -8,6 +8,7 @@ warning('off','all')
 %% Set initial parameters
 
 density = 1;
+disp(['Density: ' num2str(density)])
 T=.05/density;          % sampling time [ps]
 N=256*density;          % number of sampled points
 M=10;           % number of traces to compare

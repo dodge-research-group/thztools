@@ -1,0 +1,38 @@
+Opening log file:  /tmp/java.log.21330
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2020 The MathWorks, Inc.
+                  R2020a (9.8.0.1323502) 64-bit (glnxa64)
+                             February 25, 2020
+
+ 
+To get started, type doc.
+For product information, visit www.mathworks.com.
+ 
+Density: 4
+Starting parallel pool (parpool) using the 'local' profile ...
+Connected to the parallel pool (number of workers: 12).
+Monte Carlo run: 408/1024
+Monte Carlo run: 204/1024
+Monte Carlo run: 510/1024
+Monte Carlo run: 306/1024
+Monte Carlo run: 102/1024
+Monte Carlo run: 612/1024
+Monte Carlo run: 714/1024
+Monte Carlo run: 816/1024
+Monte Carlo run: 918/1024
+Monte Carlo run: 1020/1024
+True value: 2.5e-07
+Mean sigma_alpha^2: 2.251e-07
+Relative bias: 0.9003
+
+True value: 2.5e-05
+Mean sigma_beta^2: 2.206e-05
+Relative bias: 0.8822
+
+True value: 6.25e-08
+Mean sigma_tau^2: 5.347e-08
+Relative bias: 0.8554
+
+Elapsed time is 17554.522833 seconds.
+2020-11-08T182850

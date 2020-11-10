@@ -9,13 +9,13 @@ warning('off','all')
 
 density = 1;
 disp(['Density: ' num2str(density)])
-T=.05/density;          % sampling time [ps]
-N=256*density;          % number of sampled points
+T=.05/density;  % sampling time [ps]
+N=256*density;  % number of sampled points
 M=10;           % number of traces to compare
 SNR=2e3;        % signal to noise ratio
 w=0.2;          % pulse width [ps]
 tc=N*T/3;       % pulse center [ps]
-nMC = pow2(10); % number of Monte Carlo runs
+nMC = pow2(5); % number of Monte Carlo runs
 
 % Generate ideal time-domain pulse and pulse derivative
 t=T*(0:N-1);
@@ -72,7 +72,7 @@ Xn = cell(nMC,1);
 A = ones(nMC,M);
 eta = zeros(nMC,M);
 
-parfor iMC=1:nMC
+for iMC=1:nMC
     rng(iMC)
     if ~mod(iMC,round(nMC/10))
         fprintf('Monte Carlo run: %d/%d\n',iMC,nMC)
@@ -80,8 +80,8 @@ parfor iMC=1:nMC
     
     % Generate noisy data
     x = zeros(N,M);
-    A(iMC, :) = 1 + sigma_A*randn(1,M);
-    eta(iMC, :) = sigma_eta*randn(1,M);
+    Ai = 1 + sigma_A*randn(1,M);
+    etai = sigma_eta*randn(1,M);
     for jj = 1:M
         x(:,jj) = Ai(jj)...
             *xfun(t, tc + sigma_tau*randn(N,1) + etai(jj), w);
@@ -262,5 +262,5 @@ toc(tStart)
 
 %% Save results
 strNow = char(datetime('now','Format','yyyy-MM-dd''T''HHmmss'));
-save(['mctdnoise-' strNow])
+% save(['mctdnoise-' strNow])
 disp(strNow)

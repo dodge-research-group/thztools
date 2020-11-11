@@ -7,7 +7,7 @@ tStart = tic;
 warning('off','all')
 %% Set initial parameters
 
-density = 1;
+density = 2;
 disp(['Density: ' num2str(density)])
 T=.05/density;  % sampling time [ps]
 N=256*density;  % number of sampled points
@@ -18,11 +18,8 @@ tc=N*T/3;       % pulse center [ps]
 nMC = pow2(5); % number of Monte Carlo runs
 
 % Generate ideal time-domain pulse and pulse derivative
-t=T*(0:N-1);
-t=t(:);
-
-xfun = @(t,t0,w) (1-2*((t-t0)/w).^2).*exp(-((t-t0)/w).^2);
-mu = xfun(t, tc, w);
+[mu, t] = thzgen(N, T, tc, 'taur', 0.4);
+xfun = @(ti) triginterp(ti, t, mu);
 
 %% Run Monte Carlo simulation
 
@@ -72,7 +69,7 @@ Xn = cell(nMC,1);
 A = ones(nMC,M);
 eta = zeros(nMC,M);
 
-for iMC=1:nMC
+parfor iMC=1:nMC
     rng(iMC)
     if ~mod(iMC,round(nMC/10))
         fprintf('Monte Carlo run: %d/%d\n',iMC,nMC)
@@ -83,8 +80,7 @@ for iMC=1:nMC
     Ai = 1 + sigma_A*randn(1,M);
     etai = sigma_eta*randn(1,M);
     for jj = 1:M
-        x(:,jj) = Ai(jj)...
-            *xfun(t, tc + sigma_tau*randn(N,1) + etai(jj), w);
+        x(:,jj) = Ai(jj)*xfun(t + sigma_tau*randn(N,1) + etai(jj));
     end
     Xn{iMC} = x + sigma_alpha*randn(N,M) + sigma_beta*x.*randn(N,M);
 

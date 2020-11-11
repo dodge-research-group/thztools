@@ -17,14 +17,8 @@ tc = N*T/3;         % pulse center [ps]
 nMC = pow2(10);      % number of Monte Carlo runs
 
 % Generate ideal time-domain pulse and pulse derivative
-t=T*(0:N-1);
-t=t(:);
-
-xfun = @(t,t0,w) (1-2*((t-t0)/w).^2).*exp(-((t-t0)/w).^2);
-
-% Compute derivative matrix
-fun = @(theta,w) -1i*w;
-D = tdtf(fun,0,N,T);
+[mu, t] = thzgen(N, T, tc, 'taur', 0.4);
+xfun = @(ti) triginterp(ti, t, mu);
 
 %% Run Monte Carlo simulation
 
@@ -55,8 +49,7 @@ for iM = 1:Mnum
         A = 1 + sigma_A*randn(1,M);
         eta = sigma_eta*randn(1,M);
         for k = 1:M
-            x(:,k)=A(k)...
-                *xfun(t, tc + sigma_tau*randn(N,1) + eta(k), w);
+            x(:,k)=A(k)*xfun(t + sigma_tau*randn(N,1) + eta(k));
         end
         Xn = x + sigma_alpha*randn(N,M) + sigma_beta*x.*randn(N,M);
         

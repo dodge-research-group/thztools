@@ -35,6 +35,7 @@ sigma_eta = 0.1*T;
 
 vMean = zeros(3, Mnum);
 vStdErr = zeros(3, Mnum);
+vDist = cell(1, Mnum);
 
 for iM = 1:Mnum
     M = Mvec(iM);
@@ -94,8 +95,8 @@ for iM = 1:Mnum
             'eta', false);
         Options = struct('v0', P1.var, ...
             'mu0', mu0, ...
-            'A0', P0.A, ...
-            'eta0', P0.eta, ...
+            'A0', P1.A, ...
+            'eta0', P1.eta, ...
             'ts', T, ...
             'Fix', Fix, ...
             'Ignore', Ignore);
@@ -107,6 +108,7 @@ for iM = 1:Mnum
     
     vMean(:,iM) = mean(vEst, 2);
     vStdErr(:,iM) = std(vEst, 0, 2)/sqrt(nMC);
+    vDist{iM} = vEst;
 end
 
 %% Stop timer
@@ -114,5 +116,5 @@ toc(tStart)
 
 %% Save results
 strNow = char(datetime('now','Format','yyyy-MM-dd''T''HHmmss'));
-save(['biasfit-' strNow], 'Mvec', 'vMean', 'vStdErr')
+save(['biasfit-' strNow], 'Mvec', 'vMean', 'vStdErr', 'vDist')
 disp(strNow)

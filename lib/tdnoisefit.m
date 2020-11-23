@@ -162,7 +162,9 @@ MLE.objective = @(p) tdnll(x,parseIn(p),Fix);
 % returns an error, rerun the optimization with the quasi-Newton algorithm
 % from the current optimal point.
 try chol(hessian);
-catch ME
+catch
+    warning(['Hessian returned by FMINUNC is not positive definite; ',...
+        'recalculating with quasi-Newton algorithm'])
     MLE.x0 = pOut;
     MLE.options = optimoptions('fminunc',...
         'SpecifyObjectiveGradient',true,...
@@ -227,82 +229,6 @@ if nargout > 2
     Diagnostic.exitflag = exitflag;
     Diagnostic.output = output;
     Diagnostic.grad = grad;
-%     Popt = struct('logv',log(P.var),'mu',P.mu,'A',P.A,'eta',P.eta);
-%     hessian = zeros(length(grad));
-%     idxStart = 1;
-%     if varyParam(1)
-%         delta = max(sqrt(eps)*[1;max(abs(Popt.logv))]);
-%         for i=1:3
-%             Pplus = setfield(Popt,{1},'logv',{i},Popt.logv(i) + delta);
-%             Pminus = setfield(Popt,{1},'logv',{i},Popt.logv(i) - delta);
-%             [~, gradPlus] = tdnll(x,Pplus);
-%             [~, gradMinus] = tdnll(x,Pminus);
-%             hessian(:,idxStart + i - 1) = ...
-%                 (gradPlus - gradMinus)/(2*delta);
-%         end
-%         idxStart = idxStart + 3;
-%     end
-%     if varyParam(2)
-%         delta = max(sqrt(eps)*[1;max(abs(Popt.mu))]);
-%         for i=1:N
-%             Pplus = setfield(Popt,{1},'mu',{i},Popt.mu(i) + delta);
-%             Pminus = setfield(Popt,{1},'mu',{i},Popt.mu(i) - delta);
-%             [~, gradPlus] = tdnll(x,Pplus);
-%             [~, gradMinus] = tdnll(x,Pminus);
-%             hessian(:,idxStart + i - 1) = ...
-%                 (gradPlus - gradMinus)/(2*delta);
-%         end
-%         idxStart = idxStart + N;
-%     end
-%     if varyParam(3)
-%         delta = max(sqrt(eps)*[1;max(abs(Popt.A))]);
-%         if varyParam(2)
-%             for i=1:M-1
-%                 Pplus = setfield(Popt,{1},'A',{i+1},Popt.A(i+1) + delta);
-%                 Pminus = setfield(Popt,{1},'A',{i+1},Popt.A(i+1) - delta);
-%                 [~, gradPlus] = tdnll(x,Pplus);
-%                 [~, gradMinus] = tdnll(x,Pminus);
-%                 hessian(:,idxStart + i - 1) = ...
-%                     (gradPlus - gradMinus)/(2*delta);
-%             end
-%             idxStart = idxStart + M - 1;
-%         else
-%             for i=1:M
-%                 Pplus = setfield(Popt,{1},'A',{i},Popt.A(i) + delta);
-%                 Pminus = setfield(Popt,{1},'A',{i},Popt.A(i) - delta);
-%                 [~, gradPlus] = tdnll(x,Pplus);
-%                 [~, gradMinus] = tdnll(x,Pminus);
-%                 hessian(:,idxStart + i - 1) = ...
-%                     (gradPlus - gradMinus)/(2*delta);
-%             end
-%             idxStart = idxStart + M;
-%         end
-%     end
-%     if varyParam(4)
-%         delta = max(sqrt(eps)*[1;max(abs(Popt.eta))]);
-%         if varyParam(2)
-%             for i=1:M-1
-%                 Pplus = setfield(Popt,{1},'eta',{i+1},...
-%                     Popt.eta(i+1) + delta);
-%                 Pminus = setfield(Popt,{1},'eta',{i+1},...
-%                     Popt.eta(i+1) - delta);
-%                 [~, gradPlus] = tdnll(x,Pplus);
-%                 [~, gradMinus] = tdnll(x,Pminus);
-%                 hessian(:,idxStart + i - 1) = ...
-%                     (gradPlus - gradMinus)/(2*delta);
-%             end
-%         else
-%             for i=1:M
-%                 Pplus = setfield(Popt,{1},'eta',{i},Popt.eta(i) + delta);
-%                 Pminus = setfield(Popt,{1},'eta',{i},Popt.eta(i) - delta);
-%                 [~, gradPlus] = tdnll(x,Pplus);
-%                 [~, gradMinus] = tdnll(x,Pminus);
-%                 hessian(:,idxStart + i - 1) = ...
-%                     (gradPlus - gradMinus)/(2*delta);
-%             end
-%         end
-%     end
-%     hessian = 0.5*(hessian + hessian');
     Diagnostic.hessian = hessian;
     Diagnostic.Err = struct('var',[],'mu',[],'A',[],'eta',[]);
         

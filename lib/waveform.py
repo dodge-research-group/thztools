@@ -28,7 +28,7 @@ class Thzwaveform:
                                                           skip_header=3,
                                                           encoding=None)
 
-                                        
+
 class Thzwaveform2:
     def _init__(self, filename, local_attributes, Acquisition_time, Wait_time,
                 Time_constant, time, amplitude):

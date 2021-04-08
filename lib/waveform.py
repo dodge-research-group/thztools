@@ -21,7 +21,7 @@ class Thzwaveform:
                 if str(attributes[0]) == 'TimeConstant':
                     self.Time_constant = float(attributes[1].rstrip("\n"))
             else:
-                self.time, self.amplitude = np.genfromtxt('Scan.thz', 
+                self.time, self.amplitude = np.genfromtxt('Scan.thz',
                                                           comments='#',
                                                           unpack=True,
                                                           dtype=None,

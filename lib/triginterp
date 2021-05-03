@@ -10,12 +10,10 @@ NI = len(xi) #number of interpolants
 
 
 def trigcardinal(x, N):  
-	if N % 2 == 1 and m.pi * x == 0:  #takes care of the situations where xi-x[k] is 0, limit as approaching 0 is 1
+	if x == 0:  #takes care of the situations where xi-x[k] is 0, limit as approaching 0 is 1
 		tau = 1
 	elif N % 2 == 1:  #for the normal odd N case
 		tau = m.sin((N * m.pi * x) / 2) / (N * m.sin((m.pi * x) / 2))
-	elif N % 2 == 0 and x == 0:
-		tau = 1
 	elif N % 2 == 0:  #normal even N case
 		tau = m.sin((N * m.pi * x) / 2) / (N * m.tan((m.pi * x) / 2))
 	return tau  

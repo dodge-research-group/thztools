@@ -1,6 +1,7 @@
 name: thztools
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - sphinx
   - numpy
@@ -14,3 +15,6 @@ dependencies:
   - coverage
   - python-dotenv
   - jupyter
+  - pip
+  - pip:
+    - -e .

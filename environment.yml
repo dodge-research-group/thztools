@@ -1,0 +1,16 @@
+name: thztools
+channels:
+  - defaults
+dependencies:
+  - sphinx
+  - numpy
+  - scipy
+  - mpmath
+  - setuptools
+  - flake8
+  - matplotlib
+  - click
+  - ipython
+  - coverage
+  - python-dotenv
+  - jupyter

@@ -13,7 +13,7 @@ Noise amp takes in the same inputs as noisevar, sigma, mu & T
 5) Sqrt of Vmu is then Sigmamu
 '''
 
-from noisevar import noisevar
+from thztools import noisevar
 
 mu = [ 1, 2 ,3 ,4, 5, 6, 7, 8, 9, 10, 11]
 sigma = [.3, .4 ,.5]

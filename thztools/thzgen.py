@@ -20,9 +20,10 @@ tauc = 0.1
 taul = 0.05/np.sqrt(2*np.log(2))
 t0 = .1
 T = .05
-
+N = 12
+ts = .05
   
-f = fftfreq(N,ts)  
+f = np.fft.fftfreq(N,ts)  
 w = 2*np.pi*f    
 
  

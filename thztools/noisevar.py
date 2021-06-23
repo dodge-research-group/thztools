@@ -51,10 +51,9 @@ def noisevar(sigma, mu, T):
     
      
     Vmu = sigma[0]**2 + (np.square(np.multiply(sigma[1],mu))) +  (np.square(np.multiply(sigma[2],mudot)))
-    print(Vmu)
+ 
     return Vmu
 
-fftfreq(N,ts)
-noisevar(sigma,mu,T)
+ 
 
  

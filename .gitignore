@@ -1,4 +1,7 @@
+mctdfit.html
+*.mat
+*.asv
+.ipynb_checkpoints
 .idea
 __pycache__
 *.egg-info
-.ipynb_checkpoints

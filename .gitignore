@@ -1,2 +1,4 @@
 mctdfit.html
 *.mat
+*.asv
+.ipynb_checkpoints

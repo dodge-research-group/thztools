@@ -15,6 +15,7 @@ dependencies:
   - coverage
   - python-dotenv
   - jupyter
+  - h5py
   - pip
   - pip:
     - -e .

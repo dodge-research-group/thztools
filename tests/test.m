@@ -1,5 +1,10 @@
 %% Test FFTFREQ
 
+% Add path
+curdir = split(fileparts(mfilename('fullpath')), filesep);
+mldir = fullfile(filesep, curdir{1:end-1}, 'matlab');
+oldpath = addpath(mldir);
+
 % Set inputs
 N = [4, 5];
 T = [0.1, 1];
@@ -13,5 +18,7 @@ for i = 1:length(N)
         Set(i,j).f = fftfreq(N(i), T(j));
     end
 end
+
+path(oldpath)
 
 save test_data.mat -v7.3 Set

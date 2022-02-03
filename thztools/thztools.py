@@ -92,40 +92,26 @@ def jpcrateeq(t, theta):
 
 
 def thzgen(N, T, t0):
-    f = thztools.fftfreq(N, ts)
+    f = fftfreq(N, T)
     w = 2 * np.pi * f
+    iw = 1j * w
 
-    # Computing L
-    Lsq = np.square(w * taul * -1)  # (-(w*taul).^2/2)
+    L = np.exp(((-1 * np.square(w * taul)) / 2)) / np.sqrt(2 * np.pi * np.square(taul))
+    R = (1 / (1 / taur - iw)) - (1 / (1 / taur + 1 / tauc - iw))
+    so = (-iw) * np.square(np.multiply(L, R))
+    st = np.exp(iw * t0)
+    S = so * st
 
-    L = np.exp(Lsq / 2) / np.sqrt(2 * np.pi * (taul ** 2))
+    Lsq2 = -np.square(w * taul * 1) / 2  # (-(w*taul).^2/2)
 
-    # computing R
-
-    iw = -1j * w
-    invw = 1 / iw
-
-    R = 1 / (1 / taur - iw) - 1 / (1 / taur + 1 / tauc - iw)
-
-    # computing S
-
-    S = iw * (L * R) ** 2 * np.exp(iw * t0)
-
-    #  computing timebase matrix by multiplying sample number and the sampling time
-    #  first create a matrix with N elements, then add one so that indexing begins at 1
-
-    tm = np.arange(13)
-    tm = tm + 1
+    tm = np.arange(0, N)
     t = T * tm
 
-    # y calcuations
+    y = np.real(np.fft.ifft(np.conj(S)))
 
-    Sconj = np.conj(S)
-    Sifft = np.fft.ifft(Sconj)
-    y = np.real(Sifft)
-    y = A * y / max(y)
+    y = (A * y) / np.amax(y)
 
-    return y
+    return y, t
 
 
 def shiftmtx(tau, n, ts):
@@ -139,8 +125,9 @@ def shiftmtx(tau, n, ts):
     return h
 
 
+
 def tdtf(fun, theta, N, ts):
-    '''
+    """
 
     TDTF computes the transfer matrix for a given function
 
@@ -155,7 +142,7 @@ def tdtf(fun, theta, N, ts):
 
         h transfer matrix with size (N,N)
 
-    '''
+    """
 
     # computing the transfer function over positive frequencies
     fs = 1 / (ts * N)
@@ -174,7 +161,7 @@ def tdtf(fun, theta, N, ts):
         tfun = [tfunp; conj([fun(theta,wNy);flipud(tfunp(2:end))])];
     end
     '''
-    tpsh = tfunp[1:end]
+    tpsh = tfunp[1:]
     flipt = np.flipud(tpsh)
     flipc = np.conj(flipt)
 
@@ -182,13 +169,16 @@ def tdtf(fun, theta, N, ts):
     #  are the same magnitude but negative
 
     if N % 2 != 0:
-        tfun = np.concatenate(tfunp, flipc)
+        tfun = np.append(tfunp, flipt)
+
     else:
         wny = np.pi * N * fs
-        tfun = np.concatenate(tfunp, np.conj(fun(theta, wny)), flipc)
+        tfun = np.append(tfunp, np.conj(fun(theta, wny)))
+        tfun = np.append(tfun, flipt)
 
     imp = np.real(np.fft.ifft(np.conj(tfun)))
-    h = toeplitz(imp, np.roll(np.flipud(imp), 1))
+    imp = np.roll(np.flipud(imp), 1)
+    h = toeplitz(imp)
     
     
 def pulsegen( N, t0, w, A, T ):

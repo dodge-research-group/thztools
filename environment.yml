@@ -9,6 +9,7 @@ dependencies:
   - mpmath
   - setuptools
   - flake8
+  - pytest-cov
   - matplotlib
   - click
   - ipython

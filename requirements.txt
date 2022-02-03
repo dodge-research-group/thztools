@@ -6,6 +6,7 @@ click
 Sphinx
 coverage
 flake8
+pytest
 python-dotenv>=0.5.1
 
 numpy~=1.20.2

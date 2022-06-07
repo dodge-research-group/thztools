@@ -3,7 +3,7 @@
 % Add path
 curdir = split(fileparts(mfilename('fullpath')), filesep);
 mldir = fullfile(filesep, curdir{1:end-1}, 'matlab');
-oldpath = addpath(mldir);
+%oldpath = addpath(mldir);
 
 %% FFTFREQ
 % Set inputs
@@ -17,7 +17,7 @@ for i = 1:length(N)
     for j = 1:length(T)
         Set.fftfreq(i,j).N = N(i);
         Set.fftfreq(i,j).T = T(j);
-        Set.fftfreq(i,j).f = fftfreq(N(i), T(j));
+%        Set.fftfreq(i,j).f = fftfreq(N(i), T(j));
     end
 end
 
@@ -36,8 +36,8 @@ taul = 0.025/sqrt(2*log(2));
 % Generate output
 Init = cell(length(N));
 Set.thzgen = struct('N', Init, 't', Init, 'y', Init);
-Set.thzgen.T = T;
-Set.thzgen.t0 = t0;
+%Set.thzgen.T = T;
+%Set.thzgen.t0 = t0;
 
 path(oldpath)
 

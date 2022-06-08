@@ -36,8 +36,8 @@ taul = 0.025/sqrt(2*log(2));
 % Generate output
 Init = cell(length(N));
 Set.thzgen = struct('N', Init, 't', Init, 'y', Init);
-%Set.thzgen.T = T;
-%Set.thzgen.t0 = t0;
+Set.thzgen.T = T;
+Set.thzgen.t0 = t0;
 
 path(oldpath)
 

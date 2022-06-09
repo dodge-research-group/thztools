@@ -3,7 +3,7 @@ import numpy as np
 import SI
 
 def jpcrateeq(t, theta):
-    # JPCRATEEQ Rate equations for photocunducting antenna current
+    # JPCRATEEQ Rate equations for photoconducting antenna current
 
     n = theta[0]
     v = theta[1]

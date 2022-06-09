@@ -89,18 +89,18 @@ T = [1];
 
 % Generate output
 Init = cell(length(N), length(t0), length(w),  length(A),  length(T));
-Set.thzgen = struct('N', Init, 't0', Init, 'w', Init, 'A', Init, 'T', Init, 'y', Init);
+Set.pulsegen = struct('N', Init, 't0', Init, 'w', Init, 'A', Init, 'T', Init, 'y', Init);
 for i = 1:length(N)
     for j = 1:length(t0)
         for k = 1:length(w)
             for r = 1:length(A)
                 for s = 1:length(T)
-                    Set.thzgen(i,j,k,r,s).N = N(i);
-                    Set.thzgen(i,j,k,r,s).t0 = t0(j);
-                    Set.thzgen(i,j,k,r,s).w = w(k);
-                    Set.thzgen(i,j,k,r,s).A = A(r);
-                    Set.thzgen(i,j,k,r,s).T = T(s);
-                    Set.thzgen(i,j,k,r,s).y = pulsegen(N(i), t0(j), w(k), A(r), T(s));
+                    Set.pulsegen(i,j,k,r,s).N = N(i);
+                    Set.pulsegen(i,j,k,r,s).t0 = t0(j);
+                    Set.pulsegen(i,j,k,r,s).w = w(k);
+                    Set.pulsegen(i,j,k,r,s).A = A(r);
+                    Set.pulsegen(i,j,k,r,s).T = T(s);
+                    Set.pulsegen(i,j,k,r,s).y = pulsegen(N(i), t0(j), w(k), A(r), T(s));
                 end
             end
         end

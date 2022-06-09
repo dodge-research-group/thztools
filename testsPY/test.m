@@ -111,3 +111,31 @@ path(oldpath)
 
 save pulsegen_test_data.mat -v7.3 Set
 
+%% SHIFTMTX
+% Set required inputs
+tau = [1.0, 2.0];
+n = [256, 257];
+ts = [1.0, 2.0];
+
+% Generate output
+Init = cell(length(tau), length(n), length(ts));
+Set.shiftmtx = struct('tau', Init, 'n', Init, 'ts', Init, 'h', Init);
+for i = 1:length(N)
+    for j = 1:length(t0)
+        for k = 1:length(w)
+            for r = 1:length(A)
+                for s = 1:length(T)
+                    Set.shiftmtx(i,j,k).tau = tau(i);
+                    Set.shiftmtx(i,j,k).n = n(j);
+                    Set.shiftmtx(i,j,k).ts = ts(k);
+                    Set.shiftmtx(i,j,k).h = shiftmtx(tau(i), n(j), ts(k));
+                end
+            end
+        end
+    end
+end
+
+path(oldpath)
+
+save shiftmtx_test_data.mat -v7.3 Set
+

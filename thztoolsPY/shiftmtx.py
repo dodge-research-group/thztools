@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import linalg
 
-from thztoolsPY.fftfreq import fftfreq
+from thztools.thztoolsPY.fftfreq import fftfreq
 
 
 def shiftmtx(tau, n, ts):

@@ -25,7 +25,6 @@ def thzgen(N, T, t0, varargin):
     S = -1j * w * (L * R)**2 * np.exp(1j * w * t0);
 
     t = T*np.arange(N)
-    # t = t(:);
 
     y = np.real(   np.fft.ifft(  np.conj(S) )  )
     y = A * y / np.max(y)

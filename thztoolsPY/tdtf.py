@@ -41,10 +41,10 @@ def tdtf(fun, theta, n, ts):
     # Include the value of the transfer function at the Nyquist frequency for
     # even n.
     if n % 2 != 0:
-        tfun = [[tfunp], [np.conj(np.flipud(tfunp[1:]))]]
+        tfun = [[tfunp], np.conj(np.flipud(tfunp[1:]))]
     else:
         wNy = np.pi*n*fs
-        tfun = [[tfunp], [np.conj([[fun(theta, wNy)], [np.flipud(tfunp[1:])]])]]
+        tfun = [[tfunp], np.conj([[fun(theta, wNy)], [np.flipud(tfunp[1:])]])]
 
     # Evaluate the impulse response by taking the inverse Fourier transform,
     # taking the complex conjugate first to convert to ... +iwt convention

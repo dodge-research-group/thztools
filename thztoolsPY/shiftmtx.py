@@ -24,6 +24,6 @@ def shiftmtx(tau, n, ts):
     imp = np.fft.ifft(np.exp(-1j*w*tau)).real
 
     # computes the n by n transformation matrix
-    h = linalg.toeplitz(imp, np.roll(imp[::-1], 1))
+    h = linalg.toeplitz(imp, np.roll(np.flipud(imp), 1))
 
     return h

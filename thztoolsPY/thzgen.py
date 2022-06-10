@@ -1,32 +1,31 @@
 import numpy as np
 
-def thzgen(N, T, t0, varargin):
-    default_A = 1
+
+def thzgen(n, t, t0, varargin):
+    default_a = 1
     default_taur = 0.3
     default_tauc = 0.1
     default_taul = 0.05 / np.sqrt(2 * np.log(2))
 
-    A = default_A
+    a = default_a
     taur = default_taur
     tauc = default_tauc
     taul = default_taul
 
-    if(N % 2 == 1):
-        f = np.fft.fftfreq(N, T)
+    if n % 2 == 1:
+        f = np.fft.fftfreq(n, t)
     else:
-        f = np.fft.fftfreq(N, T)
-        f[int(N/2)] = -f[int(N/2)]
-
+        f = np.fft.fftfreq(n, t)
+        f[int(n / 2)] = -f[int(n / 2)]
 
     w = 2 * np.pi * f
+    l = np.exp(-(w * taul) ** 2 / 2) / np.sqrt(2 * np.pi * taul ** 2)
+    r = 1 / (1 / taur - 1j * w) - 1 / (1 / taur + 1 / tauc - 1j * w)
+    s = -1j * w * (l * r) ** 2 * np.exp(1j * w * t0)
 
-    L = np.exp(-(w * taul)**2 / 2) / np.sqrt(2 * np.pi * taul**2);
-    R = 1/(1 / taur - 1j * w) - 1 / (1 / taur + 1 / tauc - 1j * w);
-    S = -1j * w * (L * R)**2 * np.exp(1j * w * t0);
+    t2 = t * np.arange(n)
 
-    t = T*np.arange(N)
+    y = np.real(np.fft.ifft(np.conj(s)))
+    y = a * y / np.max(y)
 
-    y = np.real(   np.fft.ifft(  np.conj(S) )  )
-    y = A * y / np.max(y)
-
-    return [y,t]
+    return [y, t2]

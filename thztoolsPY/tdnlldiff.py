@@ -54,9 +54,8 @@ def tdnlldiff(x, param, *args):
     w = 2*np.pi*f
     mu_f = np.fft.fft(mu)
 
-    # need help with this
-    gradcalc = [Fix.get('logv'), Fix.get('mu'), Fix['A'] or Ignore['A'], \
-                 Fix['eta'] or Ignore['eta']]
+    gradcalc = np.logical_not([Fix.get('logv'), Fix.get('mu'), Fix['A'] or Ignore['A'],\
+                               Fix['eta'] or Ignore['eta']])
 
     if Ignore['eta']:
         zeta = mu*A.H

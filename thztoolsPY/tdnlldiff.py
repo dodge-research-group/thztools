@@ -7,7 +7,7 @@ from thztools.thztoolsPY.fftfreq import fftfreq
 def tdnlldiff(x, param, *args):
 
     # Parse function inputs
-    [N, M] = x.shape
+    N, M = x.shape
     if len(args) > 2:
         Fix = args[0]
     else:
@@ -55,13 +55,32 @@ def tdnlldiff(x, param, *args):
     mu_f = np.fft.fft(mu)
 
     # need help with this
-    # gradcalc = ![Fix.get('logv'), Fix.get('mu'), ]
+    gradcalc = [Fix.get('logv'), Fix.get('mu'), Fix['A'] or Ignore['A'], \
+                 Fix['eta'] or Ignore['eta']]
 
     if Ignore['eta']:
         zeta = mu*A.H
         zeta_f = np.fft.fft(zeta) # ask about fft for a (N, M) matrix
     else:
+        # this else block needs completion
+        # exp_iweta = np.exp(1j*w[])
         pass
+
+    # Compute negative-log likelihood and gradient
+
+    # Compute ressiduals and their squares for subsequent computations
+    res = x - zeta
+    ressq = res**2
+
+    # Simplest case: just variance and signal parameters, A and eta fixed at defaults
+    if Ignore['A'] and Ignore['eta']:
+        Dmu = np.fft.ifft(1j*(w*mu_f))
+        valpha = v(0)
+        vbeta = v(1) * (mu**2)
+        vtau = v(2) * (Dmu**2)
+        vtot = valpha + vbeta + vtau
+
+        resnormsq = ressq
 
 
     pass

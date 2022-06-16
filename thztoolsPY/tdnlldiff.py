@@ -44,7 +44,7 @@ def tdnlldiff(x, param, *args):
         ts = 1
         # warning('TDNLL received Param structure without ts field; set to one')
     if 'D' in pfields:
-        D = param['D']
+        d = param['D']
     else:
         fun = lambda theta, w: -1j*w
         d = tdtf (fun, 0, n, ts)
@@ -54,7 +54,7 @@ def tdnlldiff(x, param, *args):
     w = 2*np.pi*f
     mu_f = np.fft.fft(mu)
 
-    gradcalc = np.logical_not([fix.get('logv'), fix.get('mu'), fix['A'] or ignore['A'],\
+    gradcalc = np.logical_not([fix.get('logv'), fix.get('mu'), fix['A'] or ignore['A'],
                                fix['eta'] or ignore['eta']])
 
     if ignore['eta']:
@@ -68,7 +68,7 @@ def tdnlldiff(x, param, *args):
 
 
         # exp_iweta = np.exp(1j*w2)*eta1
-        exp_iweta = np.exp(np.tile(np.reshape(w, (len(w), 1)),  m)) @ np.tile(eta, n)      # do the same in only one line
+        exp_iweta = np.exp(1j*np.tile(np.reshape(w, (len(w), 1)),  m)) @ np.tile(eta, n)      # do the same in only one line
         zeta_f = np.tile(A, n) @ np.conj(exp_iweta) @ np.tile(np.reshape(mu_f, (len(mu_f), 1)), m)
         zeta = np.real(np.fft.ifft(zeta_f))
         pass
@@ -81,20 +81,46 @@ def tdnlldiff(x, param, *args):
 
     # Simplest case: just variance and signal parameters, A and eta fixed at defaults
     if ignore['A'] and ignore['eta']:
-        Dmu = np.fft.ifft(1j*(w*mu_f))
-        valpha = v(0)
-        vbeta = v(1)*(mu**2)
-        vtau = v(2)*(Dmu**2)
+        dmu = np.fft.ifft(1j*(w*mu_f))
+        valpha = v[0]
+        vbeta = v[1]*(mu**2)
+        vtau = v[2]*(dmu**2)
         vtot = valpha + vbeta + vtau
 
         resnormsq = ressq/np.tile(vtot, (1, m))
         nll = m*n*np.log(2*np.pi)/2 + (m/2)*sum(np.log(vtot)) + sum(resnormsq(:))/2
 
     # Compute graient if requested
-        if nargout > 1:
-            ngrad = sum(gradcalc[0:2] * np.reshape(np.array([3, n])), (2, 1))
-            gradnll = np.zeros((ngrad, 1))
-            nStart = 1
-            dvar = (vtot - np.mean(ressq))/ (vtot**2)
+        #if nargout > 1:                # we should ignore this line by now
+        ngrad = sum(gradcalc[0:2] @ np.reshape(np.array([3, n])), (2, 1))
+        gradnll = np.zeros((ngrad[0], 1))
+        nstart = 0
+        dvar = (vtot - np.mean(ressq, axis=1))/ (vtot**2)
+
+        if gradcalc[0]:
+            gradnll[nstart] = (m/2)*sum(dvar)*v[0]
+            gradnll[nstart+1] = (m/2)*sum(mu**2 * dvar)*v[1]
+            gradnll[nstart+2] = (m/2)*sum(dmu**2 * dvar)*v[2]
+            nstart = nstart + 3
+        pass
+
+        if gradcalc[1]:
+            for i in range(n):
+                gradnll[nstart+1] = m*(v[2]*mu*dvar + v[2]*np.transpose(d)*(dmu*dvar) - np.mean(res, axis=1)/vtot)
+        pass
+    pass
+
+        else:
+
+        res = diff(res, 1, axis=1)/np.sqrt(2)
+        ressq = res**2
+
+        dzeta = np.real(np.fft.ifft(1j@(np.tile(np.reshape(w, (len(w), 1)),  m)*zeta_f)))
+
+        valpha = v[0]
+
+        vbeta = v[2]*((zeta[:, 1:m-1])**2 + zeta[:, 2:m]**2)/2
+        vtau  = v[3]*((dzeta[:, 1:m-1])**2 + dzeta[:, 2:m]**2)/2
+        vtot = valpha + vbeta + vtau
 
         pass

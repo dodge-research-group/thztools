@@ -164,7 +164,7 @@ def tdnoisefit(x, param, fix = {'logv': False, 'mu': False, 'a': True, 'eta': Tr
 
     p['ts'] = param['ts']
 
-    
+
 
 
 

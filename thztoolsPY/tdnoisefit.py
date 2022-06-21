@@ -1,6 +1,10 @@
 import numpy as np
 
-def tdnoisefit(x, param, fix = {'logv': False, 'mu': False, 'a': True, 'eta': True}, ignore={'a': True, 'eta': True}, *args):
+from thztools.thztoolsPY.tdnll import tdnll
+from thztools.thztoolsPY.tdtf import tdtf
+
+
+def tdnoisefit(x, param, fix = {'logv': False, 'mu': False, 'a': True, 'eta': True}, ignore={'a': True, 'eta': True}):
 
     """ TDNOISEFIT computes MLE parameters for the time-domain noise model
 
@@ -43,8 +47,9 @@ def tdnoisefit(x, param, fix = {'logv': False, 'mu': False, 'a': True, 'eta': Tr
      """
 
 
+    n, m = x.shape
     mle = {}
-    idxstart = 1
+    idxstart = 0
 
     if fix['logv']:
 
@@ -56,35 +61,111 @@ def tdnoisefit(x, param, fix = {'logv': False, 'mu': False, 'a': True, 'eta': Tr
         idxrange = np.arange(idxstart, idxend + 1)
 
         def setplogv(p):
-            return
+            return p[idxrange]
 
-        idzstart = idxend + 1
+        idxstart = idxend + 1
     pass
 
-    ### help here ###################3
+
     if fix['mu']:
         def setpmu(p):
-            return mu0
+            return param['mu0']
     else:
         mle['x0'] = [param['mu0']]
         idxend = idxstart + n - 1
         idxrange = np.arange(idxstart, idxend + 1)
 
         def setpmu(p):
-            return p(idxrange)
+            return p[idxrange]
 
         idxstart = idxend + 1
     pass
-    ###########################
+
 
     if ignore['a']:
         def setpa(p):
-            return = []
+            return p[idxrange]
 
-    elif:
+    elif fix['a']:
         def setpa(p):
             return param['a0']
 
     else:
         mle['x0'] = param['a0']
         idxend = idxstart + m - 1
+        idxrange = np.arange(idxstart, idxend+1)
+        def setpa(p):
+            return p[idxrange]
+        idxstart = idxend + 1
+    pass
+
+    if ignore['eta']:
+        setpeta = param['eta']
+
+    else:
+        mle['x0'] = [param['eta0']]
+        idxend = idxstart + m - 1
+        idxrange = np.arange(idxstart, idxend + 1)
+        def setpeta(p):
+            return p(idxrange)
+    pass
+
+    def fun(theta, w):
+        return -1j*w
+
+    d = tdtf(fun, 0, n, param['ts'])
+
+    def parsein(p):
+        return {'logv': setplogv(p), 'mu': setpmu(p), 'a': setpa(p), 'eta': setpeta(p), 'ts': param['ts'], 'd': d}
+
+    def objective(p):
+        return tdnll(x, parsein(p), fix)
+
+    mle['objective'] = objective
+
+##############
+    p = {}
+
+    idxstart = 0
+    if fix['logv']:
+        p['var'] = param['v0']
+
+    else:
+        idxend = idxstart + 3
+        idxrange = np.arange(idxstart, idxend + 1)
+        p['var'] = np.exp
+        ################
+    pass
+
+    if fix['mu']:
+        p['mu'] = param['mu0']
+
+    else:
+        idxend = idxstart + n - 1
+        idxrange = np.arange(idxstart, idxend + 1)
+        idxstart = idxend + 1
+        #######################
+    pass
+
+    if ignore['a'] or fix['a']:
+        p['a'] = param['a0']
+
+    else:
+        idxend = idxstart + m - 1
+        idxrange = np.arange(idxstart, idxend + 1)
+        idxstart = idxend + 1
+        ##################
+    pass
+
+    if ignore['eta'] or fix['eta']:
+        p['eta'] = param['eta0']
+        ######################################
+    pass
+
+    p['ts'] = param['ts']
+
+    
+
+
+
+

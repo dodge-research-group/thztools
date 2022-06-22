@@ -1,14 +1,17 @@
 import numpy as np
 from scipy.optimize import minimize
+
 from thztools.thztoolsPY.tdnll import tdnll
 from thztools.thztoolsPY.tdtf import tdtf
 
+fix = {'logv': False, 'mu': False, 'a': True, 'eta': True}
 
-def tdnoisefit(x, param, fix = {'logv': False, 'mu': False, 'a': True, 'eta': True}, ignore={'a': True, 'eta': True}):
+def tdnoisefffit(x, param, fix, ignore={'a': True, 'eta': True}):
+
 
     """ TDNOISEFIT computes MLE parameters for the time-domain noise model
 
-     Syntax:   P = tdnoisefit(x,Oxptions)
+     Syntax:   P = tdnoisefit(x,Options)
 
      Description:
 
@@ -44,7 +47,8 @@ def tdnoisefit(x, param, fix = {'logv': False, 'mu': False, 'a': True, 'eta': Tr
            .output     Output from FMINUNC
            .grad     	NLL cost function gradient from FMINUNC
            .hessian   	NLL cost function hessian from FMINUNC
-     """
+
+      """
 
     n, m = x.shape
     mle = {}
@@ -88,9 +92,9 @@ def tdnoisefit(x, param, fix = {'logv': False, 'mu': False, 'a': True, 'eta': Tr
             return param['a0']
 
     else:
-        mle['x0'] = param['a0']
-        idxend = idxstart + m - 1
-        idxrange = np.arange(idxstart, idxend+1)
+        mle['x0'] = param['a0'][1:]
+        idxend = idxstart + m - 2
+        idxrange = np.arange(idxstart, idxend + 1)
 
         def setpa(p):
             return p[idxrange]
@@ -106,11 +110,12 @@ def tdnoisefit(x, param, fix = {'logv': False, 'mu': False, 'a': True, 'eta': Tr
             return param['eta']
 
     else:
-        mle['x0'] = [param['eta0']]
+        mle['x0'] = [param['eta0']][1:]
         idxend = idxstart + m - 1
         idxrange = np.arange(idxstart, idxend + 1)
+
         def setpeta(p):
-            return p(idxrange)
+            return np.concatenate((np.array([param['eta']][0]), p(idxrange)))
     pass
 
     def fun(theta, w):
@@ -121,14 +126,38 @@ def tdnoisefit(x, param, fix = {'logv': False, 'mu': False, 'a': True, 'eta': Tr
     def parsein(p):
         return {'logv': setplogv(p), 'mu': setpmu(p), 'a': setpa(p), 'eta': setpeta(p), 'ts': param['ts'], 'd': d}
 
+    def tdnllfixedeffects(x, param, fix):
+        """ Strip first element of gradient vector wrt A and eta """
+
+        nll, gradnll = tdnll(x, param, fix)
+        idxstart = 0
+        if np.logical_not(fix['logv']):
+            idxstart = idxstart + 3
+        pass
+
+        if np.logical_not(fix['mu']):
+            idxstart = idxstart + n
+        pass
+
+        if np.logical_not(fix['a']):
+            gradnll[idxstart] = []
+            idxstart = idxstart + m - 1
+        pass
+
+        if np.logical_not(fix['eta']):
+            gradnll[idxstart] = []
+        pass
+
+        return nll, gradnll
+
     def objective(p):
-        return tdnll(x, parsein(p), fix)
+        return tdnllfixedeffects(x, parsein(p), fix)
 
     mle['objective'] = objective
 
     out = minimize(mle['objective'], mle['x0'], method = 'BFGS')
 
-    # Parse output
+    # Parse ouput
     p = {}
 
     idxstart = 0
@@ -154,50 +183,52 @@ def tdnoisefit(x, param, fix = {'logv': False, 'mu': False, 'a': True, 'eta': Tr
     if ignore['a'] or fix['a']:
         p['a'] = param['a0']
 
-    elif:
-        idxend = idxstart + m - 1
+    else:
+        idxend = idxstart + m - 2
         idxrange = np.arange(idxstart, idxend + 1)
         idxstart = idxend + 1
-        p['a'] = out.x[idxrange]
+        p['a'] = np.concatenate((np.array([param['a0']][0]), out.x(idxrange)))
     pass
 
     if ignore['eta'] or fix['eta']:
         p['eta'] = param['eta0']
 
     else:
-        idxend = idxstart + m - 1
-        idxrange = np.arange(idxstart, idxend + 1)
-        p['eta'] = out.x[idxrange]
+        idxend = idxstart + m - 2
+        idxrange = np.array(idxstart, idxend + 1)
+        p['eta'] = np.concatenate((np.array([param['eta']][0]), out.x(idxrange)))
     pass
 
     p['ts'] = param['ts']
+
     diagnostic = {'grad': out.jac, 'hessian': np.linalg.inv(out.hess_inv),
                   'err': {'var': [], 'mu': [], 'a': [], 'eta': []}}
 
     paramtest = np.logical_not([fix['logv'], fix['mu'], fix['a'] or ignore['a'], fix['eta'] or ignore['eta']])
 
-    ngrad = np.sum(paramtest * [[3], [n], [m], [m]])
-    v = np.identity(ngrad)/diagnostic['hessian']
+    ngrad = np.sum(paramtest * [[3], [n], [m-1], [m-1]])
+    v = np.identity(ngrad) / diagnostic['hessian']
     err = np.sqrt(np.diag(v))
 
     idxstart = 0
     if paramtest[0]:
-        diagnostic['err']['var'] = np.sqrt(np.diag(np.diag(p['var']) * v[0:3, 0:3]) * np.diag(p['var']))
+        diagnostic['err']['var']  = np.sqrt(np.diag(np.diag(p['var']) * v[0:3, 0:3]) * np.diag(p['var']))
         idxstart = idxstart + 3
     pass
 
     if paramtest[1]:
-        diagnostic['err']['mu'] = err[idxstart: (idxstart + n - 1)]
+        diagnostic['err']['mu'] = err[idxstart, (idxstart + n - 1)]
         idxstart = idxstart + n
     pass
 
     if paramtest[2]:
-        diagnostic['err']['a'] = err[idxstart, (idxstart + m - 1)]
-        idxstart = idxstart + m
+        diagnostic['err']['a'] = err[idxstart, (idxstart + m - 2)]
+        idxstart = idxstart + m - 1
     pass
 
     if paramtest[3]:
-        diagnostic['err']['eta'] = err[idxstart, (idxstart + m - 1)]
+        diagnostic['err']['eta'] = err(idxstart, (idxstart + m - 2))
     pass
 
-    return [p, out.fun, diagnostic]
+
+

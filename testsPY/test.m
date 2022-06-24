@@ -138,4 +138,3 @@ end
 path(oldpath)
 
 save shiftmtx_test_data.mat -v7.3 Set
-

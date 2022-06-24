@@ -4,6 +4,31 @@ from thztoolsPY.DataPulse import DataPulse
 
 
 def thzload(varargin):
+    """
+    THZLOAD Recursively loads all terahertz files in a directory
+        DATA = THZLOAD recursively loads all files with the .thz extension from
+        the present directory and all of its subdirectories into DATA, an array
+        of DataPulse objects
+
+        DATA = THZLOAD(DIR) loads from the directory DIR
+
+        DATA = THZLOAD(DIR, EXT) loads all files with the extension EXT
+
+        DATA = THZLOAD(DIR, EXT, EXCLUDE) excludes directories that contain any
+        strings in the array EXCLUDE (which may also be a character array or a
+        cell array of character vectors)
+
+        DATA = THZLOAD(DIR, EXT, EXCLUDE, DATAIN) appends data loaded from DIR
+        to the input DataPulse array DATAIN
+        
+    Parameters
+    ----------
+    varargin
+
+    Returns
+    -------
+
+    """
     dir_name = varargin['dirName']
     extension = varargin['extension']
     exclude = varargin['exclude']

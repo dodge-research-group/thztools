@@ -20,7 +20,7 @@ def thzload(varargin):
 
         DATA = THZLOAD(DIR, EXT, EXCLUDE, DATAIN) appends data loaded from DIR
         to the input DataPulse array DATAIN
-        
+
     Parameters
     ----------
     varargin

@@ -1,7 +1,7 @@
 import numpy as np
 import h5py
 
-from thztools.thztoolsPY.pulsegen import pulsegen
+from thztoolsPY.pulsegen import pulsegen
 
 with h5py.File('pulsegen_test_data.mat', 'r') as file:
     Set = file['Set']

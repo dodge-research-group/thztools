@@ -13,7 +13,6 @@ addRequired(Input,'f',@isreal);
 addOptional(Input,'T',25,@isreal)
 
 parse(Input,f,varargin{:});
-t
 f = Input.Results.f*1e12;
 T = Input.Results.T;
 

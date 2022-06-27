@@ -25,6 +25,27 @@ path(oldpath)
 
 save fftfreq_test_data.mat -v7.3 Set
 
+%% EPSWATER
+% Set inputs
+f = [1, 2];
+T = [20, 30];
+
+% Generate output
+Init = cell(length(f), length(T));
+Set.epswater = struct('f', Init, 'T', Init, 'epsR', Init, 'epsI', Init);
+for i = 1:length(f)
+    for j = 1:length(T)
+        Set.epswater(i,j).f = f(i);
+        Set.epswater(i,j).T = T(j);
+        Set.epswater(i,j).epsR = real(epswater(f(i), T(j)));
+        Set.epswater(i,j).epsI = imag(epswater(f(i), T(j)));
+    end
+end
+
+path(oldpath)
+
+save epswater_test_data.mat -v7.3 Set
+
 %% COSTFUNLSQ
 % Set required inputs
 funTest = @(theta, wfft) 1;

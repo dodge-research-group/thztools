@@ -1,7 +1,7 @@
 import h5py
 import numpy as np
 
-from thztools.thztoolsPY.thzgen import thzgen
+from thztoolsPY.thzgen import thzgen
 
 with h5py.File('thzgen_test_data.mat', 'r') as file:
     Set = file['Set']

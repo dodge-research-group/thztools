@@ -35,6 +35,6 @@ def costfunlsq(fun, theta, xx, yy, sigmax, sigmay, wfft):
         Uy = Uy + np.real(np.roll(Htilde, k) * np.roll(Htilde, k).H) * sigmax[k] ** 2
 
     W = np.eye(N) / scipy.linalg.sqrtm(Uy + Vy)
-    res = W*ry
+    res = W * ry
 
     return res

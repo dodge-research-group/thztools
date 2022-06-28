@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import minimize
-from thztools.thztoolsPY.tdnll import tdnll
-from thztools.thztoolsPY.tdtf import tdtf
+from thztoolsPY.tdnll import tdnll
+from thztoolsPY.tdtf import tdtf
 
 
 def tdnoisefit(x, param, fix = {'logv': False, 'mu': False, 'a': True, 'eta': True}, ignore={'a': True, 'eta': True}):
@@ -154,7 +154,7 @@ def tdnoisefit(x, param, fix = {'logv': False, 'mu': False, 'a': True, 'eta': Tr
     if ignore['a'] or fix['a']:
         p['a'] = param['a0']
 
-    elif:
+    else:
         idxend = idxstart + m - 1
         idxrange = np.arange(idxstart, idxend + 1)
         idxstart = idxend + 1

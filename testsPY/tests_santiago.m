@@ -48,27 +48,40 @@ save epswater_test_data.mat -v7.3 Set
 
 %% COSTFUNLSQ
 % Set required inputs
-funTest = @(theta, wfft) 1;
-sigmax = rand(1, 20);
-sigmay = rand(1, 20);
-t0 = [2.0, 3.0];
+fun = @(theta, wfft) theta(1) * exp(1i * theta(2) * wfft);
+theta = rand(3, 2);
+N = 100;
+xx = [linspace(0, 10, N); linspace(0, 10, N); linspace(0, 10, N)];
+yy = [thzgen(N, 1, 1)'; thzgen(N, 2, 2)'; thzgen(N, 3, 3)'];
+wfft = 2*pi*[fftfreq(N, 1)'; fftfreq(N, 2)'; fftfreq(N, 3)'];
+ampSigma = 1e-5;
+sigmax = ampSigma*rand(3, N);
+sigmay = ampSigma*rand(3, N);
 
 % Set optional inputs
-A = 2;
-taur = 0.6;
-tauc = 0.2;
-taul = 0.025/sqrt(2*log(2));
 
 % Generate output
-Init = cell(length(N), length(T), length(t0));
-Set.costfunlsq = struct('N', Init, 'T', Init, 't0', Init, 'y', Init);
-for i = 1:length(N)
-    for j = 1:length(T)
-        for k = 1:length(t0)
-            Set.costfunlsq(i,j,k).N = N(i);
-            Set.costfunlsq(i,j,k).T = T(j);
-            Set.costfunlsq(i,j,k).t0 = t0(k);
-            Set.costfunlsq(i,j,k).y = thzgen(N(i), T(j), t0(k));
+Init = cell(size(theta,1), size(xx,1), size(yy,1), size(sigmax,1), size(sigmay,1), size(wfft,1));
+Set.costfunlsq = struct('theta', Init, 'xx', Init, 'yy', Init, 'sigmax', Init, ...
+    'sigmay', Init, 'wfft', Init, 'res', Init);
+
+for i = 1:length(theta)
+    for j = 1:length(xx)
+        for k = 1:length(yy)
+            for l = 1:length(sigmax)
+                for m = 1:length(sigmay)
+                    for n = 1:length(wfft)
+                        Set.costfunlsq(i,j,k,l,m,n).theta = theta(i, :);
+                        Set.costfunlsq(i,j,k,l,m,n).xx = xx(j, :);
+                        Set.costfunlsq(i,j,k,l,m,n).yy = yy(k, :);
+                        Set.costfunlsq(i,j,k,l,m,n).sigmax = sigmax(l, :);
+                        Set.costfunlsq(i,j,k,l,m,n).sigmay = sigmay(m, :);
+                        Set.costfunlsq(i,j,k,l,m,n).wfft = wfft(n, :);
+                        Set.costfunlsq(i,j,k,l,m,n).res = costfunlsq(fun, theta(i, :), xx(j, :), yy(k, :), ...
+                            sigmax(l, :), sigmay(m, :), wfft(n, :));
+                    end
+                end
+            end
         end
     end
 end

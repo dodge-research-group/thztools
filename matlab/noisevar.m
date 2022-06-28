@@ -28,5 +28,5 @@ function Vmu = noisevar(sigma, mu, T)
     w = 2*pi*fftfreq(N,T);
     mudot = real(ifft(1i*w.*fft(mu)));
     
-    Vmu = sigma(1).^2+(sigma(2)*mu).^2+(sigma(3)*mudot).^2;
+    Vmu = sigma(1).^2 + (sigma(2)*mu).^2 + (sigma(3)*mudot).^2;
 end

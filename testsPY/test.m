@@ -57,25 +57,26 @@ save thzgen_test_data.mat -v7.3 Set
 
 %% NOISEVAR
 % Set required inputs
-sigma = [0.5, 1.0];
-mu = [1.0, 2.0];
-T = [0.1, 1.0];
+sigma = ([0.5  1.0  1.5; 0.2  0.7  1.2; 3.1 4.0 5.0])'
+mu = ([1.0 2.0 3.0; 3.0 4.0 5.0; 1. 1. 1.])';
+T = [0.1];
 
 % Generate output
-Init = cell(length(sigma), length(mu), length(T));
-Set.thzgen = struct('sigma', Init, 'mu', Init, 'T', Init, 'Vmu', Init);
-for i = 1:length(sigma)
-    for j = 1:length(mu)
+Init = cell(size(sigma, 2), size(mu, 2), length(T));
+Set.noisevar = struct('sigma', Init, 'mu', Init, 'T', Init, 'Vmu', Init);
+for i = 1:size(sigma, 2)
+    for j = 1:size(mu, 2)
         for k = 1:length(T)
-            Set.thzgen(i,j,k).sigma = sigma(i);
-            Set.thzgen(i,j,k).mu = T(j);
-            Set.thzgen(i,j,k).T = t0(k);
-            Set.thzgen(i,j,k).Vmu = noisevar(sigma(i), mu(j), T(k));
+            Set.noisevar(i,j,k).sigma = sigma(:, i);
+            Set.noisevar(i,j,k).mu = mu(:, j);
+            Set.noisevar(i,j,k).T = T(k);
+            Set.noisevar(i,j,k).Vmu = noisevar(sigma(:, i), mu(:, j), T(k));
         end
     end
 end
 
 path(oldpath)
+
 
 save noisevar_test_data.mat -v7.3 Set
 

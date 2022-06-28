@@ -57,8 +57,8 @@ save thzgen_test_data.mat -v7.3 Set
 
 %% NOISEVAR
 % Set required inputs
-sigma = ([0.5  1.0  1.5; 0.2  0.7  1.2; 3.1 4.0 5.0])'
-mu = ([1.0 2.0 3.0; 3.0 4.0 5.0; 1. 1. 1.])';
+sigma = ([0.5  1.0  1.5 ; 0.2  0.7  1.2 ; 3.1 4.0 5.0])'
+mu = ([1.0 2.0 3.0 ; 3.0 4.0 5.0 ; 1. 1. 1.])';
 T = [0.1];
 
 % Generate output

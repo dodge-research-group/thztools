@@ -91,17 +91,18 @@ def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'A': False, 'eta': False}
     # Compute frequency vector and Fourier coefficients of mu
     f = fftfreq(N, ts)
     w = 2 * np.pi * f
-    mu_f = np.fft.fft(mu)
+    w = w.reshape(len(w), 1)
+    mu_f = np.fft.fft(mu.flatten()).reshape(len(mu), 1)
 
     gradcalc = np.logical_not([[Fix['logv']], [Fix['mu']], [Fix['A'] or Ignore['A']], [Fix['eta'] or Ignore['eta']]])
 
     if Ignore['eta']:
         zeta = mu * np.conj(A).T
-        zeta_f = np.fft.fft(zeta)
+        zeta_f = np.fft.fft(zeta, axis=0)
     else:
         exp_iweta = np.exp(1j * np.tile(w, M) * np.conj(np.tile(eta, N)).T)
         zeta_f = np.conj(np.tile(A, N)).T * np.conj(exp_iweta) * np.tile(mu_f, M)
-        zeta = np.real(np.fft.ifft(zeta_f))
+        zeta = np.real(np.fft.ifft(zeta_f, axis=0))
 
         # Compute negative - log likelihood and gradient
 
@@ -112,7 +113,7 @@ def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'A': False, 'eta': False}
         # Simplest case: just variance and signal parameters, A and eta fixed at
         # defaults
         if Ignore['A'] and Ignore['eta']:
-            Dmu = np.real(np.fft.ifft(1j * w * mu_f))
+            Dmu = np.real(np.fft.ifft(1j * w * mu_f, axis=0))
             valpha = v[0]
             vbeta = v[1] * mu**2
             vtau = v[2] * Dmu**2
@@ -138,7 +139,7 @@ def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'A': False, 'eta': False}
 
         # Alternative case: A, eta, or both are not set to defaults
         else:
-            Dzeta = np.real(np.fft.ifft(1j * np.tile(w, M) * zeta_f))
+            Dzeta = np.real(np.fft.ifft(1j * np.tile(w, M) * zeta_f, axis=0))
 
             valpha = v[0]
             vbeta = v[1] * zeta**2
@@ -158,22 +159,23 @@ def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'A': False, 'eta': False}
             if gradcalc[0]:
                 # Gradient wrt logv
                 gradnll[nStart] = (1 / 2) * np.sum(dvar) * v[0]
-                gradnll[nStart + 1] = (1 / 2) * np.sum(np.reshape(zeta, (len(zeta), 1))**2 * np.reshape(dvar, (len(dvar), 1)))*v[1]
-                gradnll[nStart + 2] = (1 / 2) * np.sum(np.reshape(Dzeta, (len(Dzeta), 1))**2 * np.reshape(dvar, (len(dvar), 1)))*v[2]
+                gradnll[nStart + 1] = (1 / 2) * np.sum(zeta.flatten()**2 * dvar.flatten())*v[1]
+                gradnll[nStart + 2] = (1 / 2) * np.sum(Dzeta.flatten()**2 * dvar.flatten())*v[2]
                 nStart = nStart + 3
             if gradcalc[1]:
                 # Gradient wrt mu
-                P = np.fft.fft(v[1] * dvar * zeta - reswt) - 1j * v[2] * w * np.fft.fft(dvar * Dzeta)
-                gradnll[nStart: nStart + N - 1] = np.sum(np.conj(A).T * np.real(np.fft.ifft(exp_iweta * P)), axis=2)
+                P = np.fft.fft(v[1] * dvar * zeta - reswt, axis=0) - 1j * v[2] * w * np.fft.fft(dvar * Dzeta, axis=0)
+                gradnll[nStart:nStart + N] = np.sum(np.conj(A).T * np.real(np.fft.ifft(exp_iweta * P, axis=0)), axis=1).reshape(N, 1)
                 nStart = nStart + N
             if gradcalc[2]:
                 # Gradient wrt A
                 term = (vtot - valpha) * dvar - reswt * zeta
-                gradnll[nStart:(nStart + M - 1)] = np.conj(np.sum(term, axis=0)).T / A
+                gradnll[nStart:nStart + M] = np.conj(np.sum(term, axis=0)).reshape(M, 1) / A
                 nStart = nStart + M
             if gradcalc[3]:
                 # Gradient wrt eta
-                DDzeta = np.real(np.fft.ifft(-np.tile(w, M)**2 * zeta_f))
-                gradnll[nStart:(nStart + M - 1)] = -np.sum(dvar * (zeta * Dzeta * v(2) + Dzeta * DDzeta * v[2]) - reswt * Dzeta)
+                DDzeta = np.real(np.fft.ifft(-np.tile(w, M)**2 * zeta_f, axis=0))
+                gradnll[nStart:nStart + M] = -np.sum(dvar * (zeta * Dzeta * v[1] + Dzeta * DDzeta * v[2]) - reswt * Dzeta, axis=0).reshape(M,1)
+    gradnll = gradnll.flatten()
 
     return [nll, gradnll]

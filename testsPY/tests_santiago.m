@@ -89,3 +89,46 @@ end
 path(oldpath)
 
 save costfunlsq_test_data.mat -v7.3 Set
+
+%% TDNLL
+% Set required inputs
+clc
+N = 10;
+M = 8;
+x = rand(N, M, 4);
+Param = [struct() struct() struct()];
+varargin = [struct() struct() struct()];
+for i = 1:1:3
+    Param(i).logv = rand(3,1);
+    Param(i).mu = rand(N,1);
+    Param(i).A = rand(M,1);
+    Param(i).eta = rand(M,1);
+    Param(i).ts = rand();
+    Param(i).D = tdtf(@(theta,w) -1i*w, 0, N, Param(i).ts);
+    
+    % Set optional inputs
+    varargin(i).logv = 0;
+    varargin(i).mu = 0;
+    varargin(i).A = 0;
+    varargin(i).eta = 0;
+end
+
+% Generate output
+Init = cell(size(x,3), size(Param,2), size(varargin,2));
+Set.tdnll = struct('x', Init, 'Param', Init, 'varargin', Init, 'nll', Init, 'gradnll', Init);
+
+for i = 1:size(x,3)
+    for j = 1:size(Param,2)
+        for k = 1:size(varargin,2)
+            Set.tdnll(i,j,k).x = x(:, :, i);
+            Set.tdnll(i,j,k).Param = Param(j);
+            Set.tdnll(i,j,k).varargin = varargin(k);
+            [Set.tdnll(i,j,k).nll, Set.tdnll(i,j,k).gradnll] = tdnll(x(:, :, i),Param(j),varargin(k));
+            disp(Set.tdnll(i,j,k).nll)
+        end
+    end
+end
+
+path(oldpath)
+
+save tdnll_test_data.mat -v7.3 Set

@@ -2,6 +2,7 @@ import numpy as np
 from scipy import linalg
 import math
 
+
 def tdtf(fun, theta, n, ts):
     """
     tdtf returns the transfer matrix for a given function
@@ -30,25 +31,28 @@ def tdtf(fun, theta, n, ts):
     """
 
     # compute the transfer function over positive frequencies
-    fs = 1/(ts*n)
-    fp = fs*np.arange(0, math.floor((n/2)))
-    wp = 2*np.pi*fp
-
+    fs = 1 / (ts * n)
+    fp = fs * np.arange(0, math.floor((n - 1) / 2 + 1))
+    wp = (2 * np.pi * fp)
     tfunp = fun(theta, wp)
 
     # The transfer function is Hermitian, so we evaluate negative frequencies
-    # by taking the complex conjugate of the correponding positive frequency.
+    # by taking the complex conjugate of the corresponding positive frequency.
     # Include the value of the transfer function at the Nyquist frequency for
     # even n.
     if n % 2 != 0:
-        tfun = [[tfunp], np.conj(np.flipud(tfunp[1:]))]
+
+        tfun = np.concatenate((tfunp, np.conj(np.flipud(tfunp[1:]))))
+
+
     else:
-        wNy = np.pi*n*fs
-        tfun = [[tfunp], np.conj([[fun(theta, wNy)], [np.flipud(tfunp[1:])]])]
+        wny = np.pi * n * fs
+        tfun = np.concatenate((tfunp, np.array([np.conj(fun(theta, wny))]), np.conj(np.flipud(tfunp[1:]))))
 
     # Evaluate the impulse response by taking the inverse Fourier transform,
     # taking the complex conjugate first to convert to ... +iwt convention
-    imp = np.fft.ifft(np.conj(tfun)).real
+
+    imp = np.real(np.fft.ifft(np.conj(tfun)))
     h = linalg.toeplitz(imp, np.roll(np.flipud(imp), 1))
 
     return h

@@ -49,36 +49,36 @@ save epswater_test_data.mat -v7.3 Set
 %% COSTFUNLSQ
 % Set required inputs
 fun = @(theta, wfft) theta(1) * exp(1i * theta(2) * wfft);
-theta = rand(3, 2);
+theta = rand(2, 3);
 N = 100;
-xx = [linspace(0, 10, N); linspace(0, 10, N); linspace(0, 10, N)];
-yy = [thzgen(N, 1, 1)'; thzgen(N, 2, 2)'; thzgen(N, 3, 3)'];
-wfft = 2*pi*[fftfreq(N, 1)'; fftfreq(N, 2)'; fftfreq(N, 3)'];
+xx = [linspace(0, 10, N)' linspace(0, 10, N)' linspace(0, 10, N)'];
+yy = [thzgen(N, 1, 1) thzgen(N, 2, 2) thzgen(N, 3, 3)] + ampSigma*rand(N, 3);
+wfft = 2*pi*[fftfreq(N, 1) fftfreq(N, 2) fftfreq(N, 3)];
 ampSigma = 1e-5;
-sigmax = ampSigma*rand(3, N);
-sigmay = ampSigma*rand(3, N);
+sigmax = ampSigma*rand(N, 3);
+sigmay = ampSigma*rand(N, 3);
 
 % Set optional inputs
 
 % Generate output
-Init = cell(size(theta,1), size(xx,1), size(yy,1), size(sigmax,1), size(sigmay,1), size(wfft,1));
+Init = cell(size(theta,2), size(xx,2), size(yy,2), size(sigmax,2), size(sigmay,2), size(wfft,2));
 Set.costfunlsq = struct('theta', Init, 'xx', Init, 'yy', Init, 'sigmax', Init, ...
     'sigmay', Init, 'wfft', Init, 'res', Init);
 
-for i = 1:length(theta)
-    for j = 1:length(xx)
-        for k = 1:length(yy)
-            for l = 1:length(sigmax)
-                for m = 1:length(sigmay)
-                    for n = 1:length(wfft)
-                        Set.costfunlsq(i,j,k,l,m,n).theta = theta(i, :);
-                        Set.costfunlsq(i,j,k,l,m,n).xx = xx(j, :);
-                        Set.costfunlsq(i,j,k,l,m,n).yy = yy(k, :);
-                        Set.costfunlsq(i,j,k,l,m,n).sigmax = sigmax(l, :);
-                        Set.costfunlsq(i,j,k,l,m,n).sigmay = sigmay(m, :);
-                        Set.costfunlsq(i,j,k,l,m,n).wfft = wfft(n, :);
-                        Set.costfunlsq(i,j,k,l,m,n).res = costfunlsq(fun, theta(i, :), xx(j, :), yy(k, :), ...
-                            sigmax(l, :), sigmay(m, :), wfft(n, :));
+for i = 1:size(theta,2)
+    for j = 1:size(xx,2)
+        for k = 1:size(yy,2)
+            for l = 1:size(sigmax,2)
+                for m = 1:size(sigmay,2)
+                    for n = 1:size(wfft,2)
+                        Set.costfunlsq(i,j,k,l,m,n).theta = theta(:, i);
+                        Set.costfunlsq(i,j,k,l,m,n).xx = xx(:, j);
+                        Set.costfunlsq(i,j,k,l,m,n).yy = yy(:, k);
+                        Set.costfunlsq(i,j,k,l,m,n).sigmax = sigmax(:, l);
+                        Set.costfunlsq(i,j,k,l,m,n).sigmay = sigmay(:, m);
+                        Set.costfunlsq(i,j,k,l,m,n).wfft = wfft(:, n);
+                        Set.costfunlsq(i,j,k,l,m,n).res = costfunlsq(fun, theta(:, i), xx(:, j), yy(:, k), ...
+                            sigmax(:, l), sigmay(:, m), wfft(:, n));
                     end
                 end
             end

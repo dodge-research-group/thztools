@@ -9,7 +9,7 @@ def test_tdtf():
     def fun(theta, w):
         return theta[0]*np.exp(-1j*theta[1]*w)
 
-    with h5py.File('tdtf_test_data1.mat', 'r') as file:
+    with h5py.File('tdtf_test_data.mat', 'r') as file:
         set = file['Set']
         theta = file['Set']['tdtf']['theta'][0]
         n = file['Set']['tdtf']['N'][0]

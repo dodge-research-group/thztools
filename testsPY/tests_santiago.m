@@ -132,3 +132,68 @@ end
 path(oldpath)
 
 save tdnll_test_data.mat -v7.3 Set
+
+%% TDNOISEFIT    
+% Set required inputs
+clc
+N = 10;
+M = 8;
+x = rand(N, M, 4);
+varargin = [struct() struct() struct()];
+paramForPy = [struct() struct() struct()];
+fixForPy = [struct() struct() struct()];
+ignoreForPy = [struct() struct() struct()];
+for i = 1:1:length(varargin)
+    % Initial parameters
+    varargin(i).v0 = rand(3,1);
+    varargin(i).mu0 = rand(N,1);
+    varargin(i).A0 = rand(M,1);
+    varargin(i).eta0 = rand(M,1);
+    varargin(i).ts = rand();
+
+    % Fix structure
+    Fix = struct();
+    Fix.logv = 0;
+    Fix.mu = 0;
+    Fix.A = 1;
+    Fix.eta = 1;
+
+    % Ignore structure
+    Ignore = struct();
+    Ignore.A = 1;
+    Ignore.eta = 1;
+    
+    varargin(i).Fix = Fix;
+    varargin(i).Ignore = Ignore;
+
+    paramForPy(i).v0 = varargin(i).v0;
+    paramForPy(i).mu0 = varargin(i).mu0;
+    paramForPy(i).A0 = varargin(i).A0;
+    paramForPy(i).eta0 = varargin(i).eta0;
+    paramForPy(i).ts = varargin(i).ts;
+
+    fixForPy(i).logv = Fix.logv;
+    fixForPy(i).mu = Fix.mu;
+    fixForPy(i).A = Fix.A;
+    fixForPy(i).eta = Fix.eta;
+    ignoreForPy(i).A = Ignore.A;
+    ignoreForPy(i).eta = Ignore.eta;
+end
+
+% Generate output
+Init = cell(size(x,3), size(varargin,2));
+Set.tdnoisefit = struct('x', Init, 'paramForPy', Init,  'fixForPy', Init, 'ignoreForPy', Init, 'P', Init, 'fval', Init, 'Diagnostic', Init);
+
+for i = 1:size(x,3)
+    for j = 1:size(varargin,2)
+        Set.tdnoisefit(i,j).x = x(:, :, i);
+        Set.tdnoisefit(i,j).paramForPy = paramForPy(j);
+        Set.tdnoisefit(i,j).fixForPy = fixForPy(j);
+        Set.tdnoisefit(i,j).ignoreForPy = ignoreForPy(j);
+        [Set.tdnoisefit(i,j).P, Set.tdnoisefit(i,j).fval, Set.tdnoisefit(i,j).Diagnostic] = tdnoisefit(x(:, :, i),varargin(j));
+    end
+end
+
+path(oldpath)
+
+save tdnoisefit_test_data.mat -v7.3 Set

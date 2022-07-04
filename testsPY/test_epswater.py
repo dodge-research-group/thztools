@@ -1,7 +1,7 @@
 import numpy as np
 import h5py
 
-from thztools.thztoolsPY.epswater import epswater
+from thztoolsPY.epswater import epswater
 
 
 def test_epswater():

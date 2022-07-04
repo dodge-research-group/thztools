@@ -28,7 +28,6 @@ def test():
                                 'A': bool(np.array(file[Varargin[k, 0, 0]]['A'])),
                                 'eta': bool(np.array(file[Varargin[k, 0, 0]]['eta']))}
                     nll = np.array(file[Set['tdnll']['nll'][k, j, i]])[0, 0]
-                    print(nll)
                     gradnll = np.array(file[Set['tdnll']['gradnll'][k, j, i]])[0]
                     [nllPy, gradnllPy] = tdnll(x, param, varargin)
                     np.testing.assert_allclose(nllPy, nll)

@@ -1,9 +1,8 @@
 import h5py
 import numpy as np
 
-from thztools.thztoolsPY.fftfreq import fftfreq
+from thztoolsPY.fftfreq import fftfreq
 
-<<<<<<< HEAD
 
 def test_fftfreq():
     with h5py.File('fftfreq_test_data.mat', 'r') as file:
@@ -19,7 +18,7 @@ def test_fftfreq():
                 t = np.array(file[set['fftfreq']['T'][i, j]])[0, 0]
                 y = np.array(file[set['fftfreq']['f'][i, j]])[0]
                 fpy = fftfreq(n.astype(int), t)
-=======
+
 def test():
     with h5py.File('fftfreq_test_data.mat', 'r') as file:
         Set = file['Set']
@@ -34,5 +33,4 @@ def test():
                 T = np.array(file[Set['fftfreq']['T'][i, j]])[0, 0]
                 y = np.array(file[Set['fftfreq']['f'][i, j]])[0]
                 fpy = fftfreq(N.astype(int), T)
->>>>>>> 645e5c6fe040c24ffad742e3bb0999e19731f9a1
                 np.testing.assert_allclose(y, fpy)

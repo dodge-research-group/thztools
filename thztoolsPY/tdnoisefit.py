@@ -4,7 +4,7 @@ from thztoolsPY.tdnll import tdnll
 from thztoolsPY.tdtf import tdtf
 
 
-def tdnoisefit(x, param, fix = {'logv': False, 'mu': False, 'a': True, 'eta': True}, ignore={'a': True, 'eta': True}):
+def tdnoisefit(x, param, fix={'logv': False, 'mu': False, 'a': True, 'eta': True}, ignore={'a': True, 'eta': True}):
 
     """ TDNOISEFIT computes MLE parameters for the time-domain noise model
 

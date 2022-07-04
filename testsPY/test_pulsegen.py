@@ -1,7 +1,7 @@
 import numpy as np
 import h5py
 
-from thztools.thztoolsPY.pulsegen import pulsegen
+from thztoolsPY.pulsegen import pulsegen
 
 
 def test_pulsegen():

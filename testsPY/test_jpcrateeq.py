@@ -8,22 +8,24 @@ def test_jpcrateeq():
         set = file['Set']
         xt = set['jpcrateeq']['t'][0]
         xtheta = set['jpcrateeq']['theta'][0]
-        # xdndt = set['jpcrateeq']['dndt'][0]
-        # xdvdt = set['jpcrateeq']['dvdt'][0]
-        # xdpdt = set['jpcrateeq']['dpdt'][0]
         dft = np.array(xt)
         dftheta = np.array(xtheta)
 
         for i in range(0, dft.shape[0]):
             for j in range(0, dftheta.shape[0]):
                 t = np.array(file[set['jpcrateeq']['t'][i, j]])[0]
-                theta = np.array(file[set['jpcrateeq']['theta'][i, j]])[0]
+                theta = np.array(file[set['jpcrateeq']['theta'][i, j]])#[0]
                 dndt = np.array(file[set['jpcrateeq']['dndt'][i, j]])[0]
                 dvdt = np.array(file[set['jpcrateeq']['dvdt'][i, j]])[0]
                 dpdt = np.array(file[set['jpcrateeq']['dpdt'][i, j]])[0]
                 resultPy = jpcrateeq(t, theta)
-                np.testing.assert_allclose(resultPy[0], dndt)
-                np.testing.assert_allclose(resultPy[1], dvdt)
-                np.testing.assert_allclose(resultPy[2], dpdt)
 
-print('hello world')
+                print(t)
+                print(theta)
+                print(dndt)
+                print(resultPy)
+                print()
+
+                np.testing.assert_allclose(np.reshape(resultPy[0], 1), dndt)
+                np.testing.assert_allclose(np.reshape(resultPy[1], 1), dvdt)
+                np.testing.assert_allclose(np.reshape(resultPy[2], 1), dpdt)

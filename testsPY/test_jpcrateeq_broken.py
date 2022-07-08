@@ -25,5 +25,3 @@ def test_jpcrateeq():
                 np.testing.assert_allclose(resultPy[0], dndt)
                 np.testing.assert_allclose(resultPy[1], dvdt)
                 np.testing.assert_allclose(resultPy[2], dpdt)
-
-print('hello world')

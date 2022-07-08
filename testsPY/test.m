@@ -167,3 +167,25 @@ end
 
 save tdtf_test_data.mat -v7.3 Set
 
+%% JPCRATEEQ
+% Set required inputs
+t = [randi(10) randi(10) randi(10)];%0:0.05:
+theta = [0.5 0.6 0.7 ; 0.15 0.1 0.34 ; 0.67 0.45 0.82];
+
+Init = cell(length(t), length(theta));
+Set.jpcrateeq = struct('t', Init, 'theta', Init, 'dndt', Init, 'dvdt', Init, 'dpdt', Init);
+
+for i = 1:length(t)
+    for j = 1:length(theta)
+        Set.jpcrateeq(i,j).t = t(i);%cell2mat(t(i));
+        Set.jpcrateeq(i,j).theta = theta(j,:);
+        result = jpcrateeq(Set.jpcrateeq(i,j).t, Set.jpcrateeq(i,j).theta);
+        Set.jpcrateeq(i,j).dndt = result(1);
+        Set.jpcrateeq(i,j).dvdt = result(2);
+        Set.jpcrateeq(i,j).dpdt = result(3);
+    end
+end
+
+path(oldpath)
+
+save jpcrateeq_test_data.mat -v7.3 Set

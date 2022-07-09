@@ -1,6 +1,6 @@
 import numpy as np
 
-from thztoolsPY.shiftmtx import shiftmtx
+from thztools.thztoolsPY.shiftmtx import shiftmtx
 
 
 def airscancorrect(x, param):
@@ -47,15 +47,15 @@ def airscancorrect(x, param):
         eta = np.zeros((M, 1))
         # Ignore.eta = true
     if 'ts' in Pfields:
-        ts = param.ts
+        ts = param.get('ts')
         # validateattributes(ts, {'double'}, {'scalar'})
     else:
         ts = 1
         # warning('TDNLL received Param structure without ts field; set to one')
 
     Xadj = np.zeros((N, M))
-    for m in np.arange(M):
+    for m in range(0,M):
         S = shiftmtx(-eta[m], N, ts)
-        Xadj[:, m] = S * (x[:, m] / A[m])
+        Xadj[:, m] = (S @ x[:, m]) / A[m]
 
     return Xadj

@@ -189,3 +189,39 @@ end
 path(oldpath)
 
 save jpcrateeq_test_data2.mat -v7.3 Set
+
+%% AIRSCANCORRECT
+
+% Set required inputs
+x = {};
+param = {};
+count = 1;
+testCount = 10;
+% generating 10 randomly sized data matrices and params
+while count <= testCount
+    % generate random data matrix of size randN by randM
+    randN = randi([3,15]);
+    randM = randi([3,15]);
+    x{count} = rand(randN,randM);
+
+    % generate random param input
+    param{count}.A = rand(randM,1);
+    param{count}.eta = rand(randM,1);
+    param{count}.ts = rand();
+
+    count = count + 1;
+end
+
+% Generate output
+Init = cell(testCount,1);
+Set.airscancorrect = struct('x', Init, 'param', Init, 'Xadj', Init);
+
+for i = 1:testCount
+    Set.airscancorrect(i).x = x{i};
+    Set.airscancorrect(i).param = param{i};
+    Set.airscancorrect(i).Xadj = airscancorrect(x{i},param{i});
+end
+
+path(oldpath)
+
+save airscancorrect_test_data.mat -v7.3 Set

@@ -1,7 +1,6 @@
 import numpy as np
 
 from thztools.thztoolsPY import SI
-#import SI
 
 
 def jpcrateeq(t, theta):

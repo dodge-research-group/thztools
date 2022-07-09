@@ -1,10 +1,10 @@
 import numpy as np
 
-from thztoolsPY.fftfreq import fftfreq
-from thztoolsPY.tdtf import tdtf
+from thztools.thztoolsPY.fftfreq import fftfreq
+from thztools.thztoolsPY.tdtf import tdtf
 
 
-def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'A': False, 'eta': False}):
+def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'a': False, 'eta': False}):
     """
     TDNLL computes negative log-likelihood for the time-domain noise model
 
@@ -58,14 +58,14 @@ def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'A': False, 'eta': False}
         # validateattributes(mu, {'double'}, {'vector', 'numel', N})
         # else:
         # error('TDNLL requires Param structure with mu field')
-    if 'A' in Pfields and param['A'] is not None:
-        A = param['A']
-        A = np.reshape(A, (len(A), 1))
-        # validateattributes(A, {'double'}, {'vector', 'numel', M})
-        Ignore['A'] = False
+    if 'a' in Pfields and param['a'] is not None:
+        a = param['a']
+        a = np.reshape(a, (len(a), 1))
+        # validateattributes(a, {'double'}, {'vector', 'numel', M})
+        Ignore['a'] = False
     else:
-        A = np.ones((M, 1))
-        Ignore['A'] = True
+        a = np.ones((M, 1))
+        Ignore['a'] = True
     if 'eta' in Pfields and param['eta'] is not None:
         eta = param['eta']
         eta = np.reshape(eta, (len(eta), 1))
@@ -80,13 +80,13 @@ def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'A': False, 'eta': False}
     else:
         ts = 1
         # warning('TDNLL received Param structure without ts field; set to one')
-    if 'D' in Pfields:
-        D = param['D']
-        # validateattributes(D, {'double'}, {'size', [N N]})
+    if 'd' in Pfields:
+        d = param['d']
+        # validateattributes(d, {'double'}, {'size', [N N]})
     else:
         # Compute derivative matrix
         fun = lambda theta, w: - 1j * w
-        D = tdtf(fun, 0, N, ts)
+        d = tdtf(fun, 0, N, ts)
 
     # Compute frequency vector and Fourier coefficients of mu
     f = fftfreq(N, ts)
@@ -94,14 +94,14 @@ def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'A': False, 'eta': False}
     w = w.reshape(len(w), 1)
     mu_f = np.fft.fft(mu.flatten()).reshape(len(mu), 1)
 
-    gradcalc = np.logical_not([[Fix['logv']], [Fix['mu']], [Fix['A'] or Ignore['A']], [Fix['eta'] or Ignore['eta']]])
+    gradcalc = np.logical_not([[Fix['logv']], [Fix['mu']], [Fix['a'] or Ignore['a']], [Fix['eta'] or Ignore['eta']]])
 
     if Ignore['eta']:
-        zeta = mu * np.conj(A).T
+        zeta = mu * np.conj(a).T
         zeta_f = np.fft.fft(zeta, axis=0)
     else:
         exp_iweta = np.exp(1j * np.tile(w, M) * np.conj(np.tile(eta, N)).T)
-        zeta_f = np.conj(np.tile(A, N)).T * np.conj(exp_iweta) * np.tile(mu_f, M)
+        zeta_f = np.conj(np.tile(a, N)).T * np.conj(exp_iweta) * np.tile(mu_f, M)
         zeta = np.real(np.fft.ifft(zeta_f, axis=0))
 
         # Compute negative - log likelihood and gradient
@@ -112,7 +112,7 @@ def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'A': False, 'eta': False}
 
         # Simplest case: just variance and signal parameters, A and eta fixed at
         # defaults
-        if Ignore['A'] and Ignore['eta']:
+        if Ignore['a'] and Ignore['eta']:
             Dmu = np.real(np.fft.ifft(1j * w * mu_f, axis=0))
             valpha = v[0]
             vbeta = v[1] * mu**2
@@ -134,7 +134,7 @@ def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'A': False, 'eta': False}
                 gradnll[nStart+2] = (M / 2) * np.sum(Dmu**2. * dvar) * v[2]
                 nStart = nStart + 3
             if gradcalc[1]:
-                gradnll[nStart:(nStart + N - 1)] = (M * (v[1] * mu * dvar + v[2] * np.dot(D.T, (Dmu * dvar))
+                gradnll[nStart:(nStart + N - 1)] = (M * (v[1] * mu * dvar + v[2] * np.dot(d.T, (Dmu * dvar))
                                                    - np.mean(res, axis=2) / vtot))
 
         # Alternative case: A, eta, or both are not set to defaults
@@ -165,12 +165,12 @@ def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'A': False, 'eta': False}
             if gradcalc[1]:
                 # Gradient wrt mu
                 P = np.fft.fft(v[1] * dvar * zeta - reswt, axis=0) - 1j * v[2] * w * np.fft.fft(dvar * Dzeta, axis=0)
-                gradnll[nStart:nStart + N] = np.sum(np.conj(A).T * np.real(np.fft.ifft(exp_iweta * P, axis=0)), axis=1).reshape(N, 1)
+                gradnll[nStart:nStart + N] = np.sum(np.conj(a).T * np.real(np.fft.ifft(exp_iweta * P, axis=0)), axis=1).reshape(N, 1)
                 nStart = nStart + N
             if gradcalc[2]:
                 # Gradient wrt A
                 term = (vtot - valpha) * dvar - reswt * zeta
-                gradnll[nStart:nStart + M] = np.conj(np.sum(term, axis=0)).reshape(M, 1) / A
+                gradnll[nStart:nStart + M] = np.conj(np.sum(term, axis=0)).reshape(M, 1) / a
                 nStart = nStart + M
             if gradcalc[3]:
                 # Gradient wrt eta

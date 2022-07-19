@@ -1,5 +1,4 @@
 import numpy as np
-
 from thztools.thztoolsPY.shiftmtx import shiftmtx
 
 

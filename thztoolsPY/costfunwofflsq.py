@@ -1,7 +1,7 @@
 import numpy as np
 import scipy
 
-from thztoolsPY.tdtf import tdtf
+from thztools.thztoolsPY.tdtf import tdtf
 
 
 def costfunwofflsq(fun, theta, xx, yy, alpha, beta, covx, covy, ts):

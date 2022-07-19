@@ -10,6 +10,7 @@ def tdloglikelihood(param, x, ts):
     Syntax:   loglik = tdloglikelihood(Param, x, ts)
 
     Description:
+
     TDLOGLIKELIHOOD computes the log-likelihood function for obtaining the
     data matrix x, given the parameter vector Param.
 

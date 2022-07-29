@@ -5,9 +5,7 @@ from thztools.thztoolsPY.tdnll import tdnll
 import scipy
 
 
-# def tdnoisefit(x, param, fix={'logv': False, 'mu': False, 'a': True, 'eta': True}, ignore={'a': True, 'eta': True}):
 def tdnoisefit(x, param, fix, ignore):
-
     """ TDNOISEFIT computes MLE parameters for the time-domain noise model
 
      Syntax:   P = tdnoisefit(x,Oxptions)
@@ -43,7 +41,7 @@ def tdnoisefit(x, param, fix, ignore):
        fval            Value of NLL cost function from FMINUNC
        Diagnostic      Structure of diagnostic information
            .exitflag	Exit flag from FMINUNC
-           .output     Output from FMINUNC
+           .output      Output from FMINUNC
            .grad     	NLL cost function gradient from FMINUNC
            .hessian   	NLL cost function hessian from FMINUNC
      """
@@ -83,8 +81,7 @@ def tdnoisefit(x, param, fix, ignore):
         ts = 1
         param['ts'] = 1
 
-    mle = {}
-    mle['x0'] = np.array([])
+    mle = {'x0': np.array([])}
     idxstart = 0
     idxrange = dict()
 
@@ -175,7 +172,7 @@ def tdnoisefit(x, param, fix, ignore):
 
     mle['objective'] = objective
 
-    out = minimize(mle['objective'], mle['x0'], method='BFGS', jac=jacobian, options={'disp': True})
+    out = minimize(mle['objective'], mle['x0'], method='CG', jac='3-point', options={'disp': True})
 
     ################################################################################
 
@@ -221,7 +218,40 @@ def tdnoisefit(x, param, fix, ignore):
 
     p['ts'] = param['ts']
 
-    #hess_inv = out.hess_inv  # LinearOperator object
-    #hess_inv = hess_inv * np.identity(hess_inv.shape[1])  # numpy array
+    # CG method doesn't return the hessian, so diagnostic structure and lines below should be commented/modified
+    # if we will use this method. BFGS returns it and lines below work without any problem
 
-    return p, out['fun']
+    # hess_inv = out['hess_inv']  # LinearOperator object
+    # hess_inv = hess_inv * np.identity(hess_inv.shape[1])
+    #
+    # diagnostic = {'jac': out['jac'], 'hessian': hess_inv,
+    #               'err': {'var': [], 'mu': [], 'a': [], 'eta': []}}
+    #
+    # paramtest = np.logical_not([fix['logv'], fix['mu'], fix['a'] or ignore['a'], fix['eta'] or ignore['eta']])
+    #
+    # ngrad = np.sum(paramtest * [3, n, m, m])
+    # v = np.dot(np.eye(ngrad), scipy.linalg.inv(diagnostic['hessian']))
+    # err = np.sqrt(np.diag(v))
+    #
+    # idxstart = 0
+    # if paramtest[0]:
+    #     diagnostic['err']['var'] = np.sqrt(np.diag(np.diag(p['var']) * v[0:3, 0:3]) * np.diag(p['var']))
+    #     idxstart = idxstart + 3
+    # pass
+    #
+    # if paramtest[1]:
+    #     diagnostic['err']['mu'] = err[idxstart:idxstart + n]
+    #     idxstart = idxstart + n
+    # pass
+    #
+    # if paramtest[2]:
+    #     diagnostic['err']['a'] = err[idxstart:idxstart + m]
+    #     idxstart = idxstart + m
+    # pass
+    #
+    # if paramtest[3]:
+    #     diagnostic['err']['eta'] = err[idxstart:idxstart + m]
+    # pass
+
+    return p, out['fun'] #diagnostic
+

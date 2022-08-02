@@ -4,7 +4,7 @@ from thztools.thztoolsPY.fftfreq import fftfreq
 from thztools.thztoolsPY.tdtf import tdtf
 
 
-def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'a': False, 'eta': False}):
+def tdnll(x, param, Fix):
     """
     TDNLL computes negative log-likelihood for the time-domain noise model
 
@@ -58,7 +58,7 @@ def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'a': False, 'eta': False}
         # validateattributes(mu, {'double'}, {'vector', 'numel', N})
         # else:
         # error('TDNLL requires Param structure with mu field')
-    if 'a' in Pfields and param['a'] is not None:
+    if 'a' in Pfields and param['a'] != []:
         a = param['a']
         a = np.reshape(a, (len(a), 1))
         # validateattributes(a, {'double'}, {'vector', 'numel', M})
@@ -66,7 +66,7 @@ def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'a': False, 'eta': False}
     else:
         a = np.ones((M, 1))
         Ignore['a'] = True
-    if 'eta' in Pfields and param['eta'] is not None:
+    if 'eta' in Pfields and param['eta'] != []:
         eta = param['eta']
         eta = np.reshape(eta, (len(eta), 1))
         # validateattributes(eta, {'double'}, {'vector', 'numel', M})
@@ -104,78 +104,81 @@ def tdnll(x, param, Fix = {'logv': False, 'mu': False, 'a': False, 'eta': False}
         zeta_f = np.conj(np.tile(a, N)).T * np.conj(exp_iweta) * np.tile(mu_f, M)
         zeta = np.real(np.fft.ifft(zeta_f, axis=0))
 
-        # Compute negative - log likelihood and gradient
+    # Compute negative - log likelihood and gradient
 
-        # Compute residuals and their squares for subsequent computations
-        res = x - zeta
-        ressq = res**2
+    # Compute residuals and their squares for subsequent computations
+    res = x - zeta
+    ressq = res**2
 
-        # Simplest case: just variance and signal parameters, A and eta fixed at
-        # defaults
-        if Ignore['a'] and Ignore['eta']:
-            Dmu = np.real(np.fft.ifft(1j * w * mu_f, axis=0))
-            valpha = v[0]
-            vbeta = v[1] * mu**2
-            vtau = v[2] * Dmu**2
-            vtot = valpha + vbeta + vtau
+    # Simplest case: just variance and signal parameters, A and eta fixed at
+    # defaults
+    if Ignore['a'] and Ignore['eta']:
+        Dmu = np.real(np.fft.ifft(1j * w * mu_f, axis=0))
+        valpha = v[0]
+        vbeta = v[1] * mu**2
+        vtau = v[2] * Dmu**2
+        vtot = valpha + vbeta + vtau
 
-            resnormsq = ressq / np.tile(vtot, M)
-            nll = M * N * np.log(2 * np.pi) / 2 + (M / 2) * np.sum(np.log(vtot)) + np.sum(resnormsq) / 2
+        resnormsq = ressq / np.tile(vtot, M)
+        nll = M * N * np.log(2 * np.pi) / 2 + (M / 2) * np.sum(np.log(vtot)) + np.sum(resnormsq) / 2
 
-            # Compute gradient if requested
-            # if nargout > 1:
-            Ngrad = np.sum(gradcalc[0:2] * [[3], [N]])
-            gradnll = np.zeros((Ngrad, 1))
-            nStart = 0
-            dvar = (vtot - np.mean(ressq, axis=1)) / vtot**2
-            if gradcalc[0]:
-                gradnll[nStart] = (M / 2) * np.sum(dvar) * v[0]
-                gradnll[nStart+1] = (M / 2) * np.sum(mu**2 * dvar) * v[1]
-                gradnll[nStart+2] = (M / 2) * np.sum(Dmu**2. * dvar) * v[2]
-                nStart = nStart + 3
-            if gradcalc[1]:
-                gradnll[nStart:(nStart + N - 1)] = (M * (v[1] * mu * dvar + v[2] * np.dot(d.T, (Dmu * dvar))
-                                                   - np.mean(res, axis=2) / vtot))
+        # Compute gradient if requested
+        # if nargout > 1:
+        Ngrad = np.sum(gradcalc[0:2] * [[3], [N]])
+        gradnll = np.zeros((Ngrad, 1))
+        nStart = 0
+        dvar = (vtot - np.mean(ressq, axis=1).reshape(N, 1)) / vtot**2
+        if gradcalc[0]:
+            gradnll[nStart] = (M / 2) * np.sum(dvar) * v[0]
+            gradnll[nStart+1] = (M / 2) * np.sum(mu**2 * dvar) * v[1]
+            gradnll[nStart+2] = (M / 2) * np.sum(Dmu**2. * dvar) * v[2]
+            nStart = nStart + 3
+        if gradcalc[1]:
+            print('mu shape : ', mu.shape)
+            print('dvar shape: ', dvar.shape)
+            print('d shape: ', d.shape)
+            print('Dmu shape: ', Dmu.shape)
+            gradnll[nStart:nStart + N] = M * (v[1] * mu * dvar + v[2] * np.dot(d.T, (Dmu * dvar)) - np.mean(res, axis=1).reshape(N,1) / vtot)
 
-        # Alternative case: A, eta, or both are not set to defaults
-        else:
-            Dzeta = np.real(np.fft.ifft(1j * np.tile(w, M) * zeta_f, axis=0))
+    # Alternative case: A, eta, or both are not set to defaults
+    else:
+        Dzeta = np.real(np.fft.ifft(1j * np.tile(w, M) * zeta_f, axis=0))
 
-            valpha = v[0]
-            vbeta = v[1] * zeta**2
-            vtau = v[2] * Dzeta**2
-            vtot = valpha + vbeta + vtau
+        valpha = v[0]
+        vbeta = v[1] * zeta**2
+        vtau = v[2] * Dzeta**2
+        vtot = valpha + vbeta + vtau
 
-            resnormsq = ressq / vtot
-            nll = M * N * np.log(2 * np.pi) / 2 + np.sum(np.log(vtot)) / 2 + np.sum(resnormsq) / 2
+        resnormsq = ressq / vtot
+        nll = M * N * np.log(2 * np.pi) / 2 + np.sum(np.log(vtot)) / 2 + np.sum(resnormsq) / 2
 
-            # Compute gradient if requested
-            # if nargout > 1:
-            Ngrad = np.sum(gradcalc * [[3], [N], [M], [M]])
-            gradnll = np.zeros((Ngrad, 1))
-            nStart = 0
-            reswt = res / vtot
-            dvar = (vtot - ressq) / vtot**2
-            if gradcalc[0]:
-                # Gradient wrt logv
-                gradnll[nStart] = (1 / 2) * np.sum(dvar) * v[0]
-                gradnll[nStart + 1] = (1 / 2) * np.sum(zeta.flatten()**2 * dvar.flatten())*v[1]
-                gradnll[nStart + 2] = (1 / 2) * np.sum(Dzeta.flatten()**2 * dvar.flatten())*v[2]
-                nStart = nStart + 3
-            if gradcalc[1]:
-                # Gradient wrt mu
-                P = np.fft.fft(v[1] * dvar * zeta - reswt, axis=0) - 1j * v[2] * w * np.fft.fft(dvar * Dzeta, axis=0)
-                gradnll[nStart:nStart + N] = np.sum(np.conj(a).T * np.real(np.fft.ifft(exp_iweta * P, axis=0)), axis=1).reshape(N, 1)
-                nStart = nStart + N
-            if gradcalc[2]:
-                # Gradient wrt A
-                term = (vtot - valpha) * dvar - reswt * zeta
-                gradnll[nStart:nStart + M] = np.conj(np.sum(term, axis=0)).reshape(M, 1) / a
-                nStart = nStart + M
-            if gradcalc[3]:
-                # Gradient wrt eta
-                DDzeta = np.real(np.fft.ifft(-np.tile(w, M)**2 * zeta_f, axis=0))
-                gradnll[nStart:nStart + M] = -np.sum(dvar * (zeta * Dzeta * v[1] + Dzeta * DDzeta * v[2]) - reswt * Dzeta, axis=0).reshape(M,1)
+        # Compute gradient if requested
+        # if nargout > 1:
+        Ngrad = np.sum(gradcalc * [[3], [N], [M], [M]])
+        gradnll = np.zeros((Ngrad, 1))
+        nStart = 0
+        reswt = res / vtot
+        dvar = (vtot - ressq) / vtot**2
+        if gradcalc[0]:
+            # Gradient wrt logv
+            gradnll[nStart] = (1 / 2) * np.sum(dvar) * v[0]
+            gradnll[nStart + 1] = (1 / 2) * np.sum(zeta.flatten()**2 * dvar.flatten())*v[1]
+            gradnll[nStart + 2] = (1 / 2) * np.sum(Dzeta.flatten()**2 * dvar.flatten())*v[2]
+            nStart = nStart + 3
+        if gradcalc[1]:
+            # Gradient wrt mu
+            P = np.fft.fft(v[1] * dvar * zeta - reswt, axis=0) - 1j * v[2] * w * np.fft.fft(dvar * Dzeta, axis=0)
+            gradnll[nStart:nStart + N] = np.sum(np.conj(a).T * np.real(np.fft.ifft(exp_iweta * P, axis=0)), axis=1).reshape(N, 1)
+            nStart = nStart + N
+        if gradcalc[2]:
+            # Gradient wrt A
+            term = (vtot - valpha) * dvar - reswt * zeta
+            gradnll[nStart:nStart + M] = np.conj(np.sum(term, axis=0)).reshape(M, 1) / a
+            nStart = nStart + M
+        if gradcalc[3]:
+            # Gradient wrt eta
+            DDzeta = np.real(np.fft.ifft(-np.tile(w, M)**2 * zeta_f, axis=0))
+            gradnll[nStart:nStart + M] = -np.sum(dvar * (zeta * Dzeta * v[1] + Dzeta * DDzeta * v[2]) - reswt * Dzeta, axis=0).reshape(M,1)
     gradnll = gradnll.flatten()
 
-    return [nll, gradnll]
+    return nll, gradnll

@@ -136,32 +136,43 @@ save tdnll_test_data.mat -v7.3 Set
 %% TDNOISEFIT    
 % Set required inputs
 clc
-N = 10;
-M = 8;
-x = rand(N, M, 4);
-varargin = [struct() struct() struct()];
-paramForPy = [struct() struct() struct()];
-fixForPy = [struct() struct() struct()];
-ignoreForPy = [struct() struct() struct()];
+N = 100;
+M = 50;
+ts = 0.1;
+
+x1 = thzgen(N, ts, N*ts/2);
+xIdeal = x1(:, ones(M,1));
+
+sAlpha = 1e-1;
+sBeta = 1e-2;
+sTau = 1e-3;
+noise = sqrt(sAlpha^2 + (sBeta .* xIdeal).^2 + sTau).*randn(N,M);
+
+x = xIdeal + noise;
+
+varargin = [struct() struct()];
+paramForPy = [struct() struct()];
+fixForPy = [struct() struct()];
+ignoreForPy = [struct() struct()];
 for i = 1:1:length(varargin)
     % Initial parameters
     varargin(i).v0 = rand(3,1);
-    varargin(i).mu0 = rand(N,1);
-    varargin(i).A0 = rand(M,1);
-    varargin(i).eta0 = rand(M,1);
-    varargin(i).ts = rand();
+    varargin(i).mu0 = x(:, 1);
+    varargin(i).A0 = 1 - 1e-10*ones(M,1);
+    varargin(i).eta0 = 1e-10*ones(M,1);
+    varargin(i).ts = ts;
 
     % Fix structure
     Fix = struct();
     Fix.logv = 0;
     Fix.mu = 0;
-    Fix.A = 1;
-    Fix.eta = 1;
+    Fix.A = 0;
+    Fix.eta = 0;
 
     % Ignore structure
     Ignore = struct();
     Ignore.A = 1;
-    Ignore.eta = 1;
+    Ignore.eta = 0;
     
     varargin(i).Fix = Fix;
     varargin(i).Ignore = Ignore;
@@ -190,10 +201,16 @@ for i = 1:size(x,3)
         Set.tdnoisefit(i,j).paramForPy = paramForPy(j);
         Set.tdnoisefit(i,j).fixForPy = fixForPy(j);
         Set.tdnoisefit(i,j).ignoreForPy = ignoreForPy(j);
-        [Set.tdnoisefit(i,j).P, Set.tdnoisefit(i,j).fval, Set.tdnoisefit(i,j).Diagnostic] = tdnoisefit(x(:, :, i),varargin(j));
+        [Set.tdnoisefit(i,j).P, Set.tdnoisefit(i,j).fval, Set.tdnoisefit(i,j).Diagnostic] = tdnoisefitNew(x(:, :, i),varargin(j));
     end
 end
 
 path(oldpath)
 
 save tdnoisefit_test_data.mat -v7.3 Set
+
+plot(xIdeal(:,1))
+hold on
+plot(x(:,1))
+plot(Set.tdnoisefit(1,1).P.mu)
+legend('Ideal', 'Ideal + Noise', 'Fit')

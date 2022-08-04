@@ -1,7 +1,7 @@
 import numpy as np
 
-from thztools.thztoolsPY.fftfreq import fftfreq
-from thztools.thztoolsPY.tdtf import tdtf
+from thztoolsPY.fftfreq import fftfreq
+from thztoolsPY.tdtf import tdtf
 
 
 def tdnll(x, param, Fix):

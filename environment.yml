@@ -1,4 +1,4 @@
-name: thztools
+name: thztools1
 channels:
   - defaults
   - conda-forge

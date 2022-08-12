@@ -1,6 +1,6 @@
 import numpy as np
 
-from thztools.thztools.thztools import shiftmtx
+from thztoolsPY.shiftmtx import shiftmtx
 
 
 def airscancorrect(x, param):

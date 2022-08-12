@@ -1,5 +1,6 @@
 import numpy as np
 
+
 from thztoolsPY.fftfreq import fftfreq
 from thztoolsPY.tdtf import tdtf
 
@@ -50,8 +51,8 @@ def tdnll(x, param, Fix):
         v = np.exp(param['logv'])
         v = np.reshape(v, (len(v), 1))
         # validateattributes(v, {'double'}, {'vector', 'numel', 3})
-        # else:
-        # error('TDNLL requires Param structure with logv field')
+    else:
+         raise ValueError('TDNLL requires Param structure with logv field')
     if 'mu' in Pfields:
         mu = param['mu']
         mu = np.reshape(mu, (len(mu), 1))
@@ -173,6 +174,8 @@ def tdnll(x, param, Fix):
         if gradcalc[2]:
             # Gradient wrt A
             term = (vtot - valpha) * dvar - reswt * zeta
+            if np.any(np.isclose(a, 0)):
+                raise ValueError("One or more elements of the amplitude vector are close to zero ")
             gradnll[nStart:nStart + M] = np.conj(np.sum(term, axis=0)).reshape(M, 1) / a
             if not Fix['mu']:
                 gradnll = np.delete(gradnll, nStart)
@@ -182,7 +185,9 @@ def tdnll(x, param, Fix):
         if gradcalc[3]:
             # Gradient wrt eta
             DDzeta = np.real(np.fft.ifft(-np.tile(w, M)**2 * zeta_f, axis=0))
-            gradnll[nStart:nStart + M] = -np.sum(dvar * (zeta * Dzeta * v[1] + Dzeta * DDzeta * v[2]) - reswt * Dzeta, axis=0).reshape(M,1)
+            gradnll = np.squeeze(gradnll)
+            gradnll[nStart:nStart + M] = -np.sum(dvar * (zeta * Dzeta * v[1] + Dzeta * DDzeta * v[2]) - reswt * Dzeta, axis=0).reshape(M,)
+
             if not Fix['mu']:
                 gradnll = np.delete(gradnll, nStart)
     gradnll = gradnll.flatten()

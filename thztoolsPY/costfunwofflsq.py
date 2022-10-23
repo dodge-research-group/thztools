@@ -1,6 +1,5 @@
 import numpy as np
 import scipy
-
 from thztoolsPY.tdtf import tdtf
 
 
@@ -24,17 +23,17 @@ def costfunwofflsq(fun, theta, xx, yy, alpha, beta, covx, covy, ts):
 
     """
     n = len(xx)
-    H = tdtf(fun, theta, n, ts)
+    h = tdtf(fun, theta, n, ts)
 
     icovx = np.eye(n) / covx
     icovy = np.eye(n) / covy
 
-    M1 = np.eye(n) + (covx * H.H * icovy * H)
-    iM1 = np.eye(n) / M1
-    M2 = (xx - alpha) + covx * H.H * icovy * (yy-beta)
-    iM1M2 = iM1 * M2
-    HM1invM2 = H * iM1M2
+    m1 = np.eye(n) + (covx * h.h * icovy * h)
+    im1 = np.eye(n) / m1
+    m2 = (xx - alpha) + covx * h.h * icovy * (yy-beta)
+    im1m2 = im1 * m2
+    hm1invm2 = h * im1m2
 
-    res = [scipy.linalg.sqrtm(icovx) * (xx - alpha - iM1M2), scipy.linalg.sqrtm(icovy) * (yy - beta - HM1invM2)]
+    res = [scipy.linalg.sqrtm(icovx) * (xx - alpha - im1m2), scipy.linalg.sqrtm(icovy) * (yy - beta - hm1invm2)]
 
     return res

@@ -4,7 +4,20 @@ import SI
 
 
 def jpcrateeq(t, theta):
-    # JPCRATEEQ Rate equations for photoconducting antenna current
+    """
+    Rate equations for photoconducting antenna current.
+    
+    Parameters 
+    ----------
+    
+    ts : float
+        Sampling time. 
+        
+    theta : ndarray 
+        
+    
+    
+    """""
 
     n = theta[0]
     v = theta[1]

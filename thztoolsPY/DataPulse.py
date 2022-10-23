@@ -4,11 +4,14 @@ import math
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-class DataPulse:
-    # DataPulse is a class which can import scan data from an appropriately
 
-    # formatted file and puts both the numerical and any supporting data
-    # into class properties
+class DataPulse:
+    """
+    DataPulse is a class which can import scan data from an appropriately formatted file and puts both the numerical and
+    any supporting data into class properties-
+
+
+    """
 
     def __init__(self, acquisitionTime=datetime.fromtimestamp(0), timeConstant=math.nan, waitTime=math.nan, description='',
                  setPoint=math.nan, scanOffset=math.nan, temperature=math.nan, time=math.nan, amplitude=math.nan,
@@ -17,7 +20,7 @@ class DataPulse:
                  channelBSlope=math.nan, channelBOffset=math.nan, channelCMaximum=math.nan, channelCMinimum=math.nan,
                  channelCVariance=math.nan, channelCSlope=math.nan, channelCOffset=math.nan, channelDMaximum=math.nan,
                  channelDMinimum=math.nan, channelDVariance=math.nan, channelDSlope=math.nan, channelDOffset=math.nan,
-                 dirName='', file={'name': '', 'data': '', 'bytes': 0, 'isdir': False, 'datenum': 0}):
+                 dirname='', file={'name': '', 'data': '', 'bytes': 0, 'isdir': False, 'datenum': 0}):
         self.acquisitionTime = acquisitionTime
         self.timeConstant = timeConstant
         self.waitTime = waitTime
@@ -47,7 +50,7 @@ class DataPulse:
         self.channelDVariance = channelDVariance
         self.channelDSlope = channelDSlope
         self.channelDOffset = channelDOffset
-        self.dirName = dirName
+        self.dirname = dirname
         self.file = file
 
     @property
@@ -65,26 +68,52 @@ class DataPulse:
 
     def DataPulse(self, filename):
         obj = dict()
-        [obj.DirName, obj.File] = os.path.split(filename) # initialize from a datafile or as an empty pulse
+        [obj['dirname'], obj['File']] = os.path.split(filename) # initialize from a datafile or as an empty pulse
         fid = open(filename)
         # first get the time the scan was taken, which appears on
         # the first line of the file
         lines = fid.readlines()
         date_time_str = lines[0].split()[1]
-        obj.AcquisitionTime = datetime.strptime(date_time_str, '%Y-%m-%dT%H:%M:%S')
+        obj['AcquisitionTime'] = datetime.strptime(date_time_str, '%Y-%m-%dT%H:%M:%S')
         # now keep grabbing each line of the file and matching it to
         # the property of the same name
+        #print('lines', lines)
+        d1 = np.array(lines)
         for idx, strr in enumerate(lines[1:]):
-            if strr is '\n':
+            if strr == '\n':
                 break
             else:
-                [var_name, var_val] = strr.split()
-                vars(obj)[var_name] = float(var_val)
+                var_name = strr.split()[0]
+                var_val = strr.split()[1]
+
+                if len(var_name)==2:
+                    obj[var_name[0]] = float(var_val[1])
+
+
         # store time and amplitude measurements
-        data = np.array([[float(i.split()[0]), float(i.split()[1])] for i in lines[(idx + 2):]])
+
+        obj['time'] = []
+        obj['amp'] = []
+
+        for i in lines[(idx+3):]:
+
+            # get data in each line of the file data. It generates a class list
+            data_list = i.split()
+
+            # convert each element on the list into a string
+            data_time_str = ''.join(data_list[0:1])
+            data_amp_str = ''.join(data_list[1:2])
+
+            # convert string into float and save in a usual list
+            data_time = (np.float(data_time_str))
+            data_amp = np.array(np.float(data_amp_str))
+            obj['time'].append(data_time)
+            obj['amp'].append(data_amp)
+
         fid.close()
-        obj.Time = data[:, 0]
-        obj.Amplitude = data[:, 1]
+        obj['time'] = np.array(obj['time'])
+        obj['amp'] = np.array(obj['amp'])
+
         return obj
 
     def plot(self, obj, varargin):

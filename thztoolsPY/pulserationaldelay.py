@@ -2,7 +2,44 @@ import math
 import numpy as np
 
 
-def pulserelationdelay(signalin, parms):
+def pulserationaldelay(signalin, parms):
+
+    r"""
+    Calculates time-domain model output with a rational transfer function together with a delay: $\\t = \frac{b(1) + b(2)
+    s + ... + b(nb)s^{(nb -1)}}{a(1) + a(2)s + a(3)s^{2} + ... + a(na) s^{(na -1)}}$
+
+    where $\\s = i \omega$ and $\\\omega$ is the scaled angular frequency, ranging over $\\(-\pi,\pi)$. If  parms is a
+    structure array, the transfer function is a sum of rational functions, in which each term in the sum is formed from
+    the parameters contained in an array element.
+
+
+    Parameters
+    ----------
+
+    signalin : ndarray
+        input data vector, arbitrary units.
+
+    parms : dict
+        Dictionary containing the parameters:
+
+        a : ndarray
+            Denominator coefficients.
+
+        b : ndarray
+            Numerator coefficients.
+
+        eta : float
+            Delay.
+
+    Returns
+    -------
+    signalout : ndarray
+        Output data vector, arbitrary units.
+
+
+
+    """
+
     n = len(signalin)
     nmax = math.floor((n - 1) / 2)
     # nTerm = len(parms[0][0])

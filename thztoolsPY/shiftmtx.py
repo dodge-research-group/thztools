@@ -6,15 +6,25 @@ from thztoolsPY.fftfreq import fftfreq
 
 def shiftmtx(tau, n, ts):
     """
-    shiftmtx computes the n by n transfer matrix for a continuous time-shift
+    Shiftmtx computes the n by n transfer matrix for a continuous time-shift.
 
-        parameters:
-            tau: Input parameters for the function
-            n: Number of time samples
-            ts: sampling time
+    Parameters
+    -----------
 
-        returns:
-            H: Transfer matrix with size (n,n)
+    tau : float
+        Input parameters for the function
+
+    n : int
+        Number of time samples
+
+    ts: int
+        sampling time
+
+    Returns
+    -------
+    h: ndarray or matrix
+        (n, n) Transfer matrix
+
     """
 
     # Fourier method

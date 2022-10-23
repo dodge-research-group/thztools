@@ -1,59 +1,71 @@
 import numpy as np
-from thztools.thztoolsPY.noisevar import noisevar
-from thztools.thztoolsPY.tdtf import tdtf
 
-def costfun(fun, mu ,theta, xx, yy, sigma_alpha, sigma_beta, sigma_tau, ts):
+from thztoolsPY.noisevar import noisevar
+from thztoolsPY.tdtf import tdtf
+
+
+def costfun(fun, mu, theta, xx, yy, sigma_alpha, sigma_beta, sigma_tau, ts):
     """
-    costfun computes the MLE cost function
+    Computes the maximum likelihood cost function.
 
     Parameters
     ----------
-        fun :
+        fun : callable
+            Transfer function, in the form fun(theta,w), -iwt convention.
 
-        mu :
+        mu : ndarray
+            Signal vector of size (n,).
 
-        theta :
+        theta : ndarray
+            Input parameters for the function.
 
-        xx :
+        xx : ndarray
+            Measured input signal.
 
-        yy :
+        yy : ndarray
+            Measured output signal.
 
-        sigma_alpha :
+        sigma_alpha : float
+            Noise produced by the detection electronics. ($\\ \sigma _{\\alpha} = 10^{-4} $)
 
-        sigma_beta :
+        sigma_beta : float
+            Multiplicative noise term produced by laser power fluctuations. ($\\ \sigma _{\\beta} = 10^{-4} $)
 
-        sigma_tau :
+        sigma_tau : float
+            Noise produced by fluctuations in the optical path lengths.
 
-        ts :
+        ts : float
+            Sampling time.
 
     Returns
     -------
-        K :
+        k : callable
+            Negative loglikelihood function.
 
     """
 
     sigma = [sigma_alpha, sigma_beta, sigma_tau]
 
     n = len(xx)
-    H = tdtf(fun, theta, n, ts)
+    h = tdtf(fun, theta, n, ts)
 
-    psi = H*mu
+    psi = h*mu
 
-    Vmu = np.diag(noisevar(sigma, mu, ts))
-    Vpsi = np.diag(noisevar(sigma, psi, ts))
+    vmu = np.diag(noisevar(sigma, mu, ts))
+    vpsi = np.diag(noisevar(sigma, psi, ts))
 
-    iVmu = np.diag(1/noisevar(sigma, mu, ts))
-    iVpsi = np.diag(1/noisevar(sigma, psi, ts))
+    ivmu = np.diag(1/noisevar(sigma, mu, ts))
+    ivpsi = np.diag(1/noisevar(sigma, psi, ts))
 
     # compute the inverse covariance matrices for xx and yy
-    iVx = np.diag(1/noisevar(sigma, xx, ts))
-    iVy = np.diag(1/noisevar(sigma, xx, ts))
+    ivx = np.diag(1/noisevar(sigma, xx, ts))
+    ivy = np.diag(1/noisevar(sigma, xx, ts))
 
     # compute the cost function
-    # Note: sigmamu and sigmapsi both have determinatns below the numerical
+    # Note: sigma-mu and sigma-psi both have determinants below the numerical
     # precision, so we multiply them by the constant matrices isigmaxx and
     # isigmayy to improve numerical stability
-    K = np.log(np.linalg.det(iVx*Vmu)) + np.log(np.linalge.det(iVy*Vpsi)) + \
-        (xx - mu).T*iVmu*(xx - mu) + (yy - psi).T*iVpsi*(yy - psi)
+    k = np.log(np.linalg.det(ivx*vmu)) + np.log(np.linalge.det(ivy*vpsi)) + \
+        (xx - mu).T*ivmu*(xx - mu) + (yy - psi).T*ivpsi*(yy - psi)
 
-    return K
+    return k

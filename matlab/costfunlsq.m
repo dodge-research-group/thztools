@@ -20,5 +20,5 @@ end
 
 W = eye(N)/sqrtm(Uy + Vy);
 
-res = W*ry;
+res = W*ry; 
 end

@@ -240,7 +240,7 @@ def tdnoisefit(x, param, fix={'logv': False, 'mu': False, 'a': False, 'eta': Fal
         return tdnll(x, parsein(p), fix)[1]
 
     mle['objective'] = objective
-    out = minimize(mle['objective'], mle['x0'], method='BFGS', jac=jacobian, options={'maxiter': 250, 'disp': True})
+    out = minimize(mle['objective'], mle['x0'], method='BFGS', jac=jacobian, options={'maxiter': 1550, 'disp': True})
 
     # The trust-region algorithm returns the Hessian for the next-to-last
     # iterate, which may not be near the final point. To check, test for
@@ -256,7 +256,7 @@ def tdnoisefit(x, param, fix={'logv': False, 'mu': False, 'a': False, 'eta': Fal
               'recalculating with quasi-Newton algorithm')
 
         mle['x0'] = out['x']
-        out2 = minimize(mle['objective'], mle['x0'], method='BFGS', jac=jacobian, options={'maxiter': 250, 'disp': True})
+        out2 = minimize(mle['objective'], mle['x0'], method='BFGS', jac=jacobian, options={'maxiter': 1550, 'disp': True})
         hess = np.linalg.inv(out2.hess_inv)
 
     # Parse output

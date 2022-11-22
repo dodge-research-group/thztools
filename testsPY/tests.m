@@ -411,4 +411,3 @@ end
  
    save dataToptica.mat -v7.3 dataToptica;
 
-

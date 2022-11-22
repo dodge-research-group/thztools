@@ -155,7 +155,7 @@ def noisefitshow(t, x):
         s[:, :, i] = shiftmtx(etaest[i], n, ts)
         zeta[:, i] = aest[i] * s[:, :, i] @ muest
 
-    delta = (x - zeta) / np.tile(np.reshape(vtotstar, (1001, 1)), 50)
+    delta = (x - zeta) / np.tile(np.reshape(vtotstar, (n, 1)), m)
     output['delta'] = delta
 
     # Compute variance of adjusted waveform data
@@ -171,19 +171,19 @@ def noisefitshow(t, x):
     plt.show()
 
     ##########
-    plt.figure(figsize=(10, 8))
-    plt.title('Drift Amplitude, 50 ps', fontsize=15)
-    plt.stem(np.arange(0, 50), 1e2 * (aest / aest[0] - 1), linefmt='C0')
-    plt.xlabel('Iteration Number', fontsize=15)
-    plt.ylabel('Drift Amplitude (% from 1)', fontsize=15)
-    plt.show()
-
-    #####
-    plt.figure(figsize=(10, 8))
-    plt.title('Drift Delay, 50 ps ', fontsize=15)
-    plt.stem(np.arange(0, 50), 1e3 * (etaest - etaest[0]))
-    plt.xlabel('Iteration Number', fontsize=15)
-    plt.ylabel('Drift Delay (fs)', fontsize=15)
-    plt.show()
+    # plt.figure(figsize=(10, 8))
+    # plt.title('Drift Amplitude, 50 ps', fontsize=15)
+    # plt.stem(np.arange(0, m), 1e2 * (aest / aest[0] - 1), linefmt='C0')
+    # plt.xlabel('Iteration Number', fontsize=15)
+    # plt.ylabel('Drift Amplitude (% from 1)', fontsize=15)
+    # plt.show()
+    #
+    # #####
+    # plt.figure(figsize=(10, 8))
+    # plt.title('Drift Delay, 50 ps ', fontsize=15)
+    # plt.stem(np.arange(0, m), 1e3 * (etaest - etaest[0]))
+    # plt.xlabel('Iteration Number', fontsize=15)
+    # plt.ylabel('Drift Delay (fs)', fontsize=15)
+    # plt.show()
 
     return output

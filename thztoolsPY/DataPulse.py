@@ -4,98 +4,86 @@ import math
 import matplotlib.pyplot as plt
 from datetime import datetime
 
+
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+
+
 class DataPulse:
-    # DataPulse is a class which can import scan data from an appropriately
 
-    # formatted file and puts both the numerical and any supporting data
-    # into class properties
+    def __init__(self, filename=''):
+        self.AcquisitionTime = None
+        self.Description = None
+        self.TimeConstant = None
+        self.WaitTime = None
+        self.setPoint = None
+        self.scanOffset = None
+        self.temperature = None
+        self.time = None
+        self.amplitude = None
+        self.ChannelAMaximum = None
+        self.ChannelAMinimum = None
+        self.ChannelAVariance = None
+        self.ChannelASlope= None
+        self.ChannelAOffset = None
+        self.ChannelBMaximum = None
+        self.ChannelBMinimum = None
+        self.ChannelBVariance = None
+        self.ChannelBSlope = None
+        self.ChannelBOffset = None
+        self.ChannelCMaximum = None
+        self.ChannelCMinimum = None
+        self.ChannelCVariance = None
+        self.ChannelCSlope = None
+        self.ChannelCOffset = None
+        self.ChannelDMaximum = None
+        self.ChannelDMinimum = None
+        self.ChannelDVariance = None
+        self.ChannelDSlope = None
+        self.ChannelDOffset = None
+        self.dirname = None
+        self.file = None
+        self.filename = filename
+        self.frequency = None
 
-    def __init__(self, acquisitionTime=datetime.fromtimestamp(0), timeConstant=math.nan, waitTime=math.nan, description='',
-                 setPoint=math.nan, scanOffset=math.nan, temperature=math.nan, time=math.nan, amplitude=math.nan,
-                 channelAMaximum=math.nan, channelAMinimum=math.nan, channelAVariance=math.nan, channelASlope=math.nan,
-                 channelAOffset=math.nan, channelBMaximum=math.nan, channelBMinimum=math.nan, channelBVariance=math.nan,
-                 channelBSlope=math.nan, channelBOffset=math.nan, channelCMaximum=math.nan, channelCMinimum=math.nan,
-                 channelCVariance=math.nan, channelCSlope=math.nan, channelCOffset=math.nan, channelDMaximum=math.nan,
-                 channelDMinimum=math.nan, channelDVariance=math.nan, channelDSlope=math.nan, channelDOffset=math.nan,
-                 dirName='', file={'name': '', 'data': '', 'bytes': 0, 'isdir': False, 'datenum': 0}):
-        self.acquisitionTime = acquisitionTime
-        self.timeConstant = timeConstant
-        self.waitTime = waitTime
-        self.description = description
-        self.setPoint = setPoint
-        self.scanOffset = scanOffset
-        self.temperature = temperature
-        self.time = time
-        self.amplitude = amplitude
-        self.channelAMaximum = channelAMaximum
-        self.channelAMinimum = channelAMinimum
-        self.channelAVariance = channelAVariance
-        self.channelASlope= channelASlope
-        self.channelAOffset = channelAOffset
-        self.channelBMaximum = channelBMaximum
-        self.channelBMinimum = channelBMinimum
-        self.channelBVariance = channelBVariance
-        self.channelBSlope = channelBSlope
-        self.channelBOffset = channelBOffset
-        self.channelCMaximum = channelCMaximum
-        self.channelCMinimum = channelCMinimum
-        self.channelCVariance = channelCVariance
-        self.channelCSlope = channelCSlope
-        self.channelCOffset = channelCOffset
-        self.channelDMaximum = channelDMaximum
-        self.channelDMinimum = channelDMinimum
-        self.channelDVariance = channelDVariance
-        self.channelDSlope = channelDSlope
-        self.channelDOffset = channelDOffset
-        self.dirName = dirName
-        self.file = file
+        if filename is not None:
 
-    @property
-    def frequency(self):
-        # Calculate frequency range
-        frequency = (np.arange(np.floor(len(self.time))) / 2 - 1).T / (self.time[-1] - self.time[0])
-        return frequency
+            data = pd.read_csv(filename, header=None, delimiter='\t')
 
-    @property
-    def fourierAmplitude(self):
-        # Calculate fft
-        famp = np.fft.fft(self.amplitude)
-        famp = famp[0:np.floor(len(famp) / 2)]
-        return famp
 
-    def DataPulse(self, filename):
-        obj = dict()
-        [obj.DirName, obj.File] = os.path.split(filename) # initialize from a datafile or as an empty pulse
-        fid = open(filename)
-        # first get the time the scan was taken, which appears on
-        # the first line of the file
-        lines = fid.readlines()
-        date_time_str = lines[0].split()[1]
-        obj.AcquisitionTime = datetime.strptime(date_time_str, '%Y-%m-%dT%H:%M:%S')
-        # now keep grabbing each line of the file and matching it to
-        # the property of the same name
-        for idx, strr in enumerate(lines[1:]):
-            if strr is '\n':
-                break
-            else:
-                [var_name, var_val] = strr.split()
-                vars(obj)[var_name] = float(var_val)
-        # store time and amplitude measurements
-        data = np.array([[float(i.split()[0]), float(i.split()[1])] for i in lines[(idx + 2):]])
-        fid.close()
-        obj.Time = data[:, 0]
-        obj.Amplitude = data[:, 1]
-        return obj
+            for i in range(data.shape[0]):
+                try:
+                    float(data[0][i])
+                except:
+                    ind = i + 1
+                pass
 
-    def plot(self, obj, varargin):
-        # Plots the time trace and power spectrum
-        plt.figure()
-        for o in obj:
-            plt.plot(o.time, o.amplitude)
-        plt.xlabel('Time (ps)')
-        plt.ylabel('Voltage (V)')
-        plt.figure()
-        for o in obj:
-            plt.plot(o.frequency, 10 * np.log10(np.abs(o.fourierAmplitude)**2), varargin)
-        plt.xlabel('Frequency (THz)')
-        plt.ylabel('Power (dB)')
+            keys = data[0][0:ind].to_list()
+            vals = data[1][0:ind].to_list()
+
+            for k in range(len(keys)):
+                if keys[k] in list(self.__dict__.keys()):
+
+                    try:
+                        float(vals[k])
+                        setattr(self, keys[k], float(vals[k]))
+                    except ValueError:
+                        setattr(self, keys[k], vals[k])
+
+
+                else:
+                    raise Warning('The data key is not defied')
+
+
+            self.time = data[0][ind:].to_numpy(dtype=float)
+            self.amplitude = data[1][ind:].to_numpy(dtype=float)
+
+
+            # Calculate frequency range
+            self.frequency = (np.arange(np.floor(len(self.time))) / 2 - 1).T / (self.time[-1] - self.time[0])
+
+            # Calculate fft
+            famp = np.fft.fft(self.amplitude)
+            self.famp = famp[0:int(np.floor(len(famp)/2))]

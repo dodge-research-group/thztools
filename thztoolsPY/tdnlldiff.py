@@ -1,6 +1,7 @@
 import numpy as np
-from thztools.thztoolsPY.tdtf import tdtf
-from thztools.thztoolsPY.fftfreq import fftfreq
+
+from thztoolsPY.fftfreq import fftfreq
+from thztoolsPY.tdtf import tdtf
 
 
 def tdnlldiff(x, param, fix={'logv': False, 'mu': False, 'a': False, 'eta': False}):
@@ -14,19 +15,19 @@ def tdnlldiff(x, param, fix={'logv': False, 'mu': False, 'a': False, 'eta': Fals
      data matrix x, given the parameter structure Param.
 
      Inputs:
-      x       Data matrix
-       Param   Parameter structure, including:
-           .logv   Log of noise parameters	[3x1 double]
-           .mu     Signal vector           [Nx1 double]
-           .A      Amplitude vector        [Mx1 double]
-           .eta    Delay vector            [Mx1 double]
-           .ts     Sampling time           [double]
-           .D      Derivative matrix       [NxN double]
-         Fix     Variables to fix for gradient calculation
-           .logv   Log of noise parameters [logical]
-           .mu     Signal vector           [logical]
-           .A      Amplitude vector        [logical]
-           .eta    Delay vector            [logical]
+        x       Data matrix
+        Param   Parameter structure, including:
+        .logv   Log of noise parameters	[3x1 double]
+        .mu     Signal vector           [Nx1 double]
+        .A      Amplitude vector        [Mx1 double]
+        .eta    Delay vector            [Mx1 double]
+        .ts     Sampling time           [double]
+        .D      Derivative matrix       [NxN double]
+        Fix     Variables to fix for gradient calculation
+        .logv   Log of noise parameters [logical]
+        .mu     Signal vector           [logical]
+        .A      Amplitude vector        [logical]
+        .eta    Delay vector            [logical]
 
      Outputs:
        nll     Negative log-likelihood function (float)

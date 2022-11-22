@@ -1,52 +1,77 @@
 import numpy as np
 from scipy.optimize import minimize
 
-from thztools.thztoolsPY.tdnll import tdnll
-from thztools.thztoolsPY.tdtf import tdtf
-
-fix = {'logv': False, 'mu': False, 'a': True, 'eta': True}
-
-def tdnoisefffit(x, param, fix, ignore={'a': True, 'eta': True}):
+from thztoolsPY.tdnll import tdnll
+from thztoolsPY.tdtf import tdtf
 
 
-    """ TDNOISEFIT computes MLE parameters for the time-domain noise model
+def tdnoisefffit(x, param, fix= {'logv': False, 'mu': False, 'a': True, 'eta': True}, ignore={'a': True, 'eta': True}):
+    """ Computes maximum likelihood parameters for the time-domain noise model.
 
-     Syntax:   P = tdnoisefit(x,Options)
-
-     Description:
-
-     TDNOISEFIT computes the noise parameters sigma and the underlying signal
+     Tdnosefffit computes the noise parameters sigma and the underlying signal
      vector mu for the data matrix x, where the columns of x are each noisy
      measurements of mu.
 
-     Inputs:
-       x               Data matrix
+    Parameters
+    ----------
 
-     Optional inputs:
-       Options         Fit options
+    x : ndarray or matrix
+        Data matrix.
 
-     Option fields:
-       v0              Initial guess, noise model parameters [3x1 double]
-       mu0             Initial guess, signal vector [Nx1 double]
-       A0              Initial guess, amplitude vector [Mx1 double]
-       eta0            Initial guess, delay vector [Mx1 double]
-       ts              Sampling time [scalar double]
-       Fix             Fixed variables [struct]
-       Ignore          Ignore variables [struct]
+    param : dict
+        A dictionary containing initial guess for the parameters:
 
-     Outputs:
-       P               Output parameter structure
-           .logv       Log of noise parameters
-           .mu         Signal vector
-           .A          Amplitude vector
-           .eta        Delay vector
-           .ts         Samling time
-       fval            Value of NLL cost function from FMINUNC
-       Diagnostic      Structure of diagnostic information
-           .exitflag	Exit flag from FMINUNC
-           .output     Output from FMINUNC
-           .grad     	NLL cost function gradient from FMINUNC
-           .hessian   	NLL cost function hessian from FMINUNC
+        v0 : ndarray
+            Initial guess, noise model parameters. Array of real elements of size (3, )
+
+        mu0 : ndarray
+            Initial guess, signal vector. Array of real elements of size  (n, )
+
+        a0 : ndarray
+            Initial guess, amplitude vector. Array of real elements of size (m, )
+
+        eta0 : ndarray
+            Initial guess, delay vector. Array of real elements of size (m, )
+
+        ts : int
+            Sampling time
+
+    fix : dict, optional
+        Fixed variables. If not given, chosen to set free all the variables.
+
+    ignore : dict, optional
+        Ignore variables. If not given, chosen to ignore both amplitude and delay.
+
+    Returns
+    --------
+    p : dict
+        Output parameter dictionary containing:
+            eta : ndarray
+                Delay vector.
+
+            a : ndarray
+                Amplitude vector.
+
+            mu : ndarray
+                Signal vector.
+
+            var : ndarray
+                Log of noise parameters
+
+
+        fval : float
+           Value of NLL cost function from FMINUNC
+
+        Diagnostic : dict
+            Dictionary containing diagnostic information
+                err : dic
+                    Dictionary containing  error of the parameters.
+
+                grad : ndarray
+                      Negative loglikelihood cost function gradient from scipy.optimize.minimize BFGS method.
+
+                hessian : ndarray
+                    Negative loglikelihood cost function hessian from scipy.optimize.minimize BFGS method.
 
       """
 
@@ -98,6 +123,7 @@ def tdnoisefffit(x, param, fix, ignore={'a': True, 'eta': True}):
 
         def setpa(p):
             return p[idxrange]
+
         idxstart = idxend + 1
     pass
 
@@ -119,7 +145,7 @@ def tdnoisefffit(x, param, fix, ignore={'a': True, 'eta': True}):
     pass
 
     def fun(theta, w):
-        return -1j*w
+        return -1j * w
 
     d = tdtf(fun, 0, n, param['ts'])
 
@@ -155,9 +181,9 @@ def tdnoisefffit(x, param, fix, ignore={'a': True, 'eta': True}):
 
     mle['objective'] = objective
 
-    out = minimize(mle['objective'], mle['x0'], method = 'BFGS')
+    out = minimize(mle['objective'], mle['x0'], method='BFGS')
 
-    # Parse ouput
+    # Parse output
     p = {}
 
     idxstart = 0
@@ -206,13 +232,13 @@ def tdnoisefffit(x, param, fix, ignore={'a': True, 'eta': True}):
 
     paramtest = np.logical_not([fix['logv'], fix['mu'], fix['a'] or ignore['a'], fix['eta'] or ignore['eta']])
 
-    ngrad = np.sum(paramtest * [[3], [n], [m-1], [m-1]])
+    ngrad = np.sum(paramtest * [[3], [n], [m - 1], [m - 1]])
     v = np.identity(ngrad) / diagnostic['hessian']
     err = np.sqrt(np.diag(v))
 
     idxstart = 0
     if paramtest[0]:
-        diagnostic['err']['var']  = np.sqrt(np.diag(np.diag(p['var']) * v[0:3, 0:3]) * np.diag(p['var']))
+        diagnostic['err']['var'] = np.sqrt(np.diag(np.diag(p['var']) * v[0:3, 0:3]) * np.diag(p['var']))
         idxstart = idxstart + 3
     pass
 
@@ -230,5 +256,4 @@ def tdnoisefffit(x, param, fix, ignore={'a': True, 'eta': True}):
         diagnostic['err']['eta'] = err(idxstart, (idxstart + m - 2))
     pass
 
-
-
+    return p, out.fun, diagnostic

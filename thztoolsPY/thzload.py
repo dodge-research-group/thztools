@@ -5,7 +5,7 @@ from thztoolsPY.DataPulse import DataPulse
 
 def thzload(varargin):
     """
-    THZLOAD Recursively loads all terahertz files in a directory
+    TH Recursively loads all terahertz files in a directory
         DATA = THZLOAD recursively loads all files with the .thz extension from
         the present directory and all of its subdirectories into DATA, an array
         of DataPulse objects

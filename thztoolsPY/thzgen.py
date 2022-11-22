@@ -2,6 +2,33 @@ import numpy as np
 
 
 def thzgen(n, t, t0, varargin):
+
+    """
+    Generate a terahertz pulse with n points at sampling interval t and centered at t0.
+
+    Parameters
+    ----------
+
+    n : int
+        number of sampled points.
+
+    t : float
+        sampling time
+
+    t0 : float
+        pulse center
+
+    Returns
+    -------
+
+    y : ndarray
+        signal (u.a)
+
+    t : float
+        timebase
+
+    """
+
     default_a = 1
     default_taur = 0.3
     default_tauc = 0.1

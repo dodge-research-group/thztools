@@ -9,9 +9,9 @@ flake8
 pytest
 python-dotenv>=0.5.1
 
-numpy~=1.23.3
-mpmath~=1.2.1
-scipy~=1.9.1
-matplotlib~=3.5.2
-setuptools~=63.4.1
-IPython~=8.4.0
+numpy>=1.23.3
+mpmath>=1.2.1
+scipy>=1.9.1
+matplotlib>=3.5.2
+setuptools>=65.5.1
+IPython>=8.4.0

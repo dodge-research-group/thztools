@@ -7,7 +7,7 @@ dependencies:
   - numpy
   - scipy
   - mpmath
-  - setuptools
+  - setuptools >= 65.5.1
   - flake8
   - pytest-cov
   - matplotlib

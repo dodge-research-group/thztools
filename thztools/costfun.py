@@ -1,7 +1,7 @@
 import numpy as np
 
 from thztoolsPY.noisevar import noisevar
-from thztoolsPY.tdtf import tdtf
+from thztools.tdtf import tdtf
 
 
 def costfun(fun, mu, theta, xx, yy, sigma_alpha, sigma_beta, sigma_tau, ts):

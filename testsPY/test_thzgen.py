@@ -1,7 +1,6 @@
 import h5py
 import numpy as np
-
-from thztools.thztoolsPY.thzgen import thzgen
+from thztoolsPY.thzgen import thzgen
 
 
 def test_thzgen():

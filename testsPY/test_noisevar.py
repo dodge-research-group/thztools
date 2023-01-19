@@ -1,7 +1,6 @@
 import numpy as np
 import h5py
-
-from thztools.thztoolsPY.noisevar import noisevar
+from thztoolsPY.noisevar import noisevar
 
 
 def test_noisevar():

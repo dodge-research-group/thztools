@@ -49,7 +49,7 @@ def tdtf(fun, theta, n, ts):
 
     else:
         wny = np.pi * n * fs
-        tfun = np.concatenate((tfunp, np.conj(np.concatenate((fun(theta, wny), np.flipud(tfunp[1:]))))))
+        tfun = np.concatenate((tfunp, np.conj(np.concatenate((fun(theta, np.array([wny])), np.flipud(tfunp[1:]))))))
 
     # Evaluate the impulse response by taking the inverse Fourier transform,
     # taking the complex conjugate first to convert to ... +iwt convention

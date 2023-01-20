@@ -1,13 +1,12 @@
 import numpy as np
 import h5py
 
-from thztools.thztoolsPY.tdtf import tdtf
+from thztoolsPY.tdtf import tdtf
 
 
 def test_tdtf():
-
     def fun(theta, w):
-        return theta[0]*np.exp(-1j*theta[1]*w)
+        return theta[0] * np.exp(-1j * theta[1] * w)
 
     with h5py.File('tdtf_test_data.mat', 'r') as file:
         set = file['Set']

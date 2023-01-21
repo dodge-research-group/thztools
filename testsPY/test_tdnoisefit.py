@@ -20,8 +20,8 @@ def test():
         for i in range(0, dfx.shape[0]):
             for j in range(0, dfParam.shape[0]):
                 print(str(i) + ' ' + str(j))
-        # for i in range(0, 1):
-            # for j in range(0, 1):
+                # for i in range(0, 1):
+                # for j in range(0, 1):
                 x = np.array(file[Set['tdnoisefit']['x'][j, i]]).T
                 param = {'v0': np.array(file[param[j, 0]]['v0'])[0],
                          'mu0': np.array(file[param[j, 0]]['mu0'])[0],
@@ -43,7 +43,7 @@ def test():
                 diagnostic = np.array(file[Set['tdnoisefit']['Diagnostic'][j, i]])[0]
                 [pPy, funPy, diagnosticPy] = tdnoisefit(x, param, fix, ignore)
                 # np.testing.assert_allclose(funPy, fun)
-                print('funPy: ', funPy, ' funMat: ', fun)
+                print('funPy: ', np.array([funPy]), ' funMat: ', fun)
                 # np.testing.assert_allclose(pPy['var'], p['var'])
                 print('---------------------------------------')
                 print('pPy[var]: ', pPy['var'], ' p[var]: ', p['var'])

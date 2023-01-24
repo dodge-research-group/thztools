@@ -1,7 +1,11 @@
-# content of test_sample.py
-def inc(x):
-    return x + 1
+import numpy as np
+
+col1, col2 = np.loadtxt('NGC7331.txt', unpack=True)
 
 
-def test_answer():
-    assert inc(3) == 4
+def sum(x, y):
+    return x + y
+
+
+def test_stum():
+    assert sum(col1[0], col2[0]) == 33.474959999999996

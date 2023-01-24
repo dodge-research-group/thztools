@@ -228,7 +228,7 @@ def tdnoisefit(x, param, fix={'logv': False, 'mu': False, 'a': False, 'eta': Fal
     def fun(theta, w):
         return -1j * w
 
-    d = tdtf(fun, 0, n, param['ts'])
+    d = tdtf(fun, np.array([0]), n, param['ts'])
 
     def parsein(p):
         return {'logv': setplogv(p), 'mu': setpmu(p), 'a': setpa(p), 'eta': setpeta(p), 'ts': param['ts'], 'd': d}

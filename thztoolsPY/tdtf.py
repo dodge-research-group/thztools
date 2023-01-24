@@ -24,7 +24,7 @@ def tdtf(fun, theta, n, ts):
         n : int
             Number of time samples.
 
-        ts : float
+        ts : ndarray
             Sampling time.
 
     Returns

@@ -1,6 +1,5 @@
 import numpy as np
 
-
 from thztoolsPY.fftfreq import fftfreq
 from thztoolsPY.tdtf import tdtf
 
@@ -87,6 +86,7 @@ def tdnll(x, param, fix):
         a = param['a']
         a = np.reshape(a, (len(a), 1))
         ignore['a'] = False
+
     else:
         a = np.ones((m, 1))
         ignore['a'] = True

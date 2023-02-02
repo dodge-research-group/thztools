@@ -1,6 +1,12 @@
+import pathlib
+
 import numpy as np
 import h5py
 from thztoolsPY.noisevar import noisevar
+import os
+
+cur_path = pathlib.Path(__file__).parent.absolute()
+print(cur_path)
 
 
 def test_noisevar():

@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import h5py
 
@@ -5,6 +7,7 @@ from thztoolsPY.pulsegen import pulsegen
 
 
 def test_pulsegen():
+    fname = os.path.join(os.path.dirname(__file__), 'pulse')
     with h5py.File('test_pulsegen.mat', 'r') as file:
         set = file['Set']
         xn = file['Set']['pulsegen']['N'][0]

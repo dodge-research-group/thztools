@@ -1,3 +1,5 @@
+import os
+
 import h5py
 import numpy as np
 from thztoolsPY.noisefitshow import noisefitshow
@@ -5,7 +7,8 @@ import matplotlib.pyplot as plt
 
 
 def test():
-    file = h5py.File('dataToptica.mat', 'r')
+    fname = os.path.join(os.path.dirname(__file__), 'dataToptica.mat')
+    file = h5py.File(fname, 'r')
 
     # time
     t = np.squeeze(np.array(file['dataToptica']['t']))
@@ -19,7 +22,7 @@ def test():
     sigmatotstar_matlab1 = np.array(file['dataToptica']['sigmaTotstar1'])
 
     # test
-    np.testing.assert_allclose(out1['sigmatotstar'], np.squeeze(sigmatotstar_matlab1.T), atol= 1, rtol = 1)
+    np.testing.assert_allclose(out1['sigmatotstar'], np.squeeze(sigmatotstar_matlab1.T), atol= 1e-3, rtol = 1e-3)
 
 
 # plot python and matlab fit

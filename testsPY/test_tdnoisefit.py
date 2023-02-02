@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import h5py
 import matplotlib.pyplot as plt
@@ -6,7 +8,8 @@ from thztoolsPY.tdnoisefit import tdnoisefit
 
 
 def test():
-    with h5py.File('tdnoisefit_test_data.mat', 'r') as file:
+    fname = os.path.join(os.path.dirname(__file__), 'tdnoisefit_test_data.mat')
+    with h5py.File(fname, 'r') as file:
         Set = file['Set']
         x = file['Set']['tdnoisefit']['x'][0]
         param = file['Set']['tdnoisefit']['paramForPy']

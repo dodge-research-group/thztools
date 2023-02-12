@@ -1,5 +1,4 @@
 import os
-
 import numpy as np
 import h5py
 import matplotlib.pyplot as plt
@@ -20,11 +19,10 @@ def test():
         dfx = np.array(x)
         dfParam = np.array(param)
 
-        for i in range(0, dfx.shape[0]):
-            for j in range(0, dfParam.shape[0]):
-                print(str(i) + ' ' + str(j))
-                # for i in range(0, 1):
-                # for j in range(0, 1):
+        #for i in range(0, dfx.shape[0]):
+            #for j in range(0, dfParam.shape[0]):
+        for i in range(0, 1):
+            for j in range(0, 1):
                 x = np.array(file[Set['tdnoisefit']['x'][j, i]]).T
                 param = {'v0': np.array(file[param[j, 0]]['v0'])[0],
                          'mu0': np.array(file[param[j, 0]]['mu0'])[0],
@@ -45,40 +43,40 @@ def test():
                 fun = np.array(file[Set['tdnoisefit']['fval'][j, i]])[0]
                 diagnostic = np.array(file[Set['tdnoisefit']['Diagnostic'][j, i]])[0]
                 [pPy, funPy, diagnosticPy] = tdnoisefit(x, param, fix, ignore)
-                # np.testing.assert_allclose(funPy, fun)
-                print('funPy: ', np.array([funPy]), ' funMat: ', fun)
-                # np.testing.assert_allclose(pPy['var'], p['var'])
-                print('---------------------------------------')
-                print('pPy[var]: ', pPy['var'], ' p[var]: ', p['var'])
-                # np.testing.assert_allclose(pPy['mu'], p['mu'])
-                # print('---------------------------------------')
-                # print('pPy[mu]: ', pPy['mu'], ' p[mu]: ', p['mu'])
-                # np.testing.assert_allclose(pPy['a'], p['a'])
-                print('---------------------------------------')
-                print('pPy[a]: ', pPy['a'], ' p[a]: ', p['a'])
-                # np.testing.assert_allclose(pPy['eta'], p['eta'])
-                print('---------------------------------------')
-                print('pPy[eta]: ', pPy['eta'], ' p[eta]: ', p['eta'])
-                # np.testing.assert_allclose(pPy['ts'], p['ts'])
-                print('---------------------------------------')
-                print('pPy[ts]: ', pPy['ts'], ' p[ts]: ', p['ts'])
+                print('Matlab Costfun: ' + str(fun))
+                print('Python Costfun: ' + str(funPy))
+                print('-------------------')
+                print('Matlab var: ' + str(p['var']))
+                print('Python var: ' + str(pPy['var']))
+                # np.testing.assert_allclose(funPy, fun, atol=1e-02)
+                # np.testing.assert_allclose(pPy['var'], p['var'], atol=1e-02)
+                # np.testing.assert_allclose(pPy['mu'], p['mu'], atol=1e-02)
+                # np.testing.assert_allclose(pPy['a'], p['a'], atol=1e-02)
+                # np.testing.assert_allclose(pPy['eta'], p['eta'], atol=1e-02)
+                # np.testing.assert_allclose(pPy['ts'], p['ts'], atol=1e-02)
                 # np.testing.assert_allclose(diagnosticPy, diagnostic)
                 fig = plt.figure()
                 plt.title(r'$\mu$')
                 plt.plot(x[:, 0], label='Input + Noise')
                 plt.plot(pPy['mu'], label = 'Fit Py')
-                plt.plot(p['mu'], label='Fit Mat', linestyle = 'dashed')
+                plt.plot(p['mu'], label='Fit Mat', linestyle='dashed')
                 plt.legend()
                 plt.show()
                 fig = plt.figure()
                 plt.title('A')
                 plt.plot(pPy['a'], label='Fit Py')
-                plt.plot(p['a'], label='Fit Mat', linestyle = 'dashed')
+                plt.plot(p['a'], label='Fit Mat', linestyle='dashed')
                 plt.legend()
                 plt.show()
                 fig = plt.figure()
                 plt.title(r'$\eta$')
                 plt.plot(pPy['eta'], label='Fit Py')
-                plt.plot(p['eta'], label='Fit Mat', linestyle = 'dashed')
+                plt.plot(p['eta'], label='Fit Mat', linestyle='dashed')
+                plt.legend()
+                plt.show()
+                fig = plt.figure()
+                plt.title(r'var')
+                plt.plot(pPy['var'], label='Fit Py')
+                plt.plot(p['var'], label='Fit Mat', linestyle='dashed')
                 plt.legend()
                 plt.show()

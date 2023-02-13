@@ -22,7 +22,7 @@ def test():
     sigmatotstar_matlab1 = np.array(file['dataToptica']['sigmaTotstar1'])
 
     # test
-    np.testing.assert_allclose(out1['sigmatotstar'], np.squeeze(sigmatotstar_matlab1.T), atol= 1e-3, rtol = 1e-3)
+    np.testing.assert_allclose(out1['sigmatotstar'], np.squeeze(sigmatotstar_matlab1.T))
 
 
 # plot python and matlab fit

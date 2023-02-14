@@ -1,6 +1,12 @@
 import numpy as np
 from numpy.fft import fftfreq
+import pathlib
 
+#for mat_path in pathlib.Path('C:/Users/jonap/thz_project_public/thztools/testsPY').glob('*.mat'):
+#    print(mat_path)
+
+p = pathlib.Path()
+p.absolute()
 
 def noisevar(sigma, mu, t):
 

@@ -1,10 +1,12 @@
 import numpy as np
 import h5py
-
+import os
 from thztoolsPY.costfunlsq import costfunlsq
 
 def test():
-    with h5py.File('costfunlsq_test_data.mat', 'r') as file:
+    fname = os.path.join(os.path.dirname(__file__), 'costfunlsq_test_data.mat')
+
+    with h5py.File(fname, 'r') as file:
         Set = file['Set']
         xtheta = file['Set']['costfunlsq']['theta'][0]
         x_xx = file['Set']['costfunlsq']['xx'][0]

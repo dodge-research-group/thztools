@@ -1,23 +1,32 @@
-'''
-Noise amp takes in the same inputs as noisevar, sigma, mu & T
+import numpy as np
+from thztoolsPY.noisevar import noisevar
 
-1) Variable defining
-2) Define the noiseamp function
-    Inputs: sigma
-            mu
-            T
-    Outputs: sigmamu
-    
-3) Get the value of Vmu which is output of noisevar() function
-4) square root the resulting matrix
-5) Sqrt of Vmu is then Sigmamu
-'''
 
-from thztools import noisevar
+def sigmamu(sigma, mu, t):
+    """
+    noiseamp computes the time-domain noise amplitudes for noise parameters sigma, with a signal mu and sampling
+    interval t.  There are three noise parameters: the first corresponds to amplitude noise, in signal units
+    (ie, the same units as mu); the second corresponds to multiplicative noise, which is dimensionless; and the
+    third corresponds to timebase noise, in units of signal/time, where the units for time are the same as
+    for t. The output, sigmamu, is given in signal units.
 
-mu = [ 1, 2 ,3 ,4, 5, 6, 7, 8, 9, 10, 11]
-sigma = [.3, .4 ,.5]
-T = .05
-def noiseamp(sigma, mu, T):
-    sigmamu = np.sqrt(noisevar(sigma, mu, T))  #Are we square rooting the matrix, or the elements individually
-    return sigmamu
+    Parameters
+    ----------
+
+    sigma : ndarray
+        (3, ) array  containing noise parameters
+
+    mu :  signal vector
+        (n, ) array  containing  signal vector
+
+    t : float 
+        sampling time
+        
+    Returns
+    -------
+    sigmamu : ndarray
+        (n, ) array containing noise amplitude
+
+    """
+
+    return np.sqrt(noisevar(sigma, mu, t))

@@ -3,6 +3,7 @@ import h5py
 import os
 from thztoolsPY.costfunlsq import costfunlsq
 
+
 def test():
     fname = os.path.join(os.path.dirname(__file__), 'costfunlsq_test_data.mat')
 

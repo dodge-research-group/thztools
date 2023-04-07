@@ -164,7 +164,7 @@ def noisefitshow(t, x):
 
     plt.figure(figsize=(10, 8))
     plt.title('Noise Model Results, 50 ps ', fontsize=15)
-    plt.plot(t, sigmatotstar, color='red', linewidth=2)
+    plt.plot(t, x, color='red', linewidth=2)
     plt.xlabel('Time (ps)', fontsize=15)
     plt.ylabel('$\sigma \hat{} ^{*}$ (nA)', fontsize=15)
     #plt.legend(fontsize=15)

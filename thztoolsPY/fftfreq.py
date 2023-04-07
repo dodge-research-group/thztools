@@ -23,6 +23,6 @@ def fftfreq(n, t):
         f = np.fft.fftfreq(n, t)
     else:
         f = np.fft.fftfreq(n, t)
-        f[int(n/2)] = -f[int(n/2)]
+        f[int(n / 2)] = -f[int(n / 2)]
 
     return f

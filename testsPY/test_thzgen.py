@@ -21,5 +21,5 @@ def test_thzgen():
                     t = np.array(file[set['thzgen']['T'][i, j, k]])[0, 0]
                     t0 = np.array(file[set['thzgen']['t0'][i, j, k]])[0, 0]
                     y = np.array(file[set['thzgen']['y'][i, j, k]])[0]
-                    fpy = thzgen(n.astype(int), t, t0, varargin=1)[0]
+                    fpy = thzgen(n.astype(int), t, t0)[0]
                     np.testing.assert_allclose(y, fpy)

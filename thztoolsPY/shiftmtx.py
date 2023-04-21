@@ -31,7 +31,7 @@ def shiftmtx(tau, n, ts):
     f = fftfreq(n, ts)
     w = 2*np.pi*f
 
-    imp = np.fft.ifft(np.exp(-1j*w*tau)).real
+    imp = np.fft.ifft(np.exp(-1j * w * tau)).real
 
     # computes the n by n transformation matrix
     h = linalg.toeplitz(imp, np.roll(np.flipud(imp), 1))

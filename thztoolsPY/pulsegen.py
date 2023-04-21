@@ -2,7 +2,6 @@ import numpy as np
 
 
 def pulsegen(n, t0, w, a, t):
-
     """ Pulsegen generates a short pulse of temporal width w centered at t0 for use in tests of time-domain analysis
 
     Parameters

@@ -1,8 +1,7 @@
 import numpy as np
 
 
-def thzgen(n, t, t0, varargin):
-
+def thzgen(n, t, t0):
     """
     Generate a terahertz pulse with n points at sampling interval t and centered at t0.
 

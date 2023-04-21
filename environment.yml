@@ -18,5 +18,6 @@ dependencies:
   - jupyter
   - h5py
   - pip
+  - pandas
   - pip:
     - -e .

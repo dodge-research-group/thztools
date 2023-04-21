@@ -1,58 +1,61 @@
 import numpy as np
-import thztools
-from scipy import constants
- 
 
 
-'''
-THZGEN generates a terahertz pulse with N points, at sampling interval T, centered at t0
+def thzgen(n, t, t0, varargin):
 
-Inputs:
-    N     number of sampled points
-    T     sampling time
-    t0    pulse center
+    """
+    Generate a terahertz pulse with n points at sampling interval t and centered at t0.
 
-Outputs:
-    y     signal
-    t     timebase [T]
-'''
+    Parameters
+    ----------
 
+    n : int
+        number of sampled points.
 
-def thzgen(N, T, t0):
+    t : float
+        sampling time
 
-    f = thztools.fftfreq(N, ts)
+    t0 : float
+        pulse center
+
+    Returns
+    -------
+
+    y : ndarray
+        signal (u.a)
+
+    t : float
+        timebase
+
+    """
+
+    default_a = 1
+    default_taur = 0.3
+    default_tauc = 0.1
+    default_taul = 0.05 / np.sqrt(2 * np.log(2))
+
+    a = default_a
+    taur = default_taur
+    tauc = default_tauc
+    taul = default_taul
+
+    if n % 2 == 1:
+        f = np.fft.fftfreq(n, t)
+    else:
+        f = np.fft.fftfreq(n, t)
+        f[int(n / 2)] = -f[int(n / 2)]
+
     w = 2 * np.pi * f
+    l = np.exp(-(w * taul) ** 2 / 2) / np.sqrt(2 * np.pi * taul ** 2)
+    r = 1 / (1 / taur - 1j * w) - 1 / (1 / taur + 1 / tauc - 1j * w)
+    s = -1j * w * (l * r) ** 2 * np.exp(1j * w * t0)
 
-    # Computing L
-    Lsq = np.square(w * taul * -1)  # (-(w*taul).^2/2)
+    t2 = t * np.arange(n)
 
-    L = np.exp(Lsq / 2) / np.sqrt(2 * np.pi * (taul ** 2))
+    y = np.real(np.fft.ifft(np.conj(s)))
+    y = a * y / np.max(y)
 
-    # computing R
+    return [y, t2]
 
-    iw = -1j * w
-    invw = 1 / iw
-
-    R = 1 / (1 / taur - iw) - 1 / (1 / taur + 1 / tauc - iw)
-
-    # computing S
-
-    S = iw * (L * R) ** 2 * np.exp(iw * t0)
-
-    #  computing timebase matrix by multiplying sample number and the sampling time
-    #  first create a matrix with N elements, then add one so that indexing begins at 1
-
-    tm = np.arange(13)
-    tm = tm + 1
-    t = T * tm
-
-    # y calcuations
-
-    Sconj = np.conj(S)
-    Sifft = np.fft.ifft(Sconj)
-    y = np.real(Sifft)
-    y = A * y / max(y)
-
-    return y
 
  

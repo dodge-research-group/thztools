@@ -49,6 +49,7 @@ def tdtf(fun, theta, n, ts):
 
     else:
         wny = np.pi * n * fs
+        print('tfunp', tfunp)
         tfun = np.concatenate((tfunp, np.conj(np.concatenate((fun(theta, wny), np.flipud(tfunp[1:]))))))
 
     # Evaluate the impulse response by taking the inverse Fourier transform,

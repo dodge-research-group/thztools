@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import h5py
 
@@ -5,7 +7,9 @@ from thztoolsPY.epswater import epswater
 
 
 def test_epswater():
-    with h5py.File('epswater_test_data.mat', 'r') as file:
+    fname = os.path.join(os.path.dirname(__file__), 'epswater_test_data.mat')
+
+    with h5py.File(fname, 'r') as file:
         set = file['Set']
         xf = file['Set']['epswater']['f'][0]
         xt = file['Set']['epswater']['T'][0]

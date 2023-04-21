@@ -1,3 +1,5 @@
+import os
+
 import h5py
 import numpy as np
 
@@ -5,7 +7,9 @@ from thztoolsPY.fftfreq import fftfreq
 
 
 def test_fftfreq():
-    with h5py.File('fftfreq_test_data.mat', 'r') as file:
+    fname = os.path.join(os.path.dirname(__file__), 'costfunlsq_test_data.mat')
+
+    with h5py.File(fname, 'r') as file:
         set = file['Set']
         xn = file['Set']['fftfreq']['N'][0]
         xt = file['Set']['fftfreq']['T'][0]
@@ -19,8 +23,10 @@ def test_fftfreq():
                 y = np.array(file[set['fftfreq']['f'][i, j]])[0]
                 fpy = fftfreq(n.astype(int), t)
 
+
 def test():
-    with h5py.File('fftfreq_test_data.mat', 'r') as file:
+    fname = os.path.join(os.path.dirname(__file__), 'costfunlsq_test_data.mat')
+    with h5py.File(fname, 'r') as file:
         Set = file['Set']
         xN = file['Set']['fftfreq']['N'][0]
         xT = file['Set']['fftfreq']['T'][0]

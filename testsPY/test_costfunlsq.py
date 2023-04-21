@@ -3,6 +3,7 @@ import h5py
 
 from thztoolsPY.costfunlsq import costfunlsq
 
+
 def test():
     with h5py.File('costfunlsq_test_data.mat', 'r') as file:
         Set = file['Set']

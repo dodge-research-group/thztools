@@ -6,6 +6,7 @@ dependencies:
   - sphinx
   - numpy
   - scipy
+  - pandas
   - mpmath
   - setuptools >= 65.5.1
   - flake8

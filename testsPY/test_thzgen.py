@@ -8,7 +8,7 @@ from thztoolsPY.thzgen import thzgen
 
 def test_thzgen():
     fname = os.path.join(os.path.dirname(__file__), 'thzgen_test_data.mat')
-    with h5py.File('thzgen_test_data.mat', 'r') as file:
+    with h5py.File(fname, 'r') as file:
         set = file['Set']
         xn = file['Set']['thzgen']['N'][0]
         xt = file['Set']['thzgen']['T'][0]

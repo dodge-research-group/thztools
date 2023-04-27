@@ -8,7 +8,6 @@ from thztoolsPY.epswater import epswater
 
 def test_epswater():
     fname = os.path.join(os.path.dirname(__file__), 'epswater_test_data.mat')
-
     with h5py.File(fname, 'r') as file:
         set = file['Set']
         xf = file['Set']['epswater']['f'][0]

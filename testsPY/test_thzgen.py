@@ -1,3 +1,5 @@
+import os
+
 import h5py
 import numpy as np
 
@@ -5,6 +7,7 @@ from thztoolsPY.thzgen import thzgen
 
 
 def test_thzgen():
+    fname = os.path.join(os.path.dirname(__file__), 'thzgen_test_data.mat')
     with h5py.File('thzgen_test_data.mat', 'r') as file:
         set = file['Set']
         xn = file['Set']['thzgen']['N'][0]

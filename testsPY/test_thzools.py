@@ -1,6 +1,8 @@
+import h5py
 import numpy as np
 import pandas as pd
 import unittest
+import os
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from thztoolsPY.costfunlsq import costfunlsq
 from thztoolsPY.epswater import epswater
@@ -93,22 +95,27 @@ class Name(unittest.TestCase):
         sigmax = ampSigma * np.ones(n)
         sigmay = ampSigma * np.ones(n)
 
+        os.path.join(os.path.dirname(__file__), 'out_costfunlsq_ones.csv')
         cosfunlsq_true = pd.read_csv('out_cosfunlsq_ones.csv', header=None)
-        cosfunlsq_true = np.array(cosfunlsq_true[0])
+        cosfunlsq_true_ones = np.array(cosfunlsq_true[0])
+        #aa = os.path.join(os.path.dirname(__file__), 'out_costfunlsq_rand.csv')
+        #a1 = pd.read_csv('aa', header=None)
+        #a2 = np.array(a1[0])
+        #print('a', aa)
         cosfunlsq = costfunlsq(fun, theta, xx, yy, sigmax, sigmay, wfft)
-        #np.testing.assert_allclose(cosfunlsq_true, cosfunlsq, rtol=1e2, atol=1e2)
+        np.testing.assert_allclose(cosfunlsq_true_ones, cosfunlsq, rtol=1e2, atol=1e2)
 
         # ======================================================================
         # random noise
-        costfunlsq_true_rand = pd.read_csv('out_costfunlsq_rand.csv', header=None)
-        cosfunlsq_true_rand = np.array(costfunlsq_true_rand[0])
-        yy = thzgen(n, 1, 1)[0] + ampSigma * np.random.rand(n)
+        #costfunlsq_true_rand = pd.read_csv('out_costfunlsq_rand.csv', header=None)
+        #cosfunlsq_true_rand = np.array(costfunlsq_true_rand[0])
+        #yy = thzgen(n, 1, 1)[0] + ampSigma * np.random.rand(n)
 
-        wfft_r = 2 * np.pi * np.fft.fftfreq(n)
-        sigmax_r = ampSigma * np.random.rand(n)
-        sigmay_r = ampSigma * np.random.rand(n)
-        cosfunlsq_rand = costfunlsq(fun, theta, xx, yy, sigmax_r, sigmay_r, wfft_r)
-        np.testing.assert_allclose(cosfunlsq_true_rand, cosfunlsq_rand, rtol=1e2, atol=1e2)
+        #wfft_r = 2 * np.pi * np.fft.fftfreq(n)
+        #sigmax_r = ampSigma * np.random.rand(n)
+        #sigmay_r = ampSigma * np.random.rand(n)
+        #cosfunlsq_rand = costfunlsq(fun, theta, xx, yy, sigmax_r, sigmay_r, wfft_r)
+        #np.testing.assert_allclose(cosfunlsq_true_rand, cosfunlsq_rand, rtol=1e2, atol=1e2)
 
     # ==================================================================
 

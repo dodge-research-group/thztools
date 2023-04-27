@@ -96,10 +96,12 @@ class Name(unittest.TestCase):
         sigmax = ampSigma * np.ones(n)
         sigmay = ampSigma * np.ones(n)
 
-        #fname = os.path.join(os.path.dirname(__file__), 'out_costfunlsq_ones.csv')
-        #print(fname)
-        #print(type(fname))
+        print(os.path.dirname(__file__))
+        fname = os.path.join(os.path.dirname(__file__), 'out_costfunlsq_ones.csv')
+        pandas.read_csv(repr(fname), header=None)
 
+
+        #pd.read_csv('C:\\Users\\jonap\\thz_project\\thztools\\testsPY\\out_cosfunlsq_ones.csv')
         #pd.read_csv(r'C:\Users\jonap\thz_project\thztools\testsPY\out_cosfunlsq_ones.csv', header=None)
 
 

@@ -1,9 +1,9 @@
 import h5py
 import numpy as np
-import pandas
 import pandas as pd
 import unittest
 import os
+import pathlib
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from thztoolsPY.costfunlsq import costfunlsq
 from thztoolsPY.epswater import epswater
@@ -96,9 +96,8 @@ class Name(unittest.TestCase):
         sigmax = ampSigma * np.ones(n)
         sigmay = ampSigma * np.ones(n)
 
-        print(os.path.dirname(__file__))
-        fname = os.path.join(os.path.dirname(__file__), 'out_costfunlsq_ones.csv')
-        pandas.read_csv(repr(fname), header=None)
+        #print(os.path.dirname(__file__))
+        #fname = os.path.join(os.path.dirname(__file__), 'out_costfunlsq_ones.csv')
 
 
         #pd.read_csv('C:\\Users\\jonap\\thz_project\\thztools\\testsPY\\out_cosfunlsq_ones.csv')
@@ -113,9 +112,13 @@ class Name(unittest.TestCase):
         #cosfunlsq = costfunlsq(fun, theta, xx, yy, sigmax, sigmay, wfft)
         #np.testing.assert_allclose(cosfunlsq_true, cosfunlsq, rtol=1e2, atol=1e2)
 
-        # ======================================================================
+        # =====================================================================
         # random noise
-        #costfunlsq_true_rand = pd.read_csv('out_costfunlsq_rand.csv', header=None)
+        cur_path  = pathlib.Path(__file__).parent.resolve()
+        new_path = cur_path / 'out_costfunlsq_rand.csv'
+
+
+        costfunlsq_true_rand = pd.read_csv(new_path, header=None)
         costfunlsq_true_rand = pd.read_csv(r'C:\Users\jonap\thz_project\thztools\testsPY\out_cosfunlsq_ones.csv', header=None)
         cosfunlsq_true_rand = np.array(costfunlsq_true_rand[0])
         yy = thzgen(n, 1, 1)[0] + ampSigma * np.random.rand(n)
@@ -125,6 +128,20 @@ class Name(unittest.TestCase):
         sigmay_r = ampSigma * np.random.rand(n)
         cosfunlsq_rand = costfunlsq(fun, theta, xx, yy, sigmax_r, sigmay_r, wfft_r)
         np.testing.assert_allclose(cosfunlsq_true_rand, cosfunlsq_rand, rtol=1e2, atol=1e2)
+
+
+        # ======================================================================
+        # random noise
+        #costfunlsq_true_rand = pd.read_csv('out_costfunlsq_rand.csv', header=None)
+        #costfunlsq_true_rand = pd.read_csv(r'C:\Users\jonap\thz_project\thztools\testsPY\out_cosfunlsq_ones.csv', header=None)
+        #cosfunlsq_true_rand = np.array(costfunlsq_true_rand[0])
+        #yy = thzgen(n, 1, 1)[0] + ampSigma * np.random.rand(n)
+
+        #wfft_r = 2 * np.pi * np.fft.fftfreq(n)
+        #sigmax_r = ampSigma * np.random.rand(n)
+        #sigmay_r = ampSigma * np.random.rand(n)
+        #cosfunlsq_rand = costfunlsq(fun, theta, xx, yy, sigmax_r, sigmay_r, wfft_r)
+        #np.testing.assert_allclose(cosfunlsq_true_rand, cosfunlsq_rand, rtol=1e2, atol=1e2)
 
     # ==================================================================
 

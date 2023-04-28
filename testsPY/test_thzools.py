@@ -76,7 +76,7 @@ class Name(unittest.TestCase):
         cur_path = pathlib.Path(__file__).parent.resolve()
         new_path = cur_path / 'thzgen_out.csv'
 
-        thzgen_true = pd.read_csv('thzgen_out.csv', header=None)
+        thzgen_true = pd.read_csv(new_path, header=None)
         thzgen_true = np.array(thzgen_true[0])
 
         thz = thzgen(n=256, t=0.05, t0=2.5)[0]

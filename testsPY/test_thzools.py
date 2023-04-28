@@ -119,7 +119,6 @@ class Name(unittest.TestCase):
 
 
         costfunlsq_true_rand = pd.read_csv(new_path, header=None)
-        costfunlsq_true_rand = pd.read_csv(r'C:\Users\jonap\thz_project\thztools\testsPY\out_cosfunlsq_ones.csv', header=None)
         cosfunlsq_true_rand = np.array(costfunlsq_true_rand[0])
         yy = thzgen(n, 1, 1)[0] + ampSigma * np.random.rand(n)
 

@@ -1,7 +1,4 @@
 import numpy as np
-# from thztoolsPY.thzgen import thzgen
-# from thztoolsPY.fftfreq import fftfreq
-# from thztoolsPY.noiseamp import sigmamu
 from thztoolsPY.thzgen import thzgen
 from thztoolsPY.fftfreq import fftfreq
 from thztoolsPY.noiseamp import sigmamu

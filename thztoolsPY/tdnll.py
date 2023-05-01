@@ -1,10 +1,9 @@
 import numpy as np
-
 from thztoolsPY.fftfreq import fftfreq
 from thztoolsPY.tdtf import tdtf
 
 
-def tdnll(x, param, Fix):
+def tdnll(x, param, fix):
     """
     TDNLL computes negative log-likelihood for the time-domain noise model
 
@@ -94,7 +93,7 @@ def tdnll(x, param, Fix):
     w = w.reshape(len(w), 1)
     mu_f = np.fft.fft(mu.flatten()).reshape(len(mu), 1)
 
-    gradcalc = np.logical_not([[Fix['logv']], [Fix['mu']], [Fix['a'] or Ignore['a']], [Fix['eta'] or Ignore['eta']]])
+    gradcalc = np.logical_not([[fix['logv']], [fix['mu']], [fix['a'] or Ignore['a']], [fix['eta'] or Ignore['eta']]])
 
     if Ignore['eta']:
         zeta = mu * np.conj(a).T
@@ -170,7 +169,7 @@ def tdnll(x, param, Fix):
             # Gradient wrt A
             term = (vtot - valpha) * dvar - reswt * zeta
             gradnll[nStart:nStart + M, 0] = np.conj(np.sum(term, axis=0)) / a.reshape(M, )
-            if not Fix['mu']:
+            if not fix['mu']:
                 gradnll = np.delete(gradnll, nStart, axis=0)
                 nStart = nStart + M - 1
             else:
@@ -179,7 +178,7 @@ def tdnll(x, param, Fix):
             # Gradient wrt eta
             DDzeta = np.real(np.fft.ifft(-np.tile(w, M)**2 * zeta_f, axis=0))
             gradnll[nStart:nStart + M, 0] = -np.sum(dvar * (zeta * Dzeta * v[1] + Dzeta * DDzeta * v[2]) - reswt * Dzeta, axis=0)
-            if not Fix['mu']:
+            if not fix['mu']:
                 gradnll = np.delete(gradnll, nStart)
     gradnll = gradnll.flatten()
 

@@ -36,16 +36,16 @@ out_shiftmtx = shiftmtx(tau, n, ts);
 %% tdnll
 N = 10;
 M = 8;
-xm = rand(N, M, 4);
+xm = rand(N, M);
 
 Param =[struct()];
 varargin = [struct()];
 for i = 1:1:1
-    Param(i).logv = rand(3,1);
-    Param(i).mu = rand(N,1);
-    Param(i).A = rand(M,1);
-    Param(i).eta = rand(M,1);
-    Param(i).ts = rand();
+    Param(i).logv = ones(3,1);
+    Param(i).mu = ones(N,1);
+    Param(i).A = ones(M,1);
+    Param(i).eta = ones(M,1);
+    Param(i).ts = 0.5;
     Param(i).D = tdtf(@(theta,w) -1i*w, 0, N, Param(i).ts);
     
     % Set optional inputs
@@ -57,4 +57,7 @@ for i = 1:1:1
 
 end
 
-tdnll(xm, Param, varargin)
+[nll, gradnll] = tdnll(xm, Param, varargin)
+
+%%
+rand()

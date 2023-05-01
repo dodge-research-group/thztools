@@ -34,3 +34,4 @@ def test():
                     [nllPy, gradnllPy] = tdnll(x, param, varargin)
                     np.testing.assert_allclose(nllPy, nll)
                     #np.testing.assert_allclose(gradnllPy, gradnll)
+                    #print(nll, nllPy)

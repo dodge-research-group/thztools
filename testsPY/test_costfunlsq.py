@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 import numpy as np
 import h5py
@@ -7,7 +8,9 @@ from thztoolsPY.costfunlsq import costfunlsq
 
 
 def test():
-    fname = os.path.join(os.path.dirname(__file__), 'costfunlsq_test_data.mat')
+    cur_path = pathlib.Path(__file__).parent.resolve()
+    fname = cur_path / 'costfunlsq_test_data.mat'
+    #fname = os.path.join(os.path.dirname(__file__), 'costfunlsq_test_data.mat')
     with h5py.File(fname, 'r') as file:
         Set = file['Set']
         xtheta = file['Set']['costfunlsq']['theta'][0]

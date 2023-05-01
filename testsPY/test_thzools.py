@@ -11,6 +11,7 @@ from thztoolsPY.fftfreq import fftfreq
 from thztoolsPY.pulsegen import pulsegen
 from thztoolsPY.noisevar import noisevar
 from thztoolsPY.shiftmtx import shiftmtx
+from thztoolsPY.tdnll import tdnll
 from thztoolsPY.tdtf import tdtf
 from thztoolsPY.thzgen import thzgen
 
@@ -149,9 +150,36 @@ class Name(unittest.TestCase):
 
     # ==================================================================
 
-    #def test_tdnll(self):
-    #    n = 10
-    #    m = 8
+    def test_tdnll(self):
+        n = 10
+        m = 8
+        x = np.random.random((10, 8))
+
+        #logv = np.random.rand(3)
+        #mu = np.random.rand(n)
+        #a = np.random.rand(m)
+        #eta = np.random.rand(m)
+        #ts = np.random.rand()
+
+        logv = np.ones(3)
+        mu = np.ones(n)
+        a = np.ones(m)
+        eta = np.ones(m)
+        ts = 0.5
+
+        theta = np.array([0])
+
+        def fun(theta, w):
+            return -1j * w
+
+        d = tdtf(fun, theta, n, np.array([ts]))
+
+        param = {'logv': logv, 'mu': mu, 'eta': eta, 'ts': np.array(ts), 'd': d}
+        fix = {'logv': 0, 'mu': 0, 'a': 0, 'eta': 0}
+
+        [nll, gradnll] = tdnll(x, param, fix)
+        print('nll', nll)
+        print('gradnll', gradnll)
 
 
 if __name__ == '_main_':

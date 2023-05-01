@@ -1,8 +1,8 @@
 import os
+import pathlib
 
 import numpy as np
 import h5py
-
 from thztoolsPY.tdtf import tdtf
 
 
@@ -10,8 +10,8 @@ def test_tdtf():
     def fun(theta, w):
         return theta[0] * np.exp(-1j * theta[1] * w)
 
-    fname = os.path.join(os.path.dirname(__file__), 'tdtf_test_data.mat')
-    print(fname)
+    cur_path = pathlib.Path(__file__).parent.resolve()
+    fname = cur_path / 'tdtf_test_data.mat'
 
     with h5py.File(fname, 'r') as file:
         set = file['Set']

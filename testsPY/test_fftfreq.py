@@ -1,5 +1,5 @@
 import os
-
+import pathlib
 import h5py
 import numpy as np
 
@@ -7,7 +7,8 @@ from thztoolsPY.fftfreq import fftfreq
 
 
 def test_fftfreq():
-    fname = os.path.join(os.path.dirname(__file__), 'costfunlsq_test_data.mat')
+    cur_path = pathlib.Path(__file__).parent.resolve()
+    fname = cur_path / 'costfunlsq_test_data.mat'
 
     with h5py.File(fname, 'r') as file:
         set = file['Set']

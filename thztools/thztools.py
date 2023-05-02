@@ -354,7 +354,11 @@ def tdtf(fun, theta, n, ts):
     """
 
     # compute the transfer function over positive frequencies
-    ts = np.array([ts])
+    if not isinstance(ts, np.ndarray):
+        ts = np.array([ts])
+    else:
+        ts = ts
+
     fs = 1 / (ts * n)
     fp = fs * np.arange(0, math.floor((n - 1) / 2 + 1))
     wp = 2 * np.pi * fp

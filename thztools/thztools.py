@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.linalg
-
+import math
 
 def fftfreq(n, t):
     """
@@ -317,7 +317,7 @@ def shiftmtx(tau, n, ts):
     imp = np.fft.ifft(np.exp(-1j * w * tau)).real
 
     # computes the n by n transformation matrix
-    h = linalg.toeplitz(imp, np.roll(np.flipud(imp), 1))
+    h = scipy.linalg.toeplitz(imp, np.roll(np.flipud(imp), 1))
 
     return h
 
@@ -353,6 +353,7 @@ def tdtf(fun, theta, n, ts):
     """
 
     # compute the transfer function over positive frequencies
+    ts = np.array([ts])
     fs = 1 / (ts * n)
     fp = fs * np.arange(0, math.floor((n - 1) / 2 + 1))
     wp = 2 * np.pi * fp
@@ -374,7 +375,7 @@ def tdtf(fun, theta, n, ts):
     # taking the complex conjugate first to convert to ... +iwt convention
 
     imp = np.real(np.fft.ifft(np.conj(tfun)))
-    h = linalg.toeplitz(imp, np.roll(np.flipud(imp), 1))
+    h = scipy.linalg.toeplitz(imp, np.roll(np.flipud(imp), 1))
 
     return h
 

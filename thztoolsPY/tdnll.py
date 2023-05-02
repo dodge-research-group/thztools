@@ -141,12 +141,12 @@ def tdnll(x, param, fix):
         print('gradnll', gradnll)
         nstart = 0
         dvar = (vtot - np.mean(ressq, axis=1).reshape(n, 1)) / vtot ** 2
-        if gradcalc[0][0]:
+        if gradcalc[0]:
             gradnll[nstart] = (m / 2) * np.sum(dvar) * v[0]
             gradnll[nstart + 1] = (m / 2) * np.sum(mu ** 2 * dvar) * v[1]
             gradnll[nstart + 2] = (m / 2) * np.sum(dmu ** 2. * dvar) * v[2]
             nstart = nstart + 3
-        if gradcalc[1][0]:
+        if gradcalc[1]:
             print('mu shape : ', mu.shape)
             print('dvar shape: ', dvar.shape)
             print('d shape: ', d.shape)
@@ -174,18 +174,18 @@ def tdnll(x, param, fix):
         nstart = 0
         reswt = res / vtot
         dvar = (vtot - ressq) / vtot**2
-        if gradcalc[0][0]:
+        if gradcalc[0]:
             # Gradient wrt logv
             gradnll[nstart] = (1 / 2) * np.sum(dvar) * v[0]
             gradnll[nstart + 1] = (1 / 2) * np.sum(zeta.flatten() ** 2 * dvar.flatten()) * v[1]
             gradnll[nstart + 2] = (1 / 2) * np.sum(dzeta.flatten() ** 2 * dvar.flatten()) * v[2]
             nstart = nstart + 3
-        if gradcalc[1][0]:
+        if gradcalc[1]:
             # Gradient wrt mu
             p = np.fft.fft(v[1] * dvar * zeta - reswt, axis=0) - 1j * v[2] * w * np.fft.fft(dvar * dzeta, axis=0)
             gradnll[nstart:nstart + n] = np.sum(np.conj(a).T * np.real(np.fft.ifft(exp_iweta * p, axis=0)), axis=1).reshape(n, 1)
             nstart = nstart + n
-        if gradcalc[2][0]:
+        if gradcalc[2]:
             # Gradient wrt A
             term = (vtot - valpha) * dvar - reswt * zeta
             if np.any(np.isclose(a, 0)):
@@ -198,15 +198,15 @@ def tdnll(x, param, fix):
                 nstart = nstart + m - 1
             else:
                 nstart = nstart + m
-        if gradcalc[3][0]:
+        if gradcalc[3]:
             # Gradient wrt eta
             ddzeta = np.real(np.fft.ifft(-np.tile(w, m) ** 2 * zeta_f, axis=0))
             gradnll = np.squeeze(gradnll)
             gradnll[nstart:nstart + m] = -np.sum(dvar * (zeta * dzeta * v[1] + dzeta * ddzeta * v[2]) - reswt * dzeta,
                                                  axis=0).reshape(m, )
 
-            #if not fix['mu']:
-                #gradnll = np.delete(gradnll, nstart)
+            if not fix['mu']:
+                gradnll = np.delete(gradnll, nstart)
     gradnll = gradnll.flatten()
 
     return nll, gradnll

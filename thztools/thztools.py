@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.linalg
+from scipy.optimize import minimize
 import math
 
 def fftfreq(n, t):

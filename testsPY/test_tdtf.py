@@ -30,7 +30,7 @@ def test_tdtf():
                     n = np.array(file[set['tdtf']['N'][i, j, k]])[0, 0]
                     ts = np.array(file[set['tdtf']['ts'][i, j, k]])[0, 0]
                     h = np.array(file[set['tdtf']['h'][i, j, k]])
-                    hpy = tdtf(fun, theta, n, np.array([ts]))
+                    hpy = tdtf(fun, theta, n, ts)
                     h = np.transpose(h)
                     np.testing.assert_allclose(hpy, h, atol=1e-10)
 

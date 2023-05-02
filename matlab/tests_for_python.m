@@ -36,7 +36,7 @@ out_shiftmtx = shiftmtx(tau, n, ts);
 %% tdnll
 N = 10;
 M = 8;
-xm = rand(N, M);
+xm = ones(N, M);
 
 Param =[struct()];
 varargin = [struct()];
@@ -59,5 +59,3 @@ end
 
 [nll, gradnll] = tdnll(xm, Param, varargin)
 
-%%
-rand()

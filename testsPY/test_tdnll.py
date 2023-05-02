@@ -35,5 +35,5 @@ def test():
                     gradnll = np.array(file[Set['tdnll']['gradnll'][k, j, i]])[0]
                     [nllPy, gradnllPy] = tdnll(x, param, varargin)
                     np.testing.assert_allclose(nllPy, nll)
-                    #np.testing.assert_allclose(gradnllPy, gradnll)
-                    #print(nll, nllPy)
+                    #np.testing.assert_allclose(gradnllPy, gradnll, rtol=1e-3)
+

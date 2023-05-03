@@ -29,7 +29,7 @@ def shiftmtx(tau, n, ts):
 
     # Fourier method
     f = fftfreq(n, ts)
-    w = 2*np.pi*f
+    w = 2 * np.pi * f
 
     imp = np.fft.ifft(np.exp(-1j * w * tau)).real
 

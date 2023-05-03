@@ -1,13 +1,14 @@
 import os
-
+import pathlib
 import h5py
 import numpy as np
-
 from thztoolsPY.thzgen import thzgen
 
 
 def test_thzgen():
-    fname = os.path.join(os.path.dirname(__file__), 'thzgen_test_data.mat')
+    cur_path = pathlib.Path(__file__).parent.resolve()
+    fname = cur_path / 'thzgen_test_data.mat'
+
     with h5py.File(fname, 'r') as file:
         set = file['Set']
         xn = file['Set']['thzgen']['N'][0]

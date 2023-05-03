@@ -1,19 +1,12 @@
 import pathlib
-
 import numpy as np
 import h5py
-
-import testsPY
 from thztoolsPY.noisevar import noisevar
-import os
-
-cur_path = pathlib.Path(__file__).parent.absolute()
-print(cur_path)
 
 
 def test_noisevar(request):
-    fname = os.path.join(os.path.dirname(__file__), 'noisevar_test_data.mat')
-    print(fname)
+    cur_path = pathlib.Path(__file__).parent.resolve()
+    fname = cur_path / 'noisevar_test_data.mat'
     with h5py.File(fname, 'r') as file:
         set = file['Set']
         sigma = file['Set']['noisevar']['sigma'][0]

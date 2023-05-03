@@ -5,14 +5,7 @@ import unittest
 import os
 import pathlib
 from numpy.testing import assert_array_almost_equal, assert_array_equal
-from thztoolsPY.costfunlsq import costfunlsq
-from thztoolsPY.epswater import epswater
-from thztoolsPY.fftfreq import fftfreq
-from thztoolsPY.pulsegen import pulsegen
-from thztoolsPY.noisevar import noisevar
-from thztoolsPY.shiftmtx import shiftmtx
-from thztoolsPY.tdtf import tdtf
-from thztoolsPY.thzgen import thzgen
+from thztools.thztools import fftfreq, pulsegen, thzgen, noisevar, epswater, costfunlsq, tdtf, shiftmtx, tdnll
 
 
 class Name(unittest.TestCase):
@@ -99,12 +92,13 @@ class Name(unittest.TestCase):
         sigmax = ampSigma * np.ones(n)
         sigmay = ampSigma * np.ones(n)
 
-        # random noise
+        # read data from matlab
         cur_path = pathlib.Path(__file__).parent.resolve()
         new_path = cur_path / 'out_costfunlsq_rand.csv'
-
         costfunlsq_true_rand = pd.read_csv(new_path, header=None)
         cosfunlsq_true_rand = np.array(costfunlsq_true_rand[0])
+
+
         yy = thzgen(n, 1, 1)[0] + ampSigma * np.random.rand(n)
 
         wfft_r = 2 * np.pi * np.fft.fftfreq(n)
@@ -149,9 +143,37 @@ class Name(unittest.TestCase):
 
     # ==================================================================
 
-    #def test_tdnll(self):
-    #    n = 10
-    #    m = 8
+    def test_tdnll(self):
+        n = 10
+        m = 8
+        x = np.ones((n, m))
+
+        # read gradient obtanied in python
+        cur_path = pathlib.Path(__file__).parent.resolve()
+        new_path = cur_path / 'tdnll_out.csv'
+        gradnll_true = pd.read_csv(new_path, header=None)
+        gradnll_true = np.array(gradnll_true[0])
+
+        # define parameters
+        logv = np.ones(3)
+        mu = np.ones(n)
+        a = np.ones(m)
+        eta = np.ones(m)
+        ts = 0.5
+
+        theta = np.array([0, 0])
+
+        def fun(theta, w):
+            return -1j * w
+
+        d = tdtf(fun, theta, n, ts)
+
+        param = {'logv': logv, 'mu': mu, 'a': a, 'eta': eta, 'ts': ts, 'd': d}
+        fix = {'logv': 0, 'mu': 0, 'a': 0, 'eta': 0}
+
+        [nll, gradnll] = tdnll(x, param, fix)
+        assert_array_almost_equal(gradnll, gradnll_true)
+
 
 
 if __name__ == '_main_':

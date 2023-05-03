@@ -2,14 +2,8 @@ import numpy as np
 from numpy.fft import fftfreq
 import pathlib
 
-#for mat_path in pathlib.Path('C:/Users/jonap/thz_project_public/thztools/testsPY').glob('*.mat'):
-#    print(mat_path)
-
-p = pathlib.Path()
-p.absolute()
 
 def noisevar(sigma, mu, t):
-
     """
  Noisevar computes the time-domain noise variance for noise parameters sigma, with a signal mu and sampling interval T.
  There are three noise parameters: the first corresponds to amplitude noise, in signal units (i.e, the same units as mu)
@@ -43,4 +37,4 @@ def noisevar(sigma, mu, t):
     w = 2 * np.pi * fftfreq(n, t)
     mudot = np.real(np.fft.ifft(1j * w * np.fft.fft(mu)))
 
-    return sigma[0]**2 + (sigma[1] * mu)**2 + (sigma[2] * mudot)**2
+    return sigma[0] ** 2 + (sigma[1] * mu) ** 2 + (sigma[2] * mudot) ** 2

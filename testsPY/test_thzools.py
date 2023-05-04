@@ -5,7 +5,7 @@ import unittest
 import os
 import pathlib
 from numpy.testing import assert_array_almost_equal, assert_array_equal
-from thztools.thztools import fftfreq, pulsegen, thzgen, noisevar, epswater, costfunlsq, tdtf, shiftmtx, tdnll
+from thztools.thztools import fftfreq, pulsegen, thzgen, noisevar, epswater, costfunlsq, tdtf, shiftmtx, tdnll, tdnoisefit
 
 
 class Name(unittest.TestCase):
@@ -174,7 +174,47 @@ class Name(unittest.TestCase):
         [nll, gradnll] = tdnll(x, param, fix)
         assert_array_almost_equal(gradnll, gradnll_true)
 
+    def test_tdnoisefit(self):
+        def test_tdnoisefit(self):
+            with h5py.File('tdnoisefit_test_python.mat', 'r') as file:
+                Set = file['Set']
+                x = Set['tdnoisefit']['x'][0]
+                param = Set['tdnoisefit']['paramForPy']
+                fix_test = Set['tdnoisefit']['fixForPy']
+                ignore_test = Set['tdnoisefit']['ignoreForPy']
+                p_test = Set['tdnoisefit']['P']
+                diagnostic = Set['tdnoisefit']['Diagnostic']
+                dfx = np.array(x)
+                dfParam = np.array(param)
 
+                x = np.array(file[Set['tdnoisefit']['x'][0, 0]]).T
+                param = {'v0': np.array(file[param[0, 0]]['v0'])[0],
+                         'mu0': np.array(file[param[0, 0]]['mu0'])[0],
+                         'a0': np.array(file[param[0, 0]]['A0'])[0],
+                         'eta0': np.array(file[param[0, 0]]['eta0'])[0],
+                         'ts': np.array(file[param[0, 0]]['ts'])[0]}
+                fix = {'logv': bool(np.array(file[fix_test[0, 0]]['logv'])),
+                       'mu': bool(np.array(file[fix_test[0, 0]]['mu'])),
+                       'a': bool(np.array(file[fix_test[0, 0]]['A'])),
+                       'eta': bool(np.array(file[fix_test[0, 0]]['eta']))}
+                ignore = {'a': bool(np.array(file[fix_test[0, 0]]['A'])),
+                          'eta': bool(np.array(file[fix_test[0, 0]]['eta']))}
+                p = {'var': np.array(file[p_test[0, 0]]['var'])[0],
+                     'mu': np.array(file[p_test[0, 0]]['mu'])[0],
+                     'a': np.array(file[p_test[0, 0]]['A'])[0],
+                     'eta': np.array(file[p_test[0, 0]]['eta'])[0],
+                     'ts': np.array(file[p_test[0, 0]]['ts'])[0]}
+                fun = np.array(file[Set['tdnoisefit']['fval'][0, 0]])[0]
+                diagnostic = np.array(file[Set['tdnoisefit']['Diagnostic'][0, 0]])[0]
+
+                [p_out, fun_out, diagnostic_out] = tdnoisefit(x, param, fix, ignore)
+
+                assert_array_almost_equal(fun_out, fun, decimal=3)
+                assert_array_almost_equal(p_out['var'], p['var'], decimal=3)
+                assert_array_almost_equal(p_out['mu'], p['mu'], decimal=3)
+                assert_array_almost_equal(p_out['a'], p['a'], decimal=3)
+                assert_array_almost_equal(p_out['eta'], p['eta'], decimal=3)
+                assert_array_almost_equal(p_out['ts'], p['ts'], decimal=3)
 
 if __name__ == '_main_':
     unittest.main()

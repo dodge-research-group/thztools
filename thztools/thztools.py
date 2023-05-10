@@ -67,7 +67,7 @@ def noisevar(sigma, mu, t):
     return sigma[0] ** 2 + (sigma[1] * mu) ** 2 + (sigma[2] * mudot) ** 2
 
 
-def sigmamu(sigma, mu, t):
+def noiseamp(sigma, mu, t):
     """
     noiseamp computes the time-domain noise amplitudes for noise parameters sigma, with a signal mu and sampling
     interval t.  There are three noise parameters: the first corresponds to amplitude noise, in signal units

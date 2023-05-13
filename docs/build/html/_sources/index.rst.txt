@@ -22,5 +22,5 @@ Table of Contents
 .. toctree::
    :maxdepth: 2
 
-   gettingstarted <gettingstarted>
+   Getting started <gettingstarted>
      thztools <thztools>

@@ -1,2 +1,0 @@
-colum 1	colum 2
-1	2

@@ -1,0 +1,1125 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>thztools &#8212; Thztools  documentation</title>
+<script>
+  document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+  document.documentElement.dataset.theme = localStorage.getItem("theme") || "light"
+</script>
+
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=92025949c220c2e29695" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=92025949c220c2e29695" rel="stylesheet">
+
+
+  <link rel="stylesheet"
+    href="../_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=92025949c220c2e29695">
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+    <div class="bd-header-announcement container-fluid" id="banner">
+      
+
+    </div>
+
+    
+    <nav class="bd-header navbar navbar-light navbar-expand-lg bg-light fixed-top bd-navbar" id="navbar-main"><div class="bd-header__inner container-xl">
+
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Logo image">
+    <img src="../_static/logo.png" class="logo__image only-dark" alt="Logo image">
+  
+  
+    <p class="title logo__title">Thztools Documentation</p>
+  
+</a>
+    
+  </div>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapsible" aria-controls="navbar-collapsible" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="fas fa-bars"></span>
+  </button>
+
+  
+  <div id="navbar-collapsible" class="col-lg-9 collapse navbar-collapse">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <ul id="navbar-main-elements" class="navbar-nav">
+    <li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../gettingstarted.html">
+  gettingstarted
+ </a>
+</li>
+
+<li class="toctree-l1 nav-item">
+ <a class="reference internal nav-link" href="../thztools.html">
+  thztools
+ </a>
+</li>
+
+    
+</ul>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+      <div class="navbar-end-item">
+        <span id="theme-switch" class="btn btn-sm btn-outline-primary navbar-btn rounded-circle">
+    <a class="theme-switch" data-mode="light"><i class="fas fa-sun"></i></a>
+    <a class="theme-switch" data-mode="dark"><i class="far fa-moon"></i></a>
+    <a class="theme-switch" data-mode="auto"><i class="fas fa-adjust"></i></a>
+</span>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          <a class="nav-link" href="https://github.com/dodge-research-group" rel="noopener" target="_blank" title="GitHub"><span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+</div>
+    </nav>
+    
+
+    <div class="bd-container container-xl">
+      <div class="bd-container__inner row">
+          
+
+<!-- Only show if we have sidebars configured, else just a small margin  -->
+<div class="bd-sidebar-primary col-12 col-md-3 bd-sidebar">
+  <div class="sidebar-start-items"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+  <div class="bd-toc-item active">
+    
+  </div>
+</nav>
+  </div>
+  <div class="sidebar-end-items">
+  </div>
+</div>
+
+
+          
+
+
+<div class="bd-sidebar-secondary d-none d-xl-block col-xl-2 bd-toc">
+  
+</div>
+
+
+          
+          
+          <div class="bd-content col-12 col-md-9 col-xl-7">
+              
+              <article class="bd-article" role="main">
+                
+  <h1>Source code for thztools</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.linalg</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
+<span class="kn">import</span> <span class="nn">math</span>
+
+<div class="viewcode-block" id="fftfreq"><a class="viewcode-back" href="../functions/thztools.fftfreq.html#thztools.fftfreq">[docs]</a><span class="k">def</span> <span class="nf">fftfreq</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Computes the positive and negative frequencies sampled in the Fast Fourier Transform.</span>
+
+<span class="sd">    :Parameters:</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n : int</span>
+<span class="sd">        Number of time samples</span>
+<span class="sd">    t: float</span>
+<span class="sd">        Sampling time</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    f : ndarray</span>
+<span class="sd">        Frequency vector (1/ts) of length n containing the sample frequencies.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">f</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)]</span> <span class="o">=</span> <span class="o">-</span><span class="n">f</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)]</span>
+
+    <span class="k">return</span> <span class="n">f</span></div>
+
+
+<div class="viewcode-block" id="noisevar"><a class="viewcode-back" href="../functions/thztools.noisevar.html#thztools.noisevar">[docs]</a><span class="k">def</span> <span class="nf">noisevar</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd"> Noisevar computes the time-domain noise variance for noise parameters sigma, with a signal mu and sampling interval T.</span>
+<span class="sd"> There are three noise parameters: the first corresponds to amplitude noise, in signal units (i.e, the same units as mu)</span>
+<span class="sd"> ;  the second corresponds to multiplicative noise, which is dimensionless; and the third corresponds to timebase noise,</span>
+<span class="sd"> in units of signal/time, where the units for time are the same as for T. The output, Vmu, is given in units that are</span>
+<span class="sd"> the square of the signal units.</span>
+
+
+
+<span class="sd"> Parameters</span>
+<span class="sd"> ----------</span>
+
+<span class="sd">   sigma : ndarray</span>
+<span class="sd">    (3, ) array  containing noise parameters</span>
+
+<span class="sd">   mu : ndarray</span>
+<span class="sd">       (n, ) array  containing  signal vector</span>
+
+<span class="sd">   t : float</span>
+<span class="sd">    Sampling time</span>
+
+<span class="sd"> Returns</span>
+<span class="sd"> --------</span>
+<span class="sd">   vmu : ndarray</span>
+<span class="sd">        Noise variance</span>
+
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">fftfreq</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+    <span class="n">mudot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">mu</span><span class="p">)))</span>
+
+    <span class="k">return</span> <span class="n">sigma</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">sigma</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">mu</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">sigma</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">mudot</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span></div>
+
+
+<div class="viewcode-block" id="sigmamu"><a class="viewcode-back" href="../functions/thztools.sigmamu.html#thztools.sigmamu">[docs]</a><span class="k">def</span> <span class="nf">sigmamu</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    noiseamp computes the time-domain noise amplitudes for noise parameters sigma, with a signal mu and sampling</span>
+<span class="sd">    interval t.  There are three noise parameters: the first corresponds to amplitude noise, in signal units</span>
+<span class="sd">    (ie, the same units as mu); the second corresponds to multiplicative noise, which is dimensionless; and the</span>
+<span class="sd">    third corresponds to timebase noise, in units of signal/time, where the units for time are the same as</span>
+<span class="sd">    for t. The output, sigmamu, is given in signal units.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    sigma : ndarray</span>
+<span class="sd">        (3, ) array  containing noise parameters</span>
+
+<span class="sd">    mu :  signal vector</span>
+<span class="sd">        (n, ) array  containing  signal vector</span>
+
+<span class="sd">    t : float</span>
+<span class="sd">        sampling time</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    sigmamu : ndarray</span>
+<span class="sd">        (n, ) array containing noise amplitude</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">noisevar</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="pulsegen"><a class="viewcode-back" href="../functions/thztools.pulsegen.html#thztools.pulsegen">[docs]</a><span class="k">def</span> <span class="nf">pulsegen</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Pulsegen generates a short pulse of temporal width w centered at t0 for use in tests of time-domain analysis</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    n : int</span>
+<span class="sd">        number of sampled points</span>
+
+<span class="sd">    t0 : float</span>
+<span class="sd">        pulse center</span>
+
+<span class="sd">    w : float</span>
+<span class="sd">        pulse width</span>
+
+<span class="sd">    a : float</span>
+<span class="sd">        pulse amplitude</span>
+
+<span class="sd">    t : float</span>
+<span class="sd">        sampling time</span>
+
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    y : ndarray</span>
+<span class="sd">        signal (u.a)</span>
+
+<span class="sd">    t : float</span>
+<span class="sd">        timebase</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">t2</span> <span class="o">=</span> <span class="n">t</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">tt</span> <span class="o">=</span> <span class="p">(</span><span class="n">t2</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span> <span class="o">/</span> <span class="n">w</span>
+
+    <span class="n">y</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">tt</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">tt</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">t2</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="thzgen"><a class="viewcode-back" href="../functions/thztools.thzgen.html#thztools.thzgen">[docs]</a><span class="k">def</span> <span class="nf">thzgen</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">t0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generate a terahertz pulse with n points at sampling interval t and centered at t0.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    n : int</span>
+<span class="sd">        number of sampled points.</span>
+
+<span class="sd">    t : float</span>
+<span class="sd">        sampling time</span>
+
+<span class="sd">    t0 : float</span>
+<span class="sd">        pulse center</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    y : ndarray</span>
+<span class="sd">        signal (u.a)</span>
+
+<span class="sd">    t : float</span>
+<span class="sd">        timebase</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_a</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">default_taur</span> <span class="o">=</span> <span class="mf">0.3</span>
+    <span class="n">default_tauc</span> <span class="o">=</span> <span class="mf">0.1</span>
+    <span class="n">default_taul</span> <span class="o">=</span> <span class="mf">0.05</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="n">a</span> <span class="o">=</span> <span class="n">default_a</span>
+    <span class="n">taur</span> <span class="o">=</span> <span class="n">default_taur</span>
+    <span class="n">tauc</span> <span class="o">=</span> <span class="n">default_tauc</span>
+    <span class="n">taul</span> <span class="o">=</span> <span class="n">default_taul</span>
+
+    <span class="k">if</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">f</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)]</span> <span class="o">=</span> <span class="o">-</span><span class="n">f</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)]</span>
+
+    <span class="n">w</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">f</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">taul</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">taul</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">taur</span> <span class="o">-</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">taur</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">tauc</span> <span class="o">-</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="p">(</span><span class="n">l</span> <span class="o">*</span> <span class="n">r</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="n">t0</span><span class="p">)</span>
+
+    <span class="n">t2</span> <span class="o">=</span> <span class="n">t</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">s</span><span class="p">)))</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">y</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">t2</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="costfunlsq"><a class="viewcode-back" href="../functions/thztools.costfunlsq.html#thztools.costfunlsq">[docs]</a><span class="k">def</span> <span class="nf">costfunlsq</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">xx</span><span class="p">,</span> <span class="n">yy</span><span class="p">,</span> <span class="n">sigmax</span><span class="p">,</span> <span class="n">sigmay</span><span class="p">,</span> <span class="n">wfft</span><span class="p">):</span>
+    <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Computes the maximum likelihood cost function.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">        fun : callable</span>
+<span class="sd">            Transfer function, in the form fun(theta,w), -iwt convention.</span>
+
+<span class="sd">        mu : ndarray</span>
+<span class="sd">            Signal vector of size (n,).</span>
+
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Input parameters for the function.</span>
+
+<span class="sd">        xx : ndarray</span>
+<span class="sd">            Measured input signal.</span>
+
+<span class="sd">        yy : ndarray</span>
+<span class="sd">            Measured output signal.</span>
+
+<span class="sd">        sigmax : ndarray or matrix</span>
+<span class="sd">            Noise covariance matrix of the input signal.</span>
+
+<span class="sd">        sigmay : nadarray</span>
+<span class="sd">            Noise covariance matrix of the output signal.</span>
+
+<span class="sd">        wfft :</span>
+
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    res : callable</span>
+
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">wfft1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">wfft</span><span class="p">])</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sigmax</span><span class="p">)</span>
+    <span class="c1">#n =np.shape(wfft)[0]</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">fun</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">wfft</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">kny</span> <span class="o">=</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">h</span><span class="p">[</span><span class="n">kny</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="n">kny</span><span class="p">])</span>
+
+    <span class="n">ry</span> <span class="o">=</span> <span class="n">yy</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">xx</span><span class="p">)</span> <span class="o">*</span> <span class="n">h</span><span class="p">))</span>
+    <span class="n">vy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">sigmay</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">htilde</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+
+    <span class="n">uy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">htilde</span><span class="p">,</span> <span class="n">k</span><span class="p">),</span> <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">htilde</span><span class="p">,</span> <span class="n">k</span><span class="p">)),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+        <span class="n">uy</span> <span class="o">=</span> <span class="n">uy</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span> <span class="o">*</span> <span class="n">sigmax</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
+        <span class="c1">#uy = uy + np.real(np.roll(htilde, k-1) @ np.roll(htilde, k-1).T) @ sigmax[k]**2</span>
+
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">sqrtm</span><span class="p">(</span><span class="n">uy</span> <span class="o">+</span> <span class="n">vy</span><span class="p">)))</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">ry</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="epswater"><a class="viewcode-back" href="../functions/thztools.epswater.html#thztools.epswater">[docs]</a><span class="k">def</span> <span class="nf">epswater</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="mi">25</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    epswater(f,T) computes the complex relative permittivity at frequency f</span>
+<span class="sd">    (THz) and temperature T (deg C)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    f Frequency (THz)</span>
+<span class="sd">    t Temperature (deg C) (optional)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    epsilonr: complex</span>
+<span class="sd">     Complex relative permittivity of water</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    .. [1] Ellison, W. J. (2007). Permittivity of pure water, at standard atmospheric pressure, over the frequency</span>
+<span class="sd">    range 0–25 THz and the temperature range 0–100 C. Journal of physical and chemical reference data, 36(1), 1-18.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Frequency conversion to Hz</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">f</span> <span class="o">*</span> <span class="mf">1e12</span>
+
+    <span class="c1"># Define relaxation parameters</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">79.23882</span><span class="p">,</span> <span class="mf">3.815866</span><span class="p">,</span> <span class="mf">1.634967</span><span class="p">])</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.004300598</span><span class="p">,</span> <span class="mf">0.01117295</span><span class="p">,</span> <span class="mf">0.006841548</span><span class="p">])</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.382264e-13</span><span class="p">,</span> <span class="mf">3.510354e-16</span><span class="p">,</span> <span class="mf">6.30035e-15</span><span class="p">])</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">652.7648</span><span class="p">,</span> <span class="mf">1249.533</span><span class="p">,</span> <span class="mf">405.5169</span><span class="p">])</span>
+    <span class="n">tc</span> <span class="o">=</span> <span class="mf">133.1383</span>
+
+    <span class="c1"># Define resonance parameters</span>
+    <span class="n">p0</span> <span class="o">=</span> <span class="mf">0.8379692</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.006118594</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.000012936798</span><span class="p">,</span> <span class="mi">4235901000000</span><span class="p">,</span> <span class="o">-</span><span class="mi">14260880000</span><span class="p">,</span>
+                  <span class="mi">273815700</span><span class="p">,</span> <span class="o">-</span><span class="mi">1246943</span><span class="p">,</span> <span class="mf">9.618642e-14</span><span class="p">,</span> <span class="mf">1.795786e-16</span><span class="p">,</span> <span class="o">-</span><span class="mf">9.310017e-18</span><span class="p">,</span>
+                  <span class="mf">1.655473e-19</span><span class="p">,</span> <span class="mf">0.6165532</span><span class="p">,</span> <span class="mf">0.007238532</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.00009523366</span><span class="p">,</span> <span class="mi">15983170000000</span><span class="p">,</span>
+                  <span class="o">-</span><span class="mi">74413570000</span><span class="p">,</span> <span class="mi">497448000</span><span class="p">,</span> <span class="mf">2.882476e-14</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.142118e-16</span><span class="p">,</span> <span class="mf">3.528051e-18</span><span class="p">])</span>
+
+    <span class="c1"># Compute temperature - dependent functions</span>
+    <span class="n">eps0</span> <span class="o">=</span> <span class="mf">87.9144</span> <span class="o">-</span> <span class="mf">0.404399</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="mf">9.58726e-4</span> <span class="o">*</span> <span class="n">t</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="mf">1.32802e-6</span> <span class="o">*</span> <span class="n">t</span> <span class="o">**</span> <span class="mi">3</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">b</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>
+    <span class="n">tau</span> <span class="o">=</span> <span class="n">c</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="n">tc</span><span class="p">))</span>
+
+    <span class="n">delta4</span> <span class="o">=</span> <span class="n">p0</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">t</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">f0</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">*</span> <span class="n">t</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">*</span> <span class="n">t</span> <span class="o">**</span> <span class="mi">3</span>
+    <span class="n">tau4</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">*</span> <span class="n">t</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span> <span class="o">*</span> <span class="n">t</span> <span class="o">**</span> <span class="mi">3</span>
+    <span class="n">delta5</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">11</span><span class="p">]</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">12</span><span class="p">]</span> <span class="o">*</span> <span class="n">t</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">f1</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">13</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">14</span><span class="p">]</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">15</span><span class="p">]</span> <span class="o">*</span> <span class="n">t</span> <span class="o">**</span> <span class="mi">2</span>
+    <span class="n">tau5</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">16</span><span class="p">]</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">17</span><span class="p">]</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">18</span><span class="p">]</span> <span class="o">*</span> <span class="n">t</span> <span class="o">**</span> <span class="mi">2</span>
+
+    <span class="c1"># Put it all together</span>
+    <span class="n">epsilonr</span> <span class="o">=</span> <span class="p">(</span><span class="n">eps0</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">f</span> <span class="o">*</span> <span class="p">(</span><span class="n">delta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">tau</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">f</span> <span class="o">*</span> <span class="n">tau</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                                             <span class="o">+</span> <span class="n">delta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">tau</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">f</span> <span class="o">*</span> <span class="n">tau</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                                             <span class="o">+</span> <span class="n">delta</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">tau</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">f</span> <span class="o">*</span> <span class="n">tau</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+                <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">f</span> <span class="o">*</span> <span class="p">(</span><span class="n">delta4</span> <span class="o">*</span> <span class="n">tau4</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">tau4</span> <span class="o">*</span> <span class="p">(</span><span class="n">f0</span> <span class="o">+</span> <span class="n">f</span><span class="p">))</span>
+                                    <span class="o">+</span> <span class="n">delta4</span> <span class="o">*</span> <span class="n">tau4</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">tau4</span> <span class="o">*</span> <span class="p">(</span><span class="n">f0</span> <span class="o">-</span> <span class="n">f</span><span class="p">)))</span>
+                <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">f</span> <span class="o">*</span> <span class="p">(</span><span class="n">delta5</span> <span class="o">*</span> <span class="n">tau5</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">tau5</span> <span class="o">*</span> <span class="p">(</span><span class="n">f1</span> <span class="o">+</span> <span class="n">f</span><span class="p">))</span>
+                                    <span class="o">+</span> <span class="n">delta5</span> <span class="o">*</span> <span class="n">tau5</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">tau5</span> <span class="o">*</span> <span class="p">(</span><span class="n">f1</span> <span class="o">-</span> <span class="n">f</span><span class="p">))))</span>
+
+    <span class="k">return</span> <span class="n">epsilonr</span></div>
+
+
+<div class="viewcode-block" id="shiftmtx"><a class="viewcode-back" href="../functions/thztools.shiftmtx.html#thztools.shiftmtx">[docs]</a><span class="k">def</span> <span class="nf">shiftmtx</span><span class="p">(</span><span class="n">tau</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">ts</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Shiftmtx computes the n by n transfer matrix for a continuous time-shift.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    -----------</span>
+
+<span class="sd">    tau : float</span>
+<span class="sd">        Input parameters for the function</span>
+
+<span class="sd">    n : int</span>
+<span class="sd">        Number of time samples</span>
+
+<span class="sd">    ts: int</span>
+<span class="sd">        sampling time</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    h: ndarray or matrix</span>
+<span class="sd">        (n, n) Transfer matrix</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Fourier method</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">fftfreq</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">ts</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">f</span>
+
+    <span class="n">imp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="n">tau</span><span class="p">))</span><span class="o">.</span><span class="n">real</span>
+
+    <span class="c1"># computes the n by n transformation matrix</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">toeplitz</span><span class="p">(</span><span class="n">imp</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">imp</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">h</span></div>
+
+<div class="viewcode-block" id="tdtf"><a class="viewcode-back" href="../functions/thztools.tdtf.html#thztools.tdtf">[docs]</a><span class="k">def</span> <span class="nf">tdtf</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">ts</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the transfer matrix for a given function.</span>
+
+<span class="sd">    It computes the n-by-n transfer matrix for the given function fun with</span>
+<span class="sd">    input parameter theta. Note that the transfer function should be written</span>
+<span class="sd">    using the physicist&#39;s -iwt convention, and that it should be in the format fun(theta,w), where theta</span>
+<span class="sd">    is a vector of the function parameters. The transfer function must be</span>
+<span class="sd">    Hermitian.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">        fun : callable</span>
+<span class="sd">            Transfer function, in the form fun(theta,w), -iwt convention.</span>
+
+<span class="sd">        theta : ndarray</span>
+<span class="sd">            Input parameters for the function.</span>
+
+<span class="sd">        n : int</span>
+<span class="sd">            Number of time samples.</span>
+
+<span class="sd">        ts : ndarray</span>
+<span class="sd">            Sampling time.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">        h : ndarray or matrix</span>
+<span class="sd">            Transfer matrix with size (n,n).</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># compute the transfer function over positive frequencies</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ts</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">ts</span>
+
+    <span class="n">fs</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">ts</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">fp</span> <span class="o">=</span> <span class="n">fs</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">wp</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">fp</span>
+    <span class="n">tfunp</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">wp</span><span class="p">)</span>
+
+    <span class="c1"># The transfer function is Hermitian, so we evaluate negative frequencies</span>
+    <span class="c1"># by taking the complex conjugate of the corresponding positive frequency.</span>
+    <span class="c1"># Include the value of the transfer function at the Nyquist frequency for</span>
+    <span class="c1"># even n.</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">tfun</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">tfunp</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">tfunp</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))))</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">wny</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">n</span> <span class="o">*</span> <span class="n">fs</span>
+        <span class="c1">#print(&#39;tfunp&#39;, tfunp)</span>
+        <span class="n">tfun</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">tfunp</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">fun</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">wny</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">tfunp</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))))))</span>
+
+    <span class="c1"># Evaluate the impulse response by taking the inverse Fourier transform,</span>
+    <span class="c1"># taking the complex conjugate first to convert to ... +iwt convention</span>
+
+    <span class="n">imp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">tfun</span><span class="p">)))</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">toeplitz</span><span class="p">(</span><span class="n">imp</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="n">imp</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">h</span></div>
+
+<div class="viewcode-block" id="tdnll"><a class="viewcode-back" href="../functions/thztools.tdnll.html#thztools.tdnll">[docs]</a><span class="k">def</span> <span class="nf">tdnll</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">fix</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Computes negative log-likelihood for the time-domain noise model.</span>
+<span class="sd">     tdnll computes the negative log-likelihood function for obtaining the</span>
+<span class="sd">     data matrix x, given the parameter dictionary param.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : ndarray or matrix</span>
+<span class="sd">        Data matrix</span>
+<span class="sd">    param : dict</span>
+<span class="sd">        A dictionary containing parameters including:</span>
+<span class="sd">        logv : ndarray</span>
+<span class="sd">            Array of size (3, ) containing log of noise parameters.</span>
+<span class="sd">        mu : ndarray</span>
+<span class="sd">            Signal vector of size (n,).</span>
+<span class="sd">        a: ndarray</span>
+<span class="sd">            Amplitude vector of size (m,).</span>
+<span class="sd">        eta : ndarray</span>
+<span class="sd">            Delay vector of size (m,).</span>
+<span class="sd">        ts : float</span>
+<span class="sd">            Sampling time.</span>
+<span class="sd">        d : ndarray or matrix</span>
+<span class="sd">            n-by-n derivative matrix.</span>
+<span class="sd">    fix : dict</span>
+<span class="sd">        A dictionary containing variables to fix for the gradient calculation.</span>
+<span class="sd">        logv : bool</span>
+<span class="sd">            Log of noise parameters.</span>
+<span class="sd">        mu : bool</span>
+<span class="sd">            Signal vector.</span>
+<span class="sd">        a : bool</span>
+<span class="sd">            Amplitude vector.</span>
+<span class="sd">        eta : bool</span>
+<span class="sd">            Delay vector.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    nll : callable</span>
+<span class="sd">        Negative log-likelihood function</span>
+<span class="sd">    gradnll : ndarray</span>
+<span class="sd">        Gradient of the negative log-likelihood function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Parse function inputs</span>
+    <span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="c1"># Parse parameter dictionary</span>
+    <span class="n">pfields</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="n">ignore</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s1">&#39;logv&#39;</span> <span class="ow">in</span> <span class="n">pfields</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">param</span><span class="p">[</span><span class="s1">&#39;logv&#39;</span><span class="p">])</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Tdnll requires Param structure with logv field&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s1">&#39;mu&#39;</span> <span class="ow">in</span> <span class="n">pfields</span><span class="p">:</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span>
+        <span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mu</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Tdnll requires param structure with mu field&#39;</span><span class="p">)</span>
+    <span class="k">pass</span>
+
+    <span class="k">if</span> <span class="s1">&#39;a&#39;</span> <span class="ow">in</span> <span class="n">pfields</span> <span class="ow">and</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="p">[]:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">pass</span>
+
+    <span class="k">if</span> <span class="s1">&#39;eta&#39;</span> <span class="ow">in</span> <span class="n">pfields</span> <span class="ow">and</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="p">[]:</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">eta</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">pass</span>
+
+    <span class="k">if</span> <span class="s1">&#39;ts&#39;</span> <span class="ow">in</span> <span class="n">pfields</span><span class="p">:</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;ts&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;TDNLL received Param structure without ts field; set to one&#39;</span><span class="p">)</span>
+    <span class="k">pass</span>
+
+    <span class="k">if</span> <span class="s1">&#39;d&#39;</span> <span class="ow">in</span> <span class="n">pfields</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;d&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Compute derivative matrix</span>
+        <span class="k">def</span> <span class="nf">fun</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
+            <span class="k">return</span> <span class="o">-</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">w</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">tdtf</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">ts</span><span class="p">)</span>
+    <span class="k">pass</span>
+
+    <span class="c1"># Compute frequency vector and Fourier coefficients of mu</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">fftfreq</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">ts</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">f</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">mu_f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">mu</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mu</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">gradcalc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">([[</span><span class="n">fix</span><span class="p">[</span><span class="s1">&#39;logv&#39;</span><span class="p">]],</span> <span class="p">[</span><span class="n">fix</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]],</span> <span class="p">[</span><span class="n">fix</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]],</span> <span class="p">[</span><span class="n">fix</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]]])</span>
+
+    <span class="k">if</span> <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]:</span>
+        <span class="n">zeta</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">zeta_f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">zeta</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">exp_iweta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">eta</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">zeta_f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">exp_iweta</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">mu_f</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+        <span class="n">zeta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">zeta_f</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+
+    <span class="c1"># Compute negative - log likelihood and gradient</span>
+
+    <span class="c1"># Compute residuals and their squares for subsequent computations</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">zeta</span>
+    <span class="n">ressq</span> <span class="o">=</span> <span class="n">res</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="c1"># Simplest case: just variance and signal parameters, A and eta fixed at</span>
+    <span class="c1"># defaults</span>
+    <span class="k">if</span> <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]:</span>
+        <span class="n">dmu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="n">mu_f</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+        <span class="n">valpha</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">vbeta</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">mu</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">vtau</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">dmu</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">vtot</span> <span class="o">=</span> <span class="n">valpha</span> <span class="o">+</span> <span class="n">vbeta</span> <span class="o">+</span> <span class="n">vtau</span>
+
+        <span class="n">resnormsq</span> <span class="o">=</span> <span class="n">ressq</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">vtot</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+        <span class="n">nll</span> <span class="o">=</span> <span class="n">m</span> <span class="o">*</span> <span class="n">n</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">m</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">vtot</span><span class="p">))</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">resnormsq</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="c1"># Compute gradient if requested</span>
+        <span class="c1"># if nargout &gt; 1:</span>
+        <span class="n">ngrad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">gradcalc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="p">[[</span><span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="n">n</span><span class="p">]])</span>
+        <span class="n">gradnll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">ngrad</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">nstart</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">dvar</span> <span class="o">=</span> <span class="p">(</span><span class="n">vtot</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ressq</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="n">vtot</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="k">if</span> <span class="n">gradcalc</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">gradnll</span><span class="p">[</span><span class="n">nstart</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">m</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dvar</span><span class="p">)</span> <span class="o">*</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">gradnll</span><span class="p">[</span><span class="n">nstart</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">m</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mu</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">dvar</span><span class="p">)</span> <span class="o">*</span> <span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">gradnll</span><span class="p">[</span><span class="n">nstart</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">m</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dmu</span> <span class="o">**</span> <span class="mf">2.</span> <span class="o">*</span> <span class="n">dvar</span><span class="p">)</span> <span class="o">*</span> <span class="n">v</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">nstart</span> <span class="o">=</span> <span class="n">nstart</span> <span class="o">+</span> <span class="mi">3</span>
+        <span class="k">if</span> <span class="n">gradcalc</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="c1">#print(&#39;mu shape : &#39;, mu.shape)</span>
+            <span class="c1">#print(&#39;dvar shape: &#39;, dvar.shape)</span>
+            <span class="c1">#print(&#39;d shape: &#39;, d.shape)</span>
+            <span class="c1">#print(&#39;Dmu shape: &#39;, dmu.shape)</span>
+            <span class="n">gradnll</span><span class="p">[</span><span class="n">nstart</span><span class="p">:</span><span class="n">nstart</span> <span class="o">+</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">*</span> <span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">dvar</span> <span class="o">+</span> <span class="n">v</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="p">(</span><span class="n">dmu</span> <span class="o">*</span> <span class="n">dvar</span><span class="p">))</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                                              <span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">vtot</span><span class="p">)</span>
+
+    <span class="c1"># Alternative case: A, eta, or both are not set to defaults</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dzeta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span> <span class="o">*</span> <span class="n">zeta_f</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+
+        <span class="n">valpha</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">vbeta</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">zeta</span><span class="o">**</span><span class="mi">2</span>
+        <span class="n">vtau</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">dzeta</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">vtot</span> <span class="o">=</span> <span class="n">valpha</span> <span class="o">+</span> <span class="n">vbeta</span> <span class="o">+</span> <span class="n">vtau</span>
+
+        <span class="n">resnormsq</span> <span class="o">=</span> <span class="n">ressq</span> <span class="o">/</span> <span class="n">vtot</span>
+        <span class="n">nll</span> <span class="o">=</span> <span class="n">m</span> <span class="o">*</span> <span class="n">n</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">vtot</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">resnormsq</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="c1"># Compute gradient if requested</span>
+        <span class="c1"># if nargout &gt; 1:</span>
+        <span class="n">ngrad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">gradcalc</span> <span class="o">*</span> <span class="p">[[</span><span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="p">[</span><span class="n">m</span><span class="p">]])</span>
+        <span class="n">gradnll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">ngrad</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">nstart</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">reswt</span> <span class="o">=</span> <span class="n">res</span> <span class="o">/</span> <span class="n">vtot</span>
+        <span class="n">dvar</span> <span class="o">=</span> <span class="p">(</span><span class="n">vtot</span> <span class="o">-</span> <span class="n">ressq</span><span class="p">)</span> <span class="o">/</span> <span class="n">vtot</span><span class="o">**</span><span class="mi">2</span>
+        <span class="k">if</span> <span class="n">gradcalc</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="c1"># Gradient wrt logv</span>
+            <span class="n">gradnll</span><span class="p">[</span><span class="n">nstart</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dvar</span><span class="p">)</span> <span class="o">*</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">gradnll</span><span class="p">[</span><span class="n">nstart</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">zeta</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">dvar</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span> <span class="o">*</span> <span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">gradnll</span><span class="p">[</span><span class="n">nstart</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dzeta</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">dvar</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span> <span class="o">*</span> <span class="n">v</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">nstart</span> <span class="o">=</span> <span class="n">nstart</span> <span class="o">+</span> <span class="mi">3</span>
+        <span class="k">if</span> <span class="n">gradcalc</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="c1"># Gradient wrt mu</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">dvar</span> <span class="o">*</span> <span class="n">zeta</span> <span class="o">-</span> <span class="n">reswt</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">v</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">w</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">dvar</span> <span class="o">*</span> <span class="n">dzeta</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">gradnll</span><span class="p">[</span><span class="n">nstart</span><span class="p">:</span><span class="n">nstart</span> <span class="o">+</span> <span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="n">exp_iweta</span> <span class="o">*</span> <span class="n">p</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">nstart</span> <span class="o">=</span> <span class="n">nstart</span> <span class="o">+</span> <span class="n">n</span>
+        <span class="k">if</span> <span class="n">gradcalc</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+            <span class="c1"># Gradient wrt A</span>
+            <span class="n">term</span> <span class="o">=</span> <span class="p">(</span><span class="n">vtot</span> <span class="o">-</span> <span class="n">valpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">dvar</span> <span class="o">-</span> <span class="n">reswt</span> <span class="o">*</span> <span class="n">zeta</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">0</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;One or more elements of the amplitude vector are close to zero &quot;</span><span class="p">)</span>
+            <span class="n">gradnll</span><span class="p">[</span><span class="n">nstart</span><span class="p">:</span><span class="n">nstart</span> <span class="o">+</span> <span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">a</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]:</span>
+                <span class="n">gradnll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">gradnll</span><span class="p">,</span> <span class="n">nstart</span><span class="p">)</span>
+                <span class="n">nstart</span> <span class="o">=</span> <span class="n">nstart</span> <span class="o">+</span> <span class="n">m</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">nstart</span> <span class="o">=</span> <span class="n">nstart</span> <span class="o">+</span> <span class="n">m</span>
+        <span class="k">if</span> <span class="n">gradcalc</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span>
+            <span class="c1"># Gradient wrt eta</span>
+            <span class="n">ddzeta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifft</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">zeta_f</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+            <span class="n">gradnll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">gradnll</span><span class="p">)</span>
+            <span class="n">gradnll</span><span class="p">[</span><span class="n">nstart</span><span class="p">:</span><span class="n">nstart</span> <span class="o">+</span> <span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dvar</span> <span class="o">*</span> <span class="p">(</span><span class="n">zeta</span> <span class="o">*</span> <span class="n">dzeta</span> <span class="o">*</span> <span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">dzeta</span> <span class="o">*</span> <span class="n">ddzeta</span> <span class="o">*</span> <span class="n">v</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span> <span class="n">reswt</span> <span class="o">*</span> <span class="n">dzeta</span><span class="p">,</span>
+                                                 <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]:</span>
+                <span class="n">gradnll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">gradnll</span><span class="p">,</span> <span class="n">nstart</span><span class="p">)</span>
+    <span class="n">gradnll</span> <span class="o">=</span> <span class="n">gradnll</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">nll</span><span class="p">,</span> <span class="n">gradnll</span></div>
+
+<div class="viewcode-block" id="tdnoisefit"><a class="viewcode-back" href="../functions/thztools.tdnoisefit.html#thztools.tdnoisefit">[docs]</a><span class="k">def</span> <span class="nf">tdnoisefit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">fix</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;logv&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;eta&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span> <span class="n">ignore</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;eta&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}):</span>
+    <span class="sd">&quot;&quot;&quot; Computes maximum likelihood estimates parameters for the time-domain noise model.</span>
+<span class="sd">     Tdnoisefit computes the noise parameters sigma and the underlying signal</span>
+<span class="sd">     vector mu for the data matrix x, where the columns of x are each noisy</span>
+<span class="sd">     measurements of mu.</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : ndarray or matrix</span>
+<span class="sd">        Data matrix.</span>
+<span class="sd">    param : dict</span>
+<span class="sd">        A dictionary containing initial guess for the parameters:</span>
+<span class="sd">        v0 : ndarray</span>
+<span class="sd">            Initial guess, noise model parameters. Array of real elements of size (3, )</span>
+<span class="sd">        mu0 : ndarray</span>
+<span class="sd">            Initial guess, signal vector. Array of real elements of size  (n, )</span>
+<span class="sd">        a0 : ndarray</span>
+<span class="sd">            Initial guess, amplitude vector. Array of real elements of size (m, )</span>
+<span class="sd">        eta0 : ndarray</span>
+<span class="sd">            Initial guess, delay vector. Array of real elements of size (m, )</span>
+<span class="sd">        ts : int</span>
+<span class="sd">            Sampling time</span>
+<span class="sd">    fix : dict, optional</span>
+<span class="sd">        A dictionary containing variables to fix for the minimization.</span>
+<span class="sd">        logv : bool</span>
+<span class="sd">            Log of noise parameters.</span>
+<span class="sd">        mu : bool</span>
+<span class="sd">            Signal vector.</span>
+<span class="sd">        a : bool</span>
+<span class="sd">            Amplitude vector.</span>
+<span class="sd">        eta : bool</span>
+<span class="sd">            Delay vector.</span>
+<span class="sd">        If not given, chosen to set free all the variables.</span>
+<span class="sd">    ignore : dict</span>
+<span class="sd">        A dictionary containing variables to ignore for the minimization.</span>
+<span class="sd">        a : bool</span>
+<span class="sd">            Amplitude vector.</span>
+<span class="sd">        eta : bool</span>
+<span class="sd">            Delay vector.</span>
+<span class="sd">        If not given, chosen to ignore both amplitude and delay.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    --------</span>
+<span class="sd">    p : dict</span>
+<span class="sd">        Output parameter dictionary containing:</span>
+<span class="sd">            eta : ndarray</span>
+<span class="sd">                Delay vector.</span>
+<span class="sd">            a : ndarray</span>
+<span class="sd">                Amplitude vector.</span>
+<span class="sd">            mu : ndarray</span>
+<span class="sd">                Signal vector.</span>
+<span class="sd">            var : ndarray</span>
+<span class="sd">                Log of noise parameters</span>
+<span class="sd">        fval : float</span>
+<span class="sd">           Value of NLL cost function from FMINUNC</span>
+<span class="sd">        Diagnostic : dict</span>
+<span class="sd">            Dictionary containing diagnostic information</span>
+<span class="sd">                err : dic</span>
+<span class="sd">                    Dictionary containing  error of the parameters.</span>
+<span class="sd">                grad : ndarray</span>
+<span class="sd">                      Negative loglikelihood cost function gradient from scipy.optimize.minimize BFGS method.</span>
+<span class="sd">                hessian : ndarray</span>
+<span class="sd">                    Negative loglikelihood cost function hessian from scipy.optimize.minimize BFGS method.</span>
+<span class="sd">     &quot;&quot;&quot;</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="c1"># Parse Inputs</span>
+    <span class="k">if</span> <span class="s1">&#39;v0&#39;</span> <span class="ow">in</span> <span class="n">param</span><span class="p">:</span>
+        <span class="n">v0</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;v0&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">v0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">param</span><span class="p">[</span><span class="s1">&#39;v0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">v0</span>
+
+    <span class="k">if</span> <span class="s1">&#39;mu0&#39;</span> <span class="ow">in</span> <span class="n">param</span><span class="p">:</span>
+        <span class="n">mu0</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;mu0&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mu0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">param</span><span class="p">[</span><span class="s1">&#39;mu0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mu0</span>
+
+    <span class="k">if</span> <span class="s1">&#39;a0&#39;</span> <span class="ow">in</span> <span class="n">param</span><span class="p">:</span>
+        <span class="n">a0</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;a0&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">a0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="n">param</span><span class="p">[</span><span class="s1">&#39;a0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">a0</span>
+
+    <span class="k">if</span> <span class="s1">&#39;eta0&#39;</span> <span class="ow">in</span> <span class="n">param</span><span class="p">:</span>
+        <span class="n">eta0</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;eta0&#39;</span><span class="p">]</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">eta0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="n">param</span><span class="p">[</span><span class="s1">&#39;eta0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">eta0</span>
+
+    <span class="k">if</span> <span class="s1">&#39;ts&#39;</span> <span class="ow">in</span> <span class="n">param</span><span class="p">:</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;ts&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">param</span><span class="p">[</span><span class="s1">&#39;ts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="n">mle</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;x0&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])}</span>
+    <span class="n">idxstart</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">idxrange</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="c1"># If fix[&#39;logv&#39;], return log(v0); otherwise return logv parameters</span>
+    <span class="k">if</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;logv&#39;</span><span class="p">]:</span>
+        <span class="k">def</span> <span class="nf">setplogv</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">param</span><span class="p">[</span><span class="s1">&#39;v0&#39;</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">param</span><span class="p">[</span><span class="s1">&#39;v0&#39;</span><span class="p">])))</span>
+        <span class="n">idxend</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="mi">3</span>
+        <span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;logv&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">idxstart</span><span class="p">,</span> <span class="n">idxend</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">setplogv</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">p</span><span class="p">[</span><span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;logv&#39;</span><span class="p">]]</span>
+
+        <span class="n">idxstart</span> <span class="o">=</span> <span class="n">idxend</span>
+    <span class="k">pass</span>
+
+    <span class="c1"># If Fix[&#39;mu&#39;], return mu0, otherwise, return mu parameters</span>
+    <span class="k">if</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]:</span>
+        <span class="k">def</span> <span class="nf">setpmu</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;mu0&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">],</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;mu0&#39;</span><span class="p">]))</span>
+        <span class="n">idxend</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="n">n</span>
+        <span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">idxstart</span><span class="p">,</span> <span class="n">idxend</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">setpmu</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">p</span><span class="p">[</span><span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]]</span>
+
+        <span class="n">idxstart</span> <span class="o">=</span> <span class="n">idxend</span>
+    <span class="k">pass</span>
+
+    <span class="c1"># If ignore A, return []; if Fix[&#39;A&#39;], return A0; if ~Fix.A &amp; Fix.mu, return all A parameters;</span>
+    <span class="c1"># If ~Fix.A &amp; ~Fix.mu, return all A parameters but first</span>
+
+    <span class="k">if</span> <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]:</span>
+        <span class="k">def</span> <span class="nf">setpa</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">elif</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]:</span>
+        <span class="k">def</span> <span class="nf">setpa</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;a0&#39;</span><span class="p">]</span>
+
+    <span class="k">elif</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]:</span>
+        <span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">],</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;a0&#39;</span><span class="p">]))</span>
+        <span class="n">idxend</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="n">m</span>
+        <span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">idxstart</span><span class="p">,</span> <span class="n">idxend</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">setpa</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">p</span><span class="p">[</span><span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]]</span>
+
+        <span class="n">idxstart</span> <span class="o">=</span> <span class="n">idxend</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">],</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;a0&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span> <span class="o">/</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;a0&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">idxend</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="n">m</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">idxstart</span><span class="p">,</span> <span class="n">idxend</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">setpa</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="mi">1</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">idxstart</span> <span class="o">=</span> <span class="n">idxend</span>
+    <span class="k">pass</span>
+
+    <span class="c1"># If Ignore.eta, return []; if Fix.eta, return eta0; if ~Fix.eta &amp; Fix.mu,return all eta parameters;</span>
+    <span class="c1"># if ~Fix.eta &amp; ~Fix.mu, return all eta parameters but first</span>
+
+    <span class="k">if</span> <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]:</span>
+        <span class="k">def</span> <span class="nf">setpeta</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">elif</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]:</span>
+        <span class="k">def</span> <span class="nf">setpeta</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;eta0&#39;</span><span class="p">]</span>
+
+    <span class="k">elif</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]:</span>
+        <span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">],</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;eta0&#39;</span><span class="p">]))</span>
+        <span class="n">idxend</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="n">m</span>
+        <span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">idxstart</span><span class="p">,</span> <span class="n">idxend</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">setpeta</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">p</span><span class="p">[</span><span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]]</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">],</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;eta0&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;eta0&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">idxend</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="n">m</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">idxstart</span><span class="p">,</span> <span class="n">idxend</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">setpeta</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="mi">0</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">fun</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">w</span>
+
+    <span class="n">d</span> <span class="o">=</span> <span class="n">tdtf</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;ts&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">parsein</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;logv&#39;</span><span class="p">:</span> <span class="n">setplogv</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="n">setpmu</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">setpa</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="s1">&#39;eta&#39;</span><span class="p">:</span> <span class="n">setpeta</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;ts&#39;</span><span class="p">],</span> <span class="s1">&#39;d&#39;</span><span class="p">:</span> <span class="n">d</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">objective</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tdnll</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">parsein</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">fix</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">jacobian</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tdnll</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">parsein</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">fix</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">mle</span><span class="p">[</span><span class="s1">&#39;objective&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">objective</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">mle</span><span class="p">[</span><span class="s1">&#39;objective&#39;</span><span class="p">],</span> <span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;BFGS&#39;</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="n">jacobian</span><span class="p">)</span>
+
+    <span class="c1"># The trust-region algorithm returns the Hessian for the next-to-last</span>
+    <span class="c1"># iterate, which may not be near the final point. To check, test for</span>
+    <span class="c1"># positive definiteness by attempting to Cholesky factorize it. If it</span>
+    <span class="c1"># returns an error, rerun the optimization with the quasi-Newton algorithm</span>
+    <span class="c1"># from the current optimal point.</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">hess_inv</span><span class="p">))</span>
+        <span class="n">hess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">hess_inv</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Hessian returned by FMINUNC is not positive definite;</span><span class="se">\n</span><span class="s1">&#39;</span>
+              <span class="s1">&#39;recalculating with quasi-Newton algorithm&#39;</span><span class="p">)</span>
+
+        <span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">x</span>
+        <span class="n">out2</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">mle</span><span class="p">[</span><span class="s1">&#39;objective&#39;</span><span class="p">],</span> <span class="n">mle</span><span class="p">[</span><span class="s1">&#39;x0&#39;</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;BFGS&#39;</span><span class="p">,</span> <span class="n">jac</span><span class="o">=</span><span class="n">jacobian</span><span class="p">)</span>
+        <span class="n">hess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">out2</span><span class="o">.</span><span class="n">hess_inv</span><span class="p">)</span>
+
+    <span class="c1"># Parse output</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">idxrange</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">idxstart</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;logv&#39;</span><span class="p">]:</span>
+        <span class="n">p</span><span class="p">[</span><span class="s1">&#39;var&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;v0&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">idxend</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="mi">3</span>
+        <span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;logv&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">idxstart</span><span class="p">,</span> <span class="n">idxend</span><span class="p">)</span>
+        <span class="n">idxstart</span> <span class="o">=</span> <span class="n">idxend</span>
+        <span class="n">p</span><span class="p">[</span><span class="s1">&#39;var&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;logv&#39;</span><span class="p">]])</span>
+    <span class="k">pass</span>
+
+    <span class="k">if</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]:</span>
+        <span class="n">p</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;mu0&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">idxend</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="n">n</span>
+        <span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">idxstart</span><span class="p">,</span> <span class="n">idxend</span><span class="p">)</span>
+        <span class="n">idxstart</span> <span class="o">=</span> <span class="n">idxend</span>
+        <span class="n">p</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]]</span>
+    <span class="k">pass</span>
+
+    <span class="k">if</span> <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]:</span>
+        <span class="n">p</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;a0&#39;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]:</span>
+        <span class="n">idxend</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="n">m</span>
+        <span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">idxstart</span><span class="p">,</span> <span class="n">idxend</span><span class="p">)</span>
+        <span class="n">idxstart</span> <span class="o">=</span> <span class="n">idxend</span>
+        <span class="n">p</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">idxend</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="n">m</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">idxstart</span><span class="p">,</span> <span class="n">idxend</span><span class="p">)</span>
+        <span class="n">idxstart</span> <span class="o">=</span> <span class="n">idxend</span>
+        <span class="n">p</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="mi">1</span><span class="p">],</span> <span class="n">out</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">pass</span>
+
+    <span class="k">if</span> <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]:</span>
+        <span class="n">p</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;eta0&#39;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">]:</span>
+        <span class="n">idxend</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="n">m</span>
+        <span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">idxstart</span><span class="p">,</span> <span class="n">idxend</span><span class="p">)</span>
+        <span class="n">p</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">idxend</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="n">m</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">idxstart</span><span class="p">,</span> <span class="n">idxend</span><span class="p">)</span>
+        <span class="n">p</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="mi">0</span><span class="p">],</span> <span class="n">out</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="n">idxrange</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">pass</span>
+
+    <span class="n">p</span><span class="p">[</span><span class="s1">&#39;ts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;ts&#39;</span><span class="p">]</span>
+
+    <span class="n">varyParam</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">([</span><span class="n">fix</span><span class="p">[</span><span class="s1">&#39;logv&#39;</span><span class="p">],</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;mu&#39;</span><span class="p">],</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">],</span> <span class="n">fix</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">ignore</span><span class="p">[</span><span class="s1">&#39;eta&#39;</span><span class="p">]])</span>
+    <span class="n">diagnostic</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;grad&#39;</span><span class="p">:</span> <span class="n">out</span><span class="o">.</span><span class="n">jac</span><span class="p">,</span> <span class="s1">&#39;hessian&#39;</span><span class="p">:</span> <span class="n">hess</span><span class="p">,</span>
+                  <span class="s1">&#39;err&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;var&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;eta&#39;</span><span class="p">:</span> <span class="p">[]}}</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">hess</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">hess</span><span class="p">))</span>
+    <span class="n">err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+    <span class="n">idxstart</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">varyParam</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="n">diagnostic</span><span class="p">[</span><span class="s1">&#39;err&#39;</span><span class="p">][</span><span class="s1">&#39;var&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;var&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;var&#39;</span><span class="p">]))</span>
+        <span class="n">idxstart</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="mi">3</span>
+    <span class="k">pass</span>
+
+    <span class="k">if</span> <span class="n">varyParam</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">diagnostic</span><span class="p">[</span><span class="s1">&#39;err&#39;</span><span class="p">][</span><span class="s1">&#39;mu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">err</span><span class="p">[</span><span class="n">idxstart</span><span class="p">:</span><span class="n">idxstart</span> <span class="o">+</span> <span class="n">n</span><span class="p">]</span>
+        <span class="n">idxstart</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="n">n</span>
+    <span class="k">pass</span>
+
+    <span class="k">if</span> <span class="n">varyParam</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">varyParam</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">diagnostic</span><span class="p">[</span><span class="s1">&#39;err&#39;</span><span class="p">][</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">err</span><span class="p">[</span><span class="n">idxstart</span><span class="p">:</span><span class="n">idxstart</span> <span class="o">+</span> <span class="n">m</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">idxstart</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="n">m</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">diagnostic</span><span class="p">[</span><span class="s1">&#39;err&#39;</span><span class="p">][</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">err</span><span class="p">[</span><span class="n">idxstart</span><span class="p">:</span><span class="n">idxstart</span> <span class="o">+</span> <span class="n">m</span><span class="p">]</span>
+            <span class="n">idxstart</span> <span class="o">=</span> <span class="n">idxstart</span> <span class="o">+</span> <span class="n">m</span>
+    <span class="k">pass</span>
+
+    <span class="k">if</span> <span class="n">varyParam</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">varyParam</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">diagnostic</span><span class="p">[</span><span class="s1">&#39;err&#39;</span><span class="p">][</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">err</span><span class="p">[</span><span class="n">idxstart</span><span class="p">:</span><span class="n">idxstart</span> <span class="o">+</span> <span class="n">m</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">diagnostic</span><span class="p">[</span><span class="s1">&#39;err&#39;</span><span class="p">][</span><span class="s1">&#39;eta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">err</span><span class="p">[</span><span class="n">idxstart</span><span class="p">:</span><span class="n">idxstart</span> <span class="o">+</span> <span class="n">m</span><span class="p">]</span>
+    <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">fun</span><span class="p">,</span> <span class="n">diagnostic</span><span class="p">]</span></div>
+</pre></div>
+
+              </article>
+              
+
+              
+              <footer class="bd-footer-article">
+                  <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+              </footer>
+              
+          </div>
+          
+      </div>
+    </div>
+
+  
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=92025949c220c2e29695"></script>
+
+<footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    <p class="copyright">
+    &copy; Copyright 2023, Steve Dodge.<br>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    <p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.0.2.<br>
+</p>
+  </div>
+  
+</div>
+</footer>
+  </body>
+</html>

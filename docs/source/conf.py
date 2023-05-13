@@ -12,13 +12,13 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../thztoolsPY'))
+sys.path.insert(0, os.path.abspath('../../thztools'))
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'Thztools'
-copyright = '2022, Steve Dodge'
+copyright = '2023, Steve Dodge'
 author = 'Steve Dodge'
 
 
@@ -123,7 +123,7 @@ html_theme_options = {
                 # Label for this link
                 "name": "GitHub",
                 # URL where the link will redirect
-                "url": "https://github.sfu.ca/dodgelab/thztools",  # required
+                "url": "https://github.com/dodge-research-group",  # required
                 # Icon class (if "type": "fontawesome"), or path to local image (if "type": "local")
                 "icon": "fab fa-github-square",
                 # The type of image to be used (see below for details)

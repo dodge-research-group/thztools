@@ -4,10 +4,9 @@ from scipy.optimize import minimize
 import math
 
 def fftfreq(n, t):
-    """
-    Computes the positive and negative frequencies sampled in the Fast Fourier Transform.
+    r"""Computes the positive and negative frequencies sampled in the Fast Fourier Transform.
 
-    Parameters
+    :Parameters:
     ----------
     n : int
         Number of time samples
@@ -195,7 +194,7 @@ def thzgen(n, t, t0):
 
 
 def costfunlsq(fun, theta, xx, yy, sigmax, sigmay, wfft):
-    """
+    r"""Computes the maximum likelihood cost function.
 
     Parameters
     ----------
@@ -415,11 +414,11 @@ def tdtf(fun, theta, n, ts):
     return h
 
 def tdnll(x, param, fix):
-    """
-    Computes negative log-likelihood for the time-domain noise model.
-    Tdnll computes the negative log-likelihood function for obtaining the
-    data matrix x, given the parameter dictionary param.
-    Parameters
+    """ Computes negative log-likelihood for the time-domain noise model.
+     tdnll computes the negative log-likelihood function for obtaining the
+     data matrix x, given the parameter dictionary param.
+
+    Parameters:
     ----------
     x : ndarray or matrix
         Data matrix

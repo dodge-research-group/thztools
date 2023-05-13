@@ -5,7 +5,7 @@ from thztoolsPY.tdtf import tdtf
 
 def tdnll(x, param, fix):
     """
-    Computes negative log-likelihood for the time-domain noise model.
+    aa_ Computes negative log-likelihood for the time-domain noise model.
     Tdnll computes the negative log-likelihood function for obtaining the
     data matrix x, given the parameter dictionary param.
     Parameters

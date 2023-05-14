@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('../../thztools'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'Thztools'
+project = 'THztools'
 copyright = '2023, Steve Dodge'
 author = 'Steve Dodge'
 
@@ -39,7 +39,6 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.extlinks',
     'sphinx.ext.ifconfig',
-    'sphinx_math_dollar',
 ]
 
 autodoc_typehints = "signature"

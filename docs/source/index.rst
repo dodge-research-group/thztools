@@ -1,15 +1,14 @@
 .. thztools documentation master file, created by
-   sphinx-quickstart on Tue Aug 16 14:51:00 2022.
+   sphinx-quickstart on Sat May 13 13:04:08 2023.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
 Thztools Documentation
 ====================================
 
-**Date**: August 16, 2022 **Version**:0.1
+**Date**: May 13, 2023 **Version**:0.2
 
 **Thztools** is a software used to compute estimates for noise model parameters and transfer function parameters.
-
 
 
 .. toctree::
@@ -17,5 +16,11 @@ Thztools Documentation
    :caption: Contents:
 
 
-   gettingstarted
-   userguide
+
+Table of Contents
+-------------------
+.. toctree::
+   :maxdepth: 2
+
+   Getting started <gettingstarted>
+     thztools <thztools>

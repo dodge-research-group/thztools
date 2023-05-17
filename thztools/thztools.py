@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.fft import rfftfreq, rfft, irfft
 import scipy.linalg
 from scipy.optimize import minimize
 import math
@@ -29,7 +30,7 @@ def fftfreq(n, t):
     return f
 
 
-def noisevar(sigma, mu, t):
+def noisevar(sigma, mu, ts):
     """
  Noisevar computes the time-domain noise variance for noise parameters sigma, with a signal mu and sampling interval T.
  There are three noise parameters: the first corresponds to amplitude noise, in signal units (i.e, the same units as mu)
@@ -48,7 +49,7 @@ def noisevar(sigma, mu, t):
    mu : ndarray
        (n, ) array  containing  signal vector
 
-   t : float
+   ts : float
     Sampling time
 
  Returns
@@ -59,9 +60,9 @@ def noisevar(sigma, mu, t):
 
     """
 
-    n = len(mu)
-    w = 2 * np.pi * fftfreq(n, t)
-    mudot = np.real(np.fft.ifft(1j * w * np.fft.fft(mu)))
+    n = mu.shape[0]
+    w = 2 * np.pi * rfftfreq(n, ts)
+    mudot = np.real(irfft(1j * w * rfft(mu)))
 
     return sigma[0] ** 2 + (sigma[1] * mu) ** 2 + (sigma[2] * mudot) ** 2
 

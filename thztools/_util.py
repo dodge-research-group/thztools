@@ -1,6 +1,4 @@
 import numpy as np
-from numpy.fft import rfftfreq, rfft, irfft
-import scipy.linalg
 
 
 def epswater(f, t=25):

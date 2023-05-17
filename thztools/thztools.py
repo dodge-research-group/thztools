@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 from numpy.fft import rfftfreq, rfft, irfft
 import pandas as pd
@@ -187,10 +188,11 @@ class DataPulse:
 
             data = pd.read_csv(filename, header=None, delimiter='\t')
 
+            ind = 0
             for i in range(data.shape[0]):
                 try:
                     float(data[0][i])
-                except:
+                except ValueError:
                     ind = i + 1
                 pass
 
@@ -484,14 +486,12 @@ def tdnll(x, param, fix):
     if 'logv' in pfields:
         v = np.exp(param['logv'])
         v = np.reshape(v, (len(v), 1))
-
     else:
         raise ValueError('Tdnll requires Param structure with logv field')
 
     if 'mu' in pfields:
         mu = param['mu']
         mu = np.reshape(mu, (len(mu), 1))
-
     else:
         raise ValueError('Tdnll requires param structure with mu field')
     pass
@@ -518,8 +518,8 @@ def tdnll(x, param, fix):
         ts = param['ts']
     else:
         ts = 1
-        raise ValueError(
-            'TDNLL received Param structure without ts field; set to one')
+        warnings.warn('TDNLL received Param structure without ts field; '
+                      'set to one')
     pass
 
     if 'd' in pfields:
@@ -884,7 +884,7 @@ def tdnoisefit(x, param,
     try:
         np.linalg.cholesky(np.linalg.inv(out.hess_inv))
         hess = np.linalg.inv(out.hess_inv)
-    except:
+    except np.linalg.LinAlgError:
         print('Hessian returned by FMINUNC is not positive definite;\n'
               'recalculating with quasi-Newton algorithm')
 

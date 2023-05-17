@@ -26,28 +26,28 @@ x = x * 1e12 / gain
 # noise model
 data = calcnoise(t, x)
 
-#get the data to plot
+# get the data to plot
 t = data['t'][0:256]
 vtot = data['vtot'][0:256]
 xadjusted = data['xadjusted'][:256, :]
 n, m = xadjusted.shape
 
 
-#plotnoisedata
+# plotnoisedata
 plt.figure(figsize=(14, 8))
 plt.plot(t, xadjusted[:, 1:-1])
-plt.plot(t, xadjusted[:, -1], color = 'red', linewidth=1)
+plt.plot(t, xadjusted[:, -1], color='red', linewidth=1)
 plt.xlabel('t (ps)', fontsize=16)
-plt.ylabel('$\hat{\sigma}_{\mu}^{*}$ (pA)', fontsize=16)
+plt.ylabel(r'$\hat{\sigma}_{\mu}^{*}$ (pA)', fontsize=16)
 plt.show()
 
 
 # plotnoiseseest
 plt.figure(figsize=(14, 8))
-plt.scatter(t, np.std(xadjusted, 1, ddof=1), color = 'black')
+plt.scatter(t, np.std(xadjusted, 1, ddof=1), color='black')
 plt.plot(t, np.sqrt(vtot) * m / (m - 1), color='red')
 plt.xlabel('t (ps)', fontsize=16)
-plt.ylabel('$\hat{\sigma}_{\mu}^{*}$ (pA)', fontsize=16)
+plt.ylabel(r'$\hat{\sigma}_{\mu}^{*}$ (pA)', fontsize=16)
 plt.show()
 
 
@@ -57,5 +57,5 @@ delta = data['delta'][0:256]
 plt.figure(figsize=(14, 8))
 plt.stem(t, delta[:, 5] / np.sqrt(m / (m - 1)))
 plt.xlabel('t (ps)', fontsize=16)
-plt.ylabel('$\hat{\sigma}_{\mu}^{*}$ (pA)', fontsize=16)
+plt.ylabel(r'$\hat{\sigma}_{\mu}^{*}$ (pA)', fontsize=16)
 plt.show()

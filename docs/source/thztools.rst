@@ -14,11 +14,8 @@ Quick list
    costfunlsq
    fftfreq
    noisevar
-   pulsegen
-   shiftmtx
-   sigmamu
+   noiseamp
    tdnll
    tdnoisefit
    tdtf
    thzgen
-   epswater

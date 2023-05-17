@@ -3,12 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Thztools Documentation
+THzTools Documentation
 ====================================
 
 **Date**: May 13, 2023 **Version**:0.2
 
-**Thztools** is a software used to compute estimates for noise model parameters and transfer function parameters.
+**THzTools** is a software used to compute estimates for noise model parameters and transfer function parameters.
 
 
 .. toctree::
@@ -24,3 +24,4 @@ Table of Contents
 
    Getting started <gettingstarted>
      thztools <thztools>
+     _util <_util>

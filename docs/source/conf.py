@@ -12,17 +12,14 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../thztools'))
 
+sys.path.insert(0, os.path.abspath('../../thztools'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'THztools'
-copyright = '2023, Steve Dodge'
+project = 'THzTools'
+project_copyright = '2023, Steve Dodge'
 author = 'Steve Dodge'
-
-
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -92,9 +89,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'default'
 
-
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
-
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -103,7 +98,6 @@ mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 #
 # html_theme = 'sphinx_rtd_theme'
 html_theme = 'pydata_sphinx_theme'
-
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -118,32 +112,25 @@ html_theme_options = {
     },
 
     "icon_links": [
-            {
-                # Label for this link
-                "name": "GitHub",
-                # URL where the link will redirect
-                "url": "https://github.com/dodge-research-group",  # required
-                # Icon class (if "type": "fontawesome"), or path to local image (if "type": "local")
-                "icon": "fab fa-github-square",
-                # The type of image to be used (see below for details)
-                "type": "fontawesome",
-            }
-       ]
+        {
+            # Label for this link
+            "name": "GitHub",
+            # URL where the link will redirect
+            "url": "https://github.com/dodge-research-group/thztools",  # required
+            # Icon class (if "type": "fontawesome"), or path to local image
+            # (if "type": "local")
+            "icon": "fab fa-github-square",
+            # The type of image to be used (see below for details)
+            "type": "fontawesome",
+        }
+    ]
 
 }
-
-
-
-
-
-
-
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'thztoolsdoc'
-
 
 # -- Options for LaTeX output ------------------------------------------------
 

@@ -1,7 +1,7 @@
 import numpy as np
-from thztoolsPY.thzgen import thzgen
-from thztoolsPY.fftfreq import fftfreq
-from thztoolsPY.noiseamp import sigmamu
+from thztools.thztools import thzgen
+from thztools.thztools import fftfreq
+from thztools.thztools import noiseamp
 
 
 def datamc(**kwargs):
@@ -25,7 +25,7 @@ def datamc(**kwargs):
 
     # Set constants
     n = p["N"]
-    T = p["T"]
+    ts = p["T"]
     t0 = p["t0"]
     sigma_alpha = p["sigmaAlpha"]
     sigma_beta = p["sigmaBeta"]
@@ -37,13 +37,14 @@ def datamc(**kwargs):
     # Run simulation
     np.random.seed(seed)
 
-    #y, t = thzgen(n, t, t0, 'taur', 0.4)
-    y, t = thzgen(n, T, t0)
-    sigma_t = sigmamu(sigma_vec, y, T)
+    # y, t = thzgen(n, t, t0, 'taur', 0.4)
+    y, t = thzgen(n, ts, t0)
+    sigma_t = noiseamp(sigma_vec, y, ts)
 
-    ym = np.tile(y, (500, 1)).T + np.tile(sigma_t, (nmc, 1)).T * np.random.rand(n, nmc)
+    ym = np.tile(y, (500, 1)).T + (np.tile(sigma_t, (nmc, 1)).T
+                                   * np.random.rand(n, nmc))
 
-    f = fftfreq(n, T)
+    f = fftfreq(n, ts)
     nf = int(n / 2) + 1
     ym_ft = np.fft.fft(ym, axis=0)
     ym_ratio = ym_ft[:, 0::2] / ym_ft[:, 1::2]
@@ -64,9 +65,7 @@ def datamc(**kwargs):
         "Vi": vi,
         "V": v,
         "Nf": nf,
-        "sigma_t" : sigma_t
+        "sigma_t": sigma_t
     }
 
     return data
-
-

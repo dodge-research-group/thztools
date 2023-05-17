@@ -1,8 +1,8 @@
 import os
 import numpy as np
-from thztoolsPY.DataPulse import DataPulse
-from calcnoise import calcnoise
 from matplotlib import pyplot as plt
+from thztools.thztools import DataPulse
+from calcnoise import calcnoise
 
 # get the data from path
 path = './../data/2017-03-20/Air Scans/Normal'

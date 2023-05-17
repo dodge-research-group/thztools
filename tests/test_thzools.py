@@ -6,8 +6,8 @@ import os
 import pathlib
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from thztools.thztools import (fftfreq, thzgen, noisevar, costfunlsq, tdtf,
-                               tdnll, tdnoisefit)
-from thztools._util import epswater, shiftmtx
+                               tdnll, tdnoisefit, shiftmtx)
+from thztools._util import epswater
 
 
 class Name(unittest.TestCase):

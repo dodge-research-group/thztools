@@ -680,7 +680,7 @@ def tdnoisefit(x, param,
             (m, )
         eta0 : ndarray
             Initial guess, delay vector. Array of real elements of size (m, )
-        ts : int
+        ts : float
             Sampling time
     fix : dict, optional
         A dictionary containing variables to fix for the minimization.

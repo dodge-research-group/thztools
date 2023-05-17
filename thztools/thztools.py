@@ -149,16 +149,13 @@ def thzgen(n, ts, t0):
     return [y, t2]
 
 
-def costfunlsq(fun, theta, xx, yy, sigmax, sigmay, wfft):
+def costfunlsq(fun, theta, xx, yy, sigmax, sigmay, ts):
     r"""Computes the maximum likelihood cost function.
 
     Parameters
     ----------
         fun : callable
             Transfer function, in the form fun(theta,w), -iwt convention.
-
-        mu : ndarray
-            Signal vector of size (n,).
 
         theta : ndarray
             Input parameters for the function.
@@ -175,8 +172,8 @@ def costfunlsq(fun, theta, xx, yy, sigmax, sigmay, wfft):
         sigmay : nadarray
             Noise covariance matrix of the output signal.
 
-        wfft :
-
+        ts : float
+            Sampling time.
 
     Returns
     -------
@@ -184,18 +181,14 @@ def costfunlsq(fun, theta, xx, yy, sigmax, sigmay, wfft):
 
 
     """
-    wfft1 = np.array([wfft])
-    n = len(sigmax)
-    #n =np.shape(wfft)[0]
+    n = xx.shape[0]
+    wfft = 2 * np.pi * rfftfreq(n, ts)
     h = np.conj(fun(theta, wfft))
-    if n % 2 == 0:
-        kny = n // 2
-        h[kny] = np.real(h[kny])
 
-    ry = yy - np.real(np.fft.ifft(np.fft.fft(xx) * h))
+    ry = yy - irfft(rfft(xx) * h, n=n)
     vy = np.diag(sigmay**2)
 
-    htilde = np.fft.ifft(h)
+    htilde = irfft(h, n=n)
 
     uy = np.zeros((n, n))
     for k in np.arange(n):

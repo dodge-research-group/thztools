@@ -89,7 +89,7 @@ class Name(unittest.TestCase):
         wfft_r = 2 * np.pi * np.fft.fftfreq(n)
         sigmax_r = ampSigma * np.random.rand(n)
         sigmay_r = ampSigma * np.random.rand(n)
-        cosfunlsq_rand = costfunlsq(fun, theta, xx, yy, sigmax_r, sigmay_r, wfft_r)
+        cosfunlsq_rand = costfunlsq(fun, theta, xx, yy, sigmax_r, sigmay_r, 1)
         np.testing.assert_allclose(cosfunlsq_true_rand, cosfunlsq_rand, rtol=1e2, atol=1e2)
 
     # ==================================================================

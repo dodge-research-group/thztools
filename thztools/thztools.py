@@ -547,8 +547,8 @@ def tdnll(x, param, fix):
         zeta_f = np.fft.fft(zeta, axis=0)
     else:
         exp_iweta = np.exp(1j * np.tile(w, m) * np.conj(np.tile(eta, n)).T)
-        zeta_f = np.conj(np.tile(a, n)).T * np.conj(exp_iweta) * np.tile(mu_f,
-                                                                         m)
+        zeta_f = (np.conj(np.tile(a, n)).T * np.conj(exp_iweta)
+                  * np.tile(mu_f, m))
         zeta = np.real(np.fft.ifft(zeta_f, axis=0))
 
     # Compute negative - log likelihood and gradient
@@ -620,8 +620,8 @@ def tdnll(x, param, fix):
             nstart = nstart + 3
         if gradcalc[1]:
             # Gradient wrt mu
-            p = np.fft.fft(v[1] * dvar * zeta - reswt, axis=0) - 1j * v[
-                2] * w * np.fft.fft(dvar * dzeta, axis=0)
+            p = (np.fft.fft(v[1] * dvar * zeta - reswt, axis=0)
+                 - 1j * v[2] * w * np.fft.fft(dvar * dzeta, axis=0))
             gradnll[nstart:nstart + n] = np.sum(
                 np.conj(a).T * np.real(np.fft.ifft(exp_iweta * p, axis=0)),
                 axis=1).reshape(n, 1)
@@ -749,7 +749,6 @@ def tdnoisefit(x, param,
 
     if 'eta0' in param:
         eta0 = param['eta0']
-
     else:
         eta0 = np.zeros(m)
         param['eta0'] = eta0

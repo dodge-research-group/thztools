@@ -2,9 +2,8 @@ import h5py
 import numpy as np
 import pandas as pd
 import unittest
-import os
 import pathlib
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import assert_array_almost_equal
 from thztools.thztools import (fftfreq, thzgen, noisevar, costfunlsq, tdtf,
                                tdnll, tdnoisefit, shiftmtx)
 from thztools._util import epswater

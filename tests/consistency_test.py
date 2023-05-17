@@ -3,7 +3,8 @@ import pathlib
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
-from thztools.thztools import fftfreq,  noisevar, epswater, thzgen, costfunlsq, tdtf, tdnll, tdnoisefit
+from thztools.thztools import fftfreq,  noisevar, thzgen, costfunlsq, tdtf, tdnll, tdnoisefit
+from thztools._util import epswater
 
 
 def test_fftfreq():
@@ -120,7 +121,6 @@ def test_costfunlsq():
                     for l in range(0, dfsigmax.shape[0]):
                         for m in range(0, dfsigmay.shape[0]):
                             for n in range(0, dfwfft.shape[0]):
-                                print(i, j, k, l, m, n)
                                 theta = np.array(file[Set['costfunlsq']['theta'][i, j, k, l, m, n]])[0]
                                 xx = np.array(file[Set['costfunlsq']['xx'][i, j, k, l, m, n]])[0]
                                 yy = np.array(file[Set['costfunlsq']['yy'][i, j, k, l, m, n]])[0]

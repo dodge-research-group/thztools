@@ -115,8 +115,8 @@ html_theme_options = {
         {
             # Label for this link
             "name": "GitHub",
-            # URL where the link will redirect
-            "url": "https://github.com/dodge-research-group/thztools",  # required
+            # URL where the link will redirect (required)
+            "url": "https://github.com/dodge-research-group/thztools",
             # Icon class (if "type": "fontawesome"), or path to local image
             # (if "type": "local")
             "icon": "fab fa-github-square",

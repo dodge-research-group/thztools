@@ -5,8 +5,9 @@ import unittest
 import os
 import pathlib
 from numpy.testing import assert_array_almost_equal, assert_array_equal
-from thztools.thztools import fftfreq, thzgen, noisevar, costfunlsq, tdtf, tdnll, tdnoisefit
-from thztools._util import epswater, shiftmtx
+from thztools.thztools import (thzgen, noisevar, costfunlsq, tdtf, tdnll,
+                               tdnoisefit)
+from thztools._util import fftfreq, epswater, shiftmtx
 
 
 class Name(unittest.TestCase):
@@ -35,10 +36,13 @@ class Name(unittest.TestCase):
         y, t = thzgen(n=20, ts=0.05, t0=2.5)
         vmu = noisevar(sigma_vec, y, 2.5)
         vmu_true = np.array(
-            [4.36242890663103e-6, 1.18964333287937e-5, 1.95293889001674e-5, 2.55422643627414e-5, 2.93161838588929e-5,
-             3.09039003252619e-5, 3.06822632940482e-5, 2.90574034275636e-5, 2.57635783418052e-5, 1.82432209755600e-5,
-             4.91505996620606e-6, 2.38368994086406e-6, 3.48676583001915e-5, 8.17878674468416e-5, 0.000100010020280983,
-             8.17871774183767e-5, 4.81773804791099e-05, 1.93749781259091e-5, 3.62858609090918e-6, 1.05084791456656e-07])
+            [4.36242890663103e-6, 1.18964333287937e-5, 1.95293889001674e-5,
+             2.55422643627414e-5, 2.93161838588929e-5, 3.09039003252619e-5,
+             3.06822632940482e-5, 2.90574034275636e-5, 2.57635783418052e-5,
+             1.82432209755600e-5, 4.91505996620606e-6, 2.38368994086406e-6,
+             3.48676583001915e-5, 8.17878674468416e-5, 0.000100010020280983,
+             8.17871774183767e-5, 4.81773804791099e-05, 1.93749781259091e-5,
+             3.62858609090918e-6, 1.05084791456656e-07])
 
         assert_array_almost_equal(vmu, vmu_true, decimal=12)
 
@@ -64,19 +68,19 @@ class Name(unittest.TestCase):
     # ==================================================================
 
     def test_cosfunlsq(self):
-        def fun(theta, wfft):
-            return theta[0] * np.exp(1j * theta[1] * wfft)
+        def fun(_theta, _wfft):
+            return _theta[0] * np.exp(1j * _theta[1] * _wfft)
 
         theta = np.array([1, 2])
         n = 100
-        ampSigma = 1e-5
+        amp_sigma = 1e-5
         xx = np.column_stack([np.linspace(0, 10, n)])
         xx = np.squeeze(xx)
-        yy = thzgen(n, 1, 1)[0] + ampSigma * np.ones(n)
+        # yy = thzgen(n, 1, 1)[0] + amp_sigma * np.ones(n)
 
-        wfft = 2 * np.pi * np.fft.fftfreq(n, 1)
-        sigmax = ampSigma * np.ones(n)
-        sigmay = ampSigma * np.ones(n)
+        # wfft = 2 * np.pi * np.fft.fftfreq(n, 1)
+        # sigmax = amp_sigma * np.ones(n)
+        # sigmay = amp_sigma * np.ones(n)
 
         # read data from matlab
         cur_path = pathlib.Path(__file__).parent.resolve()
@@ -84,14 +88,14 @@ class Name(unittest.TestCase):
         costfunlsq_true_rand = pd.read_csv(new_path, header=None)
         cosfunlsq_true_rand = np.array(costfunlsq_true_rand[0])
 
+        yy = thzgen(n, 1, 1)[0] + amp_sigma * np.random.rand(n)
 
-        yy = thzgen(n, 1, 1)[0] + ampSigma * np.random.rand(n)
-
-        wfft_r = 2 * np.pi * np.fft.fftfreq(n)
-        sigmax_r = ampSigma * np.random.rand(n)
-        sigmay_r = ampSigma * np.random.rand(n)
+        # wfft_r = 2 * np.pi * np.fft.fftfreq(n)
+        sigmax_r = amp_sigma * np.random.rand(n)
+        sigmay_r = amp_sigma * np.random.rand(n)
         cosfunlsq_rand = costfunlsq(fun, theta, xx, yy, sigmax_r, sigmay_r, 1)
-        np.testing.assert_allclose(cosfunlsq_true_rand, cosfunlsq_rand, rtol=1e2, atol=1e2)
+        np.testing.assert_allclose(cosfunlsq_true_rand, cosfunlsq_rand,
+                                   rtol=1e2, atol=1e2)
 
     # ==================================================================
 
@@ -100,8 +104,8 @@ class Name(unittest.TestCase):
         n = 5
         ts = 0.2
 
-        def fun(theta, wfft):
-            return theta[0] * np.exp(1j * theta[1] * wfft)
+        def fun(_theta, _wfft):
+            return _theta[0] * np.exp(1j * _theta[1] * _wfft)
 
         tdft_true = np.array([[3., -2.50e-15, 1.54e-15, -1.54e-15, 2.50e-15],
                               [2.50e-15, 3., -2.50e-15, 1.54e-15, -1.54e-15],
@@ -149,32 +153,32 @@ class Name(unittest.TestCase):
 
         theta = np.array([0, 0])
 
-        def fun(theta, w):
-            return -1j * w
+        def fun(_, _w):
+            return -1j * _w
 
         d = tdtf(fun, theta, n, ts)
 
         param = {'logv': logv, 'mu': mu, 'a': a, 'eta': eta, 'ts': ts, 'd': d}
         fix = {'logv': 0, 'mu': 0, 'a': 0, 'eta': 0}
 
-        [nll, gradnll] = tdnll(x, param, fix)
+        [_, gradnll] = tdnll(x, param, fix)
         assert_array_almost_equal(gradnll, gradnll_true)
 
     def test_tdnoisefit(self):
         cur_path = pathlib.Path(__file__).parent.resolve()
         new_path = cur_path / 'test_files' / 'tdnoisefit_test_python.mat'
         with h5py.File(new_path, 'r') as file:
-            Set = file['Set']
-            x = Set['tdnoisefit']['x'][0]
-            param_test = Set['tdnoisefit']['paramForPy']
-            fix_test = Set['tdnoisefit']['fixForPy']
-            ignore_test = Set['tdnoisefit']['ignoreForPy']
-            p_test = Set['tdnoisefit']['P']
-            diagnostic = Set['tdnoisefit']['Diagnostic']
-            dfx = np.array(x)
-            dfParam = np.array(param_test)
+            file_set = file['Set']
+            # x = file_set['tdnoisefit']['x'][0]
+            param_test = file_set['tdnoisefit']['paramForPy']
+            fix_test = file_set['tdnoisefit']['fixForPy']
+            ignore_test = file_set['tdnoisefit']['ignoreForPy']
+            p_test = file_set['tdnoisefit']['P']
+            # diagnostic = file_set['tdnoisefit']['Diagnostic']
+            # dfx = np.array(x)
+            # dfParam = np.array(param_test)
 
-            x = np.array(file[Set['tdnoisefit']['x'][0, 0]]).T
+            x = np.array(file[file_set['tdnoisefit']['x'][0, 0]]).T
             param = {'v0': np.array(file[param_test[0, 0]]['v0'])[0],
                      'mu0': np.array(file[param_test[0, 0]]['mu0'])[0],
                      'a0': np.array(file[param_test[0, 0]]['A0'])[0],
@@ -191,10 +195,11 @@ class Name(unittest.TestCase):
                  'a': np.array(file[p_test[0, 0]]['A'])[0],
                  'eta': np.array(file[p_test[0, 0]]['eta'])[0],
                  'ts': np.array(file[p_test[0, 0]]['ts'])[0]}
-            fun = np.array(file[Set['tdnoisefit']['fval'][0, 0]])[0]
-            diagnostic = np.array(file[Set['tdnoisefit']['Diagnostic'][0, 0]])[0]
+            fun = np.array(file[file_set['tdnoisefit']['fval'][0, 0]])[0]
+            # diagnostic = np.array(
+            # file[file_set['tdnoisefit']['Diagnostic'][0, 0]])[0]
 
-            [p_out, fun_out, diagnosticPy] = tdnoisefit(x, param, fix, ignore)
+            [p_out, fun_out, _] = tdnoisefit(x, param, fix, ignore)
 
             assert_array_almost_equal(fun_out, fun, decimal=3)
             assert_array_almost_equal(p_out['var'], p['var'], decimal=3)
@@ -202,7 +207,6 @@ class Name(unittest.TestCase):
             assert_array_almost_equal(p_out['a'], p['a'], decimal=3)
             assert_array_almost_equal(p_out['eta'], p['eta'], decimal=3)
             assert_array_almost_equal(p_out['ts'], p['ts'], decimal=3)
-
 
 
 if __name__ == '_main_':

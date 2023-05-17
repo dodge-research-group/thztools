@@ -3,7 +3,32 @@ from numpy.fft import rfftfreq, rfft, irfft
 import scipy.linalg
 from scipy.optimize import minimize
 import math
-from thztools._util import fftfreq
+
+
+def fftfreq(n, t):
+    """Computes the positive and negative frequencies sampled in the Fast
+    Fourier Transform.
+
+    Parameters
+    ----------
+    n : int
+        Number of time samples
+    t: float
+        Sampling time
+
+    Returns
+    -------
+    f : ndarray
+        Frequency vector (1/ts) of length n containing the sample frequencies.
+    """
+
+    if n % 2 == 1:
+        f = np.fft.fftfreq(n, t)
+    else:
+        f = np.fft.fftfreq(n, t)
+        f[int(n / 2)] = -f[int(n / 2)]
+
+    return f
 
 
 def noisevar(sigma, mu, ts):

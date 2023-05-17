@@ -12,7 +12,6 @@ Quick list
    :toctree: functions/
 
    costfunlsq
-   fftfreq
    noisevar
    noiseamp
    tdnll

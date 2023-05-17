@@ -108,7 +108,7 @@ html_logo = '../../docs/build/html/_static/logo.png'
 
 html_theme_options = {
     "logo": {
-        "text": "Thztools Documentation",
+        "text": "THzTools Documentation",
     },
 
     "icon_links": [

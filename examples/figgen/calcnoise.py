@@ -1,8 +1,6 @@
 import numpy as np
 import time
-from thztools.thztools import airscancorrect
-from thztools.thztools import tdtf
-from thztools.thztools import tdnoisefit
+from thztools.thztools import tdtf, tdnoisefit, airscancorrect
 from thztools._util import shiftmtx
 
 

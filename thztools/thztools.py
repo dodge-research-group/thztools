@@ -1,8 +1,9 @@
 import numpy as np
 from numpy.fft import rfftfreq, rfft, irfft
+import pandas as pd
 import scipy.linalg
 from scipy.optimize import minimize
-import math
+from thztools._util import shiftmtx
 
 
 def fftfreq(n, t):
@@ -146,6 +147,138 @@ def thzgen(n, ts, t0):
     return [y, t2]
 
 
+class DataPulse:
+
+    def __init__(self, filename=''):
+        self.AcquisitionTime = None
+        self.Description = None
+        self.TimeConstant = None
+        self.WaitTime = None
+        self.setPoint = None
+        self.scanOffset = None
+        self.temperature = None
+        self.time = None
+        self.amplitude = None
+        self.ChannelAMaximum = None
+        self.ChannelAMinimum = None
+        self.ChannelAVariance = None
+        self.ChannelASlope = None
+        self.ChannelAOffset = None
+        self.ChannelBMaximum = None
+        self.ChannelBMinimum = None
+        self.ChannelBVariance = None
+        self.ChannelBSlope = None
+        self.ChannelBOffset = None
+        self.ChannelCMaximum = None
+        self.ChannelCMinimum = None
+        self.ChannelCVariance = None
+        self.ChannelCSlope = None
+        self.ChannelCOffset = None
+        self.ChannelDMaximum = None
+        self.ChannelDMinimum = None
+        self.ChannelDVariance = None
+        self.ChannelDSlope = None
+        self.ChannelDOffset = None
+        self.dirname = None
+        self.file = None
+        self.filename = filename
+        self.frequency = None
+
+        if filename is not None:
+
+            data = pd.read_csv(filename, header=None, delimiter='\t')
+
+            for i in range(data.shape[0]):
+                try:
+                    float(data[0][i])
+                except:
+                    ind = i + 1
+                pass
+
+            keys = data[0][0:ind].to_list()
+            vals = data[1][0:ind].to_list()
+
+            for k in range(len(keys)):
+                if keys[k] in list(self.__dict__.keys()):
+
+                    try:
+                        float(vals[k])
+                        setattr(self, keys[k], float(vals[k]))
+                    except ValueError:
+                        setattr(self, keys[k], vals[k])
+
+                else:
+                    raise Warning('The data key is not defied')
+
+            self.time = data[0][ind:].to_numpy(dtype=float)
+            self.amplitude = data[1][ind:].to_numpy(dtype=float)
+
+            # Calculate frequency range
+            self.frequency = (np.arange(
+                np.floor(len(self.time))) / 2 - 1).T / (
+                                     self.time[-1] - self.time[0])
+
+            # Calculate fft
+            famp = np.fft.fft(self.amplitude)
+            self.famp = famp[0:int(np.floor(len(famp) / 2))]
+
+
+def airscancorrect(x, param):
+    """Airscancorrect rescales and shifts each column of the data matrix x,
+    assuming that each column is related to a common signal by an amplitude A
+    and a delay eta.
+
+    Parameters
+    ----------
+    x : ndarray or matrix
+        (n,m) data matrix
+
+
+    param: dict
+        Parameter dictionary including:
+            A : ndarray
+                (m, ) array containing amplitude vector
+            eta : ndarray
+                (m, ) array containing delay vector
+            ts : float
+                sampling time
+
+
+
+    Returns
+    -------
+    xadj : ndarray or matrix
+        Adjusted data matrix
+
+    """
+
+    # Parse function inputs
+    [n, m] = x.shape
+
+    # Parse parameter structure
+    pfields = param.keys()
+    if 'a' in pfields and param.get('a') is not None:
+        a = param.get('a').T
+    else:
+        a = np.ones((m, 1))
+        # Ignore.A = true
+    if 'eta' in pfields and param.get('eta') is not None:
+        eta = param.get('eta')
+    else:
+        eta = np.zeros((m, 1))
+    if 'ts' in pfields:
+        ts = param['ts']
+    else:
+        ts = 1
+
+    xadj = np.zeros((n, m))
+    for i in np.arange(m):
+        s = shiftmtx(-eta[i], n, ts)
+        xadj[:, i] = s @ (x[:, i] / a[i])
+
+    return xadj
+
+
 def costfunlsq(fun, theta, xx, yy, sigmax, sigmay, ts):
     r"""Computes the maximum likelihood cost function.
 
@@ -240,7 +373,7 @@ def tdtf(fun, theta, n, ts):
         ts = ts
 
     fs = 1 / (ts * n)
-    fp = fs * np.arange(0, math.floor((n - 1) / 2 + 1))
+    fp = fs * np.arange(0, (n - 1) // 2 + 1)
     wp = 2 * np.pi * fp
     tfunp = fun(theta, wp)
 
@@ -599,7 +732,7 @@ def tdnoisefit(x, param,
 
     # If fix['logv'], return log(v0); otherwise return logv parameters
     if fix['logv']:
-        def setplogv():
+        def setplogv(_):
             return np.log(param['v0'])
     else:
         mle['x0'] = np.concatenate((mle['x0'], np.log(param['v0'])))
@@ -614,7 +747,7 @@ def tdnoisefit(x, param,
 
     # If Fix['mu'], return mu0, otherwise, return mu parameters
     if fix['mu']:
-        def setpmu():
+        def setpmu(_):
             return param['mu0']
     else:
         mle['x0'] = np.concatenate((mle['x0'], param['mu0']))
@@ -665,11 +798,11 @@ def tdnoisefit(x, param,
     # if ~Fix.eta & ~Fix.mu, return all eta parameters but first
 
     if ignore['eta']:
-        def setpeta():
+        def setpeta(_):
             return []
 
     elif fix['eta']:
-        def setpeta():
+        def setpeta(_):
             return param['eta0']
 
     elif fix['mu']:

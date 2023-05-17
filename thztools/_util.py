@@ -72,38 +72,3 @@ def epswater(f, t=25):
                    + delta5 * tau5 / (1 + 2 * 1j * np.pi * tau5 * (f1 - f))))
 
     return epsilonr
-
-
-def shiftmtx(tau, n, ts):
-    """
-    Shiftmtx computes the n by n transfer matrix for a continuous time-shift.
-
-    Parameters
-    -----------
-
-    tau : float
-        Input parameters for the function
-
-    n : int
-        Number of time samples
-
-    ts: int
-        sampling time
-
-    Returns
-    -------
-    h: ndarray or matrix
-        (n, n) Transfer matrix
-
-    """
-
-    # Fourier method
-    f = rfftfreq(n, ts)
-    w = 2 * np.pi * f
-
-    imp = irfft(np.exp(-1j * w * tau), n=n)
-
-    # computes the n by n transformation matrix
-    h = scipy.linalg.toeplitz(imp, np.roll(np.flipud(imp), 1))
-
-    return h

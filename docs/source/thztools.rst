@@ -11,10 +11,13 @@ Quick list
 .. autosummary::
    :toctree: functions/
 
+   airscancorrect
    costfunlsq
+   DataPulse
    fftfreq
    noiseamp
    noisevar
+   shiftmtx
    tdnll
    tdnoisefit
    tdtf
@@ -26,4 +29,3 @@ Quick list
    :toctree: functions/
 
    epswater
-   shiftmtx

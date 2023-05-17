@@ -3,7 +3,6 @@ from numpy.fft import rfftfreq, rfft, irfft
 import pandas as pd
 import scipy.linalg
 from scipy.optimize import minimize
-from thztools._util import shiftmtx
 
 
 def fftfreq(n, t):
@@ -221,6 +220,41 @@ class DataPulse:
             # Calculate fft
             famp = np.fft.fft(self.amplitude)
             self.famp = famp[0:int(np.floor(len(famp) / 2))]
+
+
+def shiftmtx(tau, n, ts):
+    """
+    Shiftmtx computes the n by n transfer matrix for a continuous time-shift.
+
+    Parameters
+    -----------
+
+    tau : float
+        Input parameters for the function
+
+    n : int
+        Number of time samples
+
+    ts: int
+        sampling time
+
+    Returns
+    -------
+    h: ndarray or matrix
+        (n, n) Transfer matrix
+
+    """
+
+    # Fourier method
+    f = rfftfreq(n, ts)
+    w = 2 * np.pi * f
+
+    imp = irfft(np.exp(-1j * w * tau), n=n)
+
+    # computes the n by n transformation matrix
+    h = scipy.linalg.toeplitz(imp, np.roll(np.flipud(imp), 1))
+
+    return h
 
 
 def airscancorrect(x, param):

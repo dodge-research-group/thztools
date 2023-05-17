@@ -5,7 +5,7 @@ import unittest
 import os
 import pathlib
 from numpy.testing import assert_array_almost_equal, assert_array_equal
-from thztools.thztools import fftfreq, pulsegen, thzgen, noisevar, epswater, costfunlsq, tdtf, shiftmtx, tdnll, tdnoisefit
+from thztools.thztools import fftfreq, thzgen, noisevar, epswater, costfunlsq, tdtf, shiftmtx, tdnll, tdnoisefit
 
 
 class Name(unittest.TestCase):
@@ -25,28 +25,13 @@ class Name(unittest.TestCase):
         assert_array_almost_equal(f_even, f_even_true, decimal=12)
 
     # ==================================================================
-    def test_pulsegen(self):
-        n = 20
-        t0 = 1
-        w = 0.2
-        a = 5
-        t = 0.1
-
-        y = [-0.0000, -0.0000, -0.0000, -0.0006, -0.0105, -0.1110, -0.6410, -1.8445, -1.8394,
-             1.9470, 5.0000, 1.9470, -1.8394, -1.8445, -0.6410, -0.1110, -0.0105, -0.0006, -0.0000, -0.0000]
-        y_out, t_out = pulsegen(n, t0, w, a, t)
-
-        assert_array_almost_equal(y_out, y, decimal=4)
-        assert_array_almost_equal(t_out, t * np.arange(len(y)), decimal=12)
-
-    # ==================================================================
     def test_noisevar(self):
         sigma_alpha = 1e-4,  # Additive noise amplitude [relative to peak]
         sigma_beta = 0.01,  # Multiplicative noise amplitude [-]
         sigma_tau = 1e-3,  # Time base noise amplitude [ps]
         sigma_vec = np.array([sigma_alpha, sigma_beta, sigma_tau])
 
-        y, t = thzgen(n=20, t=0.05, t0=2.5)
+        y, t = thzgen(n=20, ts=0.05, t0=2.5)
         vmu = noisevar(sigma_vec, y, 2.5)
         vmu_true = np.array(
             [4.36242890663103e-6, 1.18964333287937e-5, 1.95293889001674e-5, 2.55422643627414e-5, 2.93161838588929e-5,
@@ -72,7 +57,7 @@ class Name(unittest.TestCase):
         thzgen_true = pd.read_csv(new_path, header=None)
         thzgen_true = np.array(thzgen_true[0])
 
-        thz = thzgen(n=256, t=0.05, t0=2.5)[0]
+        thz = thzgen(n=256, ts=0.05, t0=2.5)[0]
         np.testing.assert_allclose(thz, thzgen_true, atol=1e-5)
 
     # ==================================================================

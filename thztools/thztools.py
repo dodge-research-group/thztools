@@ -62,12 +62,12 @@ def noisevar(sigma, mu, ts):
 
     n = mu.shape[0]
     w = 2 * np.pi * rfftfreq(n, ts)
-    mudot = np.real(irfft(1j * w * rfft(mu)))
+    mudot = irfft(1j * w * rfft(mu), n=n)
 
     return sigma[0] ** 2 + (sigma[1] * mu) ** 2 + (sigma[2] * mudot) ** 2
 
 
-def noiseamp(sigma, mu, t):
+def noiseamp(sigma, mu, ts):
     """
     noiseamp computes the time-domain noise amplitudes for noise parameters sigma, with a signal mu and sampling
     interval t.  There are three noise parameters: the first corresponds to amplitude noise, in signal units
@@ -84,7 +84,7 @@ def noiseamp(sigma, mu, t):
     mu :  signal vector
         (n, ) array  containing  signal vector
 
-    t : float
+    ts : float
         sampling time
 
     Returns
@@ -94,51 +94,10 @@ def noiseamp(sigma, mu, t):
 
     """
 
-    return np.sqrt(noisevar(sigma, mu, t))
+    return np.sqrt(noisevar(sigma, mu, ts))
 
 
-def pulsegen(n, t0, w, a, t):
-    """ Pulsegen generates a short pulse of temporal width w centered at t0 for use in tests of time-domain analysis
-
-    Parameters
-    ----------
-
-    n : int
-        number of sampled points
-
-    t0 : float
-        pulse center
-
-    w : float
-        pulse width
-
-    a : float
-        pulse amplitude
-
-    t : float
-        sampling time
-
-
-    Returns
-    -------
-
-    y : ndarray
-        signal (u.a)
-
-    t : float
-        timebase
-
-    """
-
-    t2 = t * np.arange(n)
-    tt = (t2 - t0) / w
-
-    y = a * (1 - 2 * tt ** 2) * np.exp(-tt ** 2)
-
-    return [y, t2]
-
-
-def thzgen(n, t, t0):
+def thzgen(n, ts, t0):
     """
     Generate a terahertz pulse with n points at sampling interval t and centered at t0.
 
@@ -148,7 +107,7 @@ def thzgen(n, t, t0):
     n : int
         number of sampled points.
 
-    t : float
+    ts : float
         sampling time
 
     t0 : float
@@ -175,20 +134,16 @@ def thzgen(n, t, t0):
     tauc = default_tauc
     taul = default_taul
 
-    if n % 2 == 1:
-        f = np.fft.fftfreq(n, t)
-    else:
-        f = np.fft.fftfreq(n, t)
-        f[int(n / 2)] = -f[int(n / 2)]
+    f = rfftfreq(n, ts)
 
     w = 2 * np.pi * f
     l = np.exp(-(w * taul) ** 2 / 2) / np.sqrt(2 * np.pi * taul ** 2)
     r = 1 / (1 / taur - 1j * w) - 1 / (1 / taur + 1 / tauc - 1j * w)
     s = -1j * w * (l * r) ** 2 * np.exp(1j * w * t0)
 
-    t2 = t * np.arange(n)
+    t2 = ts * np.arange(n)
 
-    y = np.real(np.fft.ifft(np.conj(s)))
+    y = irfft(np.conj(s), n=n)
     y = a * y / np.max(y)
 
     return [y, t2]

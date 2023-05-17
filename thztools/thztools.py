@@ -632,11 +632,11 @@ def tdnoisefit(x, param,
     # If ~Fix.A & ~Fix.mu, return all A parameters but first
 
     if ignore['a']:
-        def setpa():
+        def setpa(_):
             return []
 
     elif fix['a']:
-        def setpa():
+        def setpa(_):
             return param['a0']
 
     elif fix['mu']:

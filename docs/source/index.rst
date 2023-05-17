@@ -24,4 +24,3 @@ Table of Contents
 
    Getting started <gettingstarted>
      thztools <thztools>
-     _util <_util>

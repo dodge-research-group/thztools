@@ -1,5 +1,5 @@
-﻿_util.shiftmtx
-=================
+﻿\_util.shiftmtx
+===============
 
 .. currentmodule:: _util
 

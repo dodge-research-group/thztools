@@ -12,9 +12,18 @@ Quick list
    :toctree: functions/
 
    costfunlsq
-   noisevar
+   fftfreq
    noiseamp
+   noisevar
    tdnll
    tdnoisefit
    tdtf
    thzgen
+
+.. currentmodule:: _util
+
+.. autosummary::
+   :toctree: functions/
+
+   epswater
+   shiftmtx

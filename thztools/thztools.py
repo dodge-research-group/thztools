@@ -269,7 +269,7 @@ def tdtf(fun, theta, n, ts):
 def tdnll(x, param, fix):
     r""" Computes negative log-likelihood for the time-domain noise model.
 
-     tdnll computes the negative log-likelihood function for obtaining the
+    Computes the negative log-likelihood function for obtaining the
      data matrix x, given the parameter dictionary param.
 
     Parameters
@@ -300,6 +300,7 @@ def tdnll(x, param, fix):
             Amplitude vector.
         eta : bool
             Delay vector.
+
     Returns
     -------
     nll : callable
@@ -358,8 +359,8 @@ def tdnll(x, param, fix):
         d = param['d']
     else:
         # Compute derivative matrix
-        def fun(theta, w):
-            return - 1j * w
+        def fun(_, _w):
+            return - 1j * _w
 
         d = tdtf(fun, 0, n, ts)
     pass
@@ -490,11 +491,12 @@ def tdnll(x, param, fix):
 def tdnoisefit(x, param,
                fix={'logv': False, 'mu': False, 'a': True, 'eta': True},
                ignore={'a': True, 'eta': True}):
-    """ Computes maximum likelihood estimates parameters for the time-domain
-    noise model.
-     Tdnoisefit computes the noise parameters sigma and the underlying signal
-     vector mu for the data matrix x, where the columns of x are each noisy
-     measurements of mu.
+    """ Computes time-domain noise model parameters.
+
+    Computes the noise parameters sigma and the underlying signal vector mu
+    for the data matrix x, where the columns of x are each noisy
+    measurements of mu.
+
     Parameters
     ----------
     x : ndarray or matrix
@@ -531,6 +533,7 @@ def tdnoisefit(x, param,
         eta : bool
             Delay vector.
         If not given, chosen to ignore both amplitude and delay.
+
     Returns
     --------
     p : dict
@@ -543,19 +546,19 @@ def tdnoisefit(x, param,
                 Signal vector.
             var : ndarray
                 Log of noise parameters
-        fval : float
-           Value of NLL cost function from FMINUNC
-        Diagnostic : dict
-            Dictionary containing diagnostic information
-                err : dic
-                    Dictionary containing  error of the parameters.
-                grad : ndarray
-                      Negative loglikelihood cost function gradient from
-                      scipy.optimize.minimize BFGS method.
-                hessian : ndarray
-                    Negative loglikelihood cost function hessian from
-                    scipy.optimize.minimize BFGS method.
-     """
+    fval : float
+        Value of NLL cost function from FMINUNC
+    Diagnostic : dict
+        Dictionary containing diagnostic information
+            err : dic
+                Dictionary containing  error of the parameters.
+            grad : ndarray
+                Negative loglikelihood cost function gradient from
+                scipy.optimize.minimize BFGS method.
+            hessian : ndarray
+                Negative loglikelihood cost function hessian from
+                scipy.optimize.minimize BFGS method.
+    """
     n, m = x.shape
 
     # Parse Inputs
@@ -596,30 +599,30 @@ def tdnoisefit(x, param,
 
     # If fix['logv'], return log(v0); otherwise return logv parameters
     if fix['logv']:
-        def setplogv(p):
+        def setplogv():
             return np.log(param['v0'])
     else:
         mle['x0'] = np.concatenate((mle['x0'], np.log(param['v0'])))
         idxend = idxstart + 3
         idxrange['logv'] = np.arange(idxstart, idxend)
 
-        def setplogv(p):
-            return p[idxrange['logv']]
+        def setplogv(_p):
+            return _p[idxrange['logv']]
 
         idxstart = idxend
     pass
 
     # If Fix['mu'], return mu0, otherwise, return mu parameters
     if fix['mu']:
-        def setpmu(p):
+        def setpmu():
             return param['mu0']
     else:
         mle['x0'] = np.concatenate((mle['x0'], param['mu0']))
         idxend = idxstart + n
         idxrange['mu'] = np.arange(idxstart, idxend)
 
-        def setpmu(p):
-            return p[idxrange['mu']]
+        def setpmu(_p):
+            return _p[idxrange['mu']]
 
         idxstart = idxend
     pass
@@ -629,11 +632,11 @@ def tdnoisefit(x, param,
     # If ~Fix.A & ~Fix.mu, return all A parameters but first
 
     if ignore['a']:
-        def setpa(p):
+        def setpa():
             return []
 
     elif fix['a']:
-        def setpa(p):
+        def setpa():
             return param['a0']
 
     elif fix['mu']:
@@ -641,8 +644,8 @@ def tdnoisefit(x, param,
         idxend = idxstart + m
         idxrange['a'] = np.arange(idxstart, idxend)
 
-        def setpa(p):
-            return p[idxrange['a']]
+        def setpa(_p):
+            return _p[idxrange['a']]
 
         idxstart = idxend
     else:
@@ -651,8 +654,8 @@ def tdnoisefit(x, param,
         idxend = idxstart + m - 1
         idxrange['a'] = np.arange(idxstart, idxend)
 
-        def setpa(p):
-            return np.concatenate(([1], p[idxrange['a']]), axis=0)
+        def setpa(_p):
+            return np.concatenate(([1], _p[idxrange['a']]), axis=0)
 
         idxstart = idxend
     pass
@@ -662,11 +665,11 @@ def tdnoisefit(x, param,
     # if ~Fix.eta & ~Fix.mu, return all eta parameters but first
 
     if ignore['eta']:
-        def setpeta(p):
+        def setpeta():
             return []
 
     elif fix['eta']:
-        def setpeta(p):
+        def setpeta():
             return param['eta0']
 
     elif fix['mu']:
@@ -674,8 +677,8 @@ def tdnoisefit(x, param,
         idxend = idxstart + m
         idxrange['eta'] = np.arange(idxstart, idxend)
 
-        def setpeta(p):
-            return p[idxrange['eta']]
+        def setpeta(_p):
+            return _p[idxrange['eta']]
 
     else:
         mle['x0'] = np.concatenate(
@@ -683,24 +686,24 @@ def tdnoisefit(x, param,
         idxend = idxstart + m - 1
         idxrange['eta'] = np.arange(idxstart, idxend)
 
-        def setpeta(p):
-            return np.concatenate(([0], p[idxrange['eta']]), axis=0)
+        def setpeta(_p):
+            return np.concatenate(([0], _p[idxrange['eta']]), axis=0)
     pass
 
-    def fun(theta, w):
-        return -1j * w
+    def fun(_, _w):
+        return -1j * _w
 
     d = tdtf(fun, 0, n, param['ts'])
 
-    def parsein(p):
-        return {'logv': setplogv(p), 'mu': setpmu(p), 'a': setpa(p),
-                'eta': setpeta(p), 'ts': param['ts'], 'd': d}
+    def parsein(_p):
+        return {'logv': setplogv(_p), 'mu': setpmu(_p), 'a': setpa(_p),
+                'eta': setpeta(_p), 'ts': param['ts'], 'd': d}
 
-    def objective(p):
-        return tdnll(x, parsein(p), fix)[0]
+    def objective(_p):
+        return tdnll(x, parsein(_p), fix)[0]
 
-    def jacobian(p):
-        return tdnll(x, parsein(p), fix)[1]
+    def jacobian(_p):
+        return tdnll(x, parsein(_p), fix)[1]
 
     mle['objective'] = objective
     out = minimize(mle['objective'], mle['x0'], method='BFGS', jac=jacobian)

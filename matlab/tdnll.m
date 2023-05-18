@@ -94,6 +94,7 @@ gradcalc = ~[Fix.logv;...
     Fix.mu;...
     (Fix.A || Ignore.A) ;...
     (Fix.eta || Ignore.eta)];
+gradcalc
 
 if Ignore.eta
     zeta = mu*A';
@@ -181,8 +182,16 @@ else
             % Gradient wrt A
             term = ((vtot - valpha).*dvar - reswt.*zeta);
             gradnll(nStart + (0:M-1)) = sum(term,1)'./A;
-            nStart = nStart + M;
+            gradnll
+            if ~Fix.mu
+                gradnll(nStart) = [];
+                nStart = nStart + M - 1;
+            else
+                nStart = nStart + M;
+            end
+     
         end
+        gradnll
         if gradcalc(4)
             % Gradient wrt eta
             DDzeta = ...
@@ -190,6 +199,10 @@ else
             gradnll(nStart + (0:M-1)) = ...
                 -sum(dvar.*(zeta.*Dzeta*v(2) + Dzeta.*DDzeta*v(3))...
                 - reswt.*Dzeta);
+            if ~Fix.mu
+                gradnll(nStart) = [];
+            end
+
         end
     end
 end

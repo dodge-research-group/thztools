@@ -112,6 +112,7 @@ ressq = res.^2;
 
 % Simplest case: just variance and signal parameters, A and eta fixed at
 % defaults
+
 if Ignore.A && Ignore.eta
     
     Dmu = real(ifft(1i*w.*mu_f));
@@ -151,7 +152,7 @@ else
     Dzeta = real(ifft(1i*w(:,ones(1,M)).*zeta_f));
  
     valpha = v(1);
-    vbeta = v(2)*(zeta(:,1:M-1).^2 + zeta(:,2:M).^2)/2;
+    vbeta = v(2)*(zeta(:,1:M-1).^2 + zeta(:,2:M).^2)  /2;
     vtau = v(3)*(Dzeta(:,1:M-1).^2 + Dzeta(:,2:M).^2)/2;
     vtot = valpha + vbeta + vtau;
     

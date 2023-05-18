@@ -23,4 +23,4 @@ Table of Contents
    :maxdepth: 2
 
    Getting started <gettingstarted>
-     thztools <thztools>
+   API <api>

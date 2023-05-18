@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "thztools"
+version = "0.1.0"
+authors = [
+  { name="Steve Dodge", email="jsdodge@sfu.ca" },
+  { name="Santiago Higuera Quintero", email="s.higuera@uniandes.edu.co" },
+  { name="Jonathan Posada", email="jonathan1401posada@gmail.com" },
+]
+maintainers = [
+  { name="Steve Dodge", email="jsdodge@sfu.ca" },
+]
+description = "Data analysis tools for terahertz time-domain spectroscopy (THz-TDS)"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.7"
+keywords = ["terahertz", "THz", "time-domain spectroscopy", "data analysis"]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/dodge-research-group/thztools"
+"Documentation" = "https://pages.github.com/dodge-research-group/thztools"
+"Bug Tracker" = "https://github.com/dodge-research-group/thztools/issues"

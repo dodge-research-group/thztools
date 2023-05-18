@@ -21,6 +21,9 @@ project = 'THzTools'
 project_copyright = '2023, Steve Dodge'
 author = 'Steve Dodge'
 
+release = '0.1'
+version = '0.1.0'
+
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -104,7 +107,7 @@ html_theme = 'pydata_sphinx_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-html_logo = '../../docs/build/html/_static/logo.png'
+# html_logo = './_static/logo.png'
 
 html_theme_options = {
     "logo": {

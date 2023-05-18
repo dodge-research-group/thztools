@@ -1,20 +1,21 @@
 function [P,fval,Diagnostic] = tdnoisefit(x,varargin)
-%TDNOISEFIT computes MLE parameters for the time-domain noise model
-%
+
+% TDNOISEFIT computes MLE parameters for the time-domain noise model
+% 
 % Syntax:   P = tdnoisefit(x,Options)
-%
+% 
 % Description:
-%
+% 
 % TDNOISEFIT computes the noise parameters sigma and the underlying signal
 % vector mu for the data matrix x, where the columns of x are each noisy
 % measurements of mu.
 %  
 % Inputs:
 %   x               Data matrix
-%
+% 
 % Optional inputs:
 %   Options         Fit options
-%
+% 
 % Option fields:
 %   v0              Initial guess, noise model parameters [3x1 double]
 %   mu0             Initial guess, signal vector [Nx1 double]
@@ -23,7 +24,7 @@ function [P,fval,Diagnostic] = tdnoisefit(x,varargin)
 %   ts              Sampling time [scalar double]
 %   Fix             Fixed variables [struct]
 %   Ignore          Ignore variables [struct]
-%
+% 
 % Outputs:
 %   P               Output parameter structure
 %       .logv       Log of noise parameters
@@ -37,7 +38,6 @@ function [P,fval,Diagnostic] = tdnoisefit(x,varargin)
 %       .output     Output from FMINUNC
 %       .grad     	NLL cost function gradient from FMINUNC
 %       .hessian   	NLL cost function hessian from FMINUNC
-%
 
 % Parse inputs
 [N,M] = size(x);
@@ -87,6 +87,7 @@ MLE.options = optimoptions('fminunc',...
     'Diagnostics','off');
 MLE.x0 = [];
 idxStart = 1;
+% If Fix.logv, return log(v0); otherwise, return logv parameters
 if Fix.logv
     setPlogv = @(p) log(v0);
 else
@@ -96,6 +97,8 @@ else
     setPlogv = @(p) p(idxRange);
     idxStart = idxEnd + 1;
 end
+
+% If Fix.mu, return mu0; otherwise, return mu parameters
 if Fix.mu
     setPmu = @(p) mu0;
 else
@@ -105,26 +108,44 @@ else
     setPmu = @(p) p(idxRange);
     idxStart = idxEnd + 1;
 end
+
+% If Ignore.A, return []; if Fix.A, return A0; if ~Fix.A & Fix.mu, return
+% all A parameters; if ~Fix.A & ~Fix.mu, return all A parameters but first
 if Ignore.A
     setPA = @(p) [];
 elseif Fix.A
     setPA = @(p) A0(:);
-else
+elseif Fix.mu
     MLE.x0 = [MLE.x0; A0(:)];
     idxEnd = idxStart+M-1;
     idxRange = idxStart:idxEnd;
     setPA = @(p) p(idxRange);
     idxStart = idxEnd + 1;
+else
+    MLE.x0 = [MLE.x0; A0(2:end)/A0(1)];
+    idxEnd = idxStart+M-2;
+    idxRange = idxStart:idxEnd;
+    setPA = @(p) [1; p(idxRange)];
+    idxStart = idxEnd + 1;
 end
+
+% If Ignore.eta, return []; if Fix.eta, return eta0; if ~Fix.eta & Fix.mu,
+% return all eta parameters; if ~Fix.eta & ~Fix.mu, return all eta
+% parameters but first
 if Ignore.eta
     setPeta = @(p) [];
 elseif Fix.eta
     setPeta = @(p) eta0(:);
-else
+elseif Fix.mu
     MLE.x0 = [MLE.x0; eta0(:)];
     idxEnd = idxStart+M-1;
     idxRange = idxStart:idxEnd;
     setPeta = @(p) p(idxRange);
+else
+    MLE.x0 = [MLE.x0;eta0(2:end)-eta0(1)];
+    idxEnd = idxStart+M-2;
+    idxRange = idxStart:idxEnd;
+    setPeta = @(p) [0;p(idxRange)];
 end
 
 D = tdtf(@(theta,w) -1i*w,0,N,ts);
@@ -134,6 +155,25 @@ parseIn = @(p) struct('logv',setPlogv(p),'mu',setPmu(p),...
 MLE.objective = @(p) tdnll(x,parseIn(p),Fix);
 
 [pOut,fval,exitflag,output,grad,hessian] = fminunc(MLE);
+
+% The trust-region algorithm returns the Hessian for the next-to-last
+% iterate, which may not be near the final point. To check, test for
+% positive definiteness by attempting to Cholesky factorize it. If it
+% returns an error, rerun the optimization with the quasi-Newton algorithm
+% from the current optimal point.
+try chol(hessian);
+catch
+    warning(['Hessian returned by FMINUNC is not positive definite; ',...
+        'recalculating with quasi-Newton algorithm'])
+    MLE.x0 = pOut;
+    MLE.options = optimoptions('fminunc',...
+        'SpecifyObjectiveGradient',true,...
+        'Algorithm','quasi-newton',...
+        'UseParallel',true,...
+        'Display','off',...
+        'Diagnostics','off');
+    [~,~,~,~,~,hessian] = fminunc(MLE);
+end
 
 % Parse output
 idxStart = 1;
@@ -155,54 +195,71 @@ else
 end
 if Ignore.A || Fix.A
     P.A = A0;
-else
+elseif Fix.mu
     idxEnd = idxStart+M-1;
     idxRange = idxStart:idxEnd;
     idxStart = idxEnd + 1;
     P.A = pOut(idxRange);
+else
+    idxEnd = idxStart+M-2;
+    idxRange = idxStart:idxEnd;
+    idxStart = idxEnd + 1;
+    P.A = [1;pOut(idxRange)];
 end
 if Ignore.eta || Fix.eta
     P.eta = eta0;
-else
+elseif Fix.mu
     idxEnd = idxStart+M-1;
     idxRange = idxStart:idxEnd;
     P.eta = pOut(idxRange);
+else
+    idxEnd = idxStart+M-2;
+    idxRange = idxStart:idxEnd;
+    P.eta = [0;pOut(idxRange)];
 end
 
 P.ts = ts;
 
 if nargout > 2
+    varyParam = ~[Fix.logv;...
+        Fix.mu;...
+        (Fix.A || Ignore.A) ;...
+        (Fix.eta || Ignore.eta)];
+
     Diagnostic.exitflag = exitflag;
     Diagnostic.output = output;
     Diagnostic.grad = grad;
     Diagnostic.hessian = hessian;
     Diagnostic.Err = struct('var',[],'mu',[],'A',[],'eta',[]);
-    
-    paramTest = ~[Fix.logv;...
-        Fix.mu;...
-        (Fix.A || Ignore.A) ;...
-        (Fix.eta || Ignore.eta)];
-    
-    Nparam = sum(paramTest.*[3;N;M;M]);
-    V = speye(Nparam)/Diagnostic.hessian;
+        
+    V = speye(size(hessian))/hessian;
     err = sqrt(diag(V));
     
     idxStart = 1;
-    if paramTest(1)
+    if varyParam(1)
         Diagnostic.Err.var = ...
             sqrt(diag(diag(P.var)*V(1:3,1:3)*diag(P.var)));
         idxStart = idxStart + 3;
     end
-    if paramTest(2)
+    if varyParam(2)
         Diagnostic.Err.mu = err(idxStart+(0:N-1));
         idxStart = idxStart + N;
     end
-    if paramTest(3)
-        Diagnostic.Err.A = err(idxStart+(0:M-1));
-        idxStart = idxStart + M;
+    if varyParam(3)
+        if varyParam(2)
+            Diagnostic.Err.A = err(idxStart+(0:M-2));
+            idxStart = idxStart + M - 1;
+        else
+            Diagnostic.Err.A = err(idxStart+(0:M-1));
+            idxStart = idxStart + M;
+        end
     end
-    if paramTest(4)
-        Diagnostic.Err.eta = err(idxStart+(0:M-1));
+    if varyParam(4)
+        if varyParam(2)
+            Diagnostic.Err.eta = err(idxStart+(0:M-2));
+        else
+            Diagnostic.Err.eta = err(idxStart+(0:M-1));
+        end
     end
 
 end

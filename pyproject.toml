@@ -8,7 +8,7 @@ version = "0.1.0"
 authors = [
   { name="Steve Dodge", email="jsdodge@sfu.ca" },
   { name="Santiago Higuera Quintero", email="s.higuera@uniandes.edu.co" },
-  { name="Jonathan Posada", email="jonathan1401posada@gmail.com" },
+  { name="Jonathan Posada", email="jonathan.posada1@udea.edu.co" },
 ]
 maintainers = [
   { name="Steve Dodge", email="jsdodge@sfu.ca" },

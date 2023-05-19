@@ -185,7 +185,6 @@ class DataPulse:
         self.frequency = None
 
         if filename is not None:
-
             data = pd.read_csv(filename, header=None, delimiter='\t')
 
             ind = 0
@@ -201,7 +200,6 @@ class DataPulse:
 
             for k in range(len(keys)):
                 if keys[k] in list(self.__dict__.keys()):
-
                     try:
                         float(vals[k])
                         setattr(self, keys[k], float(vals[k]))
@@ -423,8 +421,14 @@ def tdtf(fun, theta, n, ts):
     else:
         wny = np.pi * n * fs
         # print('tfunp', tfunp)
-        tfun = np.concatenate((tfunp, np.conj(
-            np.concatenate((fun(theta, wny), np.flipud(tfunp[1:]))))))
+        tfun = np.concatenate(
+            (
+                tfunp,
+                np.conj(
+                 np.concatenate((fun(theta, wny), np.flipud(tfunp[1:])))
+                ),
+             )
+        )
 
     # Evaluate the impulse response by taking the inverse Fourier transform,
     # taking the complex conjugate first to convert to ... +iwt convention
@@ -518,8 +522,9 @@ def tdnll(x, param, fix):
         ts = param['ts']
     else:
         ts = 1
-        warnings.warn('TDNLL received Param structure without ts field; '
-                      'set to one')
+        warnings.warn(
+            "TDNLL received Param structure without ts field; set to one"
+        )
     pass
 
     if 'd' in pfields:
@@ -539,16 +544,22 @@ def tdnll(x, param, fix):
     mu_f = np.fft.fft(mu.flatten()).reshape(len(mu), 1)
 
     gradcalc = np.logical_not(
-        [[fix['logv']], [fix['mu']], [fix['a'] or ignore['a']],
-         [fix['eta'] or ignore['eta']]])
+        [
+            [fix['logv']],
+            [fix['mu']],
+            [fix['a'] or ignore['a']],
+            [fix['eta'] or ignore['eta']]
+        ]
+    )
 
     if ignore['eta']:
         zeta = mu * np.conj(a).T
         zeta_f = np.fft.fft(zeta, axis=0)
     else:
         exp_iweta = np.exp(1j * np.tile(w, m) * np.conj(np.tile(eta, n)).T)
-        zeta_f = (np.conj(np.tile(a, n)).T * np.conj(exp_iweta)
-                  * np.tile(mu_f, m))
+        zeta_f = (
+            np.conj(np.tile(a, n)).T * np.conj(exp_iweta) * np.tile(mu_f, m)
+        )
         zeta = np.real(np.fft.ifft(zeta_f, axis=0))
 
     # Compute negative - log likelihood and gradient
@@ -567,8 +578,11 @@ def tdnll(x, param, fix):
         vtot = valpha + vbeta + vtau
 
         resnormsq = ressq / np.tile(vtot, m)
-        nll = m * n * np.log(2 * np.pi) / 2 + (m / 2) * np.sum(
-            np.log(vtot)) + np.sum(resnormsq) / 2
+        nll = (
+            m * n * np.log(2 * np.pi) / 2
+            + (m / 2) * np.sum(np.log(vtot))
+            + np.sum(resnormsq) / 2
+        )
 
         # Compute gradient if requested
         # if nargout > 1:
@@ -587,8 +601,10 @@ def tdnll(x, param, fix):
             # print('d shape: ', d.shape)
             # print('Dmu shape: ', dmu.shape)
             gradnll[nstart:nstart + n] = m * (
-                    v[1] * mu * dvar + v[2] * np.dot(d.T, (dmu * dvar))
-                    - np.mean(res, axis=1).reshape(n, 1) / vtot)
+                    v[1] * mu * dvar
+                    + v[2] * np.dot(d.T, (dmu * dvar))
+                    - np.mean(res, axis=1).reshape(n, 1) / vtot
+            )
 
     # Alternative case: A, eta, or both are not set to defaults
     else:
@@ -600,8 +616,11 @@ def tdnll(x, param, fix):
         vtot = valpha + vbeta + vtau
 
         resnormsq = ressq / vtot
-        nll = m * n * np.log(2 * np.pi) / 2 + np.sum(
-            np.log(vtot)) / 2 + np.sum(resnormsq) / 2
+        nll = (
+            m * n * np.log(2 * np.pi) / 2
+            + np.sum(np.log(vtot)) / 2
+            + np.sum(resnormsq) / 2
+        )
 
         # Compute gradient if requested
         # if nargout > 1:
@@ -612,19 +631,25 @@ def tdnll(x, param, fix):
         dvar = (vtot - ressq) / vtot ** 2
         if gradcalc[0]:
             # Gradient wrt logv
-            gradnll[nstart] = (1 / 2) * np.sum(dvar) * v[0]
-            gradnll[nstart + 1] = (1 / 2) * np.sum(
-                zeta.flatten() ** 2 * dvar.flatten()) * v[1]
-            gradnll[nstart + 2] = (1 / 2) * np.sum(
-                dzeta.flatten() ** 2 * dvar.flatten()) * v[2]
+            gradnll[nstart] = 0.5 * np.sum(dvar) * v[0]
+            gradnll[nstart + 1] = (
+                0.5 * np.sum(zeta.flatten() ** 2 * dvar.flatten()) * v[1]
+            )
+            gradnll[nstart + 2] = (
+                0.5 * np.sum(dzeta.flatten() ** 2 * dvar.flatten()) * v[2]
+            )
             nstart = nstart + 3
         if gradcalc[1]:
             # Gradient wrt mu
-            p = (np.fft.fft(v[1] * dvar * zeta - reswt, axis=0)
-                 - 1j * v[2] * w * np.fft.fft(dvar * dzeta, axis=0))
-            gradnll[nstart:nstart + n] = np.sum(
-                np.conj(a).T * np.real(np.fft.ifft(exp_iweta * p, axis=0)),
-                axis=1).reshape(n, 1)
+            p = (
+                np.fft.fft(v[1] * dvar * zeta - reswt, axis=0)
+                - 1j * v[2] * w * np.fft.fft(dvar * dzeta, axis=0)
+            )
+            gradnll[nstart:nstart + n] = (
+                np.sum(np.conj(a).T
+                       * np.real(np.fft.ifft(exp_iweta * p, axis=0)), axis=1
+                       ).reshape(n, 1)
+            )
             nstart = nstart + n
         if gradcalc[2]:
             # Gradient wrt A
@@ -632,9 +657,11 @@ def tdnll(x, param, fix):
             if np.any(np.isclose(a, 0)):
                 raise ValueError(
                     "One or more elements of the amplitude vector are close "
-                    "to zero ")
-            gradnll[nstart:nstart + m] = np.conj(np.sum(term, axis=0)).reshape(
-                m, 1) / a
+                    "to zero "
+                )
+            gradnll[nstart:nstart + m] = (
+                    np.conj(np.sum(term, axis=0)).reshape(m, 1) / a
+            )
             if not fix['mu']:
                 gradnll = np.delete(gradnll, nstart)
                 nstart = nstart + m - 1
@@ -644,9 +671,10 @@ def tdnll(x, param, fix):
             # Gradient wrt eta
             ddzeta = np.real(np.fft.ifft(-np.tile(w, m) ** 2 * zeta_f, axis=0))
             gradnll = np.squeeze(gradnll)
-            gradnll[nstart:nstart + m] = (
-                -np.sum(dvar * (zeta * dzeta * v[1] + dzeta * ddzeta * v[2])
-                        - reswt * dzeta, axis=0).reshape(m, ))
+            gradnll[nstart:nstart + m] = -np.sum(
+                dvar * (zeta * dzeta * v[1] + dzeta * ddzeta * v[2])
+                - reswt * dzeta, axis=0
+            ).reshape(m,)
 
             if not fix['mu']:
                 gradnll = np.delete(gradnll, nstart)
@@ -765,8 +793,10 @@ def tdnoisefit(x, param,
 
     # If fix['logv'], return log(v0); otherwise return logv parameters
     if fix['logv']:
+
         def setplogv(_):
             return np.log(param['v0'])
+
     else:
         mle['x0'] = np.concatenate((mle['x0'], np.log(param['v0'])))
         idxend = idxstart + 3
@@ -780,8 +810,10 @@ def tdnoisefit(x, param,
 
     # If Fix['mu'], return mu0, otherwise, return mu parameters
     if fix['mu']:
+
         def setpmu(_):
             return param['mu0']
+
     else:
         mle['x0'] = np.concatenate((mle['x0'], param['mu0']))
         idxend = idxstart + n
@@ -798,10 +830,12 @@ def tdnoisefit(x, param,
     # If ~Fix.A & ~Fix.mu, return all A parameters but first
 
     if ignore['a']:
+
         def setpa(_):
             return []
 
     elif fix['a']:
+
         def setpa(_):
             return param['a0']
 
@@ -816,7 +850,8 @@ def tdnoisefit(x, param,
         idxstart = idxend
     else:
         mle['x0'] = np.concatenate(
-            (mle['x0'], param['a0'][1:] / param['a0'][0]))
+            (mle['x0'], param['a0'][1:] / param['a0'][0])
+        )
         idxend = idxstart + m - 1
         idxrange['a'] = np.arange(idxstart, idxend)
 
@@ -831,10 +866,12 @@ def tdnoisefit(x, param,
     # if ~Fix.eta & ~Fix.mu, return all eta parameters but first
 
     if ignore['eta']:
+
         def setpeta(_):
             return []
 
     elif fix['eta']:
+
         def setpeta(_):
             return param['eta0']
 
@@ -848,7 +885,8 @@ def tdnoisefit(x, param,
 
     else:
         mle['x0'] = np.concatenate(
-            (mle['x0'], param['eta0'][1:] - param['eta0'][0]))
+            (mle['x0'], param['eta0'][1:] - param['eta0'][0])
+        )
         idxend = idxstart + m - 1
         idxrange['eta'] = np.arange(idxstart, idxend)
 
@@ -862,8 +900,14 @@ def tdnoisefit(x, param,
     d = tdtf(fun, 0, n, param['ts'])
 
     def parsein(_p):
-        return {'logv': setplogv(_p), 'mu': setpmu(_p), 'a': setpa(_p),
-                'eta': setpeta(_p), 'ts': param['ts'], 'd': d}
+        return {
+            'logv': setplogv(_p),
+            'mu': setpmu(_p),
+            'a': setpa(_p),
+            'eta': setpeta(_p),
+            'ts': param['ts'],
+            'd': d,
+        }
 
     def objective(_p):
         return tdnll(x, parsein(_p), fix)[0]
@@ -884,12 +928,15 @@ def tdnoisefit(x, param,
         np.linalg.cholesky(np.linalg.inv(out.hess_inv))
         hess = np.linalg.inv(out.hess_inv)
     except np.linalg.LinAlgError:
-        print('Hessian returned by FMINUNC is not positive definite;\n'
-              'recalculating with quasi-Newton algorithm')
+        print(
+            "Hessian returned by FMINUNC is not positive definite;\n"
+            "recalculating with quasi-Newton algorithm"
+        )
 
         mle['x0'] = out.x
-        out2 = minimize(mle['objective'], mle['x0'], method='BFGS',
-                        jac=jacobian)
+        out2 = minimize(
+            mle['objective'], mle['x0'], method='BFGS', jac=jacobian
+        )
         hess = np.linalg.inv(out2.hess_inv)
 
     # Parse output
@@ -944,10 +991,18 @@ def tdnoisefit(x, param,
     p['ts'] = param['ts']
 
     vary_param = np.logical_not(
-        [fix['logv'], fix['mu'], fix['a'] or ignore['a'],
-         fix['eta'] or ignore['eta']])
-    diagnostic = {'grad': out.jac, 'hessian': hess,
-                  'err': {'var': [], 'mu': [], 'a': [], 'eta': []}}
+        [
+            fix['logv'],
+            fix['mu'],
+            fix['a'] or ignore['a'],
+            fix['eta'] or ignore['eta']
+        ]
+    )
+    diagnostic = {
+        'grad': out.jac,
+        'hessian': hess,
+        'err': {'var': [], 'mu': [], 'a': [], 'eta': []}
+    }
     v = np.dot(np.eye(hess.shape[0]), scipy.linalg.inv(hess))
     err = np.sqrt(np.diag(v))
     idxstart = 0

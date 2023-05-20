@@ -22,6 +22,7 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
 ]
+
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/dodge-research-group/thztools/issues"
 

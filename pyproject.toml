@@ -1,10 +1,7 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[project]
+[tool.poetry]
 name = "thztools"
 version = "0.1.0"
+description = "Data analysis tools for terahertz time-domain spectroscopy (THz-TDS)"
 authors = [
   { name="Steve Dodge", email="jsdodge@sfu.ca" },
   { name="Santiago Higuera Quintero", email="s.higuera@uniandes.edu.co" },
@@ -13,10 +10,10 @@ authors = [
 maintainers = [
   { name="Steve Dodge", email="jsdodge@sfu.ca" },
 ]
-description = "Data analysis tools for terahertz time-domain spectroscopy (THz-TDS)"
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = ">=3.7"
+repository = "https://github.com/dodge-research-group/thztools"
+documentation = "https://pages.github.com/dodge-research-group/thztools"
 keywords = ["terahertz", "THz", "time-domain spectroscopy", "data analysis"]
 classifiers = [
     "Intended Audience :: Science/Research",
@@ -25,8 +22,26 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
 ]
-
-[project.urls]
-"Homepage" = "https://github.com/dodge-research-group/thztools"
-"Documentation" = "https://pages.github.com/dodge-research-group/thztools"
+[tool.poetry.urls]
 "Bug Tracker" = "https://github.com/dodge-research-group/thztools/issues"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+numpy = "^1.24.3"
+scipy = "^1.10.1"
+pandas = "^2.0.1"
+matplotlib = "^3.7.1"
+ipython = "^8.12.0"
+jupyter = "^1.0.0"
+sphinx = "^5.0.2"
+pydata-sphinx-thems = "^0.13.3"
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "^6.0.0"
+pytest-cov = "^4.0.0"
+h5py = "^3.7.0"
+coverage = "^7.2.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

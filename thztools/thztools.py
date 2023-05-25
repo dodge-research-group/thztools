@@ -93,7 +93,7 @@ def noiseamp(sigma, mu, ts):
     return np.sqrt(noisevar(sigma, mu, ts))
 
 
-def thzgen(n, ts, t0):
+def thzgen(n, ts, t0, a=1.0, taur=0.3, tauc=0.1, fwhm=0.05):
     r"""Generate a terahertz pulse.
 
     Returns an idealized waveform with n points at sampling interval t and
@@ -111,6 +111,18 @@ def thzgen(n, ts, t0):
     t0 : float
         pulse center
 
+    a : float, optional
+        Peak amplitude.
+
+    taur : float, optional
+        Current pulse rise time.
+
+    tauc : float, optional
+        Current pulse decay time.
+
+    fwhm : float, optional
+        Laser pulse FWHM.
+
     Returns
     -------
 
@@ -122,15 +134,7 @@ def thzgen(n, ts, t0):
 
     """
 
-    default_a = 1
-    default_taur = 0.3
-    default_tauc = 0.1
-    default_taul = 0.05 / np.sqrt(2 * np.log(2))
-
-    a = default_a
-    taur = default_taur
-    tauc = default_tauc
-    taul = default_taul
+    taul = fwhm / np.sqrt(2 * np.log(2))
 
     f = rfftfreq(n, ts)
 

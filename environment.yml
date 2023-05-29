@@ -3,21 +3,15 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - sphinx
-  - pydata-sphinx-theme
-  - numpy
   - scipy
   - pandas
-  - mpmath
-  - setuptools >= 65.5.1
+  - jupyter
+  - matplotlib
+  - sphinx
+  - pydata-sphinx-theme
   - flake8
   - pytest-cov
-  - matplotlib
-  - click
-  - ipython
   - coverage
-  - python-dotenv
-  - jupyter
   - h5py
   - pip
   - pip:

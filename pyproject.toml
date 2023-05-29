@@ -26,6 +26,8 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
+    "jupyter",
+    "matplotlib",
     "pandas",
     "scipy",
 ]
@@ -36,9 +38,4 @@ Issues = "https://github.com/dodge-research-group/thztools/issues"
 Source = "https://github.com/dodge-research-group/thztools"
 
 [tool.hatch.version]
-path = "tests/__init__.py"
-
-[tool.hatch.build.targets.sdist]
-include = [
-    "/tests",
-]
+path = "thztools/__about__.py"

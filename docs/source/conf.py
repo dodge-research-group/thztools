@@ -12,7 +12,7 @@
 #
 from pathlib import Path
 import sys
-import tomllib
+import tomli    # Can use tomllib for python >= 3.11
 import importlib.metadata
 
 sys.path.insert(0, (Path(__file__).parents[2] / "thztools")
@@ -24,7 +24,7 @@ sys.path.insert(0, (Path(__file__).parents[2] / "thztools")
 
 # project = "THzTools"
 with (Path(__file__).parents[2] / "pyproject.toml").open("rb") as f:
-    pkg_info = tomllib.load(f)
+    pkg_info = tomli.load(f)
 project = pkg_info["project"]["name"]
 
 author = "Steve Dodge"

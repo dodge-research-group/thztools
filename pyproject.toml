@@ -171,6 +171,7 @@ exclude_lines = [
 dependencies = [
     "sphinx",
     "pydata-sphinx-theme",
+    "tomli",
 ]
 [tool.hatch.envs.docs.scripts]
 build = "sphinx-build -b html docs/source docs/build/html"

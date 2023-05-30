@@ -9,6 +9,7 @@ dependencies:
   - matplotlib
   - sphinx
   - pydata-sphinx-theme
+  - tomli
   - flake8
   - pytest-cov
   - coverage

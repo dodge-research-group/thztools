@@ -1,3 +1,3 @@
 # Use the PyData theme
-sphinx<=7.0.0
+sphinx <= 5.3.0 # Released Oct. 16, 2022
 pydata-sphinx-theme

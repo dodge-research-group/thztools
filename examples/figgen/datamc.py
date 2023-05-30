@@ -1,7 +1,6 @@
 import numpy as np
-from thztools.thztools import thzgen
-from thztools.thztools import fftfreq
-from thztools.thztools import noiseamp
+
+from thztools.thztools import fftfreq, noiseamp, thzgen
 
 
 def datamc(**kwargs):
@@ -16,7 +15,7 @@ def datamc(**kwargs):
         "sigmaBeta": 0.01,  # Multiplicative noise amplitude [-]
         "sigmaTau": 1e-3,  # Time base noise amplitude [ps]
         "Nmc": 500,
-        "seed": 0
+        "seed": 0,
     }
 
     # Update defaults with user-defined parameters
@@ -41,8 +40,9 @@ def datamc(**kwargs):
     y, t = thzgen(n, ts, t0)
     sigma_t = noiseamp(sigma_vec, y, ts)
 
-    ym = np.tile(y, (500, 1)).T + (np.tile(sigma_t, (nmc, 1)).T
-                                   * np.random.rand(n, nmc))
+    ym = np.tile(y, (500, 1)).T + (
+        np.tile(sigma_t, (nmc, 1)).T * np.random.rand(n, nmc)
+    )
 
     f = fftfreq(n, ts)
     nf = int(n / 2) + 1
@@ -65,7 +65,7 @@ def datamc(**kwargs):
         "Vi": vi,
         "V": v,
         "Nf": nf,
-        "sigma_t": sigma_t
+        "sigma_t": sigma_t,
     }
 
     return data

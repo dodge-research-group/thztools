@@ -6,9 +6,11 @@
 THzTools Documentation
 ====================================
 
-**Date**: May 13, 2023 **Version**:0.2
+**Date**: |today| **Version**: |version|
 
-**THzTools** is a software used to compute estimates for noise model parameters and transfer function parameters.
+**THzTools**
+
+Data analysis tools for terahertz time-domain spectroscopy.
 
 
 .. toctree::

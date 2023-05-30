@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "thztools"
+name = "THzTools"
 dynamic = ["version"]
 description = "Data analysis tools for terahertz time-domain spectroscopy (THz-TDS)"
 readme = "README.md"

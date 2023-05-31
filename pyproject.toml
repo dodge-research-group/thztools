@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "THzTools"
 dynamic = ["version"]
-description = "Data analysis tools for terahertz time-domain spectroscopy (THz-TDS)"
+description = "Tools for terahertz time-domain spectroscopy (THz-TDS)"
 readme = "README.md"
 license = "MIT"
 keywords = ["terahertz", "THz", "time-domain spectroscopy", "data analysis"]

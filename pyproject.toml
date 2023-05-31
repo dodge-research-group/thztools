@@ -41,7 +41,7 @@ dependencies = [
 ]
 
 [project.urls]
-Documentation = "https://dodge-research-group.github.io/thztools/"
+Documentation = "https://pages.github.com/dodge-research-group/thztools"
 Issues = "https://github.com/dodge-research-group/thztools/issues"
 Source = "https://github.com/dodge-research-group/thztools"
 

@@ -1,7 +1,7 @@
 thztools
 ===============
 
-Here you can find a description of every function on the thztools package.
+Functions in the thztools package.
 
 Quick list
 ^^^^^^^^^^
@@ -9,23 +9,17 @@ Quick list
 .. currentmodule:: thztools
 
 .. autosummary::
-   :toctree: functions/
+    :toctree: functions/
 
-   airscancorrect
-   costfunlsq
-   DataPulse
-   fftfreq
-   noiseamp
-   noisevar
-   shiftmtx
-   tdnll
-   tdnoisefit
-   tdtf
-   thzgen
-
-.. currentmodule:: _util
-
-.. autosummary::
-   :toctree: functions/
-
-   epswater
+    airscancorrect
+    costfunlsq
+    DataPulse
+    epswater
+    fftfreq
+    noiseamp
+    noisevar
+    shiftmtx
+    tdnll
+    tdnoisefit
+    tdtf
+    thzgen

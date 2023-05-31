@@ -17,14 +17,13 @@ from pathlib import Path
 import tomli  # Can use tomllib for python >= 3.11
 
 sys.path.insert(
-    0, (Path(__file__).parents[2] / "thztools").resolve().as_posix()
+    0, (Path(__file__).parents[2] / "src").resolve().as_posix()
 )
 
 # -- Project information -----------------------------------------------------
 # -- Follows UBC MOAD recommendations, "How to structure Python packages
 # and why"
 
-# project = "THzTools"
 with (Path(__file__).parents[2] / "pyproject.toml").open("rb") as f:
     pkg_info = tomli.load(f)
 project = pkg_info["project"]["name"]

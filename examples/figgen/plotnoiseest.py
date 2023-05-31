@@ -4,7 +4,7 @@ import numpy as np
 from calcnoise import calcnoise
 from matplotlib import pyplot as plt
 
-from thztools.thztools import DataPulse
+from src.thztools import DataPulse
 
 # get the data from path
 path = "./../data/2017-03-20/Air Scans/Normal"

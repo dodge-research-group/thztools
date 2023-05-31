@@ -10,13 +10,15 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-from pathlib import Path
-import sys
-import tomli    # Can use tomllib for python >= 3.11
 import importlib.metadata
+import sys
+from pathlib import Path
 
-sys.path.insert(0, (Path(__file__).parents[2] / "thztools")
-                .resolve().as_posix())
+import tomli  # Can use tomllib for python >= 3.11
+
+sys.path.insert(
+    0, (Path(__file__).parents[2] / "thztools").resolve().as_posix()
+)
 
 # -- Project information -----------------------------------------------------
 # -- Follows UBC MOAD recommendations, "How to structure Python packages
@@ -29,7 +31,7 @@ project = pkg_info["project"]["name"]
 
 author = "Steve Dodge"
 pkg_creation_year = 2023
-project_copyright = f"{pkg_creation_year} – present, {author}"
+project_copyright = f"{pkg_creation_year} - present, {author}"
 
 version = importlib.metadata.version(project)
 release = version

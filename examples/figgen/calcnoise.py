@@ -2,8 +2,7 @@ import time
 
 import numpy as np
 
-from thztools._util import shiftmtx
-from thztools.thztools import airscancorrect, tdnoisefit, tdtf
+from src.thztools import airscancorrect, shiftmtx, tdnoisefit, tdtf
 
 
 def calcnoise(t, x):

@@ -1,14 +1,14 @@
 import pathlib
 import unittest
 
-import h5py
+import h5py  # type: ignore
 import numpy as np
 import pandas as pd
 from numpy.testing import assert_array_almost_equal
 
-from thztools._util import epswater
-from thztools.thztools import (
+from thztools import (
     costfunlsq,
+    epswater,
     fftfreq,
     noisevar,
     shiftmtx,

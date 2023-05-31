@@ -1,6 +1,6 @@
 import numpy as np
 
-from thztools.thztools import fftfreq, noiseamp, thzgen
+from src.thztools import fftfreq, noiseamp, thzgen
 
 
 def datamc(**kwargs):

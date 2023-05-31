@@ -1,13 +1,12 @@
 import pathlib
 
-import h5py
+import h5py  # type: ignore
 import numpy as np
 
-from thztools._util import epswater
-
 # import matplotlib.pyplot as plt
-from thztools.thztools import (
+from thztools import (
     costfunlsq,
+    epswater,
     fftfreq,
     noisevar,
     tdnll,

@@ -7,6 +7,7 @@ name = "THzTools"
 dynamic = ["version"]
 description = "Tools for terahertz time-domain spectroscopy (THz-TDS)"
 readme = "README.md"
+requires-python = ">=3.7"
 license = "MIT"
 keywords = ["terahertz", "THz", "time-domain spectroscopy", "data analysis"]
 authors = [
@@ -20,7 +21,14 @@ maintainers = [
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
-    "Programming Language :: Python :: 3",
+  	"Programming Language :: Python",
+  	"Programming Language :: Python :: 3.7",
+  	"Programming Language :: Python :: 3.8",
+  	"Programming Language :: Python :: 3.9",
+  	"Programming Language :: Python :: 3.10",
+  	"Programming Language :: Python :: 3.11",
+  	"Programming Language :: Python :: Implementation :: CPython",
+  	"Programming Language :: Python :: Implementation :: PyPy",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
@@ -33,12 +41,12 @@ dependencies = [
 ]
 
 [project.urls]
-Documentation = "https://pages.github.com/dodge-research-group/thztools"
+Documentation = "https://dodge-research-group.github.io/thztools/"
 Issues = "https://github.com/dodge-research-group/thztools/issues"
 Source = "https://github.com/dodge-research-group/thztools"
 
 [tool.hatch.version]
-path = "thztools/__about__.py"
+path = "src/thztools/__about__.py"
 
 [tool.hatch.envs.default]
 dependencies = [
@@ -67,11 +75,10 @@ dependencies = [
     "black>=23.1.0",
     "black[jupyter]",
     "mypy>=1.0.0",
-    "numpy>=1.22",
     "ruff>=0.0.243",
 ]
 [tool.hatch.envs.lint.scripts]
-typing = "mypy --install-types --non-interactive {args:src/package_demo_jsd tests}"
+typing = "mypy --install-types --non-interactive {args:src/thztools tests}"
 style = [
     "ruff {args:.}",
     "black --check --diff {args:.}",
@@ -139,7 +146,7 @@ unfixable = [
 ]
 
 [tool.ruff.isort]
-known-first-party = ["package_demo_jsd"]
+known-first-party = ["thztools"]
 
 [tool.ruff.flake8-tidy-imports]
 ban-relative-imports = "all"
@@ -149,16 +156,16 @@ ban-relative-imports = "all"
 "tests/**/*" = ["PLR2004", "S101", "TID252"]
 
 [tool.coverage.run]
-source_pkgs = ["package_demo_jsd", "tests"]
+source_pkgs = ["thztools", "tests"]
 branch = true
 parallel = true
 omit = [
-    "src/package_demo_jsd/__about__.py",
+    "src/thztools/__about__.py",
 ]
 
 [tool.coverage.paths]
-package_demo_jsd = ["src/package_demo_jsd", "*/package-demo-jsd/src/package_demo_jsd"]
-tests = ["tests", "*/package-demo-jsd/tests"]
+thztools = ["src/thztools", "*/thztools/src/thztools"]
+tests = ["tests", "*/thztools/tests"]
 
 [tool.coverage.report]
 exclude_lines = [

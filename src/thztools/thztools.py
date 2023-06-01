@@ -1,5 +1,7 @@
 import warnings
 
+from numpy.typing import ArrayLike
+
 import numpy as np
 import pandas as pd
 import scipy.linalg  # type: ignore
@@ -33,7 +35,7 @@ def fftfreq(n, t):
     return f
 
 
-def noisevar(sigma, mu, ts):
+def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
     r"""
     Noisevar computes the time-domain noise variance for noise parameters
     sigma, with a signal mu and sampling interval T. There are three noise
@@ -66,7 +68,7 @@ def noisevar(sigma, mu, ts):
     return sigma[0] ** 2 + (sigma[1] * mu) ** 2 + (sigma[2] * mudot) ** 2
 
 
-def noiseamp(sigma, mu, ts):
+def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
     r"""
     noiseamp computes the time-domain noise amplitudes for noise parameters
     sigma, with a signal mu and sampling interval t.  There are three noise
@@ -94,7 +96,8 @@ def noiseamp(sigma, mu, ts):
     return np.sqrt(noisevar(sigma, mu, ts))
 
 
-def thzgen(n, ts, t0, a=1.0, taur=0.3, tauc=0.1, fwhm=0.05):
+def thzgen(n: int, ts: float, t0: float, a: float = 1.0, taur: float = 0.3,
+           tauc: float = 0.1, fwhm: float = 0.05) -> (ArrayLike, ArrayLike):
     r"""Generate a terahertz pulse.
 
     Returns an idealized waveform with n points at sampling interval t and
@@ -130,7 +133,7 @@ def thzgen(n, ts, t0, a=1.0, taur=0.3, tauc=0.1, fwhm=0.05):
     y : ndarray
         signal (u.a)
 
-    t : float
+    t : ndarray
         timebase
 
     """
@@ -228,7 +231,7 @@ class DataPulse:
             self.famp = famp[0: int(np.floor(len(famp) / 2))]
 
 
-def shiftmtx(tau, n, ts):
+def shiftmtx(tau: float, n: int, ts: float) -> ArrayLike:
     """
     Shiftmtx computes the n by n transfer matrix for a continuous time-shift.
 
@@ -236,18 +239,18 @@ def shiftmtx(tau, n, ts):
     -----------
 
     tau : float
-        Input parameters for the function
+        Delay.
 
     n : int
-        Number of time samples
+        Number of samples.
 
-    ts: int
-        sampling time
+    ts: float
+        Sampling time.
 
     Returns
     -------
-    h: ndarray or matrix
-        (n, n) Transfer matrix
+    h: ndarray
+        Transfer matrix with shape (n, n).
 
     """
 
@@ -270,9 +273,8 @@ def airscancorrect(x, param):
 
     Parameters
     ----------
-    x : ndarray or matrix
-        (n,m) data matrix
-
+    x : ndarray
+        Data matrix with shape (n, m).
 
     param: dict
         Parameter dictionary including:
@@ -282,8 +284,6 @@ def airscancorrect(x, param):
                 (m, ) array containing delay vector
             ts : float
                 sampling time
-
-
 
     Returns
     -------

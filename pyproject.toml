@@ -178,6 +178,7 @@ exclude_lines = [
 dependencies = [
     "sphinx",
     "pydata-sphinx-theme",
+    "numpydoc",
     "tomli",
 ]
 [tool.hatch.envs.docs.scripts]

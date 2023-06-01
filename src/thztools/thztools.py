@@ -1,5 +1,5 @@
 import warnings
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -262,8 +262,8 @@ def shiftmtx(tau: float, n: int, ts: float = 1) -> ArrayLike:
     return h
 
 
-def airscancorrect(x: ArrayLike, *, a: ArrayLike | None = None,
-                   eta: ArrayLike | None = None,
+def airscancorrect(x: ArrayLike, *, a: Union[ArrayLike, None] = None,
+                   eta: Union[ArrayLike, None] = None,
                    ts: float = 1.0) -> ArrayLike:
     """Rescales and shifts each column of the matrix x.
 

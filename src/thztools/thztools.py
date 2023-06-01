@@ -1,5 +1,5 @@
 import warnings
-from typing import Tuple, Union
+from typing import Callable, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -309,7 +309,8 @@ def airscancorrect(x: ArrayLike, *, a: Union[ArrayLike, None] = None,
     return xadj
 
 
-def costfunlsq(fun, theta, xx, yy, sigmax, sigmay, ts):
+def costfunlsq(fun: Callable, theta: ArrayLike, xx: ArrayLike, yy: ArrayLike,
+               sigmax: ArrayLike, sigmay: ArrayLike, ts: float) -> ArrayLike:
     r"""Computes the maximum likelihood cost function.
 
     Parameters
@@ -317,19 +318,19 @@ def costfunlsq(fun, theta, xx, yy, sigmax, sigmay, ts):
         fun : callable
             Transfer function, in the form fun(theta,w), -iwt convention.
 
-        theta : ndarray
+        theta : array_like
             Input parameters for the function.
 
-        xx : ndarray
+        xx : array_like
             Measured input signal.
 
-        yy : ndarray
+        yy : array_like
             Measured output signal.
 
-        sigmax : ndarray or matrix
+        sigmax : array_like
             Noise covariance matrix of the input signal.
 
-        sigmay : nadarray
+        sigmay : array_like
             Noise covariance matrix of the output signal.
 
         ts : float
@@ -337,7 +338,7 @@ def costfunlsq(fun, theta, xx, yy, sigmax, sigmay, ts):
 
     Returns
     -------
-    res : callable
+    res : array_like
 
 
     """
@@ -364,34 +365,29 @@ def costfunlsq(fun, theta, xx, yy, sigmax, sigmay, ts):
     return res
 
 
-def tdtf(fun, theta, n, ts):
+def tdtf(fun: Callable, theta: ArrayLike, n: int, ts: float) -> ArrayLike:
     """
-    Returns the transfer matrix for a given function.
-
-    It computes the n-by-n transfer matrix for the given function fun with
-    input parameter theta. Note that the transfer function should be written
-    using the physicist's -iwt convention, and that it should be in the
-    format fun(theta,w), where theta
-    is a vector of the function parameters. The transfer function must be
-    Hermitian.
+    Computes the time-domain transfer matrix for a frequency response function.
 
     Parameters
     ----------
         fun : callable
-            Transfer function, in the form fun(theta,w), -iwt convention.
+            Frequency function, in the form fun(theta, w), where theta
+            is a vector of the function parameters. The function should be
+            expressed in the -iwt convention and must be Hermitian.
 
-        theta : ndarray
+        theta : array_like
             Input parameters for the function.
 
         n : int
             Number of time samples.
 
-        ts : ndarray
+        ts : array_like
             Sampling time.
 
     Returns
     -------
-        h : ndarray or matrix
+        h : array_like
             Transfer matrix with size (n,n).
 
     """
@@ -435,7 +431,7 @@ def tdtf(fun, theta, n, ts):
     return h
 
 
-def tdnll(x, param, fix):
+def tdnll(x: ArrayLike, param, fix):
     r"""Computes negative log-likelihood for the time-domain noise model.
 
     Computes the negative log-likelihood function for obtaining the

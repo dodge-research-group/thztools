@@ -1,11 +1,11 @@
 import warnings
-
-from numpy.typing import ArrayLike
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
 import scipy.linalg  # type: ignore
 from numpy.fft import irfft, rfft, rfftfreq
+from numpy.typing import ArrayLike
 from scipy.optimize import minimize  # type: ignore
 
 
@@ -57,6 +57,8 @@ def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
     vmu : ndarray
         Time-domain noise variance.
     """
+    sigma = np.asarray(sigma)
+    mu = np.asarray(mu)
 
     n = mu.shape[0]
     w = 2 * np.pi * rfftfreq(n, ts)
@@ -93,7 +95,8 @@ def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
 
 
 def thzgen(n: int, ts: float, t0: float, a: float = 1.0, taur: float = 0.3,
-           tauc: float = 0.1, fwhm: float = 0.05) -> (ArrayLike, ArrayLike):
+           tauc: float = 0.1, fwhm: float = 0.05
+           ) -> Tuple[ArrayLike, ArrayLike]:
     r"""Simulate a terahertz pulse.
 
     Parameters
@@ -145,7 +148,7 @@ def thzgen(n: int, ts: float, t0: float, a: float = 1.0, taur: float = 0.3,
     y = irfft(np.conj(s), n=n)
     y = a * y / np.max(y)
 
-    return [y, t2]
+    return y, t2
 
 
 class DataPulse:
@@ -259,7 +262,8 @@ def shiftmtx(tau: float, n: int, ts: float = 1) -> ArrayLike:
     return h
 
 
-def airscancorrect(x: ArrayLike, *, a: ArrayLike = None, eta: ArrayLike = None,
+def airscancorrect(x: ArrayLike, *, a: ArrayLike | None = None,
+                   eta: ArrayLike | None = None,
                    ts: float = 1.0) -> ArrayLike:
     """Rescales and shifts each column of the matrix x.
 

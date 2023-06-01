@@ -74,6 +74,7 @@ dependencies = [
     "black>=23.1.0",
     "black[jupyter]",
     "mypy>=1.0.0",
+    "numpy>=1.21",
     "ruff>=0.0.243",
 ]
 [tool.hatch.envs.lint.scripts]

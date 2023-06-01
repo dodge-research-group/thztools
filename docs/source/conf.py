@@ -11,9 +11,10 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 # import importlib.metadata
+import runpy
 import sys
 from pathlib import Path
-import runpy
+
 import tomli  # Can use tomllib for python >= 3.11
 
 sys.path.insert(
@@ -21,8 +22,6 @@ sys.path.insert(
 )
 
 # -- Project information -----------------------------------------------------
-# -- Follows UBC MOAD recommendations, "How to structure Python packages
-# and why"
 
 with (Path(__file__).parents[2] / "pyproject.toml").open("rb") as f:
     pkg_info = tomli.load(f)

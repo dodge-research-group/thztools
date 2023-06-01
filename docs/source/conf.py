@@ -11,9 +11,10 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 # import importlib.metadata
+import runpy
 import sys
 from pathlib import Path
-import runpy
+
 import tomli  # Can use tomllib for python >= 3.11
 
 sys.path.insert(
@@ -21,8 +22,6 @@ sys.path.insert(
 )
 
 # -- Project information -----------------------------------------------------
-# -- Follows UBC MOAD recommendations, "How to structure Python packages
-# and why"
 
 with (Path(__file__).parents[2] / "pyproject.toml").open("rb") as f:
     pkg_info = tomli.load(f)
@@ -42,6 +41,7 @@ release = version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "numpydoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.autodoc",
     "sphinx.ext.mathjax",
@@ -53,7 +53,7 @@ extensions = [
     "sphinx.ext.ifconfig",
 ]
 
-autodoc_typehints = "signature"
+# autodoc_typehints = "signature"
 autodoc_type_aliases = {
     "ArrayLike": "ArrayLike",
     "Boolean": "bool",
@@ -80,6 +80,7 @@ autodoc_type_aliases = {
 }
 
 autosummary_generate = True
+autodoc_typehints = "none"
 napoleon_google_docstring = False
 napoleon_use_param = False
 napoleon_use_ivar = True
@@ -105,6 +106,9 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 pygments_style = "default"
 
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+
+# numpydoc
+numpydoc_attributes_as_param_list = False
 
 # -- Options for HTML output -------------------------------------------------
 

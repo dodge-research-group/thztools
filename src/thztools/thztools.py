@@ -1,9 +1,11 @@
 import warnings
+from typing import Tuple, Union
 
 import numpy as np
 import pandas as pd
 import scipy.linalg  # type: ignore
 from numpy.fft import irfft, rfft, rfftfreq
+from numpy.typing import ArrayLike
 from scipy.optimize import minimize  # type: ignore
 
 
@@ -33,31 +35,30 @@ def fftfreq(n, t):
     return f
 
 
-def noisevar(sigma, mu, ts):
+def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
     r"""
-    Noisevar computes the time-domain noise variance for noise parameters
-    sigma, with a signal mu and sampling interval T. There are three noise
-    parameters: the first corresponds to amplitude noise, in signal units (
-    i.e, the same units as mu) ;  the second corresponds to multiplicative
-    noise, which is dimensionless; and the third corresponds to timebase
-    noise, in units of signal/time, where the units for time are the same as
-    for T. The output, Vmu, is given in units that are the square of the
-    signal units.
+    Compute the time-domain noise variance.
 
     Parameters
     ----------
-    sigma : ndarray
-        (3, ) array  containing noise parameters
-    mu : ndarray
-        (n, ) array  containing  signal vector
+    sigma : array_like
+        Noise parameter array with shape (3, ). The first element corresponds
+        to the amplitude noise, in signal units (ie, the same units as mu);
+        the second element corresponds to multiplicative noise, which is
+        dimensionless; and the third element corresponds to timebase noise, in
+        units of signal/time, where the units for time are the same as for t.
+    mu :  array_like
+        Time-domain signal.
     ts : float
-        Sampling time
+        Sampling time.
 
     Returns
-    --------
+    -------
     vmu : ndarray
-        Noise variance
+        Time-domain noise variance.
     """
+    sigma = np.asarray(sigma)
+    mu = np.asarray(mu)
 
     n = mu.shape[0]
     w = 2 * np.pi * rfftfreq(n, ts)
@@ -66,51 +67,49 @@ def noisevar(sigma, mu, ts):
     return sigma[0] ** 2 + (sigma[1] * mu) ** 2 + (sigma[2] * mudot) ** 2
 
 
-def noiseamp(sigma, mu, ts):
+def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
     r"""
-    noiseamp computes the time-domain noise amplitudes for noise parameters
-    sigma, with a signal mu and sampling interval t.  There are three noise
-    parameters: the first corresponds to amplitude noise, in signal units (
-    ie, the same units as mu); the second corresponds to multiplicative
-    noise, which is dimensionless; and the third corresponds to timebase
-    noise, in units of signal/time, where the units for time are the same as
-    for t. The output, sigmamu, is given in signal units.
+    Compute the time-domain noise amplitude.
 
     Parameters
     ----------
-    sigma : ndarray
-        (3, ) array  containing noise parameters
-    mu :  signal vector
-        (n, ) array  containing  signal vector
+    sigma : array_like
+        Noise parameter array with shape (3, ). The first element corresponds
+        to the amplitude noise, in signal units (ie, the same units as mu);
+        the second element corresponds to multiplicative noise, which is
+        dimensionless; and the third element corresponds to timebase noise, in
+        units of signal/time, where the units for time are the same as for t.
+    mu :  array_like
+        Time-domain signal.
     ts : float
-        sampling time
+        Sampling time.
 
     Returns
     -------
     sigmamu : ndarray
-        (n, ) array containing noise amplitude
+        Time-domain noise amplitude, in signal units.
+
     """
 
     return np.sqrt(noisevar(sigma, mu, ts))
 
 
-def thzgen(n, ts, t0, a=1.0, taur=0.3, tauc=0.1, fwhm=0.05):
-    r"""Generate a terahertz pulse.
-
-    Returns an idealized waveform with n points at sampling interval t and
-    centered at t0.
+def thzgen(n: int, ts: float, t0: float, a: float = 1.0, taur: float = 0.3,
+           tauc: float = 0.1, fwhm: float = 0.05
+           ) -> Tuple[ArrayLike, ArrayLike]:
+    r"""Simulate a terahertz pulse.
 
     Parameters
     ----------
 
     n : int
-        number of sampled points.
+        Number of samples.
 
     ts : float
-        sampling time
+        Sampling time.
 
     t0 : float
-        pulse center
+        Pulse center.
 
     a : float, optional
         Peak amplitude.
@@ -130,7 +129,7 @@ def thzgen(n, ts, t0, a=1.0, taur=0.3, tauc=0.1, fwhm=0.05):
     y : ndarray
         signal (u.a)
 
-    t : float
+    t : ndarray
         timebase
 
     """
@@ -149,7 +148,7 @@ def thzgen(n, ts, t0, a=1.0, taur=0.3, tauc=0.1, fwhm=0.05):
     y = irfft(np.conj(s), n=n)
     y = a * y / np.max(y)
 
-    return [y, t2]
+    return y, t2
 
 
 class DataPulse:
@@ -228,7 +227,7 @@ class DataPulse:
             self.famp = famp[0: int(np.floor(len(famp) / 2))]
 
 
-def shiftmtx(tau, n, ts):
+def shiftmtx(tau: float, n: int, ts: float = 1) -> ArrayLike:
     """
     Shiftmtx computes the n by n transfer matrix for a continuous time-shift.
 
@@ -236,18 +235,18 @@ def shiftmtx(tau, n, ts):
     -----------
 
     tau : float
-        Input parameters for the function
+        Delay.
 
     n : int
-        Number of time samples
+        Number of samples.
 
-    ts: int
-        sampling time
+    ts: float, optional
+        Sampling time.
 
     Returns
     -------
-    h: ndarray or matrix
-        (n, n) Transfer matrix
+    h: ndarray
+        Transfer matrix with shape (n, n).
 
     """
 
@@ -263,55 +262,46 @@ def shiftmtx(tau, n, ts):
     return h
 
 
-def airscancorrect(x, param):
-    """Airscancorrect rescales and shifts each column of the data matrix x,
-    assuming that each column is related to a common signal by an amplitude A
-    and a delay eta.
+def airscancorrect(x: ArrayLike, *, a: Union[ArrayLike, None] = None,
+                   eta: Union[ArrayLike, None] = None,
+                   ts: float = 1.0) -> ArrayLike:
+    """Rescales and shifts each column of the matrix x.
 
     Parameters
     ----------
-    x : ndarray or matrix
-        (n,m) data matrix
-
-
-    param: dict
-        Parameter dictionary including:
-            A : ndarray
-                (m, ) array containing amplitude vector
-            eta : ndarray
-                (m, ) array containing delay vector
-            ts : float
-                sampling time
-
-
+    x : array_like
+        Data array with shape (n, m).
+    a : array_like, optional
+        Amplitude correction. If set, a must have shape (m,). Otherwise, no
+        correction is applied.
+    eta : array_like, optional
+        Delay correction. If set, a must have shape (m,). Otherwise, no
+        correction is applied.
+    ts : float, optional
+        Sampling time. Default is 1.0.
 
     Returns
     -------
-    xadj : ndarray or matrix
-        Adjusted data matrix
+    xadj : ndarray
+        Adjusted data array.
 
     """
+    x = np.asarray(x)
 
-    # Parse function inputs
     [n, m] = x.shape
 
-    # Parse parameter structure
-    pfields = param.keys()
-    if "a" in pfields and param.get("a") is not None:
-        a = param.get("a").T
+    if a is None:
+        a = np.ones((m, ))
     else:
-        a = np.ones((m, 1))
-        # Ignore.A = true
-    if "eta" in pfields and param.get("eta") is not None:
-        eta = param.get("eta")
+        a = np.asarray(a)
+
+    if eta is None:
+        eta = np.zeros((m, ))
     else:
-        eta = np.zeros((m, 1))
-    if "ts" in pfields:
-        ts = param["ts"]
-    else:
-        ts = 1
+        eta = np.asarray(eta)
 
     xadj = np.zeros((n, m))
+    # TODO: refactor with broadcasting
     for i in np.arange(m):
         s = shiftmtx(-eta[i], n, ts)
         xadj[:, i] = s @ (x[:, i] / a[i])

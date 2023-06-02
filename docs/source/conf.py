@@ -10,16 +10,30 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
+# import importlib.metadata
+import runpy
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.abspath('../../thztools'))
+import tomli  # Can use tomllib for python >= 3.11
+
+sys.path.insert(
+    0, (Path(__file__).parents[2] / "src").resolve().as_posix()
+)
 
 # -- Project information -----------------------------------------------------
 
-project = 'THzTools'
-project_copyright = '2023, Steve Dodge'
-author = 'Steve Dodge'
+with (Path(__file__).parents[2] / "pyproject.toml").open("rb") as f:
+    pkg_info = tomli.load(f)
+project = pkg_info["project"]["name"]
+
+author = "Steve Dodge"
+pkg_creation_year = 2023
+project_copyright = f"{pkg_creation_year} - present, {author}"
+
+version = (runpy.run_path(Path(__file__).parents[2] / "src" / "thztools"
+                          / "__about__.py")["__version__"])
+release = version
 
 # -- General configuration ---------------------------------------------------
 
@@ -27,18 +41,19 @@ author = 'Steve Dodge'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autosummary',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.todo',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.extlinks',
-    'sphinx.ext.ifconfig',
+    "numpydoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.extlinks",
+    "sphinx.ext.ifconfig",
 ]
 
-autodoc_typehints = "signature"
+# autodoc_typehints = "signature"
 autodoc_type_aliases = {
     "ArrayLike": "ArrayLike",
     "Boolean": "bool",
@@ -65,31 +80,35 @@ autodoc_type_aliases = {
 }
 
 autosummary_generate = True
+autodoc_typehints = "none"
 napoleon_google_docstring = False
 napoleon_use_param = False
 napoleon_use_ivar = True
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'default'
+pygments_style = "default"
 
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+
+# numpydoc
+numpydoc_attributes_as_param_list = False
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -97,20 +116,19 @@ mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 # a list of builtin themes.
 #
 # html_theme = 'sphinx_rtd_theme'
-html_theme = 'pydata_sphinx_theme'
+html_theme = "pydata_sphinx_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
-# html_logo = '../../docs/build/html/_static/logo.png'
+# html_logo = './_static/logo.png'
 
 html_theme_options = {
     "logo": {
         "text": "THzTools Documentation",
     },
-
     "icon_links": [
         {
             # Label for this link
@@ -123,39 +141,40 @@ html_theme_options = {
             # The type of image to be used (see below for details)
             "type": "fontawesome",
         }
-    ]
-
+    ],
 }
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'thztoolsdoc'
+htmlhelp_basename = "thztoolsdoc"
 
 # -- Options for LaTeX output ------------------------------------------------
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
-    'papersize': 'letterpaper',
-
+    "papersize": "letterpaper",
     # The font size ('10pt', '11pt' or '12pt').
     #
-    'pointsize': '10pt',
-
+    "pointsize": "10pt",
     # Additional stuff for the LaTeX preamble.
     #
-    'preamble': '',
-
+    "preamble": "",
     # Latex figure (float) alignment
     #
-    'figure_align': 'htbp',
+    "figure_align": "htbp",
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'thztools.tex', 'thztools Documentation',
-     'thztools', 'manual'),
+    (
+        master_doc,
+        "thztools.tex",
+        "thztools Documentation",
+        "thztools",
+        "manual",
+    ),
 ]

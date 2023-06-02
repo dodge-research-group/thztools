@@ -1,34 +1,14 @@
-# Data analysis tools for terahertz time-domain spectroscopy
+# THzTools
 
-Project to compute estimates for noise model parameters and transfer function parameters.
+Data analysis tools for terahertz time-domain spectroscopy.
 
-## Installation
+This is *alpha* software that is currently under development.
 
-This project is based on the Cookiecutter Data Science [template](https://github.com/drivendata/cookiecutter-data-science). See [here](https://drivendata.github.io/cookiecutter-data-science/) for documentation.
+| Information       | Links                                                                                                                                                                                                                                                                                                                                   |
+|:------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Project**       | ![PyPI - Status](https://img.shields.io/pypi/status/thztools) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/thztools) ![GitHub](https://img.shields.io/github/license/dodge-research-group/thztools) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) |
+| **Build**         | ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/dodge-research-group/thztools/sphinx.yml?label=build%3Adocs) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/dodge-research-group/thztools/python-package-conda.yml?label=build%3Atests)                                |
+| **Documentation** | https://dodge-research-group.github.io/thztools/                                                                                                                                                                                                                                                                                        |
+| **Cite**          | L. Mohtashemi et al., *Opt. Express* **29**, 4912 (2021). [(DOI)](https://doi.org/10.1364/OE.417724)                                                                                                                                                                                                                                    |
 
-Make sure you create and activate a virtual environment for development with `thztools`. The instructions below are for the Conda package manager.
-
-1. Create the environment by typing the following command from the top directory. The first line of the `environment.yml` file sets the name to `thztools`, and the last line uses `pip` to install the `thztools` package in [editable mode](https://pip.pypa.io/en/stable/cli/pip_install/#install-editable) for development.
-
-    ```
-    conda env create -f environment.yml
-    ```
-2. Activate the `thztools` environment.
-
-    ```
-    conda activate thztools
-    ```
-
-3. Use the following command to run a Jupyter notebook server from within this environment.
-
-    ```
-    jupyter notebook
-    ```
-
-4. Deactivate the environment when you are finished using `thztools`.
-
-    ```
-    conda deactivate
-    ```
-
-More detailed instructions on using Conda to manage environments are available [here](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
+The original MATLAB code is available at [Zenodo](https://zenodo.org/record/4876388).

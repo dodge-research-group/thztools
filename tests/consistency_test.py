@@ -21,18 +21,27 @@ def test_fftfreq():
     fname = cur_path / "test_files" / "fftfreq_test_data.mat"
 
     with h5py.File(fname, "r") as file:
-        file_set = file["Set"]
-        xn = file["Set"]["fftfreq"]["N"][0]
-        xt = file["Set"]["fftfreq"]["T"][0]
-        dfn = np.array(xn)
-        dft = np.array(xt)
+        # Get HDF5 group for original MATLAB structure array
+        f_set = file["Set"]["fftfreq"]
+        # Each field has the same size; use one to get dimensions
+        ni, nj = f_set["N"].shape
 
-        for i in range(0, dfn.shape[0]):
-            for j in range(0, dft.shape[0]):
-                n = np.array(file[file_set["fftfreq"]["N"][i, j]])[0, 0]
-                t = np.array(file[file_set["fftfreq"]["T"][i, j]])[0, 0]
-                y = np.array(file[file_set["fftfreq"]["f"][i, j]])[0]
-                fpy = fftfreq(n.astype(int), t)
+        # Test all values in the array
+        for i in range(0, ni):
+            for j in range(0, nj):
+                # The elements of f_set are object references that point to
+                # the values in the MATLAB structure array, so to access them
+                # we use the syntax file[obj_ref], and to convert the HDF5
+                # dataset object to a ndarray we use file[obj_ref][()].
+                # MATLAB uses 2D arrays for scalars and vectors, so apply
+                # np.squeeze to reduce dimensions.
+                n = np.squeeze(file[f_set["N"][i, j]][()])
+                t = np.squeeze(file[f_set["T"][i, j]][()])
+                y = np.squeeze(file[f_set["f"][i, j]][()])
+                # Convert n to integer type for fftfreq
+                n = int(n)
+                # Compute fftfreq and compare with MATLAB output
+                fpy = fftfreq(n, t)
                 np.testing.assert_allclose(y, fpy)
 
 

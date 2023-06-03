@@ -1,9 +1,11 @@
 import os
 import pathlib
+import pytest
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
-from thztools.thztools import fftfreq,  noisevar, thzgen, costfunlsq, tdtf, tdnll, tdnoisefit
+from thztools.thztools import fftfreq, noisevar, thzgen, costfunlsq, tdtf, \
+    tdnll, tdnoisefit
 from thztools._util import epswater
 
 global fname
@@ -11,25 +13,45 @@ global fname
 cur_path = pathlib.Path(__file__).parent.resolve()
 fname = cur_path / 'test_files' / 'thztools_test_data.mat'
 
-def test_fftfreq():
 
+@pytest.fixture()
+def fix():
     with h5py.File(fname, 'r') as file:
-        set = file['Set']
-        xn = file['Set']['fftfreq']['N'][0]
-        xt = file['Set']['fftfreq']['T'][0]
-        dfn = np.array(xn)
-        dft = np.array(xt)
+        f_set = file['Set']["fftfreq"]
+        i = 0
+        j = 0
+        n = np.squeeze(file[f_set['N'][i, j]][()])[()]
+        t = np.squeeze(file[f_set['T'][i, j]][()])[()]
+        y = np.squeeze(file[f_set['f'][i, j]][()])
+        n = int(n)
+        fpy = fftfreq(n, t)
+    yield y, fpy
 
-        for i in range(0, dfn.shape[0]):
-            for j in range(0, dft.shape[0]):
-                n = np.array(file[set['fftfreq']['N'][i, j]])[0, 0]
-                t = np.array(file[set['fftfreq']['T'][i, j]])[0, 0]
-                y = np.array(file[set['fftfreq']['f'][i, j]])[0]
-                fpy = fftfreq(n.astype(int), t)
+
+def test_fix(fix):
+    np.testing.assert_allclose(*fix)
+
+
+def test_fftfreq():
+    with h5py.File(fname, 'r') as file:
+        f_set = file['Set']["fftfreq"]
+        ni, nj = f_set["N"].shape
+        # xn = file['Set']['fftfreq']['N'][0]
+        # xt = file['Set']['fftfreq']['T'][0]
+        # dfn = np.array(xn)
+        # dft = np.array(xt)
+
+        for i in range(ni):
+            for j in range(nj):
+                n = np.squeeze(file[f_set['N'][i, j]][()])[()]
+                t = np.squeeze(file[f_set['T'][i, j]][()])[()]
+                y = np.squeeze(file[f_set['f'][i, j]][()])
+                n = int(n)
+                fpy = fftfreq(n, t)
                 np.testing.assert_allclose(y, fpy)
 
-def test_noisevar():
 
+def test_noisevar():
     with h5py.File(fname, 'r') as file:
         set = file['Set']
         sigma = file['Set']['noisevar']['sigma'][0]
@@ -43,7 +65,8 @@ def test_noisevar():
         for i in range(0, nsigma.shape[0]):
             for j in range(0, nmu.shape[0]):
                 for k in range(0, nt.shape[0]):
-                    sigma = np.array(file[set['noisevar']['sigma'][i, j, k]])[0]
+                    sigma = np.array(file[set['noisevar']['sigma'][i, j, k]])[
+                        0]
                     mu = np.array(file[set['noisevar']['mu'][i, j, k]])[0]
                     t = np.array(file[set['noisevar']['T'][i, j, k]])[0, 0]
                     vmu = np.array(file[set['noisevar']['Vmu'][i, j, k]])[0]
@@ -52,7 +75,6 @@ def test_noisevar():
 
 
 def test_epswater():
-
     with h5py.File(fname, 'r') as file:
         set = file['Set']
         xf = file['Set']['epswater']['f'][0]
@@ -72,7 +94,6 @@ def test_epswater():
 
 
 def test_thzgen():
-
     with h5py.File(fname, 'r') as file:
         set = file['Set']
         xn = file['Set']['thzgen']['N'][0]
@@ -94,7 +115,6 @@ def test_thzgen():
 
 
 def test_costfunlsq():
-
     with h5py.File(fname, 'r') as file:
         Set = file['Set']
         xtheta = file['Set']['costfunlsq']['theta'][0]
@@ -118,21 +138,28 @@ def test_costfunlsq():
                     for l in range(0, dfsigmax.shape[0]):
                         for m in range(0, dfsigmay.shape[0]):
                             for n in range(0, dfwfft.shape[0]):
-                                theta = np.array(file[Set['costfunlsq']['theta'][i, j, k, l, m, n]])[0]
-                                xx = np.array(file[Set['costfunlsq']['xx'][i, j, k, l, m, n]])[0]
-                                yy = np.array(file[Set['costfunlsq']['yy'][i, j, k, l, m, n]])[0]
-                                sigmax = np.array(file[Set['costfunlsq']['sigmax'][i, j, k, l, m, n]])[0]
-                                sigmay = np.array(file[Set['costfunlsq']['sigmay'][i, j, k, l, m, n]])[0]
-                                wfft = np.array(file[Set['costfunlsq']['wfft'][i, j, k, l, m, n]])[0]
-                                res = np.array(file[Set['costfunlsq']['res'][i, j, k, l, m, n]])[0]
-                                fpy = costfunlsq(fun, theta, xx, yy, sigmax, sigmay, 0.05)
+                                theta = np.array(file[Set['costfunlsq'][
+                                    'theta'][i, j, k, l, m, n]])[0]
+                                xx = np.array(file[Set['costfunlsq']['xx'][
+                                    i, j, k, l, m, n]])[0]
+                                yy = np.array(file[Set['costfunlsq']['yy'][
+                                    i, j, k, l, m, n]])[0]
+                                sigmax = np.array(file[Set['costfunlsq'][
+                                    'sigmax'][i, j, k, l, m, n]])[0]
+                                sigmay = np.array(file[Set['costfunlsq'][
+                                    'sigmay'][i, j, k, l, m, n]])[0]
+                                wfft = np.array(file[Set['costfunlsq']['wfft'][
+                                    i, j, k, l, m, n]])[0]
+                                res = np.array(file[Set['costfunlsq']['res'][
+                                    i, j, k, l, m, n]])[0]
+                                fpy = costfunlsq(fun, theta, xx, yy, sigmax,
+                                                 sigmay, 0.05)
                                 np.testing.assert_allclose(res, fpy)
 
-def test_tdtf():
 
+def test_tdtf():
     def fun(theta, w):
         return theta[0] * np.exp(-1j * theta[1] * w)
-
 
     with h5py.File(fname, 'r') as file:
         set = file['Set']
@@ -157,7 +184,6 @@ def test_tdtf():
 
 
 def test_tdnll():
-
     with h5py.File(fname, 'r') as file:
         Set = file['Set']
         x = file['Set']['tdnll']['x'][0]
@@ -177,18 +203,23 @@ def test_tdnll():
                              'eta': np.array(file[Param[0, j, 0]]['eta'])[0],
                              'ts': np.array(file[Param[0, j, 0]]['ts'])[0],
                              'D': np.array(file[Param[0, j, 0]]['D'])}
-                    varargin = {'logv': bool(np.array(file[Varargin[k, 0, 0]]['logv'])),
-                                'mu': bool(np.array(file[Varargin[k, 0, 0]]['mu'])),
-                                'a': bool(np.array(file[Varargin[k, 0, 0]]['A'])),
-                                'eta': bool(np.array(file[Varargin[k, 0, 0]]['eta']))}
+                    varargin = {'logv': bool(
+                        np.array(file[Varargin[k, 0, 0]]['logv'])),
+                                'mu': bool(
+                                    np.array(file[Varargin[k, 0, 0]]['mu'])),
+                                'a': bool(
+                                    np.array(file[Varargin[k, 0, 0]]['A'])),
+                                'eta': bool(
+                                    np.array(file[Varargin[k, 0, 0]]['eta']))}
                     nll = np.array(file[Set['tdnll']['nll'][k, j, i]])[0, 0]
-                    gradnll = np.array(file[Set['tdnll']['gradnll'][k, j, i]])[0]
+                    gradnll = np.array(file[Set['tdnll']['gradnll'][k, j, i]])[
+                        0]
                     [nllPy, gradnllPy] = tdnll(x, param, varargin)
                     np.testing.assert_allclose(nllPy, nll)
-                    #np.testing.assert_allclose(gradnllPy, gradnll, rtol=1e-3)
+                    # np.testing.assert_allclose(gradnllPy, gradnll, rtol=1e-3)
+
 
 def test_tdnoisefit():
-
     with h5py.File(fname, 'r') as file:
         Set = file['Set']
         x = file['Set']['tdnoisefit']['x'][0]
@@ -200,8 +231,8 @@ def test_tdnoisefit():
         dfx = np.array(x)
         dfParam = np.array(param)
 
-        #for i in range(0, dfx.shape[0]):
-            #for j in range(0, dfParam.shape[0]):
+        # for i in range(0, dfx.shape[0]):
+        # for j in range(0, dfParam.shape[0]):
         for i in range(0, 1):
             for j in range(0, 1):
                 x = np.array(file[Set['tdnoisefit']['x'][j, i]]).T
@@ -222,7 +253,8 @@ def test_tdnoisefit():
                      'eta': np.array(file[pMatlab[j, 0]]['eta'])[0],
                      'ts': np.array(file[pMatlab[j, 0]]['ts'])[0]}
                 fun = np.array(file[Set['tdnoisefit']['fval'][j, i]])[0]
-                diagnostic = np.array(file[Set['tdnoisefit']['Diagnostic'][j, i]])[0]
+                diagnostic = \
+                np.array(file[Set['tdnoisefit']['Diagnostic'][j, i]])[0]
                 [pPy, funPy, diagnosticPy] = tdnoisefit(x, param, fix, ignore)
                 print('Matlab Costfun: ' + str(fun))
                 print('Python Costfun: ' + str(funPy))
@@ -239,7 +271,7 @@ def test_tdnoisefit():
                 fig = plt.figure()
                 plt.title(r'$\mu$')
                 plt.plot(x[:, 0], label='Input + Noise')
-                plt.plot(pPy['mu'], label = 'Fit Py')
+                plt.plot(pPy['mu'], label='Fit Py')
                 plt.plot(p['mu'], label='Fit Mat', linestyle='dashed')
                 plt.legend()
                 plt.show()
@@ -261,4 +293,3 @@ def test_tdnoisefit():
                 plt.plot(p['var'], label='Fit Mat', linestyle='dashed')
                 plt.legend()
                 plt.show()
-                

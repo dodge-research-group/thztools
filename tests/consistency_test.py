@@ -273,7 +273,7 @@ def test_tdnll():
                         0, 0
                     ]
                     # gradnll = np.array(
-                    #     file[file_set['tdnll']['gradnll'][k, j, i]])[0]
+                    #     file[func_set['tdnll']['gradnll'][k, j, i]])[0]
                     [nll_py, _] = tdnll(x, param, varargin)
                     np.testing.assert_allclose(nll_py, nll)
                     # np.testing.assert_allclose(gradnllPy, gradnll, rtol=1e-3)
@@ -324,7 +324,7 @@ def test_tdnoisefit():
                 }
                 fun = np.array(file[file_set["tdnoisefit"]["fval"][j, i]])[0]
                 # diagnostic = np.array(
-                # file[file_set['tdnoisefit']['Diagnostic'][j, i]])[0]
+                # file[func_set['tdnoisefit']['Diagnostic'][j, i]])[0]
                 [p_py, fun_py, _] = tdnoisefit(x, param, fix, ignore)
                 print("Matlab Costfun: " + str(fun))
                 print("Python Costfun: " + str(fun_py))

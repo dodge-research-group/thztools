@@ -199,12 +199,12 @@ class Name(unittest.TestCase):
         new_path = cur_path / "test_files" / "tdnoisefit_test_python.mat"
         with h5py.File(new_path, "r") as file:
             file_set = file["Set"]
-            # x = file_set['tdnoisefit']['x'][0]
+            # x = func_set['tdnoisefit']['x'][0]
             param_test = file_set["tdnoisefit"]["paramForPy"]
             fix_test = file_set["tdnoisefit"]["fixForPy"]
             ignore_test = file_set["tdnoisefit"]["ignoreForPy"]
             p_test = file_set["tdnoisefit"]["P"]
-            # diagnostic = file_set['tdnoisefit']['Diagnostic']
+            # diagnostic = func_set['tdnoisefit']['Diagnostic']
             # dfx = np.array(x)
             # dfParam = np.array(param_test)
 
@@ -235,7 +235,7 @@ class Name(unittest.TestCase):
             }
             fun = np.array(file[file_set["tdnoisefit"]["fval"][0, 0]])[0]
             # diagnostic = np.array(
-            # file[file_set['tdnoisefit']['Diagnostic'][0, 0]])[0]
+            # file[func_set['tdnoisefit']['Diagnostic'][0, 0]])[0]
 
             [p_out, fun_out, _] = tdnoisefit(x, param, fix, ignore)
 

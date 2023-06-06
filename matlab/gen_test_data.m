@@ -11,17 +11,29 @@ n_test = height(args);
 Init = cell(n_test, 1);
 Set.fftfreq = struct('args', Init, 'out', Init);
 for i = 1:n_test
-    Set.fftfreq(i).args = {int64(args.N(i)), args.T(i)};
-    Set.fftfreq(i).out = {fftfreq(args.N(i), args.T(i))};
+    N = args.N(i);
+    T = args.T(i);
+    Set.fftfreq(i).args = {int64(N), T};
+    Set.fftfreq(i).out = {fftfreq(N, T)};
 end
 
-% %% EPSWATER
-% % Set inputs
-% f = [1, 2];
-% T = [20, 30];
-% 
-% % Generate output
-% Init = cell(length(f), length(T));
+%% EPSWATER
+% Set inputs
+f = [1, 2];
+T = [20, 30];
+args = combinations(f, T);
+n_test = height(args);
+
+% Generate output
+Init = cell(n_test, 1);
+Set.epswater = struct('args', Init, 'out', Init);
+for i = 1:n_test
+    f = args.f(i);
+    T = args.T(i);
+    Set.epswater(i).args = {f, T};
+    Set.epswater(i).out = {epswater(f, T)};
+end
+
 % Set.epswater = struct('f', Init, 'T', Init, 'epsR', Init, 'epsI', Init);
 % for i = 1:length(f)
 %     for j = 1:length(T)

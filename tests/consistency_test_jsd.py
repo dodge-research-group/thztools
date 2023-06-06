@@ -16,7 +16,7 @@ from thztools import (
 )
 
 
-FUNC_DICT = {"fftfreq": fftfreq}
+FUNC_DICT = {"fftfreq": fftfreq, "epswater": epswater}
 cur_path = pathlib.Path(__file__).parents[1].resolve()
 f_path = cur_path / "matlab" / "thztools_test_data.mat"
 
@@ -42,6 +42,10 @@ def get_matlab_tests():
                     out_val = np.squeeze(f_obj[out_val_ref][()])
                     if out_val.shape == ():
                         out_val = out_val[()]
+                    if (out_val.dtype.names is not None
+                            and 'real' in out_val.dtype.names
+                            and 'imag' in out_val.dtype.names):
+                        out_val = out_val['real'] + 1j * out_val['imag']
                     out_val_list.append(out_val)
                 test_list.append([func_name, args_val_list, out_val_list])
     return test_list
@@ -58,54 +62,8 @@ def test_matlab_result(get_test):
     args = get_test[1]
     matlab_out = get_test[2]
     python_out = func(*args)
-    np.testing.assert_allclose(*matlab_out, *python_out)
-# @pytest.fixture(params=get_data_dict())
-# def test_func(request):
-#     return request.param
+    np.testing.assert_allclose(*matlab_out, python_out)
 
-
-# @pytest.fixture(params=get_param_list("fftfreq"))
-# def get_data(request):
-#     return request.param
-#
-#
-# def test_fftfreq(get_params):
-#     n = get_params[0]
-#     t = get_params[1]
-#     f = get_params[2]
-#     fpy = fftfreq(int(n), t)
-#     np.testing.assert_allclose(f, fpy)
-#
-#
-# def test_fftfreq():
-#     cur_path = pathlib.Path(__file__).parent.resolve()
-#     fname = cur_path / "test_files" / "fftfreq_test_data.mat"
-#
-#     with h5py.File(fname, "r") as file:
-#         # Get HDF5 group for original MATLAB structure array
-#         f_set = file["Set"]["fftfreq"]
-#         # Each field has the same size; use one to get dimensions
-#         ni, nj = f_set["N"].shape
-#
-#         # Test all values in the array
-#         for i in range(0, ni):
-#             for j in range(0, nj):
-#                 # The elements of f_set are object references that point to
-#                 # the values in the MATLAB structure array, so to access them
-#                 # we use the syntax file[obj_ref], and to convert the HDF5
-#                 # dataset object to a ndarray we use file[obj_ref][()].
-#                 # MATLAB uses 2D arrays for scalars and vectors, so apply
-#                 # np.squeeze to reduce dimensions.
-#                 n = np.squeeze(file[f_set["N"][i, j]][()])
-#                 t = np.squeeze(file[f_set["T"][i, j]][()])
-#                 y = np.squeeze(file[f_set["f"][i, j]][()])
-#                 # Convert n to integer type for fftfreq
-#                 n = int(n)
-#                 # Compute fftfreq and compare with MATLAB output
-#                 fpy = fftfreq(n, t)
-#                 np.testing.assert_allclose(y, fpy)
-#
-#
 # def test_noisevar():
 #     cur_path = pathlib.Path(__file__).parent.resolve()
 #     fname = cur_path / "test_files" / "noisevar_test_data.mat"
@@ -125,11 +83,13 @@ def test_matlab_result(get_test):
 #                     sigma = np.array(
 #                         file[file_set["noisevar"]["sigma"][i, j, k]]
 #                     )[0]
-#                     mu = np.array(file[file_set["noisevar"]["mu"][i, j, k]])[0]
+#                     mu = np.array(file[file_set["noisevar"]["mu"][i, j,
+#                     k]])[0]
 #                     t = np.array(file[file_set["noisevar"]["T"][i, j, k]])[
 #                         0, 0
 #                     ]
-#                     vmu = np.array(file[file_set["noisevar"]["Vmu"][i, j, k]])[
+#                     vmu = np.array(file[file_set["noisevar"]["Vmu"][i, j,
+#                     k]])[
 #                         0
 #                     ]
 #                     vmupy = noisevar(sigma, mu, t)
@@ -173,8 +133,10 @@ def test_matlab_result(get_test):
 #         for i in range(0, dfn.shape[0]):
 #             for j in range(0, dft.shape[0]):
 #                 for k in range(0, dft0.shape[0]):
-#                     n = np.array(file[file_set["thzgen"]["N"][i, j, k]])[0, 0]
-#                     t = np.array(file[file_set["thzgen"]["T"][i, j, k]])[0, 0]
+#                     n = np.array(file[file_set["thzgen"]["N"][i, j,
+#                     k]])[0, 0]
+#                     t = np.array(file[file_set["thzgen"]["T"][i, j,
+#                     k]])[0, 0]
 #                     t0 = np.array(file[file_set["thzgen"]["t0"][i, j, k]])[
 #                         0, 0
 #                     ]
@@ -281,11 +243,13 @@ def test_matlab_result(get_test):
 #         for i in range(0, ntheta.shape[0]):
 #             for j in range(0, nn.shape[0]):
 #                 for k in range(0, nts.shape[0]):
-#                     theta = np.array(file[file_set["tdtf"]["theta"][i, j, k]])[
+#                     theta = np.array(file[file_set["tdtf"]["theta"][i, j,
+#                     k]])[
 #                         0
 #                     ]
 #                     n = np.array(file[file_set["tdtf"]["N"][i, j, k]])[0, 0]
-#                     ts = np.array(file[file_set["tdtf"]["ts"][i, j, k]])[0, 0]
+#                     ts = np.array(file[file_set["tdtf"]["ts"][i, j,
+#                     k]])[0, 0]
 #                     h = np.array(file[file_set["tdtf"]["h"][i, j, k]])
 #                     hpy = tdtf(fun, theta, n, ts)
 #                     h = np.transpose(h)
@@ -337,7 +301,8 @@ def test_matlab_result(get_test):
 #                     #     file[func_set['tdnll']['gradnll'][k, j, i]])[0]
 #                     [nll_py, _] = tdnll(x, param, varargin)
 #                     np.testing.assert_allclose(nll_py, nll)
-#                     # np.testing.assert_allclose(gradnllPy, gradnll, rtol=1e-3)
+#                     # np.testing.assert_allclose(gradnllPy, gradnll,
+#                     rtol=1e-3)
 #
 #
 # def test_tdnoisefit():

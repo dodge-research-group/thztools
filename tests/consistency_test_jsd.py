@@ -1,7 +1,7 @@
-import pathlib
-
 import h5py  # type: ignore
 import numpy as np
+import pathlib
+import pytest
 
 # import matplotlib.pyplot as plt
 from thztools import (
@@ -16,84 +16,120 @@ from thztools import (
 )
 
 
-cur_path = pathlib.Path(__file__).parent.resolve()
-fname = cur_path / 'test_files' / 'thztools_test_data.mat'
-
-
-# The matfile_obj opens the matfile for access to all tests in the module and
-# closes the file upon completion of all tests
-@pytest.fixture(scope="module")
-def matfile_obj():
-    print("\nOpening file")
-    f_obj = h5py.File(fname, 'r')
-    yield f_obj
-    print("\nClosing file")
-    f_obj.close()
-
-
-@pytest.fixture()
-def func_set(matfile_obj, request):
-    marker = request.node.get_closest_marker("func_name")
-    if marker is None:
-        raise Exception("func_set fixture needs a function name")
-    else:
-        f_set = matfile_obj["Set"][marker.args[0]]
-    return f_set
-
-
-@pytest.fixture()
-def var_set(func_set, request):
-    marker = request.node.get_closest_marker("var_name")
-    if marker is None:
-        raise Exception("var_set fixture needs a variable name")
-    else:
-        var_set = np.array(func_set[marker.args[0]]).flatten()
-    return var_set
-
-
-@pytest.fixture()
-def func_var_names(func_set):
-    return list(func_set.keys())
-
-
-@pytest.fixture()
-def func_size(func_set, func_var_names):
-    return func_set[func_var_names[0]].size
+FUNC_DICT = {"fftfreq": fftfreq}
+cur_path = pathlib.Path(__file__).parents[1].resolve()
+fname = cur_path / "matlab" / "thztools_test_data.mat"
+print(fname)
 
 
 def get_param_list(set_name):
+    # Initiate parameter list
     param_list = []
-    c_path = pathlib.Path(__file__).parent.resolve()
-    f_name = c_path / 'test_files' / 'thztools_test_data.mat'
-    with h5py.File(f_name, 'r') as f:
+    with h5py.File(fname, 'r') as f:
+        # Get HDF5 group for original MATLAB structure array
         f_set = f["Set"][set_name]
+        # Get structure field names
         k = list(f_set.keys())
+        # Loop through field names
         for item in k:
+            # Get pointers to variables associated with a given field
             refs = np.array(f_set[item]).flatten()
             var_list = []
+            # Include variables for each pointer in var_list
             for ref in refs:
                 var = np.squeeze(f[ref][()])
                 if var.shape == ():
                     var = var[()]
                 var_list.append(var)
+            # Append variable list for the current field
             param_list.append(var_list)
+        # Transpose param_list for sequential calls from test
         param_list = list(zip(*param_list))
     return param_list
 
 
-@pytest.fixture(params=get_param_list("fftfreq"))
-def get_params(request):
-    return request.param
+def get_data_dict():
+    data_dict = dict()
+    with h5py.File(fname, 'r') as f:
+        # Get function names
+        func_list = list(f["Set"].keys())
+        # Loop over functions
+        for func_name in func_list:
+            # Initiate parameter list
+            param_list = []
+            # Get HDF5 group for original MATLAB structure array
+            func_group = f["Set"][func_name]
+            # Get structure field names
+            field_list = list(func_group.keys())
+            # Loop through field names
+            for field in field_list:
+                # Get pointers to variables associated with a given field
+                refs = np.array(func_group[field]).flatten()
+                var_list = []
+                # Include variable at each pointer in var_list
+                for ref in refs:
+                    var = np.squeeze(f[ref][()])
+                    if var.shape == ():
+                        var = var[()]
+                    var_list.append(var)
+                # Append variable list for the current field
+                param_list.append(var_list)
+            # Transpose param_list for sequential calls from test
+            param_list = list(zip(*param_list))
+            data_dict[func_name] = param_list
+    return data_dict
 
 
-# @pytest.mark.func_name("fftfreq")
-def test_fftfreq(get_params):
-    n = get_params[0]
-    t = get_params[1]
-    f = get_params[2]
-    fpy = fftfreq(int(n), t)
-    np.testing.assert_allclose(f, fpy)
+def get_matlab_tests():
+    results = []
+    with h5py.File(fname, 'r') as f:
+        # Get function names
+        func_list = list(f["Set"].keys())
+        # Loop over functions
+        for func_name in func_list:
+            # Initiate parameter list
+            param_list = []
+            # Get HDF5 group for original MATLAB structure array
+            func_group = f["Set"][func_name]
+            # Get structure field names
+            field_list = list(func_group.keys())
+            # Loop through field names
+            for field in field_list:
+                # Get pointers to variables associated with a given field
+                refs = np.array(func_group[field]).flatten()
+                var_list = []
+                # Include variable at each pointer in var_list
+                for ref in refs:
+                    var = np.squeeze(f[ref][()])
+                    if var.shape == ():
+                        var = var[()]
+                    var_list.append(var)
+                # Append variable list for the current field
+                param_list.append(var_list)
+            # Transpose param_list for sequential calls from test
+            param_list = list(zip([func_name] * len(param_list[0]),
+                                  *param_list))
+            results.append(param_list)
+    return results
 
+
+# @pytest.fixture(params=get_data_dict())
+# def test_func(request):
+#     return request.param
+
+
+# @pytest.fixture(params=get_param_list("fftfreq"))
+# def get_data(request):
+#     return request.param
+#
+#
+# def test_fftfreq(get_params):
+#     n = get_params[0]
+#     t = get_params[1]
+#     f = get_params[2]
+#     fpy = fftfreq(int(n), t)
+#     np.testing.assert_allclose(f, fpy)
+#
 #
 # def test_fftfreq():
 #     cur_path = pathlib.Path(__file__).parent.resolve()

@@ -34,16 +34,6 @@ for i = 1:n_test
     Set.epswater(i).out = {epswater(f, T)};
 end
 
-% Set.epswater = struct('f', Init, 'T', Init, 'epsR', Init, 'epsI', Init);
-% for i = 1:length(f)
-%     for j = 1:length(T)
-%         Set.epswater(i,j).f = f(i);
-%         Set.epswater(i,j).T = T(j);
-%         Set.epswater(i,j).epsR = real(epswater(f(i), T(j)));
-%         Set.epswater(i,j).epsI = imag(epswater(f(i), T(j)));
-%     end
-% end
-% 
 % %% COSTFUNLSQ
 % % Set required inputs
 % fun = @(theta, wfft) theta(1) * exp(1i * theta(2) * wfft);
@@ -84,7 +74,7 @@ end
 %         end
 %     end
 % end
-% 
+
 % % %% TDNLL
 % % % Set required inputs
 % % clc
@@ -125,16 +115,29 @@ end
 % % end
 % % 
 % % 
-% %% THZGEN
-% % Set required inputs
-% N = [256, 257];
-% T = [0.1, 1];
-% t0 = [2.0, 3.0];
-% 
-% % Set optional inputs
-% taur = 0.6;
-% tauc = 0.2;
-% taul = 0.025/sqrt(2*log(2));
+%% THZGEN
+% Set required inputs
+N = [256, 257];
+T = [0.1, 1];
+t0 = [2.0, 3.0];
+args = combinations(N, T, t0);
+n_test = height(args);
+
+% Set optional inputs
+taur = 0.6;
+tauc = 0.2;
+taul = 0.025/sqrt(2*log(2));
+
+% Generate output
+Init = cell(n_test, 1);
+Set.thzgen = struct('args', Init, 'out', Init);
+for i = 1:n_test
+    N = args.N(i);
+    T = args.T(i);
+    t0 = args.t0(i);
+    Set.thzgen(i).args = {int64(N), T, t0};
+    Set.thzgen(i).out = {thzgen(N, T, t0)};
+end
 % 
 % % Generate output
 % Init = cell(length(N), length(T), length(t0));

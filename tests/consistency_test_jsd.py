@@ -18,101 +18,47 @@ from thztools import (
 
 FUNC_DICT = {"fftfreq": fftfreq}
 cur_path = pathlib.Path(__file__).parents[1].resolve()
-fname = cur_path / "matlab" / "thztools_test_data.mat"
-print(fname)
-
-
-def get_param_list(set_name):
-    # Initiate parameter list
-    param_list = []
-    with h5py.File(fname, 'r') as f:
-        # Get HDF5 group for original MATLAB structure array
-        f_set = f["Set"][set_name]
-        # Get structure field names
-        k = list(f_set.keys())
-        # Loop through field names
-        for item in k:
-            # Get pointers to variables associated with a given field
-            refs = np.array(f_set[item]).flatten()
-            var_list = []
-            # Include variables for each pointer in var_list
-            for ref in refs:
-                var = np.squeeze(f[ref][()])
-                if var.shape == ():
-                    var = var[()]
-                var_list.append(var)
-            # Append variable list for the current field
-            param_list.append(var_list)
-        # Transpose param_list for sequential calls from test
-        param_list = list(zip(*param_list))
-    return param_list
-
-
-def get_data_dict():
-    data_dict = dict()
-    with h5py.File(fname, 'r') as f:
-        # Get function names
-        func_list = list(f["Set"].keys())
-        # Loop over functions
-        for func_name in func_list:
-            # Initiate parameter list
-            param_list = []
-            # Get HDF5 group for original MATLAB structure array
-            func_group = f["Set"][func_name]
-            # Get structure field names
-            field_list = list(func_group.keys())
-            # Loop through field names
-            for field in field_list:
-                # Get pointers to variables associated with a given field
-                refs = np.array(func_group[field]).flatten()
-                var_list = []
-                # Include variable at each pointer in var_list
-                for ref in refs:
-                    var = np.squeeze(f[ref][()])
-                    if var.shape == ():
-                        var = var[()]
-                    var_list.append(var)
-                # Append variable list for the current field
-                param_list.append(var_list)
-            # Transpose param_list for sequential calls from test
-            param_list = list(zip(*param_list))
-            data_dict[func_name] = param_list
-    return data_dict
+f_path = cur_path / "matlab" / "thztools_test_data.mat"
 
 
 def get_matlab_tests():
-    results = []
-    with h5py.File(fname, 'r') as f:
-        # Get function names
-        func_list = list(f["Set"].keys())
-        # Loop over functions
-        for func_name in func_list:
-            # Initiate parameter list
-            param_list = []
-            # Get HDF5 group for original MATLAB structure array
-            func_group = f["Set"][func_name]
-            # Get structure field names
-            field_list = list(func_group.keys())
-            # Loop through field names
-            for field in field_list:
-                # Get pointers to variables associated with a given field
-                refs = np.array(func_group[field]).flatten()
-                var_list = []
-                # Include variable at each pointer in var_list
-                for ref in refs:
-                    var = np.squeeze(f[ref][()])
-                    if var.shape == ():
-                        var = var[()]
-                    var_list.append(var)
-                # Append variable list for the current field
-                param_list.append(var_list)
-            # Transpose param_list for sequential calls from test
-            param_list = list(zip([func_name] * len(param_list[0]),
-                                  *param_list))
-            results.append(param_list)
-    return results
+    with h5py.File(f_path, "r") as f_obj:
+        func_names = list(f_obj['Set'].keys())
+        test_list = []
+        for func_name in func_names:
+            arg_refs = f_obj['Set'][func_name]['args'][()].flatten()
+            out_refs = f_obj['Set'][func_name]['out'][()].flatten()
+            for arg_ref, out_ref in zip(arg_refs, out_refs):
+                args_val_list = []
+                out_val_list = []
+                arg_val_refs = f_obj[arg_ref][()].flatten()
+                for arg_val_ref in arg_val_refs:
+                    arg_val = np.squeeze(f_obj[arg_val_ref][()])
+                    if arg_val.shape == ():
+                        arg_val = arg_val[()]
+                    args_val_list.append(arg_val)
+                out_val_refs = f_obj[out_ref][()].flatten()
+                for out_val_ref in out_val_refs:
+                    out_val = np.squeeze(f_obj[out_val_ref][()])
+                    if out_val.shape == ():
+                        out_val = out_val[()]
+                    out_val_list.append(out_val)
+                test_list.append([func_name, args_val_list, out_val_list])
+    return test_list
 
 
+@pytest.fixture(params=get_matlab_tests())
+def get_test(request):
+    return request.param
+
+
+def test_matlab_result(get_test):
+    func_name = get_test[0]
+    func = FUNC_DICT[func_name]
+    args = get_test[1]
+    matlab_out = get_test[2]
+    python_out = func(*args)
+    np.testing.assert_allclose(*matlab_out, *python_out)
 # @pytest.fixture(params=get_data_dict())
 # def test_func(request):
 #     return request.param

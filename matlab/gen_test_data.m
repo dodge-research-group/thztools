@@ -2,7 +2,7 @@
 
 %% FFTFREQ
 % Set inputs
-N = int64([4, 5]);
+N = [4, 5];
 T = [0.1, 1];
 args = combinations(N, T);
 n_test = height(args);
@@ -11,8 +11,8 @@ n_test = height(args);
 Init = cell(n_test, 1);
 Set.fftfreq = struct('args', Init, 'out', Init);
 for i = 1:n_test
-    Set.fftfreq(i).args = {args.N(i), args.T(i)};
-    Set.fftfreq(i).out = fftfreq(args.N(i), args.T(i));
+    Set.fftfreq(i).args = {int64(args.N(i)), args.T(i)};
+    Set.fftfreq(i).out = {fftfreq(args.N(i), args.T(i))};
 end
 
 % %% EPSWATER

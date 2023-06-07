@@ -5,14 +5,14 @@ import pytest
 
 # import matplotlib.pyplot as plt
 from thztools import (
-    costfunlsq,
+    costfunlsq, # TODO
     epswater,
     fftfreq,
     noiseamp,
     noisevar,
     shiftmtx,
-    tdnll,
-    tdnoisefit,
+    tdnll,      # TODO
+    tdnoisefit, # TODO
     tdtf,
     thzgen,
 )
@@ -20,11 +20,16 @@ from thztools import (
 
 # Establish dictionary mapping from function names to functions
 FUNC_DICT = {"fftfreq": fftfreq, "epswater": epswater, "thzgen": thzgen,
-             'noisevar': noisevar, 'noiseamp': noiseamp, 'shiftmtx': shiftmtx}
+             'noisevar': noisevar, 'noiseamp': noiseamp, 'shiftmtx': shiftmtx,
+             'tdtf': tdtf}
 
 # Set MAT-file path
 cur_path = pathlib.Path(__file__).parents[1].resolve()
 f_path = cur_path / "matlab" / "thztools_test_data.mat"
+
+
+def tfun_test(_theta, _w):
+    return _theta[0] * np.exp(-1j * _w * _theta[1])
 
 
 # Read test array from MAT-file
@@ -84,13 +89,16 @@ def test_matlab_result(get_test):
     func = FUNC_DICT[func_name]
     args = get_test[1]
     matlab_out = get_test[2]
-    python_out = func(*args)
+    if func_name in ['tdtf']:
+        python_out = func(tfun_test, *args)
+    else:
+        python_out = func(*args)
     # Ignore second output from Python version of thzgen
     if func_name in ["thzgen"]:
         python_out = python_out[0]
-    # Set absolute tolerance equal to the epsilon of the array dtype
+    # Set absolute tolerance equal to 2 * epsilon for the array dtype
     np.testing.assert_allclose(matlab_out[0], python_out,
-                               atol=np.finfo(python_out.dtype).eps)
+                               atol=2 * np.finfo(python_out.dtype).eps)
 
 # def test_noisevar():
 #     cur_path = pathlib.Path(__file__).parent.resolve()

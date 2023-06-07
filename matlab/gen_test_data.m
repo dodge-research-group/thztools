@@ -110,24 +110,6 @@ for i = 1:n_test
 end
 
 
-% 
-% % Generate output
-% Init = cell(size(x,3), size(Param,2), size(varargin,2));
-% Set.tdnll = struct('x', Init, 'Param', Init, 'varargin', Init, 'nll', Init, 'gradnll', Init);
-% 
-% for i = 1:size(x,3)
-%     for j = 1:size(Param,2)
-%         for k = 1:size(varargin,2)
-%             Set.tdnll(i,j,k).x = x(:, :, i);
-%             Set.tdnll(i,j,k).Param = Param(j);
-%             Set.tdnll(i,j,k).varargin = varargin(k);
-%             [Set.tdnll(i,j,k).nll, Set.tdnll(i,j,k).gradnll] = tdnll(x(:, :, i),Param(j),varargin(k));
-%             disp(Set.tdnll(i,j,k).nll)
-%         end
-%     end
-% end
-
-
 %% THZGEN
 % Set required inputs
 N = [256, 257];
@@ -241,24 +223,64 @@ for i = 1:n_test
 end
 
 
-% %% TDNOISEFIT    
-% % Set required inputs
-% clc
-% N = 100;
-% M = 50;
-% ts = 0.1;
-% 
-% x1 = thzgen(N, ts, N*ts/2);
-% xIdeal = x1(:, ones(M,1));
-% 
-% sAlpha = 1e-1;
-% sBeta = 1e-2;
-% sTau = 1e-3;
-% noise = sqrt(sAlpha^2 + (sBeta .* xIdeal).^2 + sTau).*randn(N,M);
-% 
-% x = xIdeal + noise;
-% 
-% varargin = [struct() struct()];
+%% TDNOISEFIT    
+% Set required inputs
+N = 100;
+M = 50;
+ts = 0.1;
+
+x1 = thzgen(N, ts, N*ts/2);
+xIdeal = x1(:, ones(M,1));
+
+sAlpha = 1e-1;
+sBeta = 1e-2;
+sTau = 1e-3;
+noise = noiseamp([sAlpha, sBeta, sTau], xIdeal, ts).*randn(N,M);
+
+x = xIdeal + noise;
+
+% Set optional inputs
+% Fix structure
+Fix = struct();
+Fix.logv = 0;
+Fix.mu = 0;
+Fix.A = 0;
+Fix.eta = 0;
+
+% Ignore structure
+Ignore = struct();
+Ignore.A = 1;
+Ignore.eta = 0;
+
+varargin = [struct() struct()];
+
+for i = 1:1:length(varargin)
+    % Initial parameters
+    varargin(i).v0 = rand(3,1);
+    varargin(i).mu0 = x(:, 1);
+    varargin(i).A0 = 1 - 1e-10*ones(M,1);
+    varargin(i).eta0 = 1e-10*ones(M,1);
+    varargin(i).ts = ts;
+    varargin(i).Fix = Fix;
+    varargin(i).Ignore = Ignore;
+end
+
+% Define combinations
+args = combinations(varargin);
+n_test = height(args);
+
+% Generate output
+Init = cell(n_test, 1);
+Set.tdnoisefit = struct('args', Init, 'out', Init);
+for i = 1:n_test
+    varargin = args.varargin(i);
+    Set.tdnoisefit(i).args = {x, varargin.v0, varargin.mu0, varargin.A0,...
+        varargin.eta0, varargin.ts};
+    P = tdnoisefit(x, varargin);
+    Set.tdnoisefit(i).out = {P.var, P.mu, P.A, P.eta};
+end
+
+
 % paramForPy = [struct() struct()];
 % fixForPy = [struct() struct()];
 % ignoreForPy = [struct() struct()];
@@ -304,7 +326,7 @@ end
 % Set.tdnoisefit = struct('x', Init, 'paramForPy', Init,  ...
 %     'fixForPy', Init, 'ignoreForPy', Init, 'P', Init, 'fval', Init, ...
 %     'Diagnostic', Init);
-% 
+
 % for i = 1:size(x,3)
 %     for j = 1:size(varargin,2)
 %         Set.tdnoisefit(i,j).x = x(:, :, i);

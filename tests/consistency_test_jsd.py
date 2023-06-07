@@ -21,7 +21,7 @@ from thztools import (
 # Establish dictionary mapping from function names to functions
 FUNC_DICT = {"fftfreq": fftfreq, "epswater": epswater, "thzgen": thzgen,
              'noisevar': noisevar, 'noiseamp': noiseamp, 'shiftmtx': shiftmtx,
-             'tdtf': tdtf}
+             'tdtf': tdtf, 'costfunlsq': costfunlsq}
 
 # Set MAT-file path
 cur_path = pathlib.Path(__file__).parents[1].resolve()
@@ -89,7 +89,7 @@ def test_matlab_result(get_test):
     func = FUNC_DICT[func_name]
     args = get_test[1]
     matlab_out = get_test[2]
-    if func_name in ['tdtf']:
+    if func_name in ['tdtf', 'costfunlsq']:
         python_out = func(tfun_test, *args)
     else:
         python_out = func(*args)

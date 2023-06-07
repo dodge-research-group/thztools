@@ -34,12 +34,38 @@ for i = 1:n_test
     Set.epswater(i).out = {epswater(f, T)};
 end
 
-% %% COSTFUNLSQ
-% % Set required inputs
-% fun = @(theta, wfft) theta(1) * exp(1i * theta(2) * wfft);
-% theta = rand(2, 3);
-% N = 100;
-% ampSigma = 1e-5;
+%% COSTFUNLSQ
+% Set required inputs
+N = 100;
+t0 = 1;
+fun = @(theta, wfft) theta(1) * exp(-1i * theta(2) * wfft);
+sigma = {[1e-5, 0, 0], [1e-5, 1e-2, 0], [1e-5, 1e-2, 1e-3]};
+theta = mat2cell(rand(2, 3), 2, ones(1,3));
+ts = [0.1, 1];
+
+args = combinations(sigma, theta, ts);
+n_test = height(args);
+
+% Generate output
+Init = cell(n_test, 1);
+Set.costfunlsq = struct('args', Init, 'out', Init);
+for i = 1:n_test
+    sigma = args.sigma{i};
+    theta = args.theta{i};
+    ts = args.ts(i);
+    wfft = 2*pi*fftfreq(N, ts);
+    x = thzgen(N, t0, ts);
+    y = tdtf(fun, theta, N, ts)*x;
+    sigmax = noiseamp(sigma, x, ts);
+    sigmay = noiseamp(sigma, y, ts);
+    xx = x + sigmax.*randn(N, 1);
+    yy = y + sigmay.*randn(N, 1);
+    Set.costfunlsq(i).args = {theta, xx, yy, sigmax, sigmay, ts};
+    Set.costfunlsq(i).out = {costfunlsq(fun, theta, xx, yy, sigmax, ...
+        sigmay, wfft)};
+end
+
+% xx = thzgen(N, 1, 0.1);
 % xx = [linspace(0, 10, N)' linspace(0, 10, N)' linspace(0, 10, N)'];
 % yy = [thzgen(N, 1, 1) thzgen(N, 2, 2) thzgen(N, 3, 3)] + ampSigma*rand(N, 3);
 % wfft = 2*pi*[fftfreq(N, 1) fftfreq(N, 2) fftfreq(N, 3)];

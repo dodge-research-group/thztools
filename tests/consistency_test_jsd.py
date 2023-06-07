@@ -10,6 +10,7 @@ from thztools import (
     fftfreq,
     noiseamp,
     noisevar,
+    shiftmtx,
     tdnll,
     tdnoisefit,
     tdtf,
@@ -19,7 +20,7 @@ from thztools import (
 
 # Establish dictionary mapping from function names to functions
 FUNC_DICT = {"fftfreq": fftfreq, "epswater": epswater, "thzgen": thzgen,
-             'noisevar': noisevar, 'noiseamp': noiseamp}
+             'noisevar': noisevar, 'noiseamp': noiseamp, 'shiftmtx': shiftmtx}
 
 # Set MAT-file path
 cur_path = pathlib.Path(__file__).parents[1].resolve()
@@ -55,7 +56,10 @@ def get_matlab_tests():
                     args_val_list.append(arg_val)
                 out_val_refs = f_obj[out_ref][()].flatten()
                 for out_val_ref in out_val_refs:
-                    out_val = np.squeeze(f_obj[out_val_ref][()])
+                    # MATLAB apparently writes 2D arrays to HDF5 files as
+                    # transposed C-order arrays, so we need to transpose them
+                    # back after reading them in.
+                    out_val = np.squeeze(f_obj[out_val_ref][()]).T
                     # Convert scalar arrays to scalars
                     if out_val.shape == ():
                         out_val = out_val[()]
@@ -84,7 +88,9 @@ def test_matlab_result(get_test):
     # Ignore second output from Python version of thzgen
     if func_name in ["thzgen"]:
         python_out = python_out[0]
-    np.testing.assert_allclose(matlab_out[0], python_out)
+    # Set absolute tolerance equal to the epsilon of the array dtype
+    np.testing.assert_allclose(matlab_out[0], python_out,
+                               atol=np.finfo(python_out.dtype).eps)
 
 # def test_noisevar():
 #     cur_path = pathlib.Path(__file__).parent.resolve()

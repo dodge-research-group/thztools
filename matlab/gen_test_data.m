@@ -177,30 +177,25 @@ for i = 1:n_test
     Set.noiseamp(i).out = {noiseamp(sigma, mu, T)};
 end
 
-% %% SHIFTMTX
-% % Set required inputs
-% tau = [1.0, 2.0];
-% n = [256, 257];
-% ts = [1.0, 2.0];
-% 
-% % Generate output
-% Init = cell(length(tau), length(n), length(ts));
-% Set.shiftmtx = struct('tau', Init, 'n', Init, 'ts', Init, 'h', Init);
-% for i = 1:length(N)
-%     for j = 1:length(t0)
-%         for k = 1:length(w)
-%             for r = 1:length(A)
-%                 for s = 1:length(T)
-%                     Set.shiftmtx(i,j,k).tau = tau(i);
-%                     Set.shiftmtx(i,j,k).n = n(j);
-%                     Set.shiftmtx(i,j,k).ts = ts(k);
-%                     Set.shiftmtx(i,j,k).h = shiftmtx(tau(i), n(j), ts(k));
-%                 end
-%             end
-%         end
-%     end
-% end
-% 
+%% SHIFTMTX
+% Set required inputs
+tau = [1.0, 2.0];
+n = [256, 257];
+ts = [1.0, 2.0];
+args = combinations(tau, n, ts);
+n_test = height(args);
+
+% Generate output
+Init = cell(n_test, 1);
+Set.shiftmtx = struct('args', Init, 'out', Init);
+for i = 1:n_test
+    tau = args.tau(i);
+    n = args.n(i);
+    ts = args.ts(i);
+    Set.shiftmtx(i).args = {tau, int64(n), ts};
+    Set.shiftmtx(i).out = {shiftmtx(tau, n, ts)};
+end
+
 % %% TDTF
 % % Set required inputs
 % theta = ([3.0 4.0;  5.0 6.0])';

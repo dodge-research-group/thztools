@@ -158,50 +158,25 @@ for i = 1:n_test
     Set.noisevar(i).out = {noisevar(sigma, mu, T)};
 end
 
-% % Generate output
-% Init = cell(size(sigma, 2), size(mu, 2), length(T));
-% Set.noisevar = struct('sigma', Init, 'mu', Init, 'T', Init, 'Vmu', Init);
-% for i = 1:size(sigma, 2)
-%     for j = 1:size(mu, 2)
-%         for k = 1:length(T)
-%             Set.noisevar(i,j,k).sigma = sigma(:, i);
-%             Set.noisevar(i,j,k).mu = mu(:, j);
-%             Set.noisevar(i,j,k).T = T(k);
-%             Set.noisevar(i,j,k).Vmu = noisevar(sigma(:, i), mu(:, j), T(k));
-%         end
-%     end
-% end
-% 
-% 
-% 
-% %% PULSEGEN
-% % Set required inputs
-% N = [256, 257];
-% t0 = [2.0, 3.0];
-% w = 1;
-% A = 1;
-% T = 1;
-% 
-% % Generate output
-% Init = cell(length(N), length(t0), length(w),  length(A),  length(T));
-% Set.pulsegen = struct('N', Init, 't0', Init, 'w', Init, 'A', Init, 'T', Init, 'y', Init);
-% for i = 1:length(N)
-%     for j = 1:length(t0)
-%         for k = 1:length(w)
-%             for r = 1:length(A)
-%                 for s = 1:length(T)
-%                     Set.pulsegen(i,j,k,r,s).N = N(i);
-%                     Set.pulsegen(i,j,k,r,s).t0 = t0(j);
-%                     Set.pulsegen(i,j,k,r,s).w = w(k);
-%                     Set.pulsegen(i,j,k,r,s).A = A(r);
-%                     Set.pulsegen(i,j,k,r,s).T = T(s);
-%                     Set.pulsegen(i,j,k,r,s).y = pulsegen(N(i), t0(j), w(k), A(r), T(s));
-%                 end
-%             end
-%         end
-%     end
-% end
-% 
+%% NOISEAMP
+% Set required inputs
+sigma = {[0.5  1.0  1.5]; [6.0 7.0 8.0]; [9.0 5.0 3.0]};
+mu = {[1.0 2.0 3.0 4.0]; [3.0 4.0 5.0 6.0]};
+T = [0.1, 0.2];
+args = combinations(sigma, mu, T);
+n_test = height(args);
+
+% Generate output
+Init = cell(n_test, 1);
+Set.noiseamp = struct('args', Init, 'out', Init);
+for i = 1:n_test
+    sigma = args.sigma{i}(:);
+    mu = args.mu{i}(:);
+    T = args.T(i);
+    Set.noiseamp(i).args = {sigma, mu, T};
+    Set.noiseamp(i).out = {noiseamp(sigma, mu, T)};
+end
+
 % %% SHIFTMTX
 % % Set required inputs
 % tau = [1.0, 2.0];

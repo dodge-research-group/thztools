@@ -8,6 +8,7 @@ from thztools import (
     costfunlsq,
     epswater,
     fftfreq,
+    noiseamp,
     noisevar,
     tdnll,
     tdnoisefit,
@@ -18,7 +19,7 @@ from thztools import (
 
 # Establish dictionary mapping from function names to functions
 FUNC_DICT = {"fftfreq": fftfreq, "epswater": epswater, "thzgen": thzgen,
-             'noisevar': noisevar}
+             'noisevar': noisevar, 'noiseamp': noiseamp}
 
 # Set MAT-file path
 cur_path = pathlib.Path(__file__).parents[1].resolve()

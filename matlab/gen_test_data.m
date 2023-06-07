@@ -4,6 +4,8 @@
 % Set inputs
 N = [4, 5];
 T = [0.1, 1];
+
+% Define combinations
 args = combinations(N, T);
 n_test = height(args);
 
@@ -21,6 +23,8 @@ end
 % Set inputs
 f = [1, 2];
 T = [20, 30];
+
+% Define combinations
 args = combinations(f, T);
 n_test = height(args);
 
@@ -43,6 +47,7 @@ sigma = {[1e-5, 0, 0], [1e-5, 1e-2, 0], [1e-5, 1e-2, 1e-3]};
 theta = mat2cell(rand(2, 3), 2, ones(1,3));
 ts = [0.1, 1];
 
+% Define combinations
 args = combinations(sigma, theta, ts);
 n_test = height(args);
 
@@ -65,80 +70,62 @@ for i = 1:n_test
         sigmay, wfft)};
 end
 
-% xx = thzgen(N, 1, 0.1);
-% xx = [linspace(0, 10, N)' linspace(0, 10, N)' linspace(0, 10, N)'];
-% yy = [thzgen(N, 1, 1) thzgen(N, 2, 2) thzgen(N, 3, 3)] + ampSigma*rand(N, 3);
-% wfft = 2*pi*[fftfreq(N, 1) fftfreq(N, 2) fftfreq(N, 3)];
-% ampSigma = 1e-5;
-% sigmax = ampSigma*rand(N, 3);
-% sigmay = ampSigma*rand(N, 3);
-% 
-% % Set optional inputs
+
+%% TDNLL
+% Set required inputs
+N = 10;
+M = 8;
+x = randn(N, M, 4);
+x = squeeze(mat2cell(x, N, M, ones(1,4)));
+
+% Set optional inputs
+varargin.logv = 0;
+varargin.mu = 0;
+varargin.A = 0;
+varargin.eta = 0;
+
+Param = [struct() struct() struct()];
+for i = 1:1:3
+    Param(i).logv = rand(3,1);
+    Param(i).mu = rand(N,1);
+    Param(i).A = rand(M,1);
+    Param(i).eta = rand(M,1);
+    Param(i).ts = rand();
+    Param(i).D = tdtf(@(theta,w) -1i*w, 0, N, Param(i).ts);
+end
+
+% Define combinations
+args = combinations(x, Param);
+n_test = height(args);
+
+% Generate output
+Init = cell(n_test, 1);
+Set.tdnll = struct('args', Init, 'out', Init);
+for i = 1:n_test
+    x = args.x{i};
+    Param = args.Param(i);
+    Set.tdnll(i).args = {x, Param.logv, Param.mu, Param.A, Param.eta,...
+        Param.ts, Param.D};
+    Set.tdnll(i).out = {tdnll(x, Param, varargin)};
+end
+
+
 % 
 % % Generate output
-% Init = cell(size(theta,2), size(xx,2), size(yy,2), size(sigmax,2), size(sigmay,2), size(wfft,2));
-% Set.costfunlsq = struct('theta', Init, 'xx', Init, 'yy', Init, 'sigmax', Init, ...
-%     'sigmay', Init, 'wfft', Init, 'res', Init);
+% Init = cell(size(x,3), size(Param,2), size(varargin,2));
+% Set.tdnll = struct('x', Init, 'Param', Init, 'varargin', Init, 'nll', Init, 'gradnll', Init);
 % 
-% for i = 1:size(theta,2)
-%     for j = 1:size(xx,2)
-%         for k = 1:size(yy,2)
-%             for l = 1:size(sigmax,2)
-%                 for m = 1:size(sigmay,2)
-%                     for n = 1:size(wfft,2)
-%                         Set.costfunlsq(i,j,k,l,m,n).theta = theta(:, i);
-%                         Set.costfunlsq(i,j,k,l,m,n).xx = xx(:, j);
-%                         Set.costfunlsq(i,j,k,l,m,n).yy = yy(:, k);
-%                         Set.costfunlsq(i,j,k,l,m,n).sigmax = sigmax(:, l);
-%                         Set.costfunlsq(i,j,k,l,m,n).sigmay = sigmay(:, m);
-%                         Set.costfunlsq(i,j,k,l,m,n).wfft = wfft(:, n);
-%                         Set.costfunlsq(i,j,k,l,m,n).res = costfunlsq(fun, theta(:, i), xx(:, j), yy(:, k), ...
-%                             sigmax(:, l), sigmay(:, m), wfft(:, n));
-%                     end
-%                 end
-%             end
+% for i = 1:size(x,3)
+%     for j = 1:size(Param,2)
+%         for k = 1:size(varargin,2)
+%             Set.tdnll(i,j,k).x = x(:, :, i);
+%             Set.tdnll(i,j,k).Param = Param(j);
+%             Set.tdnll(i,j,k).varargin = varargin(k);
+%             [Set.tdnll(i,j,k).nll, Set.tdnll(i,j,k).gradnll] = tdnll(x(:, :, i),Param(j),varargin(k));
+%             disp(Set.tdnll(i,j,k).nll)
 %         end
 %     end
 % end
-
-% % %% TDNLL
-% % % Set required inputs
-% % clc
-% % N = 10;
-% % M = 8;
-% % x = rand(N, M, 4);
-% % Param = [struct() struct() struct()];
-% % varargin = [struct() struct() struct()];
-% % for i = 1:1:3
-% %     Param(i).logv = rand(3,1);
-% %     Param(i).mu = rand(N,1);
-% %     Param(i).A = rand(M,1);
-% %     Param(i).eta = rand(M,1);
-% %     Param(i).ts = rand();
-% %     Param(i).D = tdtf(@(theta,w) -1i*w, 0, N, Param(i).ts);
-% % 
-% %     % Set optional inputs
-% %     varargin(i).logv = 0;
-% %     varargin(i).mu = 0;
-% %     varargin(i).A = 0;
-% %     varargin(i).eta = 0;
-% % end
-% % 
-% % % Generate output
-% % Init = cell(size(x,3), size(Param,2), size(varargin,2));
-% % Set.tdnll = struct('x', Init, 'Param', Init, 'varargin', Init, 'nll', Init, 'gradnll', Init);
-% % 
-% % for i = 1:size(x,3)
-% %     for j = 1:size(Param,2)
-% %         for k = 1:size(varargin,2)
-% %             Set.tdnll(i,j,k).x = x(:, :, i);
-% %             Set.tdnll(i,j,k).Param = Param(j);
-% %             Set.tdnll(i,j,k).varargin = varargin(k);
-% %             [Set.tdnll(i,j,k).nll, Set.tdnll(i,j,k).gradnll] = tdnll(x(:, :, i),Param(j),varargin(k));
-% %             disp(Set.tdnll(i,j,k).nll)
-% %         end
-% %     end
-% % end
 
 
 %% THZGEN
@@ -146,6 +133,8 @@ end
 N = [256, 257];
 T = [0.1, 1];
 t0 = [2.0, 3.0];
+
+% Define combinations
 args = combinations(N, T, t0);
 n_test = height(args);
 
@@ -170,6 +159,8 @@ end
 sigma = {[0.5  1.0  1.5]; [6.0 7.0 8.0]; [9.0 5.0 3.0]};
 mu = {[1.0 2.0 3.0 4.0]; [3.0 4.0 5.0 6.0]};
 T = [0.1, 0.2];
+
+% Define combinations
 args = combinations(sigma, mu, T);
 n_test = height(args);
 
@@ -189,6 +180,8 @@ end
 sigma = {[0.5  1.0  1.5]; [6.0 7.0 8.0]; [9.0 5.0 3.0]};
 mu = {[1.0 2.0 3.0 4.0]; [3.0 4.0 5.0 6.0]};
 T = [0.1, 0.2];
+
+% Define combinations
 args = combinations(sigma, mu, T);
 n_test = height(args);
 
@@ -208,6 +201,8 @@ end
 tau = [1.0, 2.0];
 n = [256, 257];
 ts = [1.0, 2.0];
+
+% Define combinations
 args = combinations(tau, n, ts);
 n_test = height(args);
 
@@ -227,6 +222,8 @@ end
 theta = {[3.0 4.0];  [5.0 6.0]};
 N = [5, 6];
 ts = [0.2, 0.3];
+
+% Define combinations
 args = combinations(theta, N, ts);
 n_test = height(args);
 

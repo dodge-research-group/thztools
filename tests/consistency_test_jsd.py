@@ -17,7 +17,8 @@ from thztools import (
 
 
 # Establish dictionary mapping from function names to functions
-FUNC_DICT = {"fftfreq": fftfreq, "epswater": epswater, "thzgen": thzgen}
+FUNC_DICT = {"fftfreq": fftfreq, "epswater": epswater, "thzgen": thzgen,
+             'noisevar': noisevar}
 
 # Set MAT-file path
 cur_path = pathlib.Path(__file__).parents[1].resolve()

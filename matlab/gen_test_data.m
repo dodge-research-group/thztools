@@ -138,27 +138,26 @@ for i = 1:n_test
     Set.thzgen(i).args = {int64(N), T, t0};
     Set.thzgen(i).out = {thzgen(N, T, t0)};
 end
-% 
-% % Generate output
-% Init = cell(length(N), length(T), length(t0));
-% Set.thzgen = struct('N', Init, 'T', Init, 't0', Init, 'y', Init);
-% for i = 1:length(N)
-%     for j = 1:length(T)
-%         for k = 1:length(t0)
-%             Set.thzgen(i,j,k).N = N(i);
-%             Set.thzgen(i,j,k).T = T(j);
-%             Set.thzgen(i,j,k).t0 = t0(k);
-%             Set.thzgen(i,j,k).y = thzgen(N(i), T(j), t0(k));
-%         end
-%     end
-% end
-% 
-% %% NOISEVAR
-% % Set required inputs
-% sigma = ([0.5  1.0  1.5; 6.0 7.0 8.0; 9.0 5.0 3.0])';
-% mu = ([1.0 2.0 3.0 4.0; 3.0 4.0 5.0 6.0])';
-% T = [0.1, 0.2];
-% 
+
+%% NOISEVAR
+% Set required inputs
+sigma = {[0.5  1.0  1.5]; [6.0 7.0 8.0]; [9.0 5.0 3.0]};
+mu = {[1.0 2.0 3.0 4.0]; [3.0 4.0 5.0 6.0]};
+T = [0.1, 0.2];
+args = combinations(sigma, mu, T);
+n_test = height(args);
+
+% Generate output
+Init = cell(n_test, 1);
+Set.noisevar = struct('args', Init, 'out', Init);
+for i = 1:n_test
+    sigma = args.sigma{i}(:);
+    mu = args.mu{i}(:);
+    T = args.T(i);
+    Set.noisevar(i).args = {sigma, mu, T};
+    Set.noisevar(i).out = {noisevar(sigma, mu, T)};
+end
+
 % % Generate output
 % Init = cell(size(sigma, 2), size(mu, 2), length(T));
 % Set.noisevar = struct('sigma', Init, 'mu', Init, 'T', Init, 'Vmu', Init);

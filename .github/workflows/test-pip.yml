@@ -1,4 +1,4 @@
-name: test
+name: Test pip installations with Hatch
 
 on:
   push:

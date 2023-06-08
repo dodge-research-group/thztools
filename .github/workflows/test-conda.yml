@@ -1,4 +1,4 @@
-name: Python Package using Conda
+name: Test conda installation and upload coverage results to Codecov
 
 on:
   push:

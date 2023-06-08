@@ -1,4 +1,4 @@
-name: pytest-with-coverage
+name: PyTest with coverage conda
 
 on:
   push:

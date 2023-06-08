@@ -1,0 +1,19 @@
+name: thztools
+channels:
+  - conda-forge
+dependencies:
+  - scipy
+  - pandas
+  - jupyter
+  - matplotlib
+  - sphinx
+  - pydata-sphinx-theme
+  - numpydoc
+  - tomli
+  - flake8
+  - pytest-cov
+  - coverage
+  - h5py
+  - pip
+  - pip:
+    - -e .

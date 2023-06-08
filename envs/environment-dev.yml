@@ -1,5 +1,6 @@
 name: thztools
 channels:
+  - defaults # Remove when using mamba
   - conda-forge
 dependencies:
   - scipy

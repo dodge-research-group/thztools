@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import warnings
-from typing import Callable, Tuple, Union
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -7,6 +9,109 @@ import scipy.linalg  # type: ignore
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.typing import ArrayLike
 from scipy.optimize import minimize  # type: ignore
+
+
+class Wave:
+    r"""
+    Signal vector with associated information.
+
+    Attributes
+    ==========
+    signal : ndarray, optional
+        Signal vector. Default is an empty array.
+
+    ts : float, optional
+        Sampling time in ps. Default is 1.0.
+
+    t0 : float, optional
+        Absolute time associated with first data point. Default is 0.0.
+
+    metadata : dict, optional
+        Dictionary of metadata associated with the wave object. Default is an
+        empty dictionary.
+    """
+
+    def __init__(
+        self,
+        signal: ArrayLike = None,
+        ts: float = 1.0,
+        t0: float = 0.0,
+        metadata: dict = None,
+    ) -> None:
+        self.signal = signal
+        self.ts = ts
+        self.t0 = t0
+        self.metadata = metadata
+
+    @property
+    def t(self) -> ArrayLike:
+        r"""
+        Generate array of sampled times.
+
+        Returns
+        -------
+        ndarray
+            Array of sampled times associated with the signal, beginning with
+            t0 and separated by ts.
+        """
+        return
+
+    @property
+    def f(self) -> ArrayLike:
+        r"""
+        Generate array of sampled frequencies.
+
+        Returns
+        -------
+        ndarray
+            Array of frequencies associated with the signal. Generate with
+            numpy.rfftfreq.
+
+        """
+        return
+
+    @property
+    def spectrum(self) -> ArrayLike:
+        r"""
+        Complex spectrum of signal.
+
+        Returns
+        -------
+        ndarray
+            Real Fourier transform of signal. Generate with numpy.rfft
+
+        """
+        return
+
+    @property
+    def psd(self) -> ArrayLike:
+        r"""
+        Power spectral density of signal.
+
+        Returns
+        -------
+        ndarray
+            Power spectral density of signal. Generate with
+            scipy.signal.periodogram. Some of the optional parameters may be
+            useful to include, such as 'window', 'detrend', and 'scaling'.
+
+        """
+        return
+
+    def load(self, filepath: str) -> None:
+        r"""
+        Load Wave object from a data file.
+
+        Parameters
+        ----------
+        filepath : str
+            File path to read.
+
+        Returns
+        -------
+
+        """
+        return
 
 
 def fftfreq(n, t):
@@ -94,9 +199,15 @@ def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
     return np.sqrt(noisevar(sigma, mu, ts))
 
 
-def thzgen(n: int, ts: float, t0: float, a: float = 1.0, taur: float = 0.3,
-           tauc: float = 0.1, fwhm: float = 0.05
-           ) -> Tuple[ArrayLike, ArrayLike]:
+def thzgen(
+    n: int,
+    ts: float,
+    t0: float,
+    a: float = 1.0,
+    taur: float = 0.3,
+    tauc: float = 0.1,
+    fwhm: float = 0.05,
+) -> tuple[ArrayLike, ArrayLike]:
     r"""Simulate a terahertz pulse.
 
     Parameters
@@ -139,7 +250,7 @@ def thzgen(n: int, ts: float, t0: float, a: float = 1.0, taur: float = 0.3,
     f = rfftfreq(n, ts)
 
     w = 2 * np.pi * f
-    ell = np.exp(-((w * taul) ** 2) / 2) / np.sqrt(2 * np.pi * taul ** 2)
+    ell = np.exp(-((w * taul) ** 2) / 2) / np.sqrt(2 * np.pi * taul**2)
     r = 1 / (1 / taur - 1j * w) - 1 / (1 / taur + 1 / tauc - 1j * w)
     s = -1j * w * (ell * r) ** 2 * np.exp(1j * w * t0)
 
@@ -218,13 +329,12 @@ class DataPulse:
 
             # Calculate frequency range
             self.frequency = (
-                                     np.arange(
-                                         np.floor(len(self.time))) / 2 - 1
-                             ).T / (self.time[-1] - self.time[0])
+                np.arange(np.floor(len(self.time))) / 2 - 1
+            ).T / (self.time[-1] - self.time[0])
 
             # Calculate fft
             famp = np.fft.fft(self.amplitude)
-            self.famp = famp[0: int(np.floor(len(famp) / 2))]
+            self.famp = famp[0 : int(np.floor(len(famp) / 2))]
 
 
 def shiftmtx(tau: float, n: int, ts: float = 1) -> ArrayLike:
@@ -262,9 +372,13 @@ def shiftmtx(tau: float, n: int, ts: float = 1) -> ArrayLike:
     return h
 
 
-def airscancorrect(x: ArrayLike, *, a: Union[ArrayLike, None] = None,
-                   eta: Union[ArrayLike, None] = None,
-                   ts: float = 1.0) -> ArrayLike:
+def airscancorrect(
+    x: ArrayLike,
+    *,
+    a: ArrayLike | None = None,
+    eta: ArrayLike | None = None,
+    ts: float = 1.0,
+) -> ArrayLike:
     """Rescales and shifts each column of the matrix x.
 
     Parameters
@@ -291,12 +405,12 @@ def airscancorrect(x: ArrayLike, *, a: Union[ArrayLike, None] = None,
     [n, m] = x.shape
 
     if a is None:
-        a = np.ones((m, ))
+        a = np.ones((m,))
     else:
         a = np.asarray(a)
 
     if eta is None:
-        eta = np.zeros((m, ))
+        eta = np.zeros((m,))
     else:
         eta = np.asarray(eta)
 
@@ -309,8 +423,15 @@ def airscancorrect(x: ArrayLike, *, a: Union[ArrayLike, None] = None,
     return xadj
 
 
-def costfunlsq(fun: Callable, theta: ArrayLike, xx: ArrayLike, yy: ArrayLike,
-               sigmax: ArrayLike, sigmay: ArrayLike, ts: float) -> ArrayLike:
+def costfunlsq(
+    fun: Callable,
+    theta: ArrayLike,
+    xx: ArrayLike,
+    yy: ArrayLike,
+    sigmax: ArrayLike,
+    sigmay: ArrayLike,
+    ts: float,
+) -> ArrayLike:
     r"""Computes the maximum likelihood cost function.
 
     Parameters
@@ -347,7 +468,7 @@ def costfunlsq(fun: Callable, theta: ArrayLike, xx: ArrayLike, yy: ArrayLike,
     h = np.conj(fun(theta, wfft))
 
     ry = yy - irfft(rfft(xx) * h, n=n)
-    vy = np.diag(sigmay ** 2)
+    vy = np.diag(sigmay**2)
 
     htilde = irfft(h, n=n)
 
@@ -553,8 +674,7 @@ def tdnll(x: ArrayLike, param, fix):
     else:
         exp_iweta = np.exp(1j * np.tile(w, m) * np.conj(np.tile(eta, n)).T)
         zeta_f = (
-                np.conj(np.tile(a, n)).T * np.conj(exp_iweta) * np.tile(mu_f,
-                                                                        m)
+            np.conj(np.tile(a, n)).T * np.conj(exp_iweta) * np.tile(mu_f, m)
         )
         zeta = np.real(np.fft.ifft(zeta_f, axis=0))
 
@@ -562,22 +682,22 @@ def tdnll(x: ArrayLike, param, fix):
 
     # Compute residuals and their squares for subsequent computations
     res = x - zeta
-    ressq = res ** 2
+    ressq = res**2
 
     # Simplest case: just variance and signal parameters, A and eta fixed at
     # defaults
     if ignore["a"] and ignore["eta"]:
         dmu = np.real(np.fft.ifft(1j * w * mu_f, axis=0))
         valpha = v[0]
-        vbeta = v[1] * mu ** 2
-        vtau = v[2] * dmu ** 2
+        vbeta = v[1] * mu**2
+        vtau = v[2] * dmu**2
         vtot = valpha + vbeta + vtau
 
         resnormsq = ressq / np.tile(vtot, m)
         nll = (
-                m * n * np.log(2 * np.pi) / 2
-                + (m / 2) * np.sum(np.log(vtot))
-                + np.sum(resnormsq) / 2
+            m * n * np.log(2 * np.pi) / 2
+            + (m / 2) * np.sum(np.log(vtot))
+            + np.sum(resnormsq) / 2
         )
 
         # Compute gradient if requested
@@ -585,21 +705,21 @@ def tdnll(x: ArrayLike, param, fix):
         ngrad = np.sum(gradcalc[0:2] * [[3], [n]])
         gradnll = np.zeros((ngrad, 1))
         nstart = 0
-        dvar = (vtot - np.mean(ressq, axis=1).reshape(n, 1)) / vtot ** 2
+        dvar = (vtot - np.mean(ressq, axis=1).reshape(n, 1)) / vtot**2
         if gradcalc[0]:
             gradnll[nstart] = (m / 2) * np.sum(dvar) * v[0]
-            gradnll[nstart + 1] = (m / 2) * np.sum(mu ** 2 * dvar) * v[1]
-            gradnll[nstart + 2] = (m / 2) * np.sum(dmu ** 2.0 * dvar) * v[2]
+            gradnll[nstart + 1] = (m / 2) * np.sum(mu**2 * dvar) * v[1]
+            gradnll[nstart + 2] = (m / 2) * np.sum(dmu**2.0 * dvar) * v[2]
             nstart = nstart + 3
         if gradcalc[1]:
             # print('mu shape : ', mu.shape)
             # print('dvar shape: ', dvar.shape)
             # print('d shape: ', d.shape)
             # print('Dmu shape: ', dmu.shape)
-            gradnll[nstart: nstart + n] = m * (
-                    v[1] * mu * dvar
-                    + v[2] * np.dot(d.T, (dmu * dvar))
-                    - np.mean(res, axis=1).reshape(n, 1) / vtot
+            gradnll[nstart : nstart + n] = m * (
+                v[1] * mu * dvar
+                + v[2] * np.dot(d.T, (dmu * dvar))
+                - np.mean(res, axis=1).reshape(n, 1) / vtot
             )
 
     # Alternative case: A, eta, or both are not set to defaults
@@ -607,15 +727,15 @@ def tdnll(x: ArrayLike, param, fix):
         dzeta = np.real(np.fft.ifft(1j * np.tile(w, m) * zeta_f, axis=0))
 
         valpha = v[0]
-        vbeta = v[1] * zeta ** 2
-        vtau = v[2] * dzeta ** 2
+        vbeta = v[1] * zeta**2
+        vtau = v[2] * dzeta**2
         vtot = valpha + vbeta + vtau
 
         resnormsq = ressq / vtot
         nll = (
-                m * n * np.log(2 * np.pi) / 2
-                + np.sum(np.log(vtot)) / 2
-                + np.sum(resnormsq) / 2
+            m * n * np.log(2 * np.pi) / 2
+            + np.sum(np.log(vtot)) / 2
+            + np.sum(resnormsq) / 2
         )
 
         # Compute gradient if requested
@@ -624,15 +744,15 @@ def tdnll(x: ArrayLike, param, fix):
         gradnll = np.zeros((ngrad, 1))
         nstart = 0
         reswt = res / vtot
-        dvar = (vtot - ressq) / vtot ** 2
+        dvar = (vtot - ressq) / vtot**2
         if gradcalc[0]:
             # Gradient wrt logv
             gradnll[nstart] = 0.5 * np.sum(dvar) * v[0]
             gradnll[nstart + 1] = (
-                    0.5 * np.sum(zeta.flatten() ** 2 * dvar.flatten()) * v[1]
+                0.5 * np.sum(zeta.flatten() ** 2 * dvar.flatten()) * v[1]
             )
             gradnll[nstart + 2] = (
-                    0.5 * np.sum(dzeta.flatten() ** 2 * dvar.flatten()) * v[2]
+                0.5 * np.sum(dzeta.flatten() ** 2 * dvar.flatten()) * v[2]
             )
             nstart = nstart + 3
         if gradcalc[1]:
@@ -640,7 +760,7 @@ def tdnll(x: ArrayLike, param, fix):
             p = np.fft.fft(v[1] * dvar * zeta - reswt, axis=0) - 1j * v[
                 2
             ] * w * np.fft.fft(dvar * dzeta, axis=0)
-            gradnll[nstart: nstart + n] = np.sum(
+            gradnll[nstart : nstart + n] = np.sum(
                 np.conj(a).T * np.real(np.fft.ifft(exp_iweta * p, axis=0)),
                 axis=1,
             ).reshape(n, 1)
@@ -654,8 +774,8 @@ def tdnll(x: ArrayLike, param, fix):
                     "close to zero "
                 )
                 raise ValueError(msg)
-            gradnll[nstart: nstart + m] = (
-                    np.conj(np.sum(term, axis=0)).reshape(m, 1) / a
+            gradnll[nstart : nstart + m] = (
+                np.conj(np.sum(term, axis=0)).reshape(m, 1) / a
             )
             if not fix["mu"]:
                 gradnll = np.delete(gradnll, nstart)
@@ -666,7 +786,7 @@ def tdnll(x: ArrayLike, param, fix):
             # Gradient wrt eta
             ddzeta = np.real(np.fft.ifft(-np.tile(w, m) ** 2 * zeta_f, axis=0))
             gradnll = np.squeeze(gradnll)
-            gradnll[nstart: nstart + m] = -np.sum(
+            gradnll[nstart : nstart + m] = -np.sum(
                 dvar * (zeta * dzeta * v[1] + dzeta * ddzeta * v[2])
                 - reswt * dzeta,
                 axis=0,
@@ -682,10 +802,10 @@ def tdnll(x: ArrayLike, param, fix):
 
 
 def tdnoisefit(
-        x,
-        param,
-        fix={"logv": False, "mu": False, "a": True, "eta": True},
-        ignore={"a": True, "eta": True},
+    x,
+    param,
+    fix={"logv": False, "mu": False, "a": True, "eta": True},
+    ignore={"a": True, "eta": True},
 ):
     """Computes time-domain noise model parameters.
 
@@ -1015,24 +1135,24 @@ def tdnoisefit(
     pass
 
     if vary_param[1]:
-        diagnostic["err"]["mu"] = err[idxstart: idxstart + n]
+        diagnostic["err"]["mu"] = err[idxstart : idxstart + n]
         idxstart = idxstart + n
     pass
 
     if vary_param[2]:
         if vary_param[1]:
-            diagnostic["err"]["a"] = err[idxstart: idxstart + m - 1]
+            diagnostic["err"]["a"] = err[idxstart : idxstart + m - 1]
             idxstart = idxstart + m - 1
         else:
-            diagnostic["err"]["a"] = err[idxstart: idxstart + m]
+            diagnostic["err"]["a"] = err[idxstart : idxstart + m]
             idxstart = idxstart + m
     pass
 
     if vary_param[3]:
         if vary_param[1]:
-            diagnostic["err"]["eta"] = err[idxstart: idxstart + m - 1]
+            diagnostic["err"]["eta"] = err[idxstart : idxstart + m - 1]
         else:
-            diagnostic["err"]["eta"] = err[idxstart: idxstart + m]
+            diagnostic["err"]["eta"] = err[idxstart : idxstart + m]
     pass
 
     return [p, out.fun, diagnostic]

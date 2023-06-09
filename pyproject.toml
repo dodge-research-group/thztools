@@ -191,8 +191,8 @@ plugins = "numpy.typing.mypy_plugin"
 exclude = [
     "/.github",
     "/docs",
+    "/envs",
     "/examples",
-    "/matlab",
     "/tests",
 ]
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import warnings
 from typing import Callable, Tuple, Union
 
@@ -7,6 +9,106 @@ import scipy.linalg  # type: ignore
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.typing import ArrayLike
 from scipy.optimize import minimize  # type: ignore
+
+
+class Wave:
+    r"""
+    Signal vector with associated information.
+
+    Attributes
+    ==========
+    signal : ndarray, optional
+        Signal vector. Default is an empty array.
+
+    ts : float, optional
+        Sampling time in ps. Default is 1.0.
+
+    t0 : float, optional
+        Absolute time associated with first data point. Default is 0.0.
+
+    metadata : dict, optional
+        Dictionary of metadata associated with the wave object. Default is an
+        empty dictionary.
+    """
+    def __init__(self,
+                 signal: ArrayLike = np.array([]),
+                 ts: float = 1.0,
+                 t0: float = 0.0,
+                 metadata: dict = dict()) -> None:
+        self.signal = signal
+        self.ts = ts
+        self.t0 = t0
+        self.metadata = metadata
+
+    @property
+    def t(self) -> ArrayLike:
+        r"""
+        Generate array of sampled times.
+
+        Returns
+        -------
+        ndarray
+            Array of sampled times associated with the signal, beginning with
+            t0 and separated by ts.
+        """
+        return
+
+    @property
+    def f(self) -> ArrayLike:
+        r"""
+        Generate array of sampled frequencies.
+
+        Returns
+        -------
+        ndarray
+            Array of frequencies associated with the signal. Generate with
+            numpy.rfftfreq.
+
+        """
+        return
+
+    @property
+    def spectrum(self) -> ArrayLike:
+        r"""
+        Complex spectrum of signal.
+
+        Returns
+        -------
+        ndarray
+            Real Fourier transform of signal. Generate with numpy.rfft
+
+        """
+        return
+
+    @property
+    def psd(self) -> ArrayLike:
+        r"""
+        Power spectral density of signal.
+
+        Returns
+        -------
+        ndarray
+            Power spectral density of signal. Generate with
+            scipy.signal.periodogram. Some of the optional parameters may be
+            useful to include, such as 'window', 'detrend', and 'scaling'.
+
+        """
+        return
+
+    def load(self, filepath: str) -> None:
+        r"""
+        Load Wave object from a data file.
+
+        Parameters
+        ----------
+        filepath : str
+            File path to read.
+
+        Returns
+        -------
+
+        """
+        return
 
 
 def fftfreq(n, t):
@@ -262,8 +364,8 @@ def shiftmtx(tau: float, n: int, ts: float = 1) -> ArrayLike:
     return h
 
 
-def airscancorrect(x: ArrayLike, *, a: Union[ArrayLike, None] = None,
-                   eta: Union[ArrayLike, None] = None,
+def airscancorrect(x: ArrayLike, *, a: ArrayLike | None = None,
+                   eta: ArrayLike | None = None,
                    ts: float = 1.0) -> ArrayLike:
     """Rescales and shifts each column of the matrix x.
 

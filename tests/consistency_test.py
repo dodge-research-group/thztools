@@ -1,6 +1,7 @@
+import pathlib
+
 import h5py  # type: ignore
 import numpy as np
-import pathlib
 import pytest
 
 # import matplotlib.pyplot as plt
@@ -20,42 +21,47 @@ from thztools import (
 
 def tdnll_alt(*args):
     x = args[0]
-    param = {'logv': args[1],
-             'mu': args[2],
-             'a': args[3],
-             'eta': args[4],
-             'ts': args[5],
-             'D': args[6]}
-    fix = {'logv': False,
-           'mu': False,
-           'a': False,
-           'eta': False}
+    param = {
+        "logv": args[1],
+        "mu": args[2],
+        "a": args[3],
+        "eta": args[4],
+        "ts": args[5],
+        "D": args[6],
+    }
+    fix = {"logv": False, "mu": False, "a": False, "eta": False}
     return tdnll(x, param, fix)
 
 
 def tdnoisefit_alt(*args):
     x = args[0]
-    param = {'v0': args[1],
-             'mu0': args[2],
-             'a0': args[3],
-             'eta0': args[4],
-             'ts': args[5]}
-    fix = {'logv': False,
-           'mu': False,
-           'a': False,
-           'eta': False}
-    ignore = {'a': True,
-              'eta': False}
+    param = {
+        "v0": args[1],
+        "mu0": args[2],
+        "a0": args[3],
+        "eta0": args[4],
+        "ts": args[5],
+    }
+    fix = {"logv": False, "mu": False, "a": False, "eta": False}
+    ignore = {"a": True, "eta": False}
     out, _, _ = tdnoisefit(x, param, fix, ignore)
-    out_alt = [out['var'], out['mu'], out['a'], out['eta']]
+    out_alt = [out["var"], out["mu"], out["a"], out["eta"]]
     return out_alt
 
 
 # Establish dictionary mapping from function names to functions
-FUNC_DICT = {"fftfreq": fftfreq, "epswater": epswater, "thzgen": thzgen,
-             'noisevar': noisevar, 'noiseamp': noiseamp, 'shiftmtx': shiftmtx,
-             'tdtf': tdtf, 'costfunlsq': costfunlsq, 'tdnll': tdnll_alt,
-             'tdnoisefit': tdnoisefit_alt}
+FUNC_DICT = {
+    "fftfreq": fftfreq,
+    "epswater": epswater,
+    "thzgen": thzgen,
+    "noisevar": noisevar,
+    "noiseamp": noiseamp,
+    "shiftmtx": shiftmtx,
+    "tdtf": tdtf,
+    "costfunlsq": costfunlsq,
+    "tdnll": tdnll_alt,
+    "tdnoisefit": tdnoisefit_alt,
+}
 
 # Set MAT-file path
 cur_path = pathlib.Path(__file__).parents[0].resolve()
@@ -72,15 +78,15 @@ def get_matlab_tests():
         # The MAT-file stores a structure named "Set" with a field for each
         # function in the test set. Get the field names (which are also the
         # function names) and loop over them.
-        func_names = list(f_obj['Set'].keys())
+        func_names = list(f_obj["Set"].keys())
         test_list = []
         for func_name in func_names:
             # The MATLAB inputs and outputs for each test configuration are
             # stored in the HDF5 dataset arrays "args" and "out", respectively.
             # The "[()]" index converts the HDF5 dataset arrays to NumPy
             # arrays for easier manipulation, such as flattening.
-            arg_refs = f_obj['Set'][func_name]['args'][()].flatten()
-            out_refs = f_obj['Set'][func_name]['out'][()].flatten()
+            arg_refs = f_obj["Set"][func_name]["args"][()].flatten()
+            out_refs = f_obj["Set"][func_name]["out"][()].flatten()
             # Get the elements of the "args" and "out" arrays and eliminate
             # extraneous array dimensions.
             for arg_ref, out_ref in zip(arg_refs, out_refs):
@@ -107,10 +113,12 @@ def get_matlab_tests():
                         out_val = out_val[()]
                     # The MAT-file stores complex numbers as tuples with a
                     # composite dtype. Convert these to NumPy complex dtypes.
-                    if (out_val.dtype.names is not None
-                            and 'real' in out_val.dtype.names
-                            and 'imag' in out_val.dtype.names):
-                        out_val = out_val['real'] + 1j * out_val['imag']
+                    if (
+                        out_val.dtype.names is not None
+                        and "real" in out_val.dtype.names
+                        and "imag" in out_val.dtype.names
+                    ):
+                        out_val = out_val["real"] + 1j * out_val["imag"]
                     out_val_list.append(out_val)
                 test_list.append([func_name, args_val_list, out_val_list])
     return test_list
@@ -126,7 +134,7 @@ def test_matlab_result(get_test):
     func = FUNC_DICT[func_name]
     args = get_test[1]
     matlab_out = get_test[2]
-    if func_name in ['tdtf', 'costfunlsq']:
+    if func_name in ["tdtf", "costfunlsq"]:
         python_out = func(tfun_test, *args)
     else:
         python_out = func(*args)
@@ -135,8 +143,8 @@ def test_matlab_result(get_test):
         python_out = python_out[0]
     if func_name != "tdnoisefit":
         # Set absolute tolerance equal to 2 * epsilon for the array dtype
-        np.testing.assert_allclose(matlab_out[0], python_out,
-                                   atol=2 * np.finfo(python_out.dtype).eps)
+        np.testing.assert_allclose(
+            matlab_out[0], python_out, atol=2 * np.finfo(python_out.dtype).eps
+        )
     else:
-        np.testing.assert_allclose(matlab_out[0], python_out,
-                                   atol=1e-2)
+        np.testing.assert_allclose(matlab_out[0], python_out, atol=1e-2)

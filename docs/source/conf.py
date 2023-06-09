@@ -13,15 +13,16 @@
 # The importlib.metadata library is used to import the version number from
 # PyPI using OPTION 2 below. Not needed for OPTION 1.
 import importlib.metadata
-import runpy
+
+# The runpy package is used to import the version number from
+# __about__.py using OPTION 1 below. Not needed for OPTION 2.
+# import runpy
 import sys
 from pathlib import Path
 
 import tomli  # Can use tomllib for python >= 3.11
 
-sys.path.insert(
-    0, (Path(__file__).parents[2] / "src").resolve().as_posix()
-)
+sys.path.insert(0, (Path(__file__).parents[2] / "src").resolve().as_posix())
 
 # -- Project information -----------------------------------------------------
 

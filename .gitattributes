@@ -2,4 +2,4 @@
 * text=auto
 
 # Exclude matlab directory from GitHub language detection
-./tests/matlab/*
+./tests/matlab/* linguist-vendored

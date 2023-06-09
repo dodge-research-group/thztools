@@ -33,8 +33,6 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "jupyter",
-    "matplotlib",
     "pandas",
     "scipy",
 ]
@@ -50,8 +48,10 @@ path = "src/thztools/__about__.py"
 [tool.hatch.envs.default]
 dependencies = [
     "coverage[toml]>=6.5",
-    "pytest",
     "h5py",
+    "jupyter",
+    "matplotlib",
+    "pytest",
 ]
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"

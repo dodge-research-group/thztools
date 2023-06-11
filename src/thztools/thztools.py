@@ -30,7 +30,6 @@ class Wave:
         Dictionary of metadata associated with the wave object. Default is an
         empty dictionary.
     """
-
     def __init__(
         self,
         signal: ArrayLike = None,
@@ -42,6 +41,16 @@ class Wave:
         self.ts = ts
         self.t0 = t0
         self.metadata = metadata
+
+    def __repr__(self):
+        return (f"{self.__class__.__name__}(signal={self.signal.__repr__()}, "
+                f"ts={self.ts}, t0={self.t0}, metadata={self.metadata.__repr__()})")
+
+    def __array__(self, dtype=None):
+        # See
+        # https://numpy.org/doc/stable/user/basics.dispatch.html#basics-dispatch
+        # for details on NumPy custom array containers
+        return self.signal
 
     @property
     def t(self) -> ArrayLike:
@@ -100,7 +109,7 @@ class Wave:
 
     def load(self, filepath: str) -> None:
         r"""
-        Load Wave object from a data file.
+        Load ``Wave`` object from a data file.
 
         Parameters
         ----------
@@ -114,27 +123,27 @@ class Wave:
         return
 
 
-def fftfreq(n, t):
-    """Computes the positive and negative frequencies sampled in the Fast
-    Fourier Transform.
+def fftfreq(n, ts):
+    """Computes the positive and negative frequencies sampled in the FFT.
 
     Parameters
     ----------
     n : int
         Number of time samples
-    t: float
+    ts: float
         Sampling time
 
     Returns
     -------
     f : ndarray
-        Frequency vector (1/ts) of length n containing the sample frequencies.
+        Frequency vector (1/``ts``) of length n containing the sample
+        frequencies.
     """
 
     if n % 2 == 1:
-        f = np.fft.fftfreq(n, t)
+        f = np.fft.fftfreq(n, ts)
     else:
-        f = np.fft.fftfreq(n, t)
+        f = np.fft.fftfreq(n, ts)
         f[int(n / 2)] = -f[int(n / 2)]
 
     return f
@@ -148,10 +157,11 @@ def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
     ----------
     sigma : array_like
         Noise parameter array with shape (3, ). The first element corresponds
-        to the amplitude noise, in signal units (ie, the same units as mu);
+        to the amplitude noise, in signal units (ie, the same units as ``mu``);
         the second element corresponds to multiplicative noise, which is
         dimensionless; and the third element corresponds to timebase noise, in
-        units of signal/time, where the units for time are the same as for t.
+        units of signal/time, where the units for time are the same as for
+        ``ts``.
     mu :  array_like
         Time-domain signal.
     ts : float
@@ -159,7 +169,7 @@ def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
 
     Returns
     -------
-    vmu : ndarray
+    ndarray
         Time-domain noise variance.
     """
     sigma = np.asarray(sigma)
@@ -191,7 +201,7 @@ def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
 
     Returns
     -------
-    sigmamu : ndarray
+    ndarray
         Time-domain noise amplitude, in signal units.
 
     """
@@ -208,7 +218,8 @@ def thzgen(
     tauc: float = 0.1,
     fwhm: float = 0.05,
 ) -> tuple[ArrayLike, ArrayLike]:
-    r"""Simulate a terahertz pulse.
+    r"""
+    Simulate a terahertz pulse.
 
     Parameters
     ----------
@@ -237,14 +248,13 @@ def thzgen(
     Returns
     -------
 
-    y : ndarray
-        signal (u.a)
+    ndarray
+        Signal array.
 
-    t : ndarray
-        timebase
+    ndarray
+        Array of time samples.
 
     """
-
     taul = fwhm / np.sqrt(2 * np.log(2))
 
     f = rfftfreq(n, ts)

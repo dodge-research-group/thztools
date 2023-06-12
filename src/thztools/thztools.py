@@ -812,11 +812,12 @@ def tdnoisefit(
         fix={"logv": False, "mu": False, "a": True, "eta": True},
         ignore={"a": True, "eta": True},
 ):
-    """Computes time-domain noise model parameters.
+    r"""
+    Compute time-domain noise model parameters.
 
-    Computes the noise parameters sigma and the underlying signal vector mu
-    for the data matrix x, where the columns of x are each noisy
-    measurements of mu.
+    Computes the noise parameters sigma and the underlying signal vector ``mu``
+    for the data matrix ``x``, where the columns of ``x`` are each noisy
+    measurements of ``mu``.
 
     Parameters
     ----------
@@ -957,7 +958,7 @@ def tdnoisefit(
     if ignore["a"]:
 
         def setpa(_):
-            return []
+            return None
 
     elif fix["a"]:
 
@@ -993,7 +994,7 @@ def tdnoisefit(
     if ignore["eta"]:
 
         def setpeta(_):
-            return []
+            return None
 
     elif fix["eta"]:
 
@@ -1036,10 +1037,10 @@ def tdnoisefit(
         }
 
     def objective(_p):
-        return tdnll(x, parsein(_p), fix)[0]
+        return tdnll(x, *parsein(_p).values(), *fix.values())[0]
 
     def jacobian(_p):
-        return tdnll(x, parsein(_p), fix)[1]
+        return tdnll(x, *parsein(_p).values(), *fix.values())[1]
 
     mle["objective"] = objective
     out = minimize(mle["objective"], mle["x0"], method="BFGS", jac=jacobian)

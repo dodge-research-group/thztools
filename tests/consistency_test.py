@@ -26,14 +26,6 @@ def tdnll_alt(*args):
 
 
 def tdnoisefit_alt(*args):
-    # x = args[0]
-    # param = {
-    #     "v0": args[1],
-    #     "mu0": args[2],
-    #     "a0": args[3],
-    #     "eta0": args[4],
-    #     "ts": args[5],
-    # }
     kwargs = {"fix_v": False, "fix_mu": False, "fix_a": False,
               "fix_eta": False, "ignore_a": True, "ignore_eta": False}
     out, _, _ = tdnoisefit(*args, **kwargs)

@@ -165,13 +165,18 @@ omit = [
 
 [tool.coverage.paths]
 thztools = ["src/thztools", "*/thztools/src/thztools"]
-tests = ["tests", "*/thztools/tests"]
+#tests = ["tests", "*/thztools/tests"]
 
 [tool.coverage.report]
 exclude_lines = [
     "no cov",
     "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
+]
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
 ]
 
 [tool.hatch.envs.docs]

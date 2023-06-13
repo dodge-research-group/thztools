@@ -1,6 +1,7 @@
 from thztools._util import epswater
 from thztools.thztools import (
     DataPulse,
+    Wave,
     airscancorrect,
     costfunlsq,
     fftfreq,

@@ -1,9 +1,10 @@
 import numpy as np
 from numpy import pi
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 import pytest
 
 from thztools.thztools import (
+    Wave,
     # costfunlsq,
     fftfreq,
     noisevar,
@@ -14,6 +15,36 @@ from thztools.thztools import (
     # tdtf,
     thzgen,
 )
+
+
+class TestWave:
+    @pytest.fixture()
+    def default_wave_obj(self):
+        return Wave()
+
+    @pytest.mark.parametrize(
+        "kwargs",
+        [dict(),
+         dict(signal=np.array([])),
+         dict(ts=1.0),
+         dict(t0=0.0),
+         dict(metadata=dict())
+         ],
+    )
+    def test_definition(self, kwargs, default_wave_obj):
+        wv = Wave(**kwargs)
+        assert_array_almost_equal(default_wave_obj.signal, wv.signal)
+        assert np.isclose(wv.ts, default_wave_obj.ts)
+        assert np.isclose(wv.t0, default_wave_obj.t0)
+        assert wv.metadata == default_wave_obj.metadata
+
+    def test_repr_method(self, default_wave_obj):
+        repr_text = ("Wave(signal=array([], dtype=float64), ts=1.0, "
+                     "t0=0.0, metadata={})")
+        assert str(default_wave_obj) == repr_text
+
+    def test_array_method(self, default_wave_obj):
+        assert_array_equal(np.asarray(default_wave_obj), np.array([]))
 
 
 class TestFFTFreq:

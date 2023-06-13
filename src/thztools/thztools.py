@@ -30,7 +30,6 @@ class Wave:
         Dictionary of metadata associated with the wave object. Default is an
         empty dictionary.
     """
-
     def __init__(
             self,
             signal: ArrayLike = None,
@@ -38,17 +37,23 @@ class Wave:
             t0: float = 0.0,
             metadata: dict = None,
     ) -> None:
-        self.signal = signal
+        if signal is None:
+            self.signal = np.array([])
+        else:
+            self.signal = np.asarray(signal)
         self.ts = ts
         self.t0 = t0
-        self.metadata = metadata
+        if metadata is None:
+            self.metadata = dict()
+        else:
+            self.metadata = metadata
 
     def __repr__(self):
         return (f"{self.__class__.__name__}(signal={self.signal.__repr__()}, "
                 f"ts={self.ts}, t0={self.t0}, metadata="
                 f"{self.metadata.__repr__()})")
 
-    def __array__(self, dtype=None):
+    def __array__(self):
         # See
         # https://numpy.org/doc/stable/user/basics.dispatch.html#basics
         # -dispatch

@@ -216,6 +216,7 @@ def thzgen(
         n: int,
         ts: float,
         t0: float,
+        *,
         a: float = 1.0,
         taur: float = 0.3,
         tauc: float = 0.1,

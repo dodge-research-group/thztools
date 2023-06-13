@@ -20,14 +20,24 @@ from thztools import (
 
 
 def tdnll_alt(*args):
-    kwargs = {"fix_logv": False, "fix_mu": False, "fix_a": False,
-              "fix_eta": False}
+    kwargs = {
+        "fix_logv": False,
+        "fix_mu": False,
+        "fix_a": False,
+        "fix_eta": False,
+    }
     return tdnll(*args, **kwargs)
 
 
 def tdnoisefit_alt(*args):
-    kwargs = {"fix_v": False, "fix_mu": False, "fix_a": False,
-              "fix_eta": False, "ignore_a": True, "ignore_eta": False}
+    kwargs = {
+        "fix_v": False,
+        "fix_mu": False,
+        "fix_a": False,
+        "fix_eta": False,
+        "ignore_a": True,
+        "ignore_eta": False,
+    }
     out, _, _ = tdnoisefit(*args, **kwargs)
     out_alt = [out["var"], out["mu"], out["a"], out["eta"]]
     return out_alt

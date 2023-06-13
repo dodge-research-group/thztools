@@ -30,12 +30,13 @@ class Wave:
         Dictionary of metadata associated with the wave object. Default is an
         empty dictionary.
     """
+
     def __init__(
-            self,
-            signal: ArrayLike = None,
-            ts: float = 1.0,
-            t0: float = 0.0,
-            metadata: dict = None,
+        self,
+        signal: ArrayLike = None,
+        ts: float = 1.0,
+        t0: float = 0.0,
+        metadata: dict = None,
     ) -> None:
         if signal is None:
             self.signal = np.array([])
@@ -44,14 +45,16 @@ class Wave:
         self.ts = ts
         self.t0 = t0
         if metadata is None:
-            self.metadata = dict()
+            self.metadata = {}
         else:
             self.metadata = metadata
 
     def __repr__(self):
-        return (f"{self.__class__.__name__}(signal={self.signal.__repr__()}, "
-                f"ts={self.ts}, t0={self.t0}, metadata="
-                f"{self.metadata.__repr__()})")
+        return (
+            f"{self.__class__.__name__}(signal={self.signal.__repr__()}, "
+            f"ts={self.ts}, t0={self.t0}, metadata="
+            f"{self.metadata.__repr__()})"
+        )
 
     def __array__(self):
         # See
@@ -218,14 +221,14 @@ def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
 
 
 def thzgen(
-        n: int,
-        ts: float,
-        t0: float,
-        *,
-        a: float = 1.0,
-        taur: float = 0.3,
-        tauc: float = 0.1,
-        fwhm: float = 0.05,
+    n: int,
+    ts: float,
+    t0: float,
+    *,
+    a: float = 1.0,
+    taur: float = 0.3,
+    tauc: float = 0.1,
+    fwhm: float = 0.05,
 ) -> tuple[ArrayLike, ArrayLike]:
     r"""
     Simulate a terahertz pulse.
@@ -269,7 +272,7 @@ def thzgen(
     f = rfftfreq(n, ts)
 
     w = 2 * np.pi * f
-    ell = np.exp(-((w * taul) ** 2) / 2) / np.sqrt(2 * np.pi * taul ** 2)
+    ell = np.exp(-((w * taul) ** 2) / 2) / np.sqrt(2 * np.pi * taul**2)
     r = 1 / (1 / taur - 1j * w) - 1 / (1 / taur + 1 / tauc - 1j * w)
     s = -1j * w * (ell * r) ** 2 * np.exp(1j * w * t0)
 
@@ -348,13 +351,12 @@ class DataPulse:
 
             # Calculate frequency range
             self.frequency = (
-                                     np.arange(
-                                         np.floor(len(self.time))) / 2 - 1
-                             ).T / (self.time[-1] - self.time[0])
+                np.arange(np.floor(len(self.time))) / 2 - 1
+            ).T / (self.time[-1] - self.time[0])
 
             # Calculate fft
             famp = np.fft.fft(self.amplitude)
-            self.famp = famp[0: int(np.floor(len(famp) / 2))]
+            self.famp = famp[0 : int(np.floor(len(famp) / 2))]
 
 
 def shiftmtx(tau: float, n: int, ts: float = 1) -> ArrayLike:
@@ -393,11 +395,11 @@ def shiftmtx(tau: float, n: int, ts: float = 1) -> ArrayLike:
 
 
 def airscancorrect(
-        x: ArrayLike,
-        *,
-        a: ArrayLike | None = None,
-        eta: ArrayLike | None = None,
-        ts: float = 1.0,
+    x: ArrayLike,
+    *,
+    a: ArrayLike | None = None,
+    eta: ArrayLike | None = None,
+    ts: float = 1.0,
 ) -> ArrayLike:
     """Rescales and shifts each column of the matrix x.
 
@@ -444,13 +446,13 @@ def airscancorrect(
 
 
 def costfunlsq(
-        fun: Callable,
-        theta: ArrayLike,
-        xx: ArrayLike,
-        yy: ArrayLike,
-        sigmax: ArrayLike,
-        sigmay: ArrayLike,
-        ts: float,
+    fun: Callable,
+    theta: ArrayLike,
+    xx: ArrayLike,
+    yy: ArrayLike,
+    sigmax: ArrayLike,
+    sigmay: ArrayLike,
+    ts: float,
 ) -> ArrayLike:
     r"""Computes the maximum likelihood cost function.
 
@@ -488,7 +490,7 @@ def costfunlsq(
     h = np.conj(fun(theta, wfft))
 
     ry = yy - irfft(rfft(xx) * h, n=n)
-    vy = np.diag(sigmay ** 2)
+    vy = np.diag(sigmay**2)
 
     htilde = irfft(h, n=n)
 
@@ -573,18 +575,18 @@ def tdtf(fun: Callable, theta: ArrayLike, n: int, ts: float) -> ArrayLike:
 
 
 def tdnll(
-        x: ArrayLike,
-        logv: ArrayLike,
-        mu: ArrayLike,
-        a: ArrayLike | None = None,
-        eta: ArrayLike | None = None,
-        ts: float = 1.0,
-        d: ArrayLike | None = None,
-        fix_logv: bool = False,
-        fix_mu: bool = False,
-        fix_a: bool = False,
-        fix_eta: bool = False
-) -> Tuple[ArrayLike, ArrayLike]:
+    x: ArrayLike,
+    logv: ArrayLike,
+    mu: ArrayLike,
+    a: ArrayLike | None = None,
+    eta: ArrayLike | None = None,
+    ts: float = 1.0,
+    d: ArrayLike | None = None,
+    fix_logv: bool = False,
+    fix_mu: bool = False,
+    fix_a: bool = False,
+    fix_eta: bool = False,
+) -> tuple[ArrayLike, ArrayLike]:
     r"""
     Compute negative log-likelihood for the time-domain noise model.
 
@@ -630,18 +632,22 @@ def tdnll(
     # Parse and validate function inputs
     x = np.asarray(x)
     if x.ndim != 2:
-        raise ValueError("Data array x must be 2D.")
+        msg = "Data array x must be 2D."
+        raise ValueError(msg)
     n, m = x.shape
 
     logv = np.asarray(logv)
     if logv.size != 3:
-        raise ValueError("Noise parameter array logv must have 3 elements.")
+        msg = "Noise parameter array logv must have 3 elements."
+        raise ValueError(msg)
 
     mu = np.asarray(mu)
     if mu.ndim != 1:
-        raise ValueError("Ideal signal vector mu must be 1D.")
+        msg = "Ideal signal vector mu must be 1D."
+        raise ValueError(msg)
     if mu.size != n:
-        raise ValueError("Size of mu is incompatible with data array x.")
+        msg = "Size of mu is incompatible with data array x."
+        raise ValueError(msg)
     mu = np.reshape(mu, (n, 1))
 
     if a is None:
@@ -650,7 +656,8 @@ def tdnll(
     else:
         a = np.asarray(a)
         if a.size != m:
-            raise ValueError("Size of a is incompatible with data array x.")
+            msg = "Size of a is incompatible with data array x."
+            raise ValueError(msg)
     a = np.reshape(a, (m, 1))
 
     if eta is None:
@@ -659,10 +666,12 @@ def tdnll(
     else:
         eta = np.asarray(eta)
         if eta.size != m:
-            raise ValueError("Size of eta is incompatible with data array x.")
+            msg = "Size of eta is incompatible with data array x."
+            raise ValueError(msg)
     eta = np.reshape(eta, (m, 1))
 
     if d is None:
+
         def fun(_, _w):
             return -1j * _w
 
@@ -693,8 +702,7 @@ def tdnll(
     else:
         exp_iweta = np.exp(1j * np.tile(w, m) * np.conj(np.tile(eta, n)).T)
         zeta_f = (
-                np.conj(np.tile(a, n)).T * np.conj(exp_iweta) * np.tile(mu_f,
-                                                                        m)
+            np.conj(np.tile(a, n)).T * np.conj(exp_iweta) * np.tile(mu_f, m)
         )
         zeta = np.real(np.fft.ifft(zeta_f, axis=0))
 
@@ -702,22 +710,22 @@ def tdnll(
 
     # Compute residuals and their squares for subsequent computations
     res = x - zeta
-    ressq = res ** 2
+    ressq = res**2
 
     # Simplest case: just variance and signal parameters, A and eta fixed at
     # defaults
     if ignore_a and ignore_eta:
         dmu = np.real(np.fft.ifft(1j * w * mu_f, axis=0))
         valpha = v[0]
-        vbeta = v[1] * mu ** 2
-        vtau = v[2] * dmu ** 2
+        vbeta = v[1] * mu**2
+        vtau = v[2] * dmu**2
         vtot = valpha + vbeta + vtau
 
         resnormsq = ressq / np.tile(vtot, m)
         nll = (
-                m * n * np.log(2 * np.pi) / 2
-                + (m / 2) * np.sum(np.log(vtot))
-                + np.sum(resnormsq) / 2
+            m * n * np.log(2 * np.pi) / 2
+            + (m / 2) * np.sum(np.log(vtot))
+            + np.sum(resnormsq) / 2
         )
 
         # Compute gradient if requested
@@ -725,21 +733,21 @@ def tdnll(
         ngrad = np.sum(gradcalc[0:2] * [[3], [n]])
         gradnll = np.zeros((ngrad, 1))
         nstart = 0
-        dvar = (vtot - np.mean(ressq, axis=1).reshape(n, 1)) / vtot ** 2
+        dvar = (vtot - np.mean(ressq, axis=1).reshape(n, 1)) / vtot**2
         if gradcalc[0]:
             gradnll[nstart] = (m / 2) * np.sum(dvar) * v[0]
-            gradnll[nstart + 1] = (m / 2) * np.sum(mu ** 2 * dvar) * v[1]
-            gradnll[nstart + 2] = (m / 2) * np.sum(dmu ** 2.0 * dvar) * v[2]
+            gradnll[nstart + 1] = (m / 2) * np.sum(mu**2 * dvar) * v[1]
+            gradnll[nstart + 2] = (m / 2) * np.sum(dmu**2.0 * dvar) * v[2]
             nstart = nstart + 3
         if gradcalc[1]:
             # print('mu shape : ', mu.shape)
             # print('dvar shape: ', dvar.shape)
             # print('d shape: ', d.shape)
             # print('Dmu shape: ', dmu.shape)
-            gradnll[nstart: nstart + n] = m * (
-                    v[1] * mu * dvar
-                    + v[2] * np.dot(d.T, (dmu * dvar))
-                    - np.mean(res, axis=1).reshape(n, 1) / vtot
+            gradnll[nstart : nstart + n] = m * (
+                v[1] * mu * dvar
+                + v[2] * np.dot(d.T, (dmu * dvar))
+                - np.mean(res, axis=1).reshape(n, 1) / vtot
             )
 
     # Alternative case: A, eta, or both are not set to defaults
@@ -747,15 +755,15 @@ def tdnll(
         dzeta = np.real(np.fft.ifft(1j * np.tile(w, m) * zeta_f, axis=0))
 
         valpha = v[0]
-        vbeta = v[1] * zeta ** 2
-        vtau = v[2] * dzeta ** 2
+        vbeta = v[1] * zeta**2
+        vtau = v[2] * dzeta**2
         vtot = valpha + vbeta + vtau
 
         resnormsq = ressq / vtot
         nll = (
-                m * n * np.log(2 * np.pi) / 2
-                + np.sum(np.log(vtot)) / 2
-                + np.sum(resnormsq) / 2
+            m * n * np.log(2 * np.pi) / 2
+            + np.sum(np.log(vtot)) / 2
+            + np.sum(resnormsq) / 2
         )
 
         # Compute gradient if requested
@@ -764,15 +772,15 @@ def tdnll(
         gradnll = np.zeros((ngrad, 1))
         nstart = 0
         reswt = res / vtot
-        dvar = (vtot - ressq) / vtot ** 2
+        dvar = (vtot - ressq) / vtot**2
         if gradcalc[0]:
             # Gradient wrt logv
             gradnll[nstart] = 0.5 * np.sum(dvar) * v[0]
             gradnll[nstart + 1] = (
-                    0.5 * np.sum(zeta.flatten() ** 2 * dvar.flatten()) * v[1]
+                0.5 * np.sum(zeta.flatten() ** 2 * dvar.flatten()) * v[1]
             )
             gradnll[nstart + 2] = (
-                    0.5 * np.sum(dzeta.flatten() ** 2 * dvar.flatten()) * v[2]
+                0.5 * np.sum(dzeta.flatten() ** 2 * dvar.flatten()) * v[2]
             )
             nstart = nstart + 3
         if gradcalc[1]:
@@ -780,7 +788,7 @@ def tdnll(
             p = np.fft.fft(v[1] * dvar * zeta - reswt, axis=0) - 1j * v[
                 2
             ] * w * np.fft.fft(dvar * dzeta, axis=0)
-            gradnll[nstart: nstart + n] = np.sum(
+            gradnll[nstart : nstart + n] = np.sum(
                 np.conj(a).T * np.real(np.fft.ifft(exp_iweta * p, axis=0)),
                 axis=1,
             ).reshape(n, 1)
@@ -794,8 +802,8 @@ def tdnll(
                     "close to zero "
                 )
                 raise ValueError(msg)
-            gradnll[nstart: nstart + m] = (
-                    np.conj(np.sum(term, axis=0)).reshape(m, 1) / a
+            gradnll[nstart : nstart + m] = (
+                np.conj(np.sum(term, axis=0)).reshape(m, 1) / a
             )
             if not fix_mu:
                 gradnll = np.delete(gradnll, nstart)
@@ -806,7 +814,7 @@ def tdnll(
             # Gradient wrt eta
             ddzeta = np.real(np.fft.ifft(-np.tile(w, m) ** 2 * zeta_f, axis=0))
             gradnll = np.squeeze(gradnll)
-            gradnll[nstart: nstart + m] = -np.sum(
+            gradnll[nstart : nstart + m] = -np.sum(
                 dvar * (zeta * dzeta * v[1] + dzeta * ddzeta * v[2])
                 - reswt * dzeta,
                 axis=0,
@@ -822,19 +830,19 @@ def tdnll(
 
 
 def tdnoisefit(
-        x: ArrayLike,
-        v0: ArrayLike | None = None,
-        mu0: ArrayLike | None = None,
-        a0: ArrayLike | None = None,
-        eta0: ArrayLike | None = None,
-        ts: float = 1.0,
-        fix_v: bool = False,
-        fix_mu: bool = False,
-        fix_a: bool = True,
-        fix_eta: bool = True,
-        ignore_a: bool = True,
-        ignore_eta: bool = True
-) -> Tuple[dict, float, dict]:
+    x: ArrayLike,
+    v0: ArrayLike | None = None,
+    mu0: ArrayLike | None = None,
+    a0: ArrayLike | None = None,
+    eta0: ArrayLike | None = None,
+    ts: float = 1.0,
+    fix_v: bool = False,
+    fix_mu: bool = False,
+    fix_a: bool = True,
+    fix_eta: bool = True,
+    ignore_a: bool = True,
+    ignore_eta: bool = True,
+) -> tuple[dict, float, dict]:
     r"""
     Compute time-domain noise model parameters.
 
@@ -897,7 +905,8 @@ def tdnoisefit(
     # Parse and validate function inputs
     x = np.asarray(x)
     if x.ndim != 2:
-        raise ValueError("Data array x must be 2D.")
+        msg = "Data array x must be 2D."
+        raise ValueError(msg)
     n, m = x.shape
 
     if v0 is None:
@@ -905,30 +914,32 @@ def tdnoisefit(
     else:
         v0 = np.asarray(v0)
         if v0.size != 3:
-            raise ValueError(
-                "Noise parameter array logv must have 3 elements."
-            )
+            msg = "Noise parameter array logv must have 3 elements."
+            raise ValueError(msg)
 
     if mu0 is None:
         mu0 = np.mean(x, 1)
     else:
         mu0 = np.asarray(mu0)
         if mu0.size != n:
-            raise ValueError("Size of mu0 is incompatible with data array x.")
+            msg = "Size of mu0 is incompatible with data array x."
+            raise ValueError(msg)
 
     if a0 is None:
         a0 = np.ones(m)
     else:
         a0 = np.asarray(a0)
         if a0.size != m:
-            raise ValueError("Size of a0 is incompatible with data array x.")
+            msg = "Size of a0 is incompatible with data array x."
+            raise ValueError(msg)
 
     if eta0 is None:
         eta0 = np.ones(m)
     else:
         eta0 = np.asarray(eta0)
         if eta0.size != m:
-            raise ValueError("Size of eta0 is incompatible with data array x.")
+            msg = "Size of eta0 is incompatible with data array x."
+            raise ValueError(msg)
 
     mle = {"x0": np.array([])}
     idxstart = 0
@@ -991,9 +1002,7 @@ def tdnoisefit(
 
         idxstart = idxend
     else:
-        mle["x0"] = np.concatenate(
-            (mle["x0"], a0[1:] / a0[0])
-        )
+        mle["x0"] = np.concatenate((mle["x0"], a0[1:] / a0[0]))
         idxend = idxstart + m - 1
         idxrange["a"] = np.arange(idxstart, idxend)
 
@@ -1026,9 +1035,7 @@ def tdnoisefit(
             return _p[idxrange["eta"]]
 
     else:
-        mle["x0"] = np.concatenate(
-            (mle["x0"], eta0[1:] - eta0[0])
-        )
+        mle["x0"] = np.concatenate((mle["x0"], eta0[1:] - eta0[0]))
         idxend = idxstart + m - 1
         idxrange["eta"] = np.arange(idxstart, idxend)
 
@@ -1053,12 +1060,14 @@ def tdnoisefit(
         }
 
     def objective(_p):
-        return tdnll(x, *parsein(_p).values(),
-                     fix_v, fix_mu, fix_a, fix_eta)[0]
+        return tdnll(x, *parsein(_p).values(), fix_v, fix_mu, fix_a, fix_eta)[
+            0
+        ]
 
     def jacobian(_p):
-        return tdnll(x, *parsein(_p).values(),
-                     fix_v, fix_mu, fix_a, fix_eta)[1]
+        return tdnll(x, *parsein(_p).values(), fix_v, fix_mu, fix_a, fix_eta)[
+            1
+        ]
 
     mle["objective"] = objective
     out = minimize(mle["objective"], mle["x0"], method="BFGS", jac=jacobian)
@@ -1159,24 +1168,24 @@ def tdnoisefit(
     pass
 
     if vary_param[1]:
-        diagnostic["err"]["mu"] = err[idxstart: idxstart + n]
+        diagnostic["err"]["mu"] = err[idxstart : idxstart + n]
         idxstart = idxstart + n
     pass
 
     if vary_param[2]:
         if vary_param[1]:
-            diagnostic["err"]["a"] = err[idxstart: idxstart + m - 1]
+            diagnostic["err"]["a"] = err[idxstart : idxstart + m - 1]
             idxstart = idxstart + m - 1
         else:
-            diagnostic["err"]["a"] = err[idxstart: idxstart + m]
+            diagnostic["err"]["a"] = err[idxstart : idxstart + m]
             idxstart = idxstart + m
     pass
 
     if vary_param[3]:
         if vary_param[1]:
-            diagnostic["err"]["eta"] = err[idxstart: idxstart + m - 1]
+            diagnostic["err"]["eta"] = err[idxstart : idxstart + m - 1]
         else:
-            diagnostic["err"]["eta"] = err[idxstart: idxstart + m]
+            diagnostic["err"]["eta"] = err[idxstart : idxstart + m]
     pass
 
     return [p, out.fun, diagnostic]

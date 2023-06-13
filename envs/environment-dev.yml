@@ -11,7 +11,7 @@ dependencies:
   - pydata-sphinx-theme
   - numpydoc
   - tomli
-  - flake8
+  - ruff
   - pytest-cov
   - coverage
   - h5py

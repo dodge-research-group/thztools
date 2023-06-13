@@ -1,14 +1,14 @@
 import numpy as np
+import pytest
 from numpy import pi
 from numpy.testing import assert_array_almost_equal, assert_array_equal
-import pytest
 
 from thztools.thztools import (
     Wave,
     # costfunlsq,
     fftfreq,
-    noisevar,
     noiseamp,
+    noisevar,
     # shiftmtx,
     # tdnll,
     # tdnoisefit,
@@ -24,12 +24,13 @@ class TestWave:
 
     @pytest.mark.parametrize(
         "kwargs",
-        [dict(),
-         dict(signal=np.array([])),
-         dict(ts=1.0),
-         dict(t0=0.0),
-         dict(metadata=dict())
-         ],
+        [
+            {},
+            {"signal": np.array([])},
+            {"ts": 1.0},
+            {"t0": 0.0},
+            {"metadata": {}},
+        ],
     )
     def test_definition(self, kwargs, default_wave_obj):
         wv = Wave(**kwargs)
@@ -39,8 +40,10 @@ class TestWave:
         assert wv.metadata == default_wave_obj.metadata
 
     def test_repr_method(self, default_wave_obj):
-        repr_text = ("Wave(signal=array([], dtype=float64), ts=1.0, "
-                     "t0=0.0, metadata={})")
+        repr_text = (
+            "Wave(signal=array([], dtype=float64), ts=1.0, "
+            "t0=0.0, metadata={})"
+        )
         assert str(default_wave_obj) == repr_text
 
     def test_array_method(self, default_wave_obj):
@@ -70,42 +73,60 @@ class TestNoise:
 
     @pytest.mark.parametrize(
         "sigma, mu, dt, expected",
-        [([1, 0, 0], mu, dt, np.ones(n)),
-         ([0, 1, 0], mu, dt, mu ** 2),
-         ([0, 0, 1], mu, dt, mu_dot ** 2)]
+        [
+            ([1, 0, 0], mu, dt, np.ones(n)),
+            ([0, 1, 0], mu, dt, mu**2),
+            ([0, 0, 1], mu, dt, mu_dot**2),
+        ],
     )
     def test_var_definition(self, sigma, mu, dt, expected):
         assert_array_almost_equal(noisevar(sigma, mu, dt), expected)
 
     @pytest.mark.parametrize(
         "sigma, mu, dt, expected",
-        [([1, 0, 0], mu, dt, np.ones(n)),
-         ([0, 1, 0], mu, dt, np.abs(mu)),
-         ([0, 0, 1], mu, dt, np.abs(mu_dot))]
+        [
+            ([1, 0, 0], mu, dt, np.ones(n)),
+            ([0, 1, 0], mu, dt, np.abs(mu)),
+            ([0, 0, 1], mu, dt, np.abs(mu_dot)),
+        ],
     )
     def test_amp_definition(self, sigma, mu, dt, expected):
         assert_array_almost_equal(noiseamp(sigma, mu, dt), expected)
 
 
 class TestTHzGen:
-
     @pytest.mark.parametrize(
         "kwargs",
-        [dict(),
-         dict(a=1.0),
-         dict(taur=0.3),
-         dict(tauc=0.1),
-         dict(fwhm=0.05),
-         ]
+        [
+            {},
+            {"a": 1.0},
+            {"taur": 0.3},
+            {"tauc": 0.1},
+            {"fwhm": 0.05},
+        ],
     )
     @pytest.mark.parametrize(
         "n, ts, t0, expected",
-        [(8, 1, 2,
-          ([0.05651348, -0.13522073, 1., -0.65804181, -0.28067975,
-           0.05182924, -0.01837401, -0.01602642],
-           np.arange(8)),
-          )]
+        [
+            (
+                8,
+                1,
+                2,
+                (
+                    [
+                        0.05651348,
+                        -0.13522073,
+                        1.0,
+                        -0.65804181,
+                        -0.28067975,
+                        0.05182924,
+                        -0.01837401,
+                        -0.01602642,
+                    ],
+                    np.arange(8),
+                ),
+            )
+        ],
     )
     def test_definition(self, n, ts, t0, kwargs, expected):
-        assert_array_almost_equal(thzgen(n, ts, t0, **kwargs),
-                                  expected)
+        assert_array_almost_equal(thzgen(n, ts, t0, **kwargs), expected)

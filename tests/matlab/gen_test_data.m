@@ -1,5 +1,7 @@
 %% Generate test data for all functions in thztools
 
+rng('default')
+
 %% FFTFREQ
 % Set inputs
 N = [4, 5];
@@ -106,7 +108,7 @@ for i = 1:n_test
     Param = args.Param(i);
     Set.tdnll(i).args = {x, Param.logv, Param.mu, Param.A, Param.eta,...
         Param.ts, Param.D};
-    Set.tdnll(i).out = {tdnll(x, Param, varargin)};
+    [Set.tdnll(i).out{1:2}] = tdnll(x, Param, varargin);
 end
 
 

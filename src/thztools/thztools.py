@@ -740,10 +740,6 @@ def tdnll(
             gradnll[nstart + 2] = (m / 2) * np.sum(dmu**2.0 * dvar) * v[2]
             nstart = nstart + 3
         if gradcalc[1]:
-            # print('mu shape : ', mu.shape)
-            # print('dvar shape: ', dvar.shape)
-            # print('d shape: ', d.shape)
-            # print('Dmu shape: ', dmu.shape)
             gradnll[nstart : nstart + n] = m * (
                 v[1] * mu * dvar
                 + v[2] * np.dot(d.T, (dmu * dvar))

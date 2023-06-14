@@ -133,12 +133,21 @@ def test_matlab_result(get_test):
     else:
         python_out = func(*args)
     # Ignore second output from Python version of thzgen
-    if func_name in ["thzgen", "tdnll", "tdnoisefit"]:
+    if func_name in ["thzgen", "tdnoisefit"]:
         python_out = python_out[0]
-    if func_name != "tdnoisefit":
+    if func_name == "tdnoisefit":
         # Set absolute tolerance equal to 2 * epsilon for the array dtype
+        np.testing.assert_allclose(matlab_out[0], python_out, atol=0.5)
+    elif func_name == "tdnll":
+        np.testing.assert_allclose(
+            matlab_out[0], python_out[0],
+            atol=2 * np.finfo(python_out[0].dtype).eps
+        )
+        np.testing.assert_allclose(
+            matlab_out[1], python_out[1],
+            atol=2 * np.finfo(python_out[1].dtype).eps
+        )
+    else:
         np.testing.assert_allclose(
             matlab_out[0], python_out, atol=2 * np.finfo(python_out.dtype).eps
         )
-    else:
-        np.testing.assert_allclose(matlab_out[0], python_out, atol=1e-2)

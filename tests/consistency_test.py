@@ -137,7 +137,7 @@ def test_matlab_result(get_test):
         python_out = python_out[0]
     if func_name == "tdnoisefit":
         # Set absolute tolerance equal to 2 * epsilon for the array dtype
-        np.testing.assert_allclose(matlab_out[0], python_out, atol=0.5)
+        np.testing.assert_allclose(matlab_out[0], python_out, atol=1e-4)
     elif func_name == "tdnll":
         np.testing.assert_allclose(
             matlab_out[0], python_out[0],

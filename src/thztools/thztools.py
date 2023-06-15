@@ -161,41 +161,6 @@ def thzgen(
     return y, t2
 
 
-def shiftmtx(tau: float, n: int, ts: float = 1) -> ArrayLike:
-    """
-    Shiftmtx computes the n by n transfer matrix for a continuous time-shift.
-
-    Parameters
-    -----------
-
-    tau : float
-        Delay.
-
-    n : int
-        Number of samples.
-
-    ts: float, optional
-        Sampling time.
-
-    Returns
-    -------
-    h: ndarray
-        Transfer matrix with shape (n, n).
-
-    """
-
-    # Fourier method
-    f = rfftfreq(n, ts)
-    w = 2 * np.pi * f
-
-    imp = irfft(np.exp(-1j * w * tau), n=n)
-
-    # computes the n by n transformation matrix
-    h = scipy.linalg.toeplitz(imp, np.roll(np.flipud(imp), 1))
-
-    return h
-
-
 def airscancorrect(
     x: ArrayLike,
     *,

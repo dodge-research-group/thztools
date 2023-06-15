@@ -161,27 +161,6 @@ for i = 1:n_test
     Set.noiseamp(i).out = {noiseamp(sigma, mu, T)};
 end
 
-%% SHIFTMTX
-% Set required inputs
-tau = [1.0, 2.0];
-n = [256, 257];
-ts = [1.0, 2.0];
-
-% Define combinations
-args = combinations(tau, n, ts);
-n_test = height(args);
-
-% Generate output
-Init = cell(n_test, 1);
-Set.shiftmtx = struct('args', Init, 'out', Init);
-for i = 1:n_test
-    tau = args.tau(i);
-    n = args.n(i);
-    ts = args.ts(i);
-    Set.shiftmtx(i).args = {tau, int64(n), ts};
-    Set.shiftmtx(i).out = {shiftmtx(tau, n, ts)};
-end
-
 %% TDTF
 % Set required inputs
 theta = {[3.0 4.0];  [5.0 6.0]};

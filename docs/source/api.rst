@@ -16,7 +16,6 @@ Quick list
     fftfreq
     noiseamp
     noisevar
-    shiftmtx
     tdnll
     tdnoisefit
     tdtf

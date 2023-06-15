@@ -626,6 +626,7 @@ def tdnll(
 
 def tdnoisefit(
     x: ArrayLike,
+    *,
     v0: ArrayLike | None = None,
     mu0: ArrayLike | None = None,
     a0: ArrayLike | None = None,

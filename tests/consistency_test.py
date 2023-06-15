@@ -14,17 +14,23 @@ from thztools import (
     tdtf,
     thzgen,
 )
+
 # np.seterr(all='raise')
 
 
 def tdnll_alt(*args):
+    args_alt = [args[0], args[2], args[1]]
     kwargs = {
+        "a": args[3],
+        "eta": args[4],
+        "ts": args[5],
+        "d": args[6],
         "fix_logv": False,
         "fix_mu": False,
         "fix_a": False,
         "fix_eta": False,
     }
-    return tdnll(*args, **kwargs)
+    return tdnll(*args_alt, **kwargs)
 
 
 def tdnoisefit_alt(*args):
@@ -136,12 +142,14 @@ def test_matlab_result(get_test):
         np.testing.assert_allclose(matlab_out[0], python_out, atol=1e-4)
     elif func_name == "tdnll":
         np.testing.assert_allclose(
-            matlab_out[0], python_out[0],
-            atol=2 * np.finfo(python_out[0].dtype).eps
+            matlab_out[0],
+            python_out[0],
+            atol=2 * np.finfo(python_out[0].dtype).eps,
         )
         np.testing.assert_allclose(
-            matlab_out[1], python_out[1],
-            atol=2 * np.finfo(python_out[1].dtype).eps
+            matlab_out[1],
+            python_out[1],
+            atol=2 * np.finfo(python_out[1].dtype).eps,
         )
     else:
         np.testing.assert_allclose(

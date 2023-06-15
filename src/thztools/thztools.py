@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import warnings
-from typing import Callable, Tuple
+from typing import Callable
 
 import numpy as np
-import pandas as pd
 import scipy.linalg  # type: ignore
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.typing import ArrayLike
@@ -208,8 +206,10 @@ def scaleshift(
     else:
         a = np.asarray(a)
         if a.shape != m:
-            msg = (f"Scale correction with shape {a.shape} can not be applied "
-                   f"to data with shape {x.shape}")
+            msg = (
+                f"Scale correction with shape {a.shape} can not be applied "
+                f"to data with shape {x.shape}"
+            )
             raise ValueError(msg)
 
     if eta is None:
@@ -217,16 +217,19 @@ def scaleshift(
     else:
         eta = np.asarray(eta)
         if eta.shape != m:
-            msg = (f"Shift correction with shape {a.shape} can not be applied "
-                   f"to data with shape {x.shape}")
+            msg = (
+                f"Shift correction with shape {a.shape} can not be applied "
+                f"to data with shape {x.shape}"
+            )
             raise ValueError(msg)
 
     f = rfftfreq(n, ts)
     w = 2 * np.pi * f
     phase = np.expand_dims(eta, axis=eta.ndim) * w
 
-    xadj = (np.fft.irfft(np.fft.rfft(x) * np.exp(1j * phase), n=n)
-            / np.expand_dims(a, axis=a.ndim))
+    xadj = np.fft.irfft(
+        np.fft.rfft(x) * np.exp(1j * phase), n=n
+    ) / np.expand_dims(a, axis=a.ndim)
 
     if x.ndim > 1:
         if axis != -1:
@@ -366,8 +369,9 @@ def tdtf(fun: Callable, theta: ArrayLike, n: int, ts: float) -> ArrayLike:
 
 def tdnll(
     x: ArrayLike,
-    logv: ArrayLike,
     mu: ArrayLike,
+    logv: ArrayLike,
+    *,
     a: ArrayLike | None = None,
     eta: ArrayLike | None = None,
     ts: float = 1.0,
@@ -385,35 +389,40 @@ def tdnll(
 
     Parameters
     ----------
-    x : ndarray or matrix
-        Data matrix
-    logv : ndarray
-        Array of size (3, ) containing log of noise parameters.
-    mu : ndarray
-        Signal vector of size (n,).
+    x : array_like
+        Data matrix with shape (n, m).
+    mu : array_like
+        Signal vector with shape (n,).
+    logv : array_like
+        Array of noise parameters with shape (3,).
     a: ndarray, optional
-        Amplitude vector of size (m,).
+        Amplitude vector with shape (m,). Default is `np.ones((m,))`.
     eta : ndarray, optional
-        Delay vector of size (m,).
+        Delay vector with shape (m,). Default is `np.zeros((m,))`.
     ts : float, optional
-        Sampling time.
+        Sampling time. Default is ``1.0``.
     d : ndarray, optional
         Derivative matrix, size (n, n).
     fix_logv : bool, optional
-        Log of noise parameters.
+        Exclude noise parameters from gradiate calculation when ``True``.
+        Default is ``False``.
     fix_mu : bool, optional
-        Signal vector.
+        Exclude signal vector from gradiate calculation when ``True``.
+        Default is ``False``.
     fix_a : bool, optional
-        Amplitude vector.
+        Exclude amplitude vector from gradiate calculation when ``True``.
+        Default is ``False``.
     fix_eta : bool, optional
-        Delay vector.
+        Exclude delay vector from gradiate calculation when ``True``.
+        Default is ``False``.
 
     Returns
     -------
-    nll : callable
-        Negative log-likelihood function
-    gradnll : ndarray
-        Gradient of the negative log-likelihood function
+    nll : float
+        Negative log-likelihood.
+    gradnll : array_like
+        Gradient of the negative log-likelihood function with respect to free
+        parameters.
     """
     # Parameters to ignore when computing gradnll
     ignore_a = False
@@ -846,14 +855,34 @@ def tdnoisefit(
         }
 
     def objective(_p):
-        return tdnll(x, *parsein(_p).values(), fix_v, fix_mu, fix_a, fix_eta)[
-            0
-        ]
+        p_dict = parsein(_p)
+        _mu = p_dict.pop("mu")
+        _logv = p_dict.pop("logv")
+        return tdnll(
+            x,
+            _mu,
+            _logv,
+            **p_dict,
+            fix_logv=fix_v,
+            fix_mu=fix_mu,
+            fix_a=fix_a,
+            fix_eta=fix_eta,
+        )[0]
 
     def jacobian(_p):
-        return tdnll(x, *parsein(_p).values(), fix_v, fix_mu, fix_a, fix_eta)[
-            1
-        ]
+        p_dict = parsein(_p)
+        _mu = p_dict.pop("mu")
+        _logv = p_dict.pop("logv")
+        return tdnll(
+            x,
+            _mu,
+            _logv,
+            **p_dict,
+            fix_logv=fix_v,
+            fix_mu=fix_mu,
+            fix_a=fix_a,
+            fix_eta=fix_eta,
+        )[1]
 
     mle["objective"] = objective
     out = minimize(mle["objective"], mle["x0"], method="BFGS", jac=jacobian)

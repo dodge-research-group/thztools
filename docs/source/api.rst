@@ -13,7 +13,6 @@ Quick list
 
     airscancorrect
     costfunlsq
-    DataPulse
     fftfreq
     noiseamp
     noisevar

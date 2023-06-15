@@ -1,6 +1,4 @@
 from thztools.thztools import (
-    DataPulse,
-    Wave,
     airscancorrect,
     costfunlsq,
     fftfreq,
@@ -14,8 +12,6 @@ from thztools.thztools import (
 )
 
 __all__ = [
-    "DataPulse",
-    "Wave",
     "airscancorrect",
     "costfunlsq",
     "fftfreq",

@@ -1,9 +1,9 @@
 from thztools.thztools import (
-    airscancorrect,
     costfunlsq,
     fftfreq,
     noiseamp,
     noisevar,
+    scaleshift,
     tdnll,
     tdnoisefit,
     tdtf,
@@ -11,11 +11,11 @@ from thztools.thztools import (
 )
 
 __all__ = [
-    "airscancorrect",
     "costfunlsq",
     "fftfreq",
     "noiseamp",
     "noisevar",
+    "scaleshift",
     "tdnll",
     "tdnoisefit",
     "tdtf",

@@ -161,7 +161,7 @@ def thzgen(
     return y, t2
 
 
-def airscancorrect(
+def scaleshift(
     x: ArrayLike,
     *,
     a: ArrayLike | None = None,
@@ -176,9 +176,9 @@ def airscancorrect(
     x : array_like
         Data array.
     a : array_like, optional
-        Amplitude correction.
+        Scale array.
     eta : array_like, optional
-        Delay correction.
+        Shift array.
     ts : float, optional
         Sampling time. Default is 1.0.
     axis : int, optional

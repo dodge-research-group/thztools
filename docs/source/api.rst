@@ -11,11 +11,11 @@ Quick list
 .. autosummary::
     :toctree: functions/
 
-    airscancorrect
     costfunlsq
     fftfreq
     noiseamp
     noisevar
+    scaleshift
     tdnll
     tdnoisefit
     tdtf

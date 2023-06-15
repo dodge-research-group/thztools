@@ -14,7 +14,6 @@ Quick list
     airscancorrect
     costfunlsq
     DataPulse
-    epswater
     fftfreq
     noiseamp
     noisevar

@@ -21,25 +21,6 @@ for i = 1:n_test
     Set.fftfreq(i).out = {fftfreq(N, T)};
 end
 
-%% EPSWATER
-% Set inputs
-f = [1, 2];
-T = [20, 30];
-
-% Define combinations
-args = combinations(f, T);
-n_test = height(args);
-
-% Generate output
-Init = cell(n_test, 1);
-Set.epswater = struct('args', Init, 'out', Init);
-for i = 1:n_test
-    f = args.f(i);
-    T = args.T(i);
-    Set.epswater(i).args = {f, T};
-    Set.epswater(i).out = {epswater(f, T)};
-end
-
 %% COSTFUNLSQ
 % Set required inputs
 N = 100;

@@ -6,7 +6,6 @@ import pytest
 
 from thztools import (
     costfunlsq,
-    epswater,
     fftfreq,
     noiseamp,
     noisevar,
@@ -46,7 +45,6 @@ def tdnoisefit_alt(*args):
 # Establish dictionary mapping from function names to functions
 FUNC_DICT = {
     "fftfreq": fftfreq,
-    "epswater": epswater,
     "thzgen": thzgen,
     "noisevar": noisevar,
     "noiseamp": noiseamp,

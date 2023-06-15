@@ -17,6 +17,7 @@ from thztools import (
     tdtf,
     thzgen,
 )
+# np.seterr(all='raise')
 
 
 def tdnll_alt(*args):

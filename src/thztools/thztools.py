@@ -400,21 +400,23 @@ def airscancorrect(
     a: ArrayLike | None = None,
     eta: ArrayLike | None = None,
     ts: float = 1.0,
+    axis: int = -1,
 ) -> ArrayLike:
-    """Rescales and shifts each column of the matrix x.
+    """Rescale and shift signal vectors.
 
     Parameters
     ----------
     x : array_like
-        Data array with shape (n, m).
+        Data array.
     a : array_like, optional
-        Amplitude correction. If set, a must have shape (m,). Otherwise, no
-        correction is applied.
+        Amplitude correction.
     eta : array_like, optional
-        Delay correction. If set, a must have shape (m,). Otherwise, no
-        correction is applied.
+        Delay correction.
     ts : float, optional
         Sampling time. Default is 1.0.
+    axis : int, optional
+        Axis over which to apply the correction. If not given, applies over the
+        last axis in ``x``.
 
     Returns
     -------
@@ -423,24 +425,45 @@ def airscancorrect(
 
     """
     x = np.asarray(x)
+    if x.size == 0:
+        return np.empty(x.shape)
 
-    [n, m] = x.shape
+    axis = int(axis)
+    if x.ndim > 1:
+        if axis != -1:
+            x = np.moveaxis(x, axis, -1)
+
+    n = x.shape[-1]
+    m = x.shape[:-1]
 
     if a is None:
-        a = np.ones((m,))
+        a = np.ones(m)
     else:
         a = np.asarray(a)
+        if a.shape != m:
+            msg = (f"Scale correction with shape {a.shape} can not be applied "
+                   f"to data with shape {x.shape}")
+            raise ValueError(msg)
 
     if eta is None:
-        eta = np.zeros((m,))
+        eta = np.zeros(m)
     else:
         eta = np.asarray(eta)
+        if eta.shape != m:
+            msg = (f"Shift correction with shape {a.shape} can not be applied "
+                   f"to data with shape {x.shape}")
+            raise ValueError(msg)
 
-    xadj = np.zeros((n, m))
-    # TODO: refactor with broadcasting
-    for i in np.arange(m):
-        s = shiftmtx(-eta[i], n, ts)
-        xadj[:, i] = s @ (x[:, i] / a[i])
+    f = rfftfreq(n, ts)
+    w = 2 * np.pi * f
+    phase = np.expand_dims(eta, axis=eta.ndim) * w
+
+    xadj = (np.fft.irfft(np.fft.rfft(x) * np.exp(1j * phase), n=n)
+            / np.expand_dims(a, axis=a.ndim))
+
+    if x.ndim > 1:
+        if axis != -1:
+            xadj = np.moveaxis(xadj, -1, axis)
 
     return xadj
 

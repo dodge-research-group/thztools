@@ -4,7 +4,6 @@ import h5py  # type: ignore
 import numpy as np
 import pytest
 
-# import matplotlib.pyplot as plt
 from thztools import (
     costfunlsq,
     epswater,

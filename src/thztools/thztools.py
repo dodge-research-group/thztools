@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Callable
 
 import numpy as np
-import scipy.linalg  # type: ignore
+import scipy.linalg as la
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.typing import ArrayLike
 from scipy.optimize import minimize  # type: ignore
@@ -295,7 +295,7 @@ def costfunlsq(
         # uy = uy + np.real(np.roll(htilde, k-1) @ np.roll(htilde, k-1).T) @
         # sigmax[k]**2
 
-    w = np.dot(np.eye(n), scipy.linalg.inv(scipy.linalg.sqrtm(uy + vy)))
+    w = np.dot(np.eye(n), la.inv(la.sqrtm(uy + vy)))
     res = np.dot(w, ry)
 
     return res
@@ -310,7 +310,7 @@ def tdtf(fun: Callable, theta: ArrayLike, n: int, ts: float) -> ArrayLike:
         fun : callable
             Frequency function, in the form fun(theta, w), where theta
             is a vector of the function parameters. The function should be
-            expressed in the -iwt convention and must be Hermitian.
+            expressed in the +iwt convention and must be Hermitian.
 
         theta : array_like
             Input parameters for the function.
@@ -328,41 +328,12 @@ def tdtf(fun: Callable, theta: ArrayLike, n: int, ts: float) -> ArrayLike:
 
     """
 
-    # compute the transfer function over positive frequencies
-    if not isinstance(ts, np.ndarray):
-        ts = np.array([ts])
-    else:
-        ts = ts
+    f = rfftfreq(n, ts)
+    w = 2 * np.pi * f
+    tfunp = fun(theta, w)
 
-    fs = 1 / (ts * n)
-    fp = fs * np.arange(0, (n - 1) // 2 + 1)
-    wp = 2 * np.pi * fp
-    tfunp = fun(theta, wp)
-
-    # The transfer function is Hermitian, so we evaluate negative frequencies
-    # by taking the complex conjugate of the corresponding positive frequency.
-    # Include the value of the transfer function at the Nyquist frequency for
-    # even n.
-    if n % 2 != 0:
-        tfun = np.concatenate((tfunp, np.conj(np.flipud(tfunp[1:]))))
-
-    else:
-        wny = np.pi * n * fs
-        # print('tfunp', tfunp)
-        tfun = np.concatenate(
-            (
-                tfunp,
-                np.conj(
-                    np.concatenate((fun(theta, wny), np.flipud(tfunp[1:])))
-                ),
-            )
-        )
-
-    # Evaluate the impulse response by taking the inverse Fourier transform,
-    # taking the complex conjugate first to convert to ... +iwt convention
-
-    imp = np.real(np.fft.ifft(np.conj(tfun)))
-    h = scipy.linalg.toeplitz(imp, np.roll(np.flipud(imp), 1))
+    imp = irfft(tfunp, n=n)
+    h = la.circulant(imp).T
 
     return h
 
@@ -895,9 +866,9 @@ def tdnoisefit(
     # from the current optimal point.
 
     try:
-        np.linalg.cholesky(np.linalg.inv(out.hess_inv))
-        hess = np.linalg.inv(out.hess_inv)
-    except np.linalg.LinAlgError:
+        la.cholesky(la.inv(out.hess_inv))
+        hess = la.inv(out.hess_inv)
+    except la.LinAlgError:
         print(
             "Hessian returned by FMINUNC is not positive definite;\n"
             "recalculating with quasi-Newton algorithm"
@@ -907,7 +878,7 @@ def tdnoisefit(
         out2 = minimize(
             mle["objective"], mle["x0"], method="BFGS", jac=jacobian
         )
-        hess = np.linalg.inv(out2.hess_inv)
+        hess = la.inv(out2.hess_inv)
 
     # Parse output
     p = {}
@@ -973,7 +944,7 @@ def tdnoisefit(
         "hessian": hess,
         "err": {"var": [], "mu": [], "a": [], "eta": []},
     }
-    v = np.dot(np.eye(hess.shape[0]), scipy.linalg.inv(hess))
+    v = np.dot(np.eye(hess.shape[0]), la.inv(hess))
     err = np.sqrt(np.diag(v))
     idxstart = 0
     if vary_param[0]:

@@ -75,16 +75,19 @@ class TestTHzGen:
         n = 8
         ts = 1.0
         t0 = 2.0
-        y_expected = np.array([
-                        0.05651348,
-                        -0.13522073,
-                        1.0,
-                        -0.65804181,
-                        -0.28067975,
-                        0.05182924,
-                        -0.01837401,
-                        -0.01602642,
-                    ])
+        y_expected = np.array(
+            [
+                0.05651348,
+                -0.13522073,
+                1.0,
+                -0.65804181,
+                -0.28067975,
+                0.05182924,
+                -0.01837401,
+                -0.01602642,
+            ]
+        )
         t_expected = np.arange(n)
-        assert_array_almost_equal(thzgen(n, ts, t0, **kwargs),
-                                  (y_expected, t_expected))
+        assert_array_almost_equal(
+            thzgen(n, ts, t0, **kwargs), (y_expected, t_expected)
+        )

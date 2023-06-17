@@ -211,7 +211,7 @@ Fix.eta = 0;
 
 % Ignore structure
 Ignore = struct();
-Ignore.A = 1;
+Ignore.A = 0;
 Ignore.eta = 0;
 
 varargin = [struct() struct()];

@@ -19,12 +19,13 @@ from thztools import (
 
 
 def tdnll_alt(*args):
-    args_alt = [args[0], args[2], args[1]]
+    # Transpose data array to convert MATLAB column orientation to NumPy
+    # row orientation; swap order of logv and mu
+    args_alt = [args[0].T, args[2], args[1]]
     kwargs = {
         "a": args[3],
         "eta": args[4],
         "ts": args[5],
-        "d": args[6],
         "fix_logv": False,
         "fix_mu": False,
         "fix_a": False,
@@ -44,7 +45,7 @@ def tdnoisefit_alt(*args):
         "fix_mu": False,
         "fix_a": False,
         "fix_eta": False,
-        "ignore_a": True,
+        "ignore_a": False,
         "ignore_eta": False,
     }
     out, _, _ = tdnoisefit(args[0], **kwargs)

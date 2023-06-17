@@ -342,15 +342,14 @@ def tdnll(
     x: ArrayLike,
     mu: ArrayLike,
     logv: ArrayLike,
+    a: ArrayLike,
+    eta: ArrayLike,
+    ts: float,
     *,
-    a: ArrayLike | None = None,
-    eta: ArrayLike | None = None,
-    ts: float = 1.0,
-    d: ArrayLike | None = None,
-    fix_logv: bool = False,
-    fix_mu: bool = False,
-    fix_a: bool = False,
-    fix_eta: bool = False,
+    fix_logv: bool,
+    fix_mu: bool,
+    fix_a: bool,
+    fix_eta: bool,
 ) -> tuple[ArrayLike, ArrayLike]:
     r"""
     Compute negative log-likelihood for the time-domain noise model.
@@ -361,31 +360,25 @@ def tdnll(
     Parameters
     ----------
     x : array_like
-        Data matrix with shape (n, m).
+        Data matrix.
     mu : array_like
-        Signal vector with shape (n,).
+        Signal vector with length N.
     logv : array_like
-        Array of noise parameters with shape (3,).
-    a: ndarray, optional
-        Amplitude vector with shape (m,). Default is `np.ones((m,))`.
-    eta : ndarray, optional
-        Delay vector with shape (m,). Default is `np.zeros((m,))`.
-    ts : float, optional
-        Sampling time. Default is ``1.0``.
-    d : ndarray, optional
-        Derivative matrix, size (n, n).
-    fix_logv : bool, optional
+        Array of three noise parameters.
+    a: array_like
+        Amplitude vector with length M.
+    eta : array_like
+        Delay vector with length M.
+    ts : float
+        Sampling time.
+    fix_logv : bool
         Exclude noise parameters from gradiate calculation when ``True``.
-        Default is ``False``.
-    fix_mu : bool, optional
+    fix_mu : bool
         Exclude signal vector from gradiate calculation when ``True``.
-        Default is ``False``.
-    fix_a : bool, optional
+    fix_a : bool
         Exclude amplitude vector from gradiate calculation when ``True``.
-        Default is ``False``.
-    fix_eta : bool, optional
+    fix_eta : bool
         Exclude delay vector from gradiate calculation when ``True``.
-        Default is ``False``.
 
     Returns
     -------
@@ -395,87 +388,30 @@ def tdnll(
         Gradient of the negative log-likelihood function with respect to free
         parameters.
     """
-    # Parameters to ignore when computing gradnll
-    ignore_a = False
-    ignore_eta = False
-
-    # Parse and validate function inputs
     x = np.asarray(x)
-    if x.ndim != 2:
-        msg = "Data array x must be 2D."
-        raise ValueError(msg)
-    n, m = x.shape
-
     logv = np.asarray(logv)
-    if logv.size != 3:
-        msg = "Noise parameter array logv must have 3 elements."
-        raise ValueError(msg)
-
     mu = np.asarray(mu)
-    if mu.ndim != 1:
-        msg = "Ideal signal vector mu must be 1D."
-        raise ValueError(msg)
-    if mu.size != n:
-        msg = "Size of mu is incompatible with data array x."
-        raise ValueError(msg)
-    mu = np.reshape(mu, (n, 1))
+    a = np.asarray(a)
+    eta = np.asarray(eta)
 
-    if a is None:
-        a = np.ones((m,))
-        ignore_a = True
-    else:
-        a = np.asarray(a)
-        if a.size != m:
-            msg = "Size of a is incompatible with data array x."
-            raise ValueError(msg)
-    a = np.reshape(a, (m, 1))
+    m, n = x.shape
 
-    if eta is None:
-        eta = np.ones((m,))
-        ignore_eta = True
-    else:
-        eta = np.asarray(eta)
-        if eta.size != m:
-            msg = "Size of eta is incompatible with data array x."
-            raise ValueError(msg)
-    eta = np.reshape(eta, (m, 1))
+    def fun(_, _w):
+        return -1j * _w
 
-    if d is None:
-
-        def fun(_, _w):
-            return -1j * _w
-
-        d = tdtf(fun, 0, n, ts)
+    tdtf(fun, 0, n, ts)
 
     # Compute variance
     v = np.exp(logv)
-    v = np.reshape(v, (len(v), 1))
 
     # Compute frequency vector and Fourier coefficients of mu
     f = rfftfreq(n, ts)
-    n_f = f.size
     w = 2 * np.pi * f
-    w = w.reshape(len(w), 1)
-    mu_f = rfft(mu.flatten()).reshape(n_f, 1)
+    mu_f = rfft(mu)
 
-    gradcalc = np.logical_not(
-        [
-            [fix_logv],
-            [fix_mu],
-            [fix_a or ignore_a],
-            [fix_eta or ignore_eta],
-        ]
-    )
-
-    if ignore_eta:
-        zeta = mu * np.conj(a).T
-        zeta_f = rfft(zeta, axis=0)
-    else:
-        exp_iweta = np.exp(1j * np.tile(w, m) * np.conj(np.tile(eta, n_f)).T)
-        zeta_f = (
-            np.conj(np.tile(a, n_f)).T * np.conj(exp_iweta) * np.tile(mu_f, m)
-        )
-        zeta = irfft(zeta_f, axis=0, n=n)
+    exp_iweta = np.exp(1j * np.outer(eta, w))
+    zeta_f = ((np.conj(exp_iweta) * mu_f).T * a).T
+    zeta = irfft(zeta_f, n=n)
 
     # Compute negative - log likelihood and gradient
 
@@ -483,115 +419,57 @@ def tdnll(
     res = x - zeta
     ressq = res**2
 
-    # Simplest case: just variance and signal parameters, A and eta fixed at
-    # defaults
-    if ignore_a and ignore_eta:
-        dmu = irfft(1j * w * mu_f, axis=0, n=n)
-        valpha = v[0]
-        vbeta = v[1] * mu**2
-        vtau = v[2] * dmu**2
-        vtot = valpha + vbeta + vtau
-
-        resnormsq = ressq / np.tile(vtot, m)
-        nll = (
-            m * n * np.log(2 * np.pi) / 2
-            + (m / 2) * np.sum(np.log(vtot))
-            + np.sum(resnormsq) / 2
-        )
-
-        # Compute gradient if requested
-        # if nargout > 1:
-        ngrad = np.sum(gradcalc[0:2] * [[3], [n]])
-        gradnll = np.zeros((ngrad, 1))
-        nstart = 0
-        dvar = (vtot - np.mean(ressq, axis=1).reshape(n, 1)) / vtot**2
-        if gradcalc[0]:
-            gradnll[nstart] = (m / 2) * np.sum(dvar) * v[0]
-            gradnll[nstart + 1] = (m / 2) * np.sum(mu**2 * dvar) * v[1]
-            gradnll[nstart + 2] = (m / 2) * np.sum(dmu**2.0 * dvar) * v[2]
-            nstart = nstart + 3
-        if gradcalc[1]:
-            gradnll[nstart : nstart + n] = m * (
-                v[1] * mu * dvar
-                + v[2] * np.dot(d.T, (dmu * dvar))
-                - np.mean(res, axis=1).reshape(n, 1) / vtot
-            )
-
     # Alternative case: A, eta, or both are not set to defaults
-    else:
-        dzeta = irfft(1j * np.tile(w, m) * zeta_f, axis=0, n=n)
+    dzeta = irfft(1j * w * zeta_f, n=n)
 
-        valpha = v[0]
-        vbeta = v[1] * zeta**2
-        vtau = v[2] * dzeta**2
-        vtot = valpha + vbeta + vtau
+    valpha = v[0]
+    vbeta = v[1] * zeta**2
+    vtau = v[2] * dzeta**2
+    vtot = valpha + vbeta + vtau
 
-        resnormsq = ressq / vtot
-        nll = (
-            m * n * np.log(2 * np.pi) / 2
-            + np.sum(np.log(vtot)) / 2
-            + np.sum(resnormsq) / 2
-        )
+    resnormsq = ressq / vtot
+    nll = (
+        m * n * np.log(2 * np.pi) / 2
+        + np.sum(np.log(vtot)) / 2
+        + np.sum(resnormsq) / 2
+    )
 
-        # Compute gradient if requested
-        # if nargout > 1:
-        ngrad = np.sum(gradcalc * [[3], [n], [m], [m]])
-        gradnll = np.zeros((ngrad, 1))
-        nstart = 0
+    # Compute gradient if requested
+    gradnll = np.array([])
+    if not (fix_logv & fix_mu & fix_a & fix_eta):
         reswt = res / vtot
         dvar = (vtot - ressq) / vtot**2
-        if gradcalc[0]:
+        if not fix_logv:
             # Gradient wrt logv
-            gradnll[nstart] = 0.5 * np.sum(dvar) * v[0]
-            gradnll[nstart + 1] = (
-                0.5 * np.sum(zeta.flatten() ** 2 * dvar.flatten()) * v[1]
+            gradnll = np.append(gradnll, 0.5 * np.sum(dvar) * v[0])
+            gradnll = np.append(gradnll, 0.5 * np.sum(zeta**2 * dvar) * v[1])
+            gradnll = np.append(
+                gradnll, 0.5 * np.sum(dzeta**2 * dvar) * v[2]
             )
-            gradnll[nstart + 2] = (
-                0.5 * np.sum(dzeta.flatten() ** 2 * dvar.flatten()) * v[2]
-            )
-            nstart = nstart + 3
-        if gradcalc[1]:
+        if not fix_mu:
             # Gradient wrt mu
-            p = rfft(v[1] * dvar * zeta - reswt, axis=0) - 1j * v[
-                2
-            ] * w * rfft(dvar * dzeta, axis=0)
-            gradnll[nstart : nstart + n] = np.sum(
-                np.conj(a).T * irfft(exp_iweta * p, axis=0, n=n),
-                axis=1,
-            ).reshape(n, 1)
-            nstart = nstart + n
-        if gradcalc[2]:
+            p = rfft(v[1] * dvar * zeta - reswt) - 1j * v[2] * w * rfft(
+                dvar * dzeta
+            )
+            gradnll = np.append(
+                gradnll, np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
+            )
+        if not fix_a:
             # Gradient wrt A
             term = (vtot - valpha) * dvar - reswt * zeta
-            if np.any(np.isclose(a, 0)):
-                msg = (
-                    "One or more elements of the amplitude vector are "
-                    "close to zero "
-                )
-                raise ValueError(msg)
-            gradnll[nstart : nstart + m] = (
-                np.conj(np.sum(term, axis=0)).reshape(m, 1) / a
-            )
-            if not fix_mu:
-                gradnll = np.delete(gradnll, nstart)
-                nstart = nstart + m - 1
-            else:
-                nstart = nstart + m
-        if gradcalc[3]:
+            dnllda = np.sum(term, axis=1).T / a
+            # Exclude first term for consistency with MATLAB version
+            gradnll = np.append(gradnll, dnllda[1:])
+        if not fix_eta:
             # Gradient wrt eta
-            ddzeta = irfft(-np.tile(w, m) ** 2 * zeta_f, axis=0, n=n)
-            gradnll = np.squeeze(gradnll)
-            gradnll[nstart : nstart + m] = -np.sum(
+            ddzeta = irfft(-(w**2) * zeta_f, n=n)
+            dnlldeta = -np.sum(
                 dvar * (zeta * dzeta * v[1] + dzeta * ddzeta * v[2])
                 - reswt * dzeta,
-                axis=0,
-            ).reshape(
-                m,
+                axis=1,
             )
-
-            if not fix_mu:
-                gradnll = np.delete(gradnll, nstart)
-    gradnll = gradnll.flatten()
+            # Exclude first term for consistency with MATLAB version
+            gradnll = np.append(gradnll, dnlldeta[1:])
 
     return nll, gradnll
 
@@ -815,7 +693,7 @@ def tdnoisefit(
     def fun(_, _w):
         return -1j * _w
 
-    d = tdtf(fun, 0, n, ts)
+    tdtf(fun, 0, n, ts)
 
     def parsein(_p):
         return {
@@ -824,7 +702,6 @@ def tdnoisefit(
             "a": setpa(_p),
             "eta": setpeta(_p),
             "ts": ts,
-            "d": d,
         }
 
     def objective(_p):
@@ -832,7 +709,7 @@ def tdnoisefit(
         _mu = p_dict.pop("mu")
         _logv = p_dict.pop("logv")
         return tdnll(
-            x,
+            x.T,
             _mu,
             _logv,
             **p_dict,
@@ -847,7 +724,7 @@ def tdnoisefit(
         _mu = p_dict.pop("mu")
         _logv = p_dict.pop("logv")
         return tdnll(
-            x,
+            x.T,
             _mu,
             _logv,
             **p_dict,

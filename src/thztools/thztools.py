@@ -717,25 +717,10 @@ def tdnoisefit(
             fix_mu=fix_mu,
             fix_a=fix_a,
             fix_eta=fix_eta,
-        )[0]
-
-    def jacobian(_p):
-        p_dict = parsein(_p)
-        _mu = p_dict.pop("mu")
-        _logv = p_dict.pop("logv")
-        return tdnll(
-            x.T,
-            _mu,
-            _logv,
-            **p_dict,
-            fix_logv=fix_v,
-            fix_mu=fix_mu,
-            fix_a=fix_a,
-            fix_eta=fix_eta,
-        )[1]
+        )
 
     mle["objective"] = objective
-    out = minimize(mle["objective"], mle["x0"], method="BFGS", jac=jacobian)
+    out = minimize(mle["objective"], mle["x0"], method="BFGS", jac=True)
 
     # The trust-region algorithm returns the Hessian for the next-to-last
     # iterate, which may not be near the final point. To check, test for

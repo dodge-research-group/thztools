@@ -279,24 +279,21 @@ def costfunlsq(
 
     """
     n = xx.shape[0]
-    wfft = 2 * np.pi * rfftfreq(n, ts)
-    h = np.conj(fun(theta, wfft))
+    w = 2 * np.pi * rfftfreq(n, ts)
+    h_f = np.conj(fun(theta, w))
 
-    ry = yy - irfft(rfft(xx) * h, n=n)
+    ry = yy - irfft(rfft(xx) * h_f, n=n)
     vy = np.diag(sigmay**2)
 
-    htilde = irfft(h, n=n)
+    h_imp = irfft(h_f, n=n)
+    h = la.circulant(h_imp)
 
-    uy = np.zeros((n, n))
-    for k in np.arange(n):
-        a = np.reshape(np.roll(htilde, k), (n, 1))
-        b = np.reshape(np.conj(np.roll(htilde, k)), (1, n))
-        uy = uy + np.real(np.dot(a, b)) * sigmax[k] ** 2
-        # uy = uy + np.real(np.roll(htilde, k-1) @ np.roll(htilde, k-1).T) @
-        # sigmax[k]**2
+    # For V_xx = diag(sigma_x ** 2),
+    # uy = h @ ((sigmax ** 2) * h).T
+    #    = h @ diag(sigmax ** 2) @ h.T
+    uy = h @ ((sigmax ** 2) * h).T
 
-    w = np.dot(np.eye(n), la.inv(la.sqrtm(uy + vy)))
-    res = np.dot(w, ry)
+    res = la.inv(la.sqrtm(uy + vy)) @ ry
 
     return res
 
@@ -739,7 +736,7 @@ def tdnoisefit(
 
         mle["x0"] = out.x
         out2 = minimize(
-            mle["objective"], mle["x0"], method="BFGS", jac=jacobian
+            mle["objective"], mle["x0"], method="BFGS", jac=True
         )
         hess = la.inv(out2.hess_inv)
 

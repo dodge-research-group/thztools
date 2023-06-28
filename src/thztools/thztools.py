@@ -3,10 +3,145 @@ from __future__ import annotations
 from typing import Callable
 
 import numpy as np
-import scipy.linalg as la
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.typing import ArrayLike
-from scipy.optimize import minimize  # type: ignore
+import scipy.linalg as la
+from scipy import odr
+from scipy.optimize import minimize
+
+
+class ODR(odr.ODR):
+    """
+    ODR class that includes bug fix gh-18739.
+    See: https://github.com/scipy/scipy/issues/18739
+    """
+
+    def __init__(
+        self,
+        data,
+        model,
+        beta0=None,
+        delta0=None,
+        ifixb=None,
+        ifixx=None,
+        job=None,
+        iprint=None,
+        errfile=None,
+        rptfile=None,
+        ndigit=None,
+        taufac=None,
+        sstol=None,
+        partol=None,
+        maxit=None,
+        stpb=None,
+        stpd=None,
+        sclb=None,
+        scld=None,
+        work=None,
+        iwork=None,
+        overwrite=False,
+    ):
+        super().__init__(
+            data,
+            model,
+            beta0,
+            delta0,
+            ifixb,
+            ifixx,
+            job,
+            iprint,
+            errfile,
+            rptfile,
+            ndigit,
+            taufac,
+            sstol,
+            partol,
+            maxit,
+            stpb,
+            stpd,
+            sclb,
+            scld,
+            work,
+            iwork,
+            overwrite,
+        )
+
+    def _gen_work(self):
+        """Generate a suitable work array if one does not already exist."""
+
+        n = self.data.x.shape[-1]
+        p = self.beta0.shape[0]
+
+        if len(self.data.x.shape) == 2:
+            m = self.data.x.shape[0]
+        else:
+            m = 1
+
+        if self.model.implicit:
+            q = self.data.y
+        elif len(self.data.y.shape) == 2:
+            q = self.data.y.shape[0]
+        else:
+            q = 1
+
+        if self.data.we is None:
+            ldwe = ld2we = 1
+        elif len(self.data.we.shape) == 3:
+            ld2we, ldwe = self.data.we.shape[1:]
+        else:
+            we = self.data.we
+            ldwe = 1
+            ld2we = 1
+            if we.ndim == 1 and q == 1:
+                ldwe = n
+            elif we.ndim == 2:
+                if we.shape == (q, q):
+                    ld2we = q
+                elif we.shape == (q, n):
+                    ldwe = n
+
+        if self.job % 10 < 2:
+            # ODR not OLS
+            lwork = (
+                18
+                + 11 * p
+                + p * p
+                + m
+                + m * m
+                + 4 * n * q
+                + 6 * n * m
+                + 2 * n * q * p
+                + 2 * n * q * m
+                + q * q
+                + 5 * q
+                + q * (p + m)
+                + ldwe * ld2we * q
+            )
+        else:
+            # OLS not ODR
+            lwork = (
+                18
+                + 11 * p
+                + p * p
+                + m
+                + m * m
+                + 4 * n * q
+                + 2 * n * m
+                + 2 * n * q * p
+                + 5 * q
+                + q * (p + m)
+                + ldwe * ld2we * q
+            )
+
+        if (
+            isinstance(self.work, np.ndarray)
+            and self.work.shape == (lwork,)
+            and self.work.dtype.str.endswith("f8")
+        ):
+            # the existing array is fine
+            return
+        else:
+            self.work = np.zeros((lwork,), float)
 
 
 def fftfreq(n, ts):
@@ -291,7 +426,7 @@ def costfunlsq(
     # For V_xx = diag(sigma_x ** 2),
     # uy = h @ ((sigmax ** 2) * h).T
     #    = h @ diag(sigmax ** 2) @ h.T
-    uy = h @ ((sigmax ** 2) * h).T
+    uy = h @ ((sigmax**2) * h).T
 
     res = la.inv(la.sqrtm(uy + vy)) @ ry
 
@@ -735,9 +870,7 @@ def tdnoisefit(
         )
 
         mle["x0"] = out.x
-        out2 = minimize(
-            mle["objective"], mle["x0"], method="BFGS", jac=True
-        )
+        out2 = minimize(mle["objective"], mle["x0"], method="BFGS", jac=True)
         hess = la.inv(out2.hess_inv)
 
     # Parse output

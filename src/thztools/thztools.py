@@ -382,7 +382,7 @@ def costfunlsq(
     sigmay: ArrayLike,
     ts: float,
 ) -> ArrayLike:
-    r"""Computes the maximum likelihood cost function.
+    r"""Computes the residual vector for the maximum likelihood cost function.
 
     Parameters
     ----------
@@ -399,10 +399,10 @@ def costfunlsq(
             Measured output signal.
 
         sigmax : array_like
-            Noise covariance matrix of the input signal.
+            Noise vector of the input signal.
 
         sigmay : array_like
-            Noise covariance matrix of the output signal.
+            Noise vector of the output signal.
 
         ts : float
             Sampling time.
@@ -429,6 +429,62 @@ def costfunlsq(
     uy = h @ ((sigmax**2) * h).T
 
     res = la.inv(la.sqrtm(uy + vy)) @ ry
+
+    return res
+
+
+def costfuntls(
+    fun: Callable,
+    theta: ArrayLike,
+    mu: ArrayLike,
+    xx: ArrayLike,
+    yy: ArrayLike,
+    sigmax: ArrayLike,
+    sigmay: ArrayLike,
+    ts: float,
+) -> ArrayLike:
+    r"""Computes the residual vector for the total least squares cost function.
+
+    Parameters
+    ----------
+        fun : callable
+            Transfer function, in the form fun(theta,w), -iwt convention.
+
+        theta : array_like
+            Input parameters for the function.
+
+        mu : array_like
+            Estimated input signal.
+
+        xx : array_like
+            Measured input signal.
+
+        yy : array_like
+            Measured output signal.
+
+        sigmax : array_like
+            Noise vector of the input signal.
+
+        sigmay : array_like
+            Noise vector of the output signal.
+
+        ts : float
+            Sampling time.
+
+    Returns
+    -------
+    res : array_like
+
+
+    """
+    n = xx.shape[-1]
+    delta = (xx - mu) / sigmax
+    w = 2 * np.pi * rfftfreq(n, ts)
+    h_f = fun(theta, w)
+
+    eps = (yy - irfft(rfft(mu) * h_f, n=n)) / sigmay
+
+    res = np.concatenate((delta, eps))
 
     return res
 

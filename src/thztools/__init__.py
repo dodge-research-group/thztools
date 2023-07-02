@@ -1,6 +1,7 @@
 from thztools.thztools import (
     ODR,
     costfunlsq,
+    costfuntls,
     fftfreq,
     noiseamp,
     noisevar,
@@ -14,6 +15,7 @@ from thztools.thztools import (
 __all__ = [
     "ODR",
     "costfunlsq",
+    "costfuntls",
     "fftfreq",
     "noiseamp",
     "noisevar",

@@ -1,5 +1,4 @@
 from thztools.thztools import (
-    ODR,
     costfunlsq,
     costfuntls,
     fftfreq,
@@ -13,7 +12,6 @@ from thztools.thztools import (
 )
 
 __all__ = [
-    "ODR",
     "costfunlsq",
     "costfuntls",
     "fftfreq",

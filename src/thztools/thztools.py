@@ -314,7 +314,7 @@ def costfuntls(
     Parameters
     ----------
         fun : callable
-            Transfer function, in the form fun(theta,w), -iwt convention.
+            Transfer function, in the form fun(theta,w), +iwt convention.
 
         theta : array_like
             Input parameters for the function.

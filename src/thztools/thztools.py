@@ -641,6 +641,7 @@ def tdnoisefit(
     if not fix_eta:
         x0 = np.concatenate((x0, eta0[1:] - eta0[0]))
 
+    # Bundle free parameters together into objective function
     def objective(_p):
         if fix_v:
             _logv = np.log(v0)
@@ -674,120 +675,64 @@ def tdnoisefit(
             fix_eta=fix_eta,
         )
 
+    # Minimize cost function with respect to free parameters
     out = minimize(objective, x0, method="BFGS", jac=True)
-
-    # The trust-region algorithm returns the Hessian for the next-to-last
-    # iterate, which may not be near the final point. To check, test for
-    # positive definiteness by attempting to Cholesky factorize it. If it
-    # returns an error, rerun the optimization with the quasi-Newton algorithm
-    # from the current optimal point.
-
-    try:
-        la.cholesky(la.inv(out.hess_inv))
-        hess = la.inv(out.hess_inv)
-    except la.LinAlgError:
-        print(
-            "Hessian returned by FMINUNC is not positive definite;\n"
-            "recalculating with quasi-Newton algorithm"
-        )
-
-        x0 = out.x
-        out2 = minimize(objective, x0, method="BFGS", jac=True)
-        hess = la.inv(out2.hess_inv)
 
     # Parse output
     p = {}
-    idxrange = {}
-    idxstart = 0
-
+    x_out = out.x
     if fix_v:
         p["var"] = v0
     else:
-        idxend = idxstart + 3
-        idxrange["logv"] = np.arange(idxstart, idxend)
-        idxstart = idxend
-        p["var"] = np.exp(out.x[idxrange["logv"]])
-    pass
+        p["var"] = np.exp(x_out[:3])
+        x_out = x_out[3:]
 
     if fix_mu:
         p["mu"] = mu0
     else:
-        idxend = idxstart + n
-        idxrange["mu"] = np.arange(idxstart, idxend)
-        idxstart = idxend
-        p["mu"] = out.x[idxrange["mu"]]
-    pass
+        p["mu"] = x_out[:n]
+        x_out = x_out[n:]
 
     if fix_a:
         p["a"] = a0
-    elif fix_mu:
-        idxend = idxstart + m
-        idxrange["a"] = np.arange(idxstart, idxend)
-        idxstart = idxend
-        p["a"] = out.x[idxrange["a"]]
     else:
-        idxend = idxstart + m - 1
-        idxrange["a"] = np.arange(idxstart, idxend)
-        idxstart = idxend
-        p["a"] = np.concatenate(([1], out.x[idxrange["a"]]), axis=0)
-    pass
+        p["a"] = np.concatenate(([1], x_out[:m - 1]))
+        x_out = x_out[m-1:]
 
     if fix_eta:
         p["eta"] = eta0
-    elif fix_mu:
-        idxend = idxstart + m
-        idxrange["eta"] = np.arange(idxstart, idxend)
-        p["eta"] = out.x[idxrange["eta"]]
     else:
-        idxend = idxstart + m - 1
-        idxrange["eta"] = np.arange(idxstart, idxend)
-        p["eta"] = np.concatenate(([0], out.x[idxrange["eta"]]), axis=0)
-    pass
+        p["eta"] = np.concatenate(([0], x_out[:m - 1]))
 
     p["ts"] = ts
 
-    vary_param = np.logical_not(
-        [
-            fix_v,
-            fix_mu,
-            fix_a,
-            fix_eta,
-        ]
-    )
     diagnostic = {
         "grad": out.jac,
-        "hessian": hess,
-        "err": {"var": [], "mu": [], "a": [], "eta": []},
+        "hess_inv": out.hess_inv,
+        "err": {
+            "var": np.array([]),
+            "mu": np.array([]),
+            "a": np.array([]),
+            "eta": np.array([])
+        },
     }
-    v = np.dot(np.eye(hess.shape[0]), la.inv(hess))
-    err = np.sqrt(np.diag(v))
-    idxstart = 0
-    if vary_param[0]:
+    err = np.sqrt(np.diag(out.hess_inv))
+    if not fix_v:
         diagnostic["err"]["var"] = np.sqrt(
-            np.diag(np.diag(p["var"]) * v[0:3, 0:3]) * np.diag(p["var"])
+            np.diag(np.diag(p["var"]) * out.hess_inv[0:3, 0:3])
+            * np.diag(p["var"])
         )
-        idxstart = idxstart + 3
-    pass
+        err = err[3:]
 
-    if vary_param[1]:
-        diagnostic["err"]["mu"] = err[idxstart : idxstart + n]
-        idxstart = idxstart + n
-    pass
+    if not fix_mu:
+        diagnostic["err"]["mu"] = err[:n]
+        err = err[n:]
 
-    if vary_param[2]:
-        if vary_param[1]:
-            diagnostic["err"]["a"] = err[idxstart : idxstart + m - 1]
-            idxstart = idxstart + m - 1
-        else:
-            diagnostic["err"]["a"] = err[idxstart : idxstart + m]
-            idxstart = idxstart + m
-    pass
+    if not fix_a:
+        diagnostic["err"]["a"] = np.concatenate(([0], err[:m - 1]))
+        err = err[m - 1:]
 
-    if vary_param[3]:
-        if vary_param[1]:
-            diagnostic["err"]["eta"] = err[idxstart : idxstart + m - 1]
-        else:
-            diagnostic["err"]["eta"] = err[idxstart : idxstart + m]
-    pass
+    if not fix_eta:
+        diagnostic["err"]["eta"] = np.concatenate(([0], err[:m - 1]))
 
     return [p, out.fun, diagnostic]

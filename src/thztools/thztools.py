@@ -3,10 +3,9 @@ from __future__ import annotations
 from typing import Callable
 
 import numpy as np
+import scipy.linalg as la
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.typing import ArrayLike
-import scipy.linalg as la
-from scipy import odr
 from scipy.optimize import minimize
 
 
@@ -593,6 +592,8 @@ def tdnoisefit(
     """
     # Parse and validate function inputs
     x = np.asarray(x)
+    # Preassign n, m
+    n = m = 0
     try:
         n, m = x.shape
     except ValueError:
@@ -656,12 +657,12 @@ def tdnoisefit(
         if fix_a:
             _a = a0
         else:
-            _a = np.concatenate((np.array([1.]), _p[:m - 1]))
-            _p = _p[m - 1:]
+            _a = np.concatenate((np.array([1.0]), _p[: m - 1]))
+            _p = _p[m - 1 :]
         if fix_eta:
             _eta = eta0
         else:
-            _eta = np.concatenate((np.array([0.]), _p[:m - 1]))
+            _eta = np.concatenate((np.array([0.0]), _p[: m - 1]))
         return tdnll(
             x.T,
             _mu,
@@ -696,13 +697,13 @@ def tdnoisefit(
     if fix_a:
         p["a"] = a0
     else:
-        p["a"] = np.concatenate(([1], x_out[:m - 1]))
-        x_out = x_out[m-1:]
+        p["a"] = np.concatenate(([1], x_out[: m - 1]))
+        x_out = x_out[m - 1 :]
 
     if fix_eta:
         p["eta"] = eta0
     else:
-        p["eta"] = np.concatenate(([0], x_out[:m - 1]))
+        p["eta"] = np.concatenate(([0], x_out[: m - 1]))
 
     p["ts"] = ts
 
@@ -713,7 +714,7 @@ def tdnoisefit(
             "var": np.array([]),
             "mu": np.array([]),
             "a": np.array([]),
-            "eta": np.array([])
+            "eta": np.array([]),
         },
     }
     err = np.sqrt(np.diag(out.hess_inv))
@@ -729,10 +730,10 @@ def tdnoisefit(
         err = err[n:]
 
     if not fix_a:
-        diagnostic["err"]["a"] = np.concatenate(([0], err[:m - 1]))
-        err = err[m - 1:]
+        diagnostic["err"]["a"] = np.concatenate(([0], err[: m - 1]))
+        err = err[m - 1 :]
 
     if not fix_eta:
-        diagnostic["err"]["eta"] = np.concatenate(([0], err[:m - 1]))
+        diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
 
     return [p, out.fun, diagnostic]

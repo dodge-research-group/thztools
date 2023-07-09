@@ -409,20 +409,20 @@ def tdnll(
     Compute negative log-likelihood for the time-domain noise model.
 
     Computes the negative log-likelihood function for obtaining the
-    data matrix ``x``, given the parameter dictionary param.
+    data matrix `x` given `mu`, `logv`, `a`, and `eta`.
 
     Parameters
     ----------
     x : array_like
         Data matrix.
     mu : array_like
-        Signal vector with length N.
+        Signal vector with shape (n,).
     logv : array_like
         Array of three noise parameters.
     a: array_like
-        Amplitude vector with length M.
+        Amplitude vector with shape (m,).
     eta : array_like
-        Delay vector with length M.
+        Delay vector with shape (m,).
     ts : float
         Sampling time.
     fix_logv : bool
@@ -449,11 +449,6 @@ def tdnll(
     eta = np.asarray(eta)
 
     m, n = x.shape
-
-    def fun(_, _w):
-        return -1j * _w
-
-    tdtf(fun, 0, n, ts)
 
     # Compute variance
     v = np.exp(logv)
@@ -488,7 +483,7 @@ def tdnll(
         + np.sum(resnormsq) / 2
     )
 
-    # Compute gradient if requested
+    # Compute gradient
     gradnll = np.array([])
     if not (fix_logv & fix_mu & fix_a & fix_eta):
         reswt = res / vtot
@@ -540,8 +535,6 @@ def tdnoisefit(
     fix_mu: bool = False,
     fix_a: bool = True,
     fix_eta: bool = True,
-    ignore_a: bool = True,
-    ignore_eta: bool = True,
 ) -> tuple[dict, float, dict]:
     r"""
     Compute time-domain noise model parameters.
@@ -572,10 +565,6 @@ def tdnoisefit(
         Amplitude vector.
     fix_eta : bool, optional
         Delay vector.
-    ignore_a : bool, optional
-        Amplitude vector.
-    ignore_eta : bool, optional
-        Delay vector.
 
     Returns
     --------
@@ -604,10 +593,10 @@ def tdnoisefit(
     """
     # Parse and validate function inputs
     x = np.asarray(x)
-    if x.ndim != 2:
-        msg = "Data array x must be 2D."
-        raise ValueError(msg)
-    n, m = x.shape
+    try:
+        n, m = x.shape
+    except ValueError:
+        print("Data array x must be 2D.")
 
     if v0 is None:
         v0 = np.mean(np.var(x, 1)) * np.array([1, 1, 1])
@@ -634,147 +623,58 @@ def tdnoisefit(
             raise ValueError(msg)
 
     if eta0 is None:
-        eta0 = np.ones(m)
+        eta0 = np.zeros(m)
     else:
         eta0 = np.asarray(eta0)
         if eta0.size != m:
             msg = "Size of eta0 is incompatible with data array x."
             raise ValueError(msg)
 
-    mle = {"x0": np.array([])}
-    idxstart = 0
-    idxrange = {}
-
-    # If fix['logv'], return log(v0); otherwise return logv parameters
-    if fix_v:
-
-        def setplogv(_):
-            return np.log(v0)
-
-    else:
-        mle["x0"] = np.concatenate((mle["x0"], np.log(v0)))
-        idxend = idxstart + 3
-        idxrange["logv"] = np.arange(idxstart, idxend)
-
-        def setplogv(_p):
-            return _p[idxrange["logv"]]
-
-        idxstart = idxend
-
-    # If Fix['mu'], return mu0, otherwise, return mu parameters
-    if fix_mu:
-
-        def setpmu(_):
-            return mu0
-
-    else:
-        mle["x0"] = np.concatenate((mle["x0"], mu0))
-        idxend = idxstart + n
-        idxrange["mu"] = np.arange(idxstart, idxend)
-
-        def setpmu(_p):
-            return _p[idxrange["mu"]]
-
-        idxstart = idxend
-    pass
-
-    # If ignore_a, return None; if fix_a, return a0; if (!fix_a & fix_mu),
-    # return all a parameters; if !fix_a & !fix_mu, return all a parameters
-    # but first
-
-    if ignore_a:
-
-        def setpa(_):
-            return None
-
-    elif fix_a:
-
-        def setpa(_):
-            return a0
-
-    elif fix_mu:
-        mle["x0"] = np.concatenate((mle["x0"], a0))
-        idxend = idxstart + m
-        idxrange["a"] = np.arange(idxstart, idxend)
-
-        def setpa(_p):
-            return _p[idxrange["a"]]
-
-        idxstart = idxend
-    else:
-        mle["x0"] = np.concatenate((mle["x0"], a0[1:] / a0[0]))
-        idxend = idxstart + m - 1
-        idxrange["a"] = np.arange(idxstart, idxend)
-
-        def setpa(_p):
-            return np.concatenate(([1], _p[idxrange["a"]]), axis=0)
-
-        idxstart = idxend
-    pass
-
-    # If ignore_eta, return None; if fix_eta, return eta0; if !fix_eta &
-    # fix_mu,return all eta parameters; if !fix_eta & !fix_mu, return all eta
-    # parameters but first
-
-    if ignore_eta:
-
-        def setpeta(_):
-            return None
-
-    elif fix_eta:
-
-        def setpeta(_):
-            return eta0
-
-    elif fix_mu:
-        mle["x0"] = np.concatenate((mle["x0"], eta0))
-        idxend = idxstart + m
-        idxrange["eta"] = np.arange(idxstart, idxend)
-
-        def setpeta(_p):
-            return _p[idxrange["eta"]]
-
-    else:
-        mle["x0"] = np.concatenate((mle["x0"], eta0[1:] - eta0[0]))
-        idxend = idxstart + m - 1
-        idxrange["eta"] = np.arange(idxstart, idxend)
-
-        def setpeta(_p):
-            return np.concatenate(([0], _p[idxrange["eta"]]), axis=0)
-
-    pass
-
-    def fun(_, _w):
-        return -1j * _w
-
-    tdtf(fun, 0, n, ts)
-
-    def parsein(_p):
-        return {
-            "logv": setplogv(_p),
-            "mu": setpmu(_p),
-            "a": setpa(_p),
-            "eta": setpeta(_p),
-            "ts": ts,
-        }
+    # Set initial guesses for all free parameters
+    x0 = np.array([])
+    if not fix_v:
+        x0 = np.concatenate((x0, np.log(v0)))
+    if not fix_mu:
+        x0 = np.concatenate((x0, mu0))
+    if not fix_a:
+        x0 = np.concatenate((x0, a0[1:] / a0[0]))
+    if not fix_eta:
+        x0 = np.concatenate((x0, eta0[1:] - eta0[0]))
 
     def objective(_p):
-        p_dict = parsein(_p)
-        _mu = p_dict.pop("mu")
-        _logv = p_dict.pop("logv")
+        if fix_v:
+            _logv = np.log(v0)
+        else:
+            _logv = _p[:3]
+            _p = _p[3:]
+        if fix_mu:
+            _mu = mu0
+        else:
+            _mu = _p[:n]
+            _p = _p[n:]
+        if fix_a:
+            _a = a0
+        else:
+            _a = np.concatenate((np.array([1.]), _p[:m - 1]))
+            _p = _p[m - 1:]
+        if fix_eta:
+            _eta = eta0
+        else:
+            _eta = np.concatenate((np.array([0.]), _p[:m - 1]))
         return tdnll(
             x.T,
             _mu,
             _logv,
-            **p_dict,
+            _a,
+            _eta,
+            ts,
             fix_logv=fix_v,
             fix_mu=fix_mu,
             fix_a=fix_a,
             fix_eta=fix_eta,
         )
 
-    mle["objective"] = objective
-    out = minimize(mle["objective"], mle["x0"], method="BFGS", jac=True)
+    out = minimize(objective, x0, method="BFGS", jac=True)
 
     # The trust-region algorithm returns the Hessian for the next-to-last
     # iterate, which may not be near the final point. To check, test for
@@ -791,8 +691,8 @@ def tdnoisefit(
             "recalculating with quasi-Newton algorithm"
         )
 
-        mle["x0"] = out.x
-        out2 = minimize(mle["objective"], mle["x0"], method="BFGS", jac=True)
+        x0 = out.x
+        out2 = minimize(objective, x0, method="BFGS", jac=True)
         hess = la.inv(out2.hess_inv)
 
     # Parse output
@@ -818,7 +718,7 @@ def tdnoisefit(
         p["mu"] = out.x[idxrange["mu"]]
     pass
 
-    if ignore_a or fix_a:
+    if fix_a:
         p["a"] = a0
     elif fix_mu:
         idxend = idxstart + m
@@ -832,7 +732,7 @@ def tdnoisefit(
         p["a"] = np.concatenate(([1], out.x[idxrange["a"]]), axis=0)
     pass
 
-    if ignore_eta or fix_eta:
+    if fix_eta:
         p["eta"] = eta0
     elif fix_mu:
         idxend = idxstart + m
@@ -850,8 +750,8 @@ def tdnoisefit(
         [
             fix_v,
             fix_mu,
-            fix_a or ignore_a,
-            fix_eta or ignore_eta,
+            fix_a,
+            fix_eta,
         ]
     )
     diagnostic = {

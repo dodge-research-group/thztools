@@ -45,8 +45,6 @@ def tdnoisefit_alt(*args):
         "fix_mu": False,
         "fix_a": False,
         "fix_eta": False,
-        "ignore_a": False,
-        "ignore_eta": False,
     }
     out, _, _ = tdnoisefit(args[0], **kwargs)
     out_alt = [out["var"], out["mu"], out["a"], out["eta"]]

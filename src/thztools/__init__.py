@@ -1,13 +1,10 @@
-from thztools._util import epswater
 from thztools.thztools import (
-    DataPulse,
-    Wave,
-    airscancorrect,
     costfunlsq,
+    costfuntls,
     fftfreq,
     noiseamp,
     noisevar,
-    shiftmtx,
+    scaleshift,
     tdnll,
     tdnoisefit,
     tdtf,
@@ -15,15 +12,12 @@ from thztools.thztools import (
 )
 
 __all__ = [
-    "DataPulse",
-    "Wave",
-    "airscancorrect",
     "costfunlsq",
-    "epswater",
+    "costfuntls",
     "fftfreq",
     "noiseamp",
     "noisevar",
-    "shiftmtx",
+    "scaleshift",
     "tdnll",
     "tdnoisefit",
     "tdtf",

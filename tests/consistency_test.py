@@ -6,39 +6,47 @@ import pytest
 
 from thztools import (
     costfunlsq,
-    epswater,
     fftfreq,
     noiseamp,
     noisevar,
-    shiftmtx,
     tdnll,
     tdnoisefit,
     tdtf,
     thzgen,
 )
+
 # np.seterr(all='raise')
 
 
 def tdnll_alt(*args):
+    # Transpose data array to convert MATLAB column orientation to NumPy
+    # row orientation; swap order of logv and mu
+    args_alt = [args[0].T, args[2], args[1]]
     kwargs = {
+        "a": args[3],
+        "eta": args[4],
+        "ts": args[5],
         "fix_logv": False,
         "fix_mu": False,
         "fix_a": False,
         "fix_eta": False,
     }
-    return tdnll(*args, **kwargs)
+    return tdnll(*args_alt, **kwargs)
 
 
 def tdnoisefit_alt(*args):
     kwargs = {
+        "v0": args[1],
+        "mu0": args[2],
+        "a0": args[3],
+        "eta0": args[4],
+        "ts": args[5],
         "fix_v": False,
         "fix_mu": False,
         "fix_a": False,
         "fix_eta": False,
-        "ignore_a": True,
-        "ignore_eta": False,
     }
-    out, _, _ = tdnoisefit(*args, **kwargs)
+    out, _, _ = tdnoisefit(args[0], **kwargs)
     out_alt = [out["var"], out["mu"], out["a"], out["eta"]]
     return out_alt
 
@@ -46,11 +54,9 @@ def tdnoisefit_alt(*args):
 # Establish dictionary mapping from function names to functions
 FUNC_DICT = {
     "fftfreq": fftfreq,
-    "epswater": epswater,
     "thzgen": thzgen,
     "noisevar": noisevar,
     "noiseamp": noiseamp,
-    "shiftmtx": shiftmtx,
     "tdtf": tdtf,
     "costfunlsq": costfunlsq,
     "tdnll": tdnll_alt,
@@ -140,12 +146,14 @@ def test_matlab_result(get_test):
         np.testing.assert_allclose(matlab_out[0], python_out, atol=1e-4)
     elif func_name == "tdnll":
         np.testing.assert_allclose(
-            matlab_out[0], python_out[0],
-            atol=2 * np.finfo(python_out[0].dtype).eps
+            matlab_out[0],
+            python_out[0],
+            atol=2 * np.finfo(python_out[0].dtype).eps,
         )
         np.testing.assert_allclose(
-            matlab_out[1], python_out[1],
-            atol=2 * np.finfo(python_out[1].dtype).eps
+            matlab_out[1],
+            python_out[1],
+            atol=2 * np.finfo(python_out[1].dtype).eps,
         )
     else:
         np.testing.assert_allclose(

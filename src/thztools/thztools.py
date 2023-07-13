@@ -1,137 +1,12 @@
 from __future__ import annotations
 
-import warnings
-from typing import Callable, Tuple
+from typing import Callable
 
 import numpy as np
-import pandas as pd
-import scipy.linalg  # type: ignore
+import scipy.linalg as la
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.typing import ArrayLike
-from scipy.optimize import minimize  # type: ignore
-
-
-class Wave:
-    r"""
-    Signal vector with associated information.
-
-    Attributes
-    ==========
-    signal : ndarray, optional
-        Signal vector. Default is an empty array.
-
-    ts : float, optional
-        Sampling time in ps. Default is 1.0.
-
-    t0 : float, optional
-        Absolute time associated with first data point. Default is 0.0.
-
-    metadata : dict, optional
-        Dictionary of metadata associated with the wave object. Default is an
-        empty dictionary.
-    """
-
-    def __init__(
-        self,
-        signal: ArrayLike = None,
-        ts: float = 1.0,
-        t0: float = 0.0,
-        metadata: dict = None,
-    ) -> None:
-        if signal is None:
-            self.signal = np.array([])
-        else:
-            self.signal = np.asarray(signal)
-        self.ts = ts
-        self.t0 = t0
-        if metadata is None:
-            self.metadata = {}
-        else:
-            self.metadata = metadata
-
-    def __repr__(self):
-        return (
-            f"{self.__class__.__name__}(signal={self.signal.__repr__()}, "
-            f"ts={self.ts}, t0={self.t0}, metadata="
-            f"{self.metadata.__repr__()})"
-        )
-
-    def __array__(self):
-        # See
-        # https://numpy.org/doc/stable/user/basics.dispatch.html#basics
-        # -dispatch
-        # for details on NumPy custom array containers
-        return self.signal
-
-    @property
-    def t(self) -> ArrayLike:
-        r"""
-        Generate array of sampled times.
-
-        Returns
-        -------
-        ndarray
-            Array of sampled times associated with the signal, beginning with
-            t0 and separated by ts.
-        """
-        return
-
-    @property
-    def f(self) -> ArrayLike:
-        r"""
-        Generate array of sampled frequencies.
-
-        Returns
-        -------
-        ndarray
-            Array of frequencies associated with the signal. Generate with
-            numpy.rfftfreq.
-
-        """
-        return
-
-    @property
-    def spectrum(self) -> ArrayLike:
-        r"""
-        Complex spectrum of signal.
-
-        Returns
-        -------
-        ndarray
-            Real Fourier transform of signal. Generate with numpy.rfft
-
-        """
-        return
-
-    @property
-    def psd(self) -> ArrayLike:
-        r"""
-        Power spectral density of signal.
-
-        Returns
-        -------
-        ndarray
-            Power spectral density of signal. Generate with
-            scipy.signal.periodogram. Some of the optional parameters may be
-            useful to include, such as 'window', 'detrend', and 'scaling'.
-
-        """
-        return
-
-    def load(self, filepath: str) -> None:
-        r"""
-        Load ``Wave`` object from a data file.
-
-        Parameters
-        ----------
-        filepath : str
-            File path to read.
-
-        Returns
-        -------
-
-        """
-        return
+from scipy.optimize import minimize
 
 
 def fftfreq(n, ts):
@@ -284,117 +159,7 @@ def thzgen(
     return y, t2
 
 
-class DataPulse:
-    def __init__(self, filename=""):
-        self.AcquisitionTime = None
-        self.Description = None
-        self.TimeConstant = None
-        self.WaitTime = None
-        self.setPoint = None
-        self.scanOffset = None
-        self.temperature = None
-        self.time = None
-        self.amplitude = None
-        self.ChannelAMaximum = None
-        self.ChannelAMinimum = None
-        self.ChannelAVariance = None
-        self.ChannelASlope = None
-        self.ChannelAOffset = None
-        self.ChannelBMaximum = None
-        self.ChannelBMinimum = None
-        self.ChannelBVariance = None
-        self.ChannelBSlope = None
-        self.ChannelBOffset = None
-        self.ChannelCMaximum = None
-        self.ChannelCMinimum = None
-        self.ChannelCVariance = None
-        self.ChannelCSlope = None
-        self.ChannelCOffset = None
-        self.ChannelDMaximum = None
-        self.ChannelDMinimum = None
-        self.ChannelDVariance = None
-        self.ChannelDSlope = None
-        self.ChannelDOffset = None
-        self.dirname = None
-        self.file = None
-        self.filename = filename
-        self.frequency = None
-
-        if filename is not None:
-            data = pd.read_csv(filename, header=None, delimiter="\t")
-
-            ind = 0
-            for i in range(data.shape[0]):
-                try:
-                    float(data[0][i])
-                except ValueError:
-                    ind = i + 1
-                pass
-
-            keys = data[0][0:ind].to_list()
-            vals = data[1][0:ind].to_list()
-
-            for k in range(len(keys)):
-                if keys[k] in list(self.__dict__.keys()):
-                    try:
-                        float(vals[k])
-                        setattr(self, keys[k], float(vals[k]))
-                    except ValueError:
-                        setattr(self, keys[k], vals[k])
-
-                else:
-                    msg = "The data key is not defied"
-                    raise Warning(msg)
-
-            self.time = data[0][ind:].to_numpy(dtype=float)
-            self.amplitude = data[1][ind:].to_numpy(dtype=float)
-
-            # Calculate frequency range
-            self.frequency = (
-                np.arange(np.floor(len(self.time))) / 2 - 1
-            ).T / (self.time[-1] - self.time[0])
-
-            # Calculate fft
-            famp = np.fft.fft(self.amplitude)
-            self.famp = famp[0 : int(np.floor(len(famp) / 2))]
-
-
-def shiftmtx(tau: float, n: int, ts: float = 1) -> ArrayLike:
-    """
-    Shiftmtx computes the n by n transfer matrix for a continuous time-shift.
-
-    Parameters
-    -----------
-
-    tau : float
-        Delay.
-
-    n : int
-        Number of samples.
-
-    ts: float, optional
-        Sampling time.
-
-    Returns
-    -------
-    h: ndarray
-        Transfer matrix with shape (n, n).
-
-    """
-
-    # Fourier method
-    f = rfftfreq(n, ts)
-    w = 2 * np.pi * f
-
-    imp = irfft(np.exp(-1j * w * tau), n=n)
-
-    # computes the n by n transformation matrix
-    h = scipy.linalg.toeplitz(imp, np.roll(np.flipud(imp), 1))
-
-    return h
-
-
-def airscancorrect(
+def scaleshift(
     x: ArrayLike,
     *,
     a: ArrayLike | None = None,
@@ -409,9 +174,9 @@ def airscancorrect(
     x : array_like
         Data array.
     a : array_like, optional
-        Amplitude correction.
+        Scale array.
     eta : array_like, optional
-        Delay correction.
+        Shift array.
     ts : float, optional
         Sampling time. Default is 1.0.
     axis : int, optional
@@ -441,8 +206,10 @@ def airscancorrect(
     else:
         a = np.asarray(a)
         if a.shape != m:
-            msg = (f"Scale correction with shape {a.shape} can not be applied "
-                   f"to data with shape {x.shape}")
+            msg = (
+                f"Scale correction with shape {a.shape} can not be applied "
+                f"to data with shape {x.shape}"
+            )
             raise ValueError(msg)
 
     if eta is None:
@@ -450,16 +217,19 @@ def airscancorrect(
     else:
         eta = np.asarray(eta)
         if eta.shape != m:
-            msg = (f"Shift correction with shape {a.shape} can not be applied "
-                   f"to data with shape {x.shape}")
+            msg = (
+                f"Shift correction with shape {a.shape} can not be applied "
+                f"to data with shape {x.shape}"
+            )
             raise ValueError(msg)
 
     f = rfftfreq(n, ts)
     w = 2 * np.pi * f
     phase = np.expand_dims(eta, axis=eta.ndim) * w
 
-    xadj = (np.fft.irfft(np.fft.rfft(x) * np.exp(1j * phase), n=n)
-            / np.expand_dims(a, axis=a.ndim))
+    xadj = np.fft.irfft(
+        np.fft.rfft(x) * np.exp(1j * phase), n=n
+    ) / np.expand_dims(a, axis=a.ndim)
 
     if x.ndim > 1:
         if axis != -1:
@@ -477,7 +247,7 @@ def costfunlsq(
     sigmay: ArrayLike,
     ts: float,
 ) -> ArrayLike:
-    r"""Computes the maximum likelihood cost function.
+    r"""Computes the residual vector for the maximum likelihood cost function.
 
     Parameters
     ----------
@@ -494,10 +264,10 @@ def costfunlsq(
             Measured output signal.
 
         sigmax : array_like
-            Noise covariance matrix of the input signal.
+            Noise vector of the input signal.
 
         sigmay : array_like
-            Noise covariance matrix of the output signal.
+            Noise vector of the output signal.
 
         ts : float
             Sampling time.
@@ -509,24 +279,78 @@ def costfunlsq(
 
     """
     n = xx.shape[0]
-    wfft = 2 * np.pi * rfftfreq(n, ts)
-    h = np.conj(fun(theta, wfft))
+    w = 2 * np.pi * rfftfreq(n, ts)
+    h_f = np.conj(fun(theta, w))
 
-    ry = yy - irfft(rfft(xx) * h, n=n)
+    ry = yy - irfft(rfft(xx) * h_f, n=n)
     vy = np.diag(sigmay**2)
 
-    htilde = irfft(h, n=n)
+    h_imp = irfft(h_f, n=n)
+    h = la.circulant(h_imp)
 
-    uy = np.zeros((n, n))
-    for k in np.arange(n):
-        a = np.reshape(np.roll(htilde, k), (n, 1))
-        b = np.reshape(np.conj(np.roll(htilde, k)), (1, n))
-        uy = uy + np.real(np.dot(a, b)) * sigmax[k] ** 2
-        # uy = uy + np.real(np.roll(htilde, k-1) @ np.roll(htilde, k-1).T) @
-        # sigmax[k]**2
+    # For V_xx = diag(sigma_x ** 2),
+    # uy = h @ ((sigmax ** 2) * h).T
+    # is equivalent to and faster than
+    # uy = h @ diag(sigmax ** 2) @ h.T
+    uy = h @ ((sigmax**2) * h).T
 
-    w = np.dot(np.eye(n), scipy.linalg.inv(scipy.linalg.sqrtm(uy + vy)))
-    res = np.dot(w, ry)
+    res = la.inv(la.sqrtm(uy + vy)) @ ry
+
+    return res
+
+
+def costfuntls(
+    fun: Callable,
+    theta: ArrayLike,
+    mu: ArrayLike,
+    xx: ArrayLike,
+    yy: ArrayLike,
+    sigmax: ArrayLike,
+    sigmay: ArrayLike,
+    ts: float,
+) -> ArrayLike:
+    r"""Computes the residual vector for the total least squares cost function.
+
+    Parameters
+    ----------
+        fun : callable
+            Transfer function, in the form fun(theta,w), +iwt convention.
+
+        theta : array_like
+            Input parameters for the function.
+
+        mu : array_like
+            Estimated input signal.
+
+        xx : array_like
+            Measured input signal.
+
+        yy : array_like
+            Measured output signal.
+
+        sigmax : array_like
+            Noise vector of the input signal.
+
+        sigmay : array_like
+            Noise vector of the output signal.
+
+        ts : float
+            Sampling time.
+
+    Returns
+    -------
+    res : array_like
+
+
+    """
+    n = xx.shape[-1]
+    delta = (xx - mu) / sigmax
+    w = 2 * np.pi * rfftfreq(n, ts)
+    h_f = fun(theta, w)
+
+    eps = (yy - irfft(rfft(mu) * h_f, n=n)) / sigmay
+
+    res = np.concatenate((delta, eps))
 
     return res
 
@@ -540,7 +364,7 @@ def tdtf(fun: Callable, theta: ArrayLike, n: int, ts: float) -> ArrayLike:
         fun : callable
             Frequency function, in the form fun(theta, w), where theta
             is a vector of the function parameters. The function should be
-            expressed in the -iwt convention and must be Hermitian.
+            expressed in the +iwt convention and must be Hermitian.
 
         theta : array_like
             Input parameters for the function.
@@ -558,176 +382,85 @@ def tdtf(fun: Callable, theta: ArrayLike, n: int, ts: float) -> ArrayLike:
 
     """
 
-    # compute the transfer function over positive frequencies
-    if not isinstance(ts, np.ndarray):
-        ts = np.array([ts])
-    else:
-        ts = ts
+    f = rfftfreq(n, ts)
+    w = 2 * np.pi * f
+    tfunp = fun(theta, w)
 
-    fs = 1 / (ts * n)
-    fp = fs * np.arange(0, (n - 1) // 2 + 1)
-    wp = 2 * np.pi * fp
-    tfunp = fun(theta, wp)
-
-    # The transfer function is Hermitian, so we evaluate negative frequencies
-    # by taking the complex conjugate of the corresponding positive frequency.
-    # Include the value of the transfer function at the Nyquist frequency for
-    # even n.
-    if n % 2 != 0:
-        tfun = np.concatenate((tfunp, np.conj(np.flipud(tfunp[1:]))))
-
-    else:
-        wny = np.pi * n * fs
-        # print('tfunp', tfunp)
-        tfun = np.concatenate(
-            (
-                tfunp,
-                np.conj(
-                    np.concatenate((fun(theta, wny), np.flipud(tfunp[1:])))
-                ),
-            )
-        )
-
-    # Evaluate the impulse response by taking the inverse Fourier transform,
-    # taking the complex conjugate first to convert to ... +iwt convention
-
-    imp = np.real(np.fft.ifft(np.conj(tfun)))
-    h = scipy.linalg.toeplitz(imp, np.roll(np.flipud(imp), 1))
+    imp = irfft(tfunp, n=n)
+    h = la.circulant(imp).T
 
     return h
 
 
 def tdnll(
     x: ArrayLike,
-    logv: ArrayLike,
     mu: ArrayLike,
-    a: ArrayLike | None = None,
-    eta: ArrayLike | None = None,
-    ts: float = 1.0,
-    d: ArrayLike | None = None,
-    fix_logv: bool = False,
-    fix_mu: bool = False,
-    fix_a: bool = False,
-    fix_eta: bool = False,
+    logv: ArrayLike,
+    a: ArrayLike,
+    eta: ArrayLike,
+    ts: float,
+    *,
+    fix_logv: bool,
+    fix_mu: bool,
+    fix_a: bool,
+    fix_eta: bool,
 ) -> tuple[ArrayLike, ArrayLike]:
     r"""
     Compute negative log-likelihood for the time-domain noise model.
 
     Computes the negative log-likelihood function for obtaining the
-    data matrix ``x``, given the parameter dictionary param.
+    data matrix `x` given `mu`, `logv`, `a`, and `eta`.
 
     Parameters
     ----------
-    x : ndarray or matrix
-        Data matrix
-    logv : ndarray
-        Array of size (3, ) containing log of noise parameters.
-    mu : ndarray
-        Signal vector of size (n,).
-    a: ndarray, optional
-        Amplitude vector of size (m,).
-    eta : ndarray, optional
-        Delay vector of size (m,).
-    ts : float, optional
+    x : array_like
+        Data matrix.
+    mu : array_like
+        Signal vector with shape (n,).
+    logv : array_like
+        Array of three noise parameters.
+    a: array_like
+        Amplitude vector with shape (m,).
+    eta : array_like
+        Delay vector with shape (m,).
+    ts : float
         Sampling time.
-    d : ndarray, optional
-        Derivative matrix, size (n, n).
-    fix_logv : bool, optional
-        Log of noise parameters.
-    fix_mu : bool, optional
-        Signal vector.
-    fix_a : bool, optional
-        Amplitude vector.
-    fix_eta : bool, optional
-        Delay vector.
+    fix_logv : bool
+        Exclude noise parameters from gradiate calculation when ``True``.
+    fix_mu : bool
+        Exclude signal vector from gradiate calculation when ``True``.
+    fix_a : bool
+        Exclude amplitude vector from gradiate calculation when ``True``.
+    fix_eta : bool
+        Exclude delay vector from gradiate calculation when ``True``.
 
     Returns
     -------
-    nll : callable
-        Negative log-likelihood function
-    gradnll : ndarray
-        Gradient of the negative log-likelihood function
+    nll : float
+        Negative log-likelihood.
+    gradnll : array_like
+        Gradient of the negative log-likelihood function with respect to free
+        parameters.
     """
-    # Parameters to ignore when computing gradnll
-    ignore_a = False
-    ignore_eta = False
-
-    # Parse and validate function inputs
     x = np.asarray(x)
-    if x.ndim != 2:
-        msg = "Data array x must be 2D."
-        raise ValueError(msg)
-    n, m = x.shape
-
     logv = np.asarray(logv)
-    if logv.size != 3:
-        msg = "Noise parameter array logv must have 3 elements."
-        raise ValueError(msg)
-
     mu = np.asarray(mu)
-    if mu.ndim != 1:
-        msg = "Ideal signal vector mu must be 1D."
-        raise ValueError(msg)
-    if mu.size != n:
-        msg = "Size of mu is incompatible with data array x."
-        raise ValueError(msg)
-    mu = np.reshape(mu, (n, 1))
+    a = np.asarray(a)
+    eta = np.asarray(eta)
 
-    if a is None:
-        a = np.ones((m,))
-        ignore_a = True
-    else:
-        a = np.asarray(a)
-        if a.size != m:
-            msg = "Size of a is incompatible with data array x."
-            raise ValueError(msg)
-    a = np.reshape(a, (m, 1))
-
-    if eta is None:
-        eta = np.ones((m,))
-        ignore_eta = True
-    else:
-        eta = np.asarray(eta)
-        if eta.size != m:
-            msg = "Size of eta is incompatible with data array x."
-            raise ValueError(msg)
-    eta = np.reshape(eta, (m, 1))
-
-    if d is None:
-
-        def fun(_, _w):
-            return -1j * _w
-
-        d = tdtf(fun, 0, n, ts)
+    m, n = x.shape
 
     # Compute variance
     v = np.exp(logv)
-    v = np.reshape(v, (len(v), 1))
 
     # Compute frequency vector and Fourier coefficients of mu
-    f = fftfreq(n, ts)
+    f = rfftfreq(n, ts)
     w = 2 * np.pi * f
-    w = w.reshape(len(w), 1)
-    mu_f = np.fft.fft(mu.flatten()).reshape(len(mu), 1)
+    mu_f = rfft(mu)
 
-    gradcalc = np.logical_not(
-        [
-            [fix_logv],
-            [fix_mu],
-            [fix_a or ignore_a],
-            [fix_eta or ignore_eta],
-        ]
-    )
-
-    if ignore_eta:
-        zeta = mu * np.conj(a).T
-        zeta_f = np.fft.fft(zeta, axis=0)
-    else:
-        exp_iweta = np.exp(1j * np.tile(w, m) * np.conj(np.tile(eta, n)).T)
-        zeta_f = (
-            np.conj(np.tile(a, n)).T * np.conj(exp_iweta) * np.tile(mu_f, m)
-        )
-        zeta = np.real(np.fft.ifft(zeta_f, axis=0))
+    exp_iweta = np.exp(1j * np.outer(eta, w))
+    zeta_f = ((np.conj(exp_iweta) * mu_f).T * a).T
+    zeta = irfft(zeta_f, n=n)
 
     # Compute negative - log likelihood and gradient
 
@@ -735,121 +468,64 @@ def tdnll(
     res = x - zeta
     ressq = res**2
 
-    # Simplest case: just variance and signal parameters, A and eta fixed at
-    # defaults
-    if ignore_a and ignore_eta:
-        dmu = np.real(np.fft.ifft(1j * w * mu_f, axis=0))
-        valpha = v[0]
-        vbeta = v[1] * mu**2
-        vtau = v[2] * dmu**2
-        vtot = valpha + vbeta + vtau
-
-        resnormsq = ressq / np.tile(vtot, m)
-        nll = (
-            m * n * np.log(2 * np.pi) / 2
-            + (m / 2) * np.sum(np.log(vtot))
-            + np.sum(resnormsq) / 2
-        )
-
-        # Compute gradient if requested
-        # if nargout > 1:
-        ngrad = np.sum(gradcalc[0:2] * [[3], [n]])
-        gradnll = np.zeros((ngrad, 1))
-        nstart = 0
-        dvar = (vtot - np.mean(ressq, axis=1).reshape(n, 1)) / vtot**2
-        if gradcalc[0]:
-            gradnll[nstart] = (m / 2) * np.sum(dvar) * v[0]
-            gradnll[nstart + 1] = (m / 2) * np.sum(mu**2 * dvar) * v[1]
-            gradnll[nstart + 2] = (m / 2) * np.sum(dmu**2.0 * dvar) * v[2]
-            nstart = nstart + 3
-        if gradcalc[1]:
-            gradnll[nstart : nstart + n] = m * (
-                v[1] * mu * dvar
-                + v[2] * np.dot(d.T, (dmu * dvar))
-                - np.mean(res, axis=1).reshape(n, 1) / vtot
-            )
-
     # Alternative case: A, eta, or both are not set to defaults
-    else:
-        dzeta = np.real(np.fft.ifft(1j * np.tile(w, m) * zeta_f, axis=0))
+    dzeta = irfft(1j * w * zeta_f, n=n)
 
-        valpha = v[0]
-        vbeta = v[1] * zeta**2
-        vtau = v[2] * dzeta**2
-        vtot = valpha + vbeta + vtau
+    valpha = v[0]
+    vbeta = v[1] * zeta**2
+    vtau = v[2] * dzeta**2
+    vtot = valpha + vbeta + vtau
 
-        resnormsq = ressq / vtot
-        nll = (
-            m * n * np.log(2 * np.pi) / 2
-            + np.sum(np.log(vtot)) / 2
-            + np.sum(resnormsq) / 2
-        )
+    resnormsq = ressq / vtot
+    nll = (
+        m * n * np.log(2 * np.pi) / 2
+        + np.sum(np.log(vtot)) / 2
+        + np.sum(resnormsq) / 2
+    )
 
-        # Compute gradient if requested
-        # if nargout > 1:
-        ngrad = np.sum(gradcalc * [[3], [n], [m], [m]])
-        gradnll = np.zeros((ngrad, 1))
-        nstart = 0
+    # Compute gradient
+    gradnll = np.array([])
+    if not (fix_logv & fix_mu & fix_a & fix_eta):
         reswt = res / vtot
         dvar = (vtot - ressq) / vtot**2
-        if gradcalc[0]:
+        if not fix_logv:
             # Gradient wrt logv
-            gradnll[nstart] = 0.5 * np.sum(dvar) * v[0]
-            gradnll[nstart + 1] = (
-                0.5 * np.sum(zeta.flatten() ** 2 * dvar.flatten()) * v[1]
+            gradnll = np.append(gradnll, 0.5 * np.sum(dvar) * v[0])
+            gradnll = np.append(gradnll, 0.5 * np.sum(zeta**2 * dvar) * v[1])
+            gradnll = np.append(
+                gradnll, 0.5 * np.sum(dzeta**2 * dvar) * v[2]
             )
-            gradnll[nstart + 2] = (
-                0.5 * np.sum(dzeta.flatten() ** 2 * dvar.flatten()) * v[2]
-            )
-            nstart = nstart + 3
-        if gradcalc[1]:
+        if not fix_mu:
             # Gradient wrt mu
-            p = np.fft.fft(v[1] * dvar * zeta - reswt, axis=0) - 1j * v[
-                2
-            ] * w * np.fft.fft(dvar * dzeta, axis=0)
-            gradnll[nstart : nstart + n] = np.sum(
-                np.conj(a).T * np.real(np.fft.ifft(exp_iweta * p, axis=0)),
-                axis=1,
-            ).reshape(n, 1)
-            nstart = nstart + n
-        if gradcalc[2]:
+            p = rfft(v[1] * dvar * zeta - reswt) - 1j * v[2] * w * rfft(
+                dvar * dzeta
+            )
+            gradnll = np.append(
+                gradnll, np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
+            )
+        if not fix_a:
             # Gradient wrt A
             term = (vtot - valpha) * dvar - reswt * zeta
-            if np.any(np.isclose(a, 0)):
-                msg = (
-                    "One or more elements of the amplitude vector are "
-                    "close to zero "
-                )
-                raise ValueError(msg)
-            gradnll[nstart : nstart + m] = (
-                np.conj(np.sum(term, axis=0)).reshape(m, 1) / a
-            )
-            if not fix_mu:
-                gradnll = np.delete(gradnll, nstart)
-                nstart = nstart + m - 1
-            else:
-                nstart = nstart + m
-        if gradcalc[3]:
+            dnllda = np.sum(term, axis=1).T / a
+            # Exclude first term for consistency with MATLAB version
+            gradnll = np.append(gradnll, dnllda[1:])
+        if not fix_eta:
             # Gradient wrt eta
-            ddzeta = np.real(np.fft.ifft(-np.tile(w, m) ** 2 * zeta_f, axis=0))
-            gradnll = np.squeeze(gradnll)
-            gradnll[nstart : nstart + m] = -np.sum(
+            ddzeta = irfft(-(w**2) * zeta_f, n=n)
+            dnlldeta = -np.sum(
                 dvar * (zeta * dzeta * v[1] + dzeta * ddzeta * v[2])
                 - reswt * dzeta,
-                axis=0,
-            ).reshape(
-                m,
+                axis=1,
             )
-
-            if not fix_mu:
-                gradnll = np.delete(gradnll, nstart)
-    gradnll = gradnll.flatten()
+            # Exclude first term for consistency with MATLAB version
+            gradnll = np.append(gradnll, dnlldeta[1:])
 
     return nll, gradnll
 
 
 def tdnoisefit(
     x: ArrayLike,
+    *,
     v0: ArrayLike | None = None,
     mu0: ArrayLike | None = None,
     a0: ArrayLike | None = None,
@@ -859,8 +535,6 @@ def tdnoisefit(
     fix_mu: bool = False,
     fix_a: bool = True,
     fix_eta: bool = True,
-    ignore_a: bool = True,
-    ignore_eta: bool = True,
 ) -> tuple[dict, float, dict]:
     r"""
     Compute time-domain noise model parameters.
@@ -891,10 +565,6 @@ def tdnoisefit(
         Amplitude vector.
     fix_eta : bool, optional
         Delay vector.
-    ignore_a : bool, optional
-        Amplitude vector.
-    ignore_eta : bool, optional
-        Delay vector.
 
     Returns
     --------
@@ -923,10 +593,12 @@ def tdnoisefit(
     """
     # Parse and validate function inputs
     x = np.asarray(x)
-    if x.ndim != 2:
-        msg = "Data array x must be 2D."
-        raise ValueError(msg)
-    n, m = x.shape
+    # Preassign n, m
+    n = m = 0
+    try:
+        n, m = x.shape
+    except ValueError:
+        print("Data array x must be 2D.")
 
     if v0 is None:
         v0 = np.mean(np.var(x, 1)) * np.array([1, 1, 1])
@@ -953,258 +625,116 @@ def tdnoisefit(
             raise ValueError(msg)
 
     if eta0 is None:
-        eta0 = np.ones(m)
+        eta0 = np.zeros(m)
     else:
         eta0 = np.asarray(eta0)
         if eta0.size != m:
             msg = "Size of eta0 is incompatible with data array x."
             raise ValueError(msg)
 
-    mle = {"x0": np.array([])}
-    idxstart = 0
-    idxrange = {}
+    # Set initial guesses for all free parameters
+    x0 = np.array([])
+    if not fix_v:
+        x0 = np.concatenate((x0, np.log(v0)))
+    if not fix_mu:
+        x0 = np.concatenate((x0, mu0))
+    if not fix_a:
+        x0 = np.concatenate((x0, a0[1:] / a0[0]))
+    if not fix_eta:
+        x0 = np.concatenate((x0, eta0[1:] - eta0[0]))
 
-    # If fix['logv'], return log(v0); otherwise return logv parameters
-    if fix_v:
-
-        def setplogv(_):
-            return np.log(v0)
-
-    else:
-        mle["x0"] = np.concatenate((mle["x0"], np.log(v0)))
-        idxend = idxstart + 3
-        idxrange["logv"] = np.arange(idxstart, idxend)
-
-        def setplogv(_p):
-            return _p[idxrange["logv"]]
-
-        idxstart = idxend
-
-    # If Fix['mu'], return mu0, otherwise, return mu parameters
-    if fix_mu:
-
-        def setpmu(_):
-            return mu0
-
-    else:
-        mle["x0"] = np.concatenate((mle["x0"], mu0))
-        idxend = idxstart + n
-        idxrange["mu"] = np.arange(idxstart, idxend)
-
-        def setpmu(_p):
-            return _p[idxrange["mu"]]
-
-        idxstart = idxend
-    pass
-
-    # If ignore_a, return None; if fix_a, return a0; if (!fix_a & fix_mu),
-    # return all a parameters; if !fix_a & !fix_mu, return all a parameters
-    # but first
-
-    if ignore_a:
-
-        def setpa(_):
-            return None
-
-    elif fix_a:
-
-        def setpa(_):
-            return a0
-
-    elif fix_mu:
-        mle["x0"] = np.concatenate((mle["x0"], a0))
-        idxend = idxstart + m
-        idxrange["a"] = np.arange(idxstart, idxend)
-
-        def setpa(_p):
-            return _p[idxrange["a"]]
-
-        idxstart = idxend
-    else:
-        mle["x0"] = np.concatenate((mle["x0"], a0[1:] / a0[0]))
-        idxend = idxstart + m - 1
-        idxrange["a"] = np.arange(idxstart, idxend)
-
-        def setpa(_p):
-            return np.concatenate(([1], _p[idxrange["a"]]), axis=0)
-
-        idxstart = idxend
-    pass
-
-    # If ignore_eta, return None; if fix_eta, return eta0; if !fix_eta &
-    # fix_mu,return all eta parameters; if !fix_eta & !fix_mu, return all eta
-    # parameters but first
-
-    if ignore_eta:
-
-        def setpeta(_):
-            return None
-
-    elif fix_eta:
-
-        def setpeta(_):
-            return eta0
-
-    elif fix_mu:
-        mle["x0"] = np.concatenate((mle["x0"], eta0))
-        idxend = idxstart + m
-        idxrange["eta"] = np.arange(idxstart, idxend)
-
-        def setpeta(_p):
-            return _p[idxrange["eta"]]
-
-    else:
-        mle["x0"] = np.concatenate((mle["x0"], eta0[1:] - eta0[0]))
-        idxend = idxstart + m - 1
-        idxrange["eta"] = np.arange(idxstart, idxend)
-
-        def setpeta(_p):
-            return np.concatenate(([0], _p[idxrange["eta"]]), axis=0)
-
-    pass
-
-    def fun(_, _w):
-        return -1j * _w
-
-    d = tdtf(fun, 0, n, ts)
-
-    def parsein(_p):
-        return {
-            "logv": setplogv(_p),
-            "mu": setpmu(_p),
-            "a": setpa(_p),
-            "eta": setpeta(_p),
-            "ts": ts,
-            "d": d,
-        }
-
+    # Bundle free parameters together into objective function
     def objective(_p):
-        return tdnll(x, *parsein(_p).values(), fix_v, fix_mu, fix_a, fix_eta)[
-            0
-        ]
-
-    def jacobian(_p):
-        return tdnll(x, *parsein(_p).values(), fix_v, fix_mu, fix_a, fix_eta)[
-            1
-        ]
-
-    mle["objective"] = objective
-    out = minimize(mle["objective"], mle["x0"], method="BFGS", jac=jacobian)
-
-    # The trust-region algorithm returns the Hessian for the next-to-last
-    # iterate, which may not be near the final point. To check, test for
-    # positive definiteness by attempting to Cholesky factorize it. If it
-    # returns an error, rerun the optimization with the quasi-Newton algorithm
-    # from the current optimal point.
-
-    try:
-        np.linalg.cholesky(np.linalg.inv(out.hess_inv))
-        hess = np.linalg.inv(out.hess_inv)
-    except np.linalg.LinAlgError:
-        print(
-            "Hessian returned by FMINUNC is not positive definite;\n"
-            "recalculating with quasi-Newton algorithm"
+        if fix_v:
+            _logv = np.log(v0)
+        else:
+            _logv = _p[:3]
+            _p = _p[3:]
+        if fix_mu:
+            _mu = mu0
+        else:
+            _mu = _p[:n]
+            _p = _p[n:]
+        if fix_a:
+            _a = a0
+        else:
+            _a = np.concatenate((np.array([1.0]), _p[: m - 1]))
+            _p = _p[m - 1 :]
+        if fix_eta:
+            _eta = eta0
+        else:
+            _eta = np.concatenate((np.array([0.0]), _p[: m - 1]))
+        return tdnll(
+            x.T,
+            _mu,
+            _logv,
+            _a,
+            _eta,
+            ts,
+            fix_logv=fix_v,
+            fix_mu=fix_mu,
+            fix_a=fix_a,
+            fix_eta=fix_eta,
         )
 
-        mle["x0"] = out.x
-        out2 = minimize(
-            mle["objective"], mle["x0"], method="BFGS", jac=jacobian
-        )
-        hess = np.linalg.inv(out2.hess_inv)
+    # Minimize cost function with respect to free parameters
+    out = minimize(objective, x0, method="BFGS", jac=True)
 
     # Parse output
     p = {}
-    idxrange = {}
-    idxstart = 0
-
+    x_out = out.x
     if fix_v:
         p["var"] = v0
     else:
-        idxend = idxstart + 3
-        idxrange["logv"] = np.arange(idxstart, idxend)
-        idxstart = idxend
-        p["var"] = np.exp(out.x[idxrange["logv"]])
-    pass
+        p["var"] = np.exp(x_out[:3])
+        x_out = x_out[3:]
 
     if fix_mu:
         p["mu"] = mu0
     else:
-        idxend = idxstart + n
-        idxrange["mu"] = np.arange(idxstart, idxend)
-        idxstart = idxend
-        p["mu"] = out.x[idxrange["mu"]]
-    pass
+        p["mu"] = x_out[:n]
+        x_out = x_out[n:]
 
-    if ignore_a or fix_a:
+    if fix_a:
         p["a"] = a0
-    elif fix_mu:
-        idxend = idxstart + m
-        idxrange["a"] = np.arange(idxstart, idxend)
-        idxstart = idxend
-        p["a"] = out.x[idxrange["a"]]
     else:
-        idxend = idxstart + m - 1
-        idxrange["a"] = np.arange(idxstart, idxend)
-        idxstart = idxend
-        p["a"] = np.concatenate(([1], out.x[idxrange["a"]]), axis=0)
-    pass
+        p["a"] = np.concatenate(([1], x_out[: m - 1]))
+        x_out = x_out[m - 1 :]
 
-    if ignore_eta or fix_eta:
+    if fix_eta:
         p["eta"] = eta0
-    elif fix_mu:
-        idxend = idxstart + m
-        idxrange["eta"] = np.arange(idxstart, idxend)
-        p["eta"] = out.x[idxrange["eta"]]
     else:
-        idxend = idxstart + m - 1
-        idxrange["eta"] = np.arange(idxstart, idxend)
-        p["eta"] = np.concatenate(([0], out.x[idxrange["eta"]]), axis=0)
-    pass
+        p["eta"] = np.concatenate(([0], x_out[: m - 1]))
 
     p["ts"] = ts
 
-    vary_param = np.logical_not(
-        [
-            fix_v,
-            fix_mu,
-            fix_a or ignore_a,
-            fix_eta or ignore_eta,
-        ]
-    )
     diagnostic = {
         "grad": out.jac,
-        "hessian": hess,
-        "err": {"var": [], "mu": [], "a": [], "eta": []},
+        "hess_inv": out.hess_inv,
+        "err": {
+            "var": np.array([]),
+            "mu": np.array([]),
+            "a": np.array([]),
+            "eta": np.array([]),
+        },
     }
-    v = np.dot(np.eye(hess.shape[0]), scipy.linalg.inv(hess))
-    err = np.sqrt(np.diag(v))
-    idxstart = 0
-    if vary_param[0]:
+    err = np.sqrt(np.diag(out.hess_inv))
+    if not fix_v:
         diagnostic["err"]["var"] = np.sqrt(
-            np.diag(np.diag(p["var"]) * v[0:3, 0:3]) * np.diag(p["var"])
+            np.diag(np.diag(p["var"]) * out.hess_inv[0:3, 0:3])
+            * np.diag(p["var"])
         )
-        idxstart = idxstart + 3
-    pass
+        err = err[3:]
 
-    if vary_param[1]:
-        diagnostic["err"]["mu"] = err[idxstart : idxstart + n]
-        idxstart = idxstart + n
-    pass
+    if not fix_mu:
+        diagnostic["err"]["mu"] = err[:n]
+        err = err[n:]
 
-    if vary_param[2]:
-        if vary_param[1]:
-            diagnostic["err"]["a"] = err[idxstart : idxstart + m - 1]
-            idxstart = idxstart + m - 1
-        else:
-            diagnostic["err"]["a"] = err[idxstart : idxstart + m]
-            idxstart = idxstart + m
-    pass
+    if not fix_a:
+        diagnostic["err"]["a"] = np.concatenate(([0], err[: m - 1]))
+        err = err[m - 1 :]
 
-    if vary_param[3]:
-        if vary_param[1]:
-            diagnostic["err"]["eta"] = err[idxstart : idxstart + m - 1]
-        else:
-            diagnostic["err"]["eta"] = err[idxstart : idxstart + m]
-    pass
+    if not fix_eta:
+        diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
 
     return [p, out.fun, diagnostic]

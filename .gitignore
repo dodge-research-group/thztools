@@ -1,5 +1,5 @@
 # Local .gitignore
-Untitled.ipynb
+Untitled*.ipynb
 
 # Python .gitignore:
 #	https://github.com/github/gitignore/blob/main/Python.gitignore

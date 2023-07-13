@@ -11,14 +11,11 @@ Quick list
 .. autosummary::
     :toctree: functions/
 
-    airscancorrect
     costfunlsq
-    DataPulse
-    epswater
     fftfreq
     noiseamp
     noisevar
-    shiftmtx
+    scaleshift
     tdnll
     tdnoisefit
     tdtf

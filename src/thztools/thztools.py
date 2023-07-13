@@ -290,7 +290,8 @@ def costfunlsq(
 
     # For V_xx = diag(sigma_x ** 2),
     # uy = h @ ((sigmax ** 2) * h).T
-    #    = h @ diag(sigmax ** 2) @ h.T
+    # is equivalent to and faster than
+    # uy = h @ diag(sigmax ** 2) @ h.T
     uy = h @ ((sigmax**2) * h).T
 
     res = la.inv(la.sqrtm(uy + vy)) @ ry

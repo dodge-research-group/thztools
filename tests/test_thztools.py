@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
 from numpy import pi
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_allclose
 
 from thztools.thztools import (
     # costfunlsq,
-    fftfreq,
+    # fftfreq,
     noiseamp,
     noisevar,
     # shiftmtx,
@@ -15,19 +15,20 @@ from thztools.thztools import (
     thzgen,
 )
 
-
-class TestFFTFreq:
-    @pytest.mark.parametrize(
-        "n, ts, expected",
-        [
-            (9, 1, [0, 1, 2, 3, 4, -4, -3, -2, -1]),
-            (9, pi, [0, 1, 2, 3, 4, -4, -3, -2, -1]),
-            (10, 1, [0, 1, 2, 3, 4, 5, -4, -3, -2, -1]),
-            (10, pi, [0, 1, 2, 3, 4, 5, -4, -3, -2, -1]),
-        ],
-    )
-    def test_definition(self, n, ts, expected):
-        assert_array_almost_equal(n * ts * fftfreq(n, ts), expected)
+atol = 1e-8
+rtol = 1e-5
+# class TestFFTFreq:
+#     @pytest.mark.parametrize(
+#         "n, ts, expected",
+#         [
+#             (9, 1, [0, 1, 2, 3, 4, -4, -3, -2, -1]),
+#             (9, pi, [0, 1, 2, 3, 4, -4, -3, -2, -1]),
+#             (10, 1, [0, 1, 2, 3, 4, 5, -4, -3, -2, -1]),
+#             (10, pi, [0, 1, 2, 3, 4, 5, -4, -3, -2, -1]),
+#         ],
+#     )
+#     def test_definition(self, n, ts, expected):
+#         assert_array_almost_equal(n * ts * fftfreq(n, ts), expected)
 
 
 class TestNoise:
@@ -46,7 +47,9 @@ class TestNoise:
         ],
     )
     def test_var_definition(self, sigma, mu, dt, expected):
-        assert_array_almost_equal(noisevar(sigma, mu, dt), expected)
+        assert_allclose(
+            noisevar(sigma, mu, dt), expected, atol=atol, rtol=rtol
+        )
 
     @pytest.mark.parametrize(
         "sigma, mu, dt, expected",
@@ -57,7 +60,9 @@ class TestNoise:
         ],
     )
     def test_amp_definition(self, sigma, mu, dt, expected):
-        assert_array_almost_equal(noiseamp(sigma, mu, dt), expected)
+        assert_allclose(
+            noiseamp(sigma, mu, dt), expected, atol=atol, rtol=rtol
+        )
 
 
 class TestTHzGen:
@@ -88,6 +93,9 @@ class TestTHzGen:
             ]
         )
         t_expected = np.arange(n)
-        assert_array_almost_equal(
-            thzgen(n, ts, t0, **kwargs), (y_expected, t_expected)
+        assert_allclose(
+            thzgen(n, ts, t0, **kwargs),
+            (y_expected, t_expected),
+            atol=atol,
+            rtol=rtol,
         )

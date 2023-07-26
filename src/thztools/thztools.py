@@ -8,31 +8,7 @@ from numpy.fft import irfft, rfft, rfftfreq
 from numpy.typing import ArrayLike
 from scipy.optimize import minimize
 
-
-def fftfreq(n, ts):
-    """Computes the positive and negative frequencies sampled in the FFT.
-
-    Parameters
-    ----------
-    n : int
-        Number of time samples
-    ts: float
-        Sampling time
-
-    Returns
-    -------
-    f : ndarray
-        Frequency vector (1/``ts``) of length n containing the sample
-        frequencies.
-    """
-
-    if n % 2 == 1:
-        f = np.fft.fftfreq(n, ts)
-    else:
-        f = np.fft.fftfreq(n, ts)
-        f[int(n / 2)] = -f[int(n / 2)]
-
-    return f
+NUM_NOISE_PARAMETERS = 3
 
 
 def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
@@ -604,8 +580,11 @@ def tdnoisefit(
         v0 = np.mean(np.var(x, 1)) * np.array([1, 1, 1])
     else:
         v0 = np.asarray(v0)
-        if v0.size != 3:
-            msg = "Noise parameter array logv must have 3 elements."
+        if v0.size != NUM_NOISE_PARAMETERS:
+            msg = (
+                "Noise parameter array logv must have "
+                f"{NUM_NOISE_PARAMETERS} elements."
+            )
             raise ValueError(msg)
 
     if mu0 is None:

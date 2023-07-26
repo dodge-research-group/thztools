@@ -12,11 +12,9 @@ Quick list
     :toctree: functions/
 
     costfunlsq
-    fftfreq
     noiseamp
     noisevar
     scaleshift
     tdnll
     tdnoisefit
-    tdtf
     thzgen

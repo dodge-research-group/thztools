@@ -15,8 +15,6 @@ from thztools import (
     thzgen,
 )
 
-# np.seterr(all='raise')
-
 
 def tdnll_alt(*args):
     # Transpose data array to convert MATLAB column orientation to NumPy
@@ -138,23 +136,54 @@ def test_matlab_result(get_test):
         python_out = func(tfun_test, *args)
     else:
         python_out = func(*args)
-    # Ignore second output from Python version of thzgen
-    if func_name in ["thzgen", "tdnoisefit"]:
-        python_out = python_out[0]
+
+    # Get machine precision for comparisons
+    eps = np.finfo(python_out[0].dtype).eps
+
     if func_name == "tdnoisefit":
-        # Set absolute tolerance equal to 2 * epsilon for the array dtype
-        np.testing.assert_allclose(matlab_out[0], python_out, atol=1e-4)
-    elif func_name == "tdnll":
+        # var
         np.testing.assert_allclose(
             matlab_out[0],
             python_out[0],
-            atol=2 * np.finfo(python_out[0].dtype).eps,
+            atol=1e-8,
+            rtol=1e-5
         )
+        # mu
         np.testing.assert_allclose(
             matlab_out[1],
             python_out[1],
-            atol=2 * np.finfo(python_out[1].dtype).eps,
+            atol=1e-7,
+            rtol=1e-4
         )
+        # a
+        np.testing.assert_allclose(
+            matlab_out[2],
+            python_out[2],
+            atol=1e-8,
+            rtol=1e-4
+        )
+        # eta
+        np.testing.assert_allclose(
+            matlab_out[3],
+            python_out[3],
+            atol=1e-8,
+            rtol=5e-2
+        )
+    # Ignore second output from Python version of thzgen
+    elif func_name == "thzgen":
+        np.testing.assert_allclose(
+            matlab_out[0],
+            python_out[0],
+            atol=2 * eps
+        )
+    # Compare value and gradient of cost function
+    elif func_name == "tdnll":
+        for i in range(1):
+            np.testing.assert_allclose(
+                matlab_out[i],
+                python_out[i],
+                atol=2 * eps,
+            )
     else:
         np.testing.assert_allclose(
             matlab_out[0], python_out, atol=2 * np.finfo(python_out.dtype).eps

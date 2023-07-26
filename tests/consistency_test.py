@@ -143,39 +143,23 @@ def test_matlab_result(get_test):
     if func_name == "tdnoisefit":
         # var
         np.testing.assert_allclose(
-            matlab_out[0],
-            python_out[0],
-            atol=1e-8,
-            rtol=1e-5
+            matlab_out[0], python_out[0], atol=1e-8, rtol=1e-5
         )
         # mu
         np.testing.assert_allclose(
-            matlab_out[1],
-            python_out[1],
-            atol=1e-7,
-            rtol=1e-4
+            matlab_out[1], python_out[1], atol=1e-7, rtol=1e-4
         )
         # a
         np.testing.assert_allclose(
-            matlab_out[2],
-            python_out[2],
-            atol=1e-8,
-            rtol=1e-4
+            matlab_out[2], python_out[2], atol=1e-8, rtol=1e-4
         )
         # eta
         np.testing.assert_allclose(
-            matlab_out[3],
-            python_out[3],
-            atol=1e-8,
-            rtol=5e-2
+            matlab_out[3], python_out[3], atol=1e-8, rtol=5e-2
         )
     # Ignore second output from Python version of thzgen
     elif func_name == "thzgen":
-        np.testing.assert_allclose(
-            matlab_out[0],
-            python_out[0],
-            atol=2 * eps
-        )
+        np.testing.assert_allclose(matlab_out[0], python_out[0], atol=2 * eps)
     # Compare value and gradient of cost function
     elif func_name == "tdnll":
         for i in range(1):

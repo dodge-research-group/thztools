@@ -570,14 +570,14 @@ def tdnoisefit(
     --------
     p : dict
         Output parameter dictionary containing:
-            eta : ndarray
-                Delay vector.
-            a : ndarray
-                Amplitude vector.
-            mu : ndarray
-                Signal vector.
             var : ndarray
                 Log of noise parameters
+            mu : ndarray
+                Signal vector.
+            a : ndarray
+                Amplitude vector.
+            eta : ndarray
+                Delay vector.
     fval : float
         Value of NLL cost function from FMINUNC
     Diagnostic : dict

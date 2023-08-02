@@ -204,8 +204,8 @@ def scaleshift(
     phase = np.expand_dims(eta, axis=eta.ndim) * w
 
     xadj = np.fft.irfft(
-        np.fft.rfft(x) * np.exp(1j * phase), n=n
-    ) / np.expand_dims(a, axis=a.ndim)
+        np.fft.rfft(x) * np.exp(-1j * phase), n=n
+    ) * np.expand_dims(a, axis=a.ndim)
 
     if x.ndim > 1:
         if axis != -1:

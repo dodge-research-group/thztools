@@ -2,33 +2,20 @@ import numpy as np
 import pytest
 from numpy import pi
 from numpy.testing import assert_allclose
+from numpy.typing import ArrayLike
 
 from thztools.thztools import (
     # costfunlsq,
-    # fftfreq,
     noiseamp,
     noisevar,
-    # shiftmtx,
+    scaleshift,
     # tdnll,
     # tdnoisefit,
-    # tdtf,
     thzgen,
 )
 
 atol = 1e-8
 rtol = 1e-5
-# class TestFFTFreq:
-#     @pytest.mark.parametrize(
-#         "n, ts, expected",
-#         [
-#             (9, 1, [0, 1, 2, 3, 4, -4, -3, -2, -1]),
-#             (9, pi, [0, 1, 2, 3, 4, -4, -3, -2, -1]),
-#             (10, 1, [0, 1, 2, 3, 4, 5, -4, -3, -2, -1]),
-#             (10, pi, [0, 1, 2, 3, 4, 5, -4, -3, -2, -1]),
-#         ],
-#     )
-#     def test_definition(self, n, ts, expected):
-#         assert_array_almost_equal(n * ts * fftfreq(n, ts), expected)
 
 
 class TestNoise:
@@ -46,7 +33,8 @@ class TestNoise:
             ([0, 0, 1], mu, dt, mu_dot**2),
         ],
     )
-    def test_var_definition(self, sigma, mu, dt, expected):
+    def test_var_definition(self, sigma: ArrayLike, mu: ArrayLike, dt: float,
+                            expected: ArrayLike) -> None:
         assert_allclose(
             noisevar(sigma, mu, dt), expected, atol=atol, rtol=rtol
         )
@@ -59,7 +47,8 @@ class TestNoise:
             ([0, 0, 1], mu, dt, np.abs(mu_dot)),
         ],
     )
-    def test_amp_definition(self, sigma, mu, dt, expected):
+    def test_amp_definition(self, sigma: ArrayLike, mu: ArrayLike, dt: float,
+                            expected: ArrayLike) -> None:
         assert_allclose(
             noiseamp(sigma, mu, dt), expected, atol=atol, rtol=rtol
         )
@@ -76,7 +65,7 @@ class TestTHzGen:
             {"fwhm": 0.05},
         ],
     )
-    def test_inputs(self, kwargs):
+    def test_inputs(self, kwargs: dict) -> None:
         n = 8
         ts = 1.0
         t0 = 2.0
@@ -96,6 +85,33 @@ class TestTHzGen:
         assert_allclose(
             thzgen(n, ts, t0, **kwargs),
             (y_expected, t_expected),
+            atol=atol,
+            rtol=rtol,
+        )
+
+
+class TestScaleShift:
+    n = 16
+    dt = 1.0 / n
+    t = np.arange(n) * dt
+    x = np.cos(2 * pi * t)
+
+    @pytest.mark.parametrize(
+        "x, kwargs, expected",
+        [
+            [x, {}, x],
+            [x, {"a": 2}, 2 * x],
+            [x, {"eta": 1}, np.cos(2 * pi * (t - dt))],
+            [x, {"a": 2, "eta": 1}, 2 * np.cos(2 * pi * (t - dt))],
+            [x, {"a": 2, "eta": dt, "ts": dt}, 2 * np.cos(2 * pi * (t - dt))],
+        ],
+    )
+    def test_inputs(
+        self, x: ArrayLike, kwargs: dict, expected: ArrayLike
+    ) -> None:
+        assert_allclose(
+            scaleshift(x, **kwargs),
+            expected,
             atol=atol,
             rtol=rtol,
         )

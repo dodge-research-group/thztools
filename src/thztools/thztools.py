@@ -700,9 +700,10 @@ def tdnoisefit(
     }
     err = np.sqrt(np.diag(out.hess_inv))
     if not fix_v:
+        # Propagate error from log(V) to V
         diagnostic["err"]["var"] = np.sqrt(
-            np.diag(np.diag(p["var"]) * out.hess_inv[0:3, 0:3])
-            * np.diag(p["var"])
+            np.diag(np.diag(p["var"]) @ out.hess_inv[0:3, 0:3])
+            @ np.diag(p["var"])
         )
         err = err[3:]
 

@@ -204,8 +204,8 @@ def scaleshift(
     phase = np.expand_dims(eta, axis=eta.ndim) * w
 
     xadj = np.fft.irfft(
-        np.fft.rfft(x) * np.exp(1j * phase), n=n
-    ) / np.expand_dims(a, axis=a.ndim)
+        np.fft.rfft(x) * np.exp(-1j * phase), n=n
+    ) * np.expand_dims(a, axis=a.ndim)
 
     if x.ndim > 1:
         if axis != -1:
@@ -524,7 +524,8 @@ def tdnoisefit(
     x : ndarray
         Data array.
     v0 : ndarray, optional
-        Initial guess, noise model parameters with size (3,).
+        Initial guess, noise model parameters with size (3,), expressed as
+        variance amplitudes.
     mu0 : ndarray, optional
         Initial guess, signal vector with size (n,).
     a0 : ndarray, optional
@@ -547,7 +548,7 @@ def tdnoisefit(
     p : dict
         Output parameter dictionary containing:
             var : ndarray
-                Log of noise parameters
+                Noise parameters, expressed as variance amplitudes.
             mu : ndarray
                 Signal vector.
             a : ndarray
@@ -699,9 +700,10 @@ def tdnoisefit(
     }
     err = np.sqrt(np.diag(out.hess_inv))
     if not fix_v:
+        # Propagate error from log(V) to V
         diagnostic["err"]["var"] = np.sqrt(
-            np.diag(np.diag(p["var"]) * out.hess_inv[0:3, 0:3])
-            * np.diag(p["var"])
+            np.diag(np.diag(p["var"]) @ out.hess_inv[0:3, 0:3])
+            @ np.diag(p["var"])
         )
         err = err[3:]
 
@@ -716,4 +718,4 @@ def tdnoisefit(
     if not fix_eta:
         diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
 
-    return [p, out.fun, diagnostic]
+    return p, out.fun, diagnostic

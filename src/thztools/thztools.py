@@ -524,7 +524,8 @@ def tdnoisefit(
     x : ndarray
         Data array.
     v0 : ndarray, optional
-        Initial guess, noise model parameters with size (3,).
+        Initial guess, noise model parameters with size (3,), expressed as
+        variance amplitudes.
     mu0 : ndarray, optional
         Initial guess, signal vector with size (n,).
     a0 : ndarray, optional
@@ -547,7 +548,7 @@ def tdnoisefit(
     p : dict
         Output parameter dictionary containing:
             var : ndarray
-                Log of noise parameters
+                Noise parameters, expressed as variance amplitudes.
             mu : ndarray
                 Signal vector.
             a : ndarray

@@ -45,9 +45,9 @@ jobs:
         skip_existing: true
 
     - name: Publish distribution 📦 to PyPI
-      if: startsWith(github.ref, 'refs/tags')
+#      if: startsWith(github.ref, 'refs/tags')
       # The line above is the old code from PyPA, the line below is from @lwasser
-      # if: github.event_name == 'release'
+      if: github.event_name == 'release'
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI }}

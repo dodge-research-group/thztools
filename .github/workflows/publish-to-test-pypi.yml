@@ -1,8 +1,14 @@
 name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI
+# Modified from https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/# ,
+# based on suggestions from https://pyopensci.discourse.group/t/trouble-github-action-for-publishing-to-pypi/355?u=jsdodge
+# and https://github.com/dodge-research-group/thztools/pull/23
 
 on:
+  release:
+    types: [published]
   push:
-    branches: [ 'main' ]
+    branches:
+      - main
 
 jobs:
   build-n-publish:
@@ -16,28 +22,21 @@ jobs:
       with:
         python-version: "3.x"
 
-    - name: Install pypa/build
-      run: >-
-        python3 -m
-        pip install
-        build
-        --user
+    - name: Install hatch
+      run: pip install hatch
     - name: Build a binary wheel and a source tarball
-      run: >-
-        python3 -m
-        build
-        --sdist
-        --wheel
-        --outdir dist/
-        .
+      run: hatch build
 
     - name: Publish distribution 📦 to Test PyPI
+      if: github.event_name == 'push'
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.TEST_PYPI }}
         repository-url: https://test.pypi.org/legacy/
+        skip_existing: true
+
     - name: Publish distribution 📦 to PyPI
-      if: startsWith(github.ref, 'refs/tags')
+      if: github.event_name == 'release'
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI }}

@@ -719,3 +719,8 @@ def tdnoisefit(
         diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
 
     return p, out.fun, diagnostic
+
+
+def fit(
+        
+)

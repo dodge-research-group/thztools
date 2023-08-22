@@ -8,6 +8,11 @@ from numpy.fft import irfft, rfft, rfftfreq
 from numpy.typing import ArrayLike
 from scipy.optimize import minimize
 
+from scipy.optimize import approx_fprime as fprime
+import scipy.linalg as la
+from scipy import signal
+import scipy.optimize as opt
+
 NUM_NOISE_PARAMETERS = 3
 
 
@@ -639,7 +644,7 @@ def tdnoisefit(
             _a = a0
         else:
             _a = np.concatenate((np.array([1.0]), _p[: m - 1]))
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
         if fix_eta:
             _eta = eta0
         else:
@@ -679,7 +684,7 @@ def tdnoisefit(
         p["a"] = a0
     else:
         p["a"] = np.concatenate(([1], x_out[: m - 1]))
-        x_out = x_out[m - 1 :]
+        x_out = x_out[m - 1:]
 
     if fix_eta:
         p["eta"] = eta0
@@ -713,7 +718,7 @@ def tdnoisefit(
 
     if not fix_a:
         diagnostic["err"]["a"] = np.concatenate(([0], err[: m - 1]))
-        err = err[m - 1 :]
+        err = err[m - 1:]
 
     if not fix_eta:
         diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
@@ -722,5 +727,60 @@ def tdnoisefit(
 
 
 def fit(
-        
-)
+    fun: Callable,
+    p0: ArrayLike,
+    xx: ArrayLike,
+    yy: ArrayLike,
+    ts: float,
+    *,
+    noise_parms: ArrayLike | None = [1, 1, 1],
+) -> tuple[ArrayLike]:
+    n = yy.shape[-1]
+    n_p = len(p0)
+    w = 2 * np.pi * rfftfreq(n, ts)
+    sigma_x = noiseamp(noise_parms, xx, ts=ts)
+    sigma_y = noiseamp(noise_parms, yy, ts=ts)
+    p_est = np.concatenate((p0, np.zeros(n)))
+
+    def td_fun(_p, _x):
+        _y = irfft(rfft(_x) * fun(_p, w), n=n)
+        return _y
+
+    def jac_fun(_x):
+        mu_est = xx[:]-_x[n_p:]
+        jac_tl = np.zeros((n, n_p))
+        jac_tr = np.diag(-1 / sigma_x)
+        jac_bl = fprime(_x[:n_p], lambda _p0: costfuntls(
+            fun,
+            _p0,
+            mu_est,
+            xx[:],
+            yy[:],
+            sigma_x,
+            sigma_y,
+            ts,
+        )[n:]
+        )
+        jac_br = -(
+            la.circulant(td_fun(_x[:n_p], signal.unit_impulse(n))).T / sigma_y
+        ).T
+        jac_tot = np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
+        return jac_tot
+
+    result = opt.least_squares(
+        lambda _p: costfuntls(
+            fun,
+            _p[:n_p],
+            xx[:]-_p[n_p:],
+            xx[:],
+            yy[:],
+            sigma_x,
+            sigma_y,
+            ts
+        ),
+        p_est,
+        jac=jac_fun,
+        method='lm',
+        x_scale=np.concatenate((np.ones(n_p), sigma_x)),
+    )
+    return result

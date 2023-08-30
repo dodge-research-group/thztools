@@ -6,7 +6,7 @@ from numpy.typing import ArrayLike
 
 from thztools.thztools import (
     costfunlsq,
-    # costfuntls,
+    costfuntls,
     noiseamp,
     noisevar,
     scaleshift,
@@ -186,4 +186,23 @@ class TestCostFunLSQ:
     assert_allclose(
         costfunlsq(fun, theta, xx, yy, sigmax, sigmay, ts),  # type: ignore
         np.zeros_like(xx),
+    )
+
+
+class TestCostFunTLS:
+    @staticmethod
+    def fun(p, w):
+        return p[0] * np.exp(1j * p[1] * w)
+
+    theta = np.asarray([1, 0])
+    mu = np.arange(8)
+    xx = mu
+    yy = xx
+    sigmax = np.ones_like(xx)
+    sigmay = sigmax
+    ts = 1.0
+
+    assert_allclose(
+        costfuntls(fun, theta, mu, xx, yy, sigmax, sigmay, ts),  # type: ignore
+        np.concatenate((np.zeros_like(xx), np.zeros_like(xx))),
     )

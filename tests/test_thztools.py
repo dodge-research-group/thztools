@@ -19,6 +19,10 @@ atol = 1e-8
 rtol = 1e-5
 
 
+def tfun(p, w):
+    return p[0] * np.exp(1j * p[1] * w)
+
+
 class TestNoise:
     n = 16
     dt = 1.0 / n
@@ -172,10 +176,6 @@ class TestScaleShift:
 
 
 class TestCostFunLSQ:
-    @staticmethod
-    def fun(p, w):
-        return p[0] * np.exp(1j * p[1] * w)
-
     theta = np.asarray([1, 0])
     xx = np.arange(8)
     yy = xx
@@ -184,16 +184,12 @@ class TestCostFunLSQ:
     ts = 1.0
 
     assert_allclose(
-        costfunlsq(fun, theta, xx, yy, sigmax, sigmay, ts),  # type: ignore
+        costfunlsq(tfun, theta, xx, yy, sigmax, sigmay, ts),  # type: ignore
         np.zeros_like(xx),
     )
 
 
 class TestCostFunTLS:
-    @staticmethod
-    def fun(p, w):
-        return p[0] * np.exp(1j * p[1] * w)
-
     theta = np.asarray([1, 0])
     mu = np.arange(8)
     xx = mu
@@ -203,6 +199,8 @@ class TestCostFunTLS:
     ts = 1.0
 
     assert_allclose(
-        costfuntls(fun, theta, mu, xx, yy, sigmax, sigmay, ts),  # type: ignore
+        costfuntls(
+            tfun, theta, mu, xx, yy, sigmax, sigmay, ts
+        ),  # type: ignore
         np.concatenate((np.zeros_like(xx), np.zeros_like(xx))),
     )

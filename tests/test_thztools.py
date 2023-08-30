@@ -5,7 +5,8 @@ from numpy.testing import assert_allclose
 from numpy.typing import ArrayLike
 
 from thztools.thztools import (
-    # costfunlsq,
+    costfunlsq,
+    # costfuntls,
     noiseamp,
     noisevar,
     scaleshift,
@@ -168,3 +169,21 @@ class TestScaleShift:
     def test_errors(self, x: ArrayLike, kwargs: dict) -> None:
         with pytest.raises(ValueError):
             scaleshift(x, **kwargs)
+
+
+class TestCostFunLSQ:
+    @staticmethod
+    def fun(p, w):
+        return p[0] * np.exp(1j * p[1] * w)
+
+    theta = np.asarray([1, 0])
+    xx = np.arange(8)
+    yy = xx
+    sigmax = np.ones_like(xx)
+    sigmay = sigmax
+    ts = 1.0
+
+    assert_allclose(
+        costfunlsq(fun, theta, xx, yy, sigmax, sigmay, ts),  # type: ignore
+        np.zeros_like(xx),
+    )

@@ -344,43 +344,6 @@ def costfuntls(
     return res
 
 
-def tdtf(fun: Callable, theta: ArrayLike, n: int, ts: float) -> ArrayLike:
-    """
-    Computes the time-domain transfer matrix for a frequency response function.
-
-    Parameters
-    ----------
-        fun : callable
-            Frequency function, in the form fun(theta, w), where theta
-            is a vector of the function parameters. The function should be
-            expressed in the +iwt convention and must be Hermitian.
-
-        theta : array_like
-            Input parameters for the function.
-
-        n : int
-            Number of time samples.
-
-        ts : array_like
-            Sampling time.
-
-    Returns
-    -------
-        h : array_like
-            Transfer matrix with size (n,n).
-
-    """
-
-    f = rfftfreq(n, ts)
-    w = 2 * np.pi * f
-    tfunp = fun(theta, w)
-
-    imp = irfft(tfunp, n=n)
-    h = la.circulant(imp).T
-
-    return h
-
-
 def tdnll(
     x: ArrayLike,
     mu: ArrayLike,

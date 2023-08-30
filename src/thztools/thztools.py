@@ -254,6 +254,12 @@ def costfunlsq(
 
 
     """
+    theta = np.asarray(theta)
+    xx = np.asarray(xx)
+    yy = np.asarray(yy)
+    sigmax = np.asarray(sigmax)
+    sigmay = np.asarray(sigmay)
+
     n = xx.shape[0]
     w = 2 * np.pi * rfftfreq(n, ts)
     h_f = np.conj(fun(theta, w))
@@ -319,6 +325,13 @@ def costfuntls(
 
 
     """
+    theta = np.asarray(theta)
+    mu = np.asarray(mu)
+    xx = np.asarray(xx)
+    yy = np.asarray(yy)
+    sigmax = np.asarray(sigmax)
+    sigmay = np.asarray(sigmay)
+
     n = xx.shape[-1]
     delta = (xx - mu) / sigmax
     w = 2 * np.pi * rfftfreq(n, ts)

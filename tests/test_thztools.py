@@ -11,7 +11,7 @@ from thztools.thztools import (
     noisevar,
     scaleshift,
     tdnll,
-    # tdnoisefit,
+    tdnoisefit,
     thzgen,
 )
 
@@ -34,12 +34,13 @@ class TestNoise:
         "sigma, mu, dt, expected",
         [
             ([1, 0, 0], mu, dt, np.ones(n)),
-            ([0, 1, 0], mu, dt, mu**2),
-            ([0, 0, 1], mu, dt, mu_dot**2),
+            ([0, 1, 0], mu, dt, mu ** 2),
+            ([0, 0, 1], mu, dt, mu_dot ** 2),
         ],
     )
     def test_var_definition(
-        self, sigma: ArrayLike, mu: ArrayLike, dt: float, expected: ArrayLike
+            self, sigma: ArrayLike, mu: ArrayLike, dt: float,
+            expected: ArrayLike
     ) -> None:
         assert_allclose(
             noisevar(sigma, mu, dt),  # type: ignore
@@ -57,7 +58,8 @@ class TestNoise:
         ],
     )
     def test_amp_definition(
-        self, sigma: ArrayLike, mu: ArrayLike, dt: float, expected: ArrayLike
+            self, sigma: ArrayLike, mu: ArrayLike, dt: float,
+            expected: ArrayLike
     ) -> None:
         assert_allclose(
             noiseamp(sigma, mu, dt),  # type: ignore
@@ -139,8 +141,8 @@ class TestScaleShift:
                 {"a": [2, 0.5], "eta": [1, -1]},
                 np.stack(
                     (
-                        2 * np.cos(2 * pi * (t - dt)),
-                        0.5 * np.cos(2 * pi * (t + dt)),
+                            2 * np.cos(2 * pi * (t - dt)),
+                            0.5 * np.cos(2 * pi * (t + dt)),
                     )
                 ),
             ],
@@ -149,8 +151,8 @@ class TestScaleShift:
                 {"a": [2, 0.5], "eta": [dt, -dt], "ts": dt},
                 np.stack(
                     (
-                        2 * np.cos(2 * pi * (t - dt)),
-                        0.5 * np.cos(2 * pi * (t + dt)),
+                            2 * np.cos(2 * pi * (t - dt)),
+                            0.5 * np.cos(2 * pi * (t + dt)),
                     )
                 ),
             ],
@@ -158,7 +160,7 @@ class TestScaleShift:
         ],
     )
     def test_inputs(
-        self, x: ArrayLike, kwargs: dict, expected: ArrayLike
+            self, x: ArrayLike, kwargs: dict, expected: ArrayLike
     ) -> None:
         assert_allclose(
             scaleshift(x, **kwargs),  # type: ignore
@@ -238,19 +240,19 @@ class TestTDNLL:
         ],
     )
     def test_inputs(
-        self,
-        x,
-        mu,
-        logv,
-        a,
-        eta,
-        ts,
-        fix_logv,
-        fix_mu,
-        fix_a,
-        fix_eta,
-        desired_nll,
-        desired_gradnll,
+            self,
+            x,
+            mu,
+            logv,
+            a,
+            eta,
+            ts,
+            fix_logv,
+            fix_mu,
+            fix_a,
+            fix_eta,
+            desired_nll,
+            desired_gradnll,
     ):
         nll, gradnll = tdnll(
             x,
@@ -266,3 +268,24 @@ class TestTDNLL:
         )
         assert_allclose(nll, desired_nll)
         assert_allclose(gradnll, desired_gradnll)
+
+
+class TestTDNoiseFit:
+    rng = np.random.default_rng(0)
+    n = 128
+    m = 32
+    ts = 1.0 / n
+    t = np.arange(n) * ts
+    mu, _ = thzgen(n, ts=ts, t0=n * ts / 2)
+    sigma = np.array([1e-5, 0, 0])
+    x = (mu + noiseamp(sigma, mu, ts) * rng.standard_normal((m, n))).T
+    a = np.ones(m)
+    eta = np.zeros(m)
+
+    def test_inputs(self):
+        x = self.x
+        m = self.m
+        sigma = self.sigma
+        p, fval, diagnostic = tdnoisefit(x)
+        assert_allclose(p['var'] * m / (m - 1), sigma ** 2, rtol=1e-5,
+                        atol=1e-9)

@@ -207,27 +207,21 @@ class TestCostFunTLS:
 
 
 class TestTDNLL:
+    m = 2
     n = 16
     dt = 1.0 / n
     t = np.arange(n) * dt
     mu = np.cos(2 * pi * t)
-    x = np.stack((mu, mu))
+    x = np.tile(mu, [m, 1])
     logv = np.array([0, -np.inf, -np.inf])
-    a = np.ones(2)
-    eta = np.zeros(2)
+    a = np.ones(m)
+    eta = np.zeros(m)
     ts = dt
 
     @pytest.mark.parametrize(
-        "x, mu, logv, a, eta, ts, fix_logv, fix_mu, fix_a, fix_eta, "
-        "desired_nll, desired_gradnll",
+        "fix_logv, fix_mu, fix_a, fix_eta, desired_nll, desired_gradnll",
         [
             [
-                x,
-                mu,
-                logv,
-                a,
-                eta,
-                ts,
                 True,
                 True,
                 True,
@@ -239,12 +233,6 @@ class TestTDNLL:
     )
     def test_inputs(
         self,
-        x,
-        mu,
-        logv,
-        a,
-        eta,
-        ts,
         fix_logv,
         fix_mu,
         fix_a,
@@ -252,6 +240,12 @@ class TestTDNLL:
         desired_nll,
         desired_gradnll,
     ):
+        x = self.x
+        mu = self.mu
+        logv = self.logv
+        a = self.a
+        eta = self.eta
+        ts = self.ts
         nll, gradnll = tdnll(
             x,
             mu,

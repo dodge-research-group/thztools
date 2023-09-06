@@ -14,7 +14,7 @@ from scipy.optimize import minimize
 NUM_NOISE_PARAMETERS = 3
 
 
-def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
+def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     r"""
     Compute the time-domain noise variance.
 
@@ -47,7 +47,7 @@ def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
     return sigma[0] ** 2 + (sigma[1] * mu) ** 2 + (sigma[2] * mudot) ** 2
 
 
-def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
+def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     r"""
     Compute the time-domain noise amplitude.
 
@@ -83,7 +83,7 @@ def thzgen(
     taur: float = 0.3,
     tauc: float = 0.1,
     fwhm: float = 0.05,
-) -> tuple[ArrayLike, ArrayLike]:
+) -> tuple[np.ndarray, np.ndarray]:
     r"""
     Simulate a terahertz pulse.
 
@@ -145,7 +145,7 @@ def scaleshift(
     eta: ArrayLike | None = None,
     ts: float = 1.0,
     axis: int = -1,
-) -> ArrayLike:
+) -> np.ndarray:
     """Rescale and shift signal vectors.
 
     Parameters
@@ -225,7 +225,7 @@ def costfunlsq(
     sigmax: ArrayLike,
     sigmay: ArrayLike,
     ts: float,
-) -> ArrayLike:
+) -> np.ndarray:
     r"""Computes the residual vector for the maximum likelihood cost function.
 
     Parameters
@@ -293,7 +293,7 @@ def costfuntls(
     sigmax: ArrayLike,
     sigmay: ArrayLike,
     ts: float,
-) -> ArrayLike:
+) -> np.ndarray:
     r"""Computes the residual vector for the total least squares cost function.
 
     Parameters
@@ -359,7 +359,7 @@ def tdnll(
     fix_mu: bool,
     fix_a: bool,
     fix_eta: bool,
-) -> tuple[ArrayLike, ArrayLike]:
+) -> tuple[float, np.ndarray]:
     r"""
     Compute negative log-likelihood for the time-domain noise model.
 

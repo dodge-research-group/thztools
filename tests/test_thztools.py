@@ -33,8 +33,9 @@ class TestNoise:
             ([0, 0, 1], mu, dt, mu_dot**2),
         ],
     )
-    def test_var_definition(self, sigma: ArrayLike, mu: ArrayLike, dt: float,
-                            expected: ArrayLike) -> None:
+    def test_var_definition(
+        self, sigma: ArrayLike, mu: ArrayLike, dt: float, expected: ArrayLike
+    ) -> None:
         assert_allclose(
             noisevar(sigma, mu, dt), expected, atol=atol, rtol=rtol
         )
@@ -47,8 +48,9 @@ class TestNoise:
             ([0, 0, 1], mu, dt, np.abs(mu_dot)),
         ],
     )
-    def test_amp_definition(self, sigma: ArrayLike, mu: ArrayLike, dt: float,
-                            expected: ArrayLike) -> None:
+    def test_amp_definition(
+        self, sigma: ArrayLike, mu: ArrayLike, dt: float, expected: ArrayLike
+    ) -> None:
         assert_allclose(
             noiseamp(sigma, mu, dt), expected, atol=atol, rtol=rtol
         )

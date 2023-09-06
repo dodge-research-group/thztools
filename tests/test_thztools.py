@@ -10,7 +10,7 @@ from thztools.thztools import (
     noiseamp,
     noisevar,
     scaleshift,
-    # tdnll,
+    tdnll,
     # tdnoisefit,
     thzgen,
 )
@@ -204,3 +204,29 @@ class TestCostFunTLS:
         ),  # type: ignore
         np.concatenate((np.zeros_like(xx), np.zeros_like(xx))),
     )
+
+
+class TestTDNLL:
+    n = 16
+    dt = 1.0 / n
+    t = np.arange(n) * dt
+    mu = np.cos(2 * pi * t)
+    x = np.stack((mu, mu))
+    logv = np.array([0, -np.inf, -np.inf])
+    a = np.ones(2)
+    eta = np.zeros(2)
+    ts = dt
+
+    @pytest.mark.parametrize(
+        "x, mu, logv, a, eta, ts, fix_logv, fix_mu, fix_a, fix_eta, "
+        "desired_nll, desired_gradnll",
+        [[x, mu, logv, a, eta, ts, True, True, True, True,
+          x.size * np.log(2 * pi) / 2, np.array([])],
+        ]
+    )
+    def test_inputs(self, x, mu, logv, a, eta, ts, fix_logv, fix_mu, fix_a,
+                    fix_eta, desired_nll, desired_gradnll):
+        nll, gradnll = tdnll(x, mu, logv, a, eta, ts, fix_logv=fix_logv,
+                             fix_mu=fix_mu, fix_a=fix_a, fix_eta=fix_eta)
+        assert_allclose(nll, desired_nll)
+        assert_allclose(gradnll, desired_gradnll)

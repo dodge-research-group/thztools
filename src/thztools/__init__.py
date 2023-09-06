@@ -1,6 +1,7 @@
 from thztools.thztools import (
     costfunlsq,
     costfuntls,
+    fit,
     noiseamp,
     noisevar,
     scaleshift,
@@ -12,6 +13,7 @@ from thztools.thztools import (
 __all__ = [
     "costfunlsq",
     "costfuntls",
+    "fit",
     "noiseamp",
     "noisevar",
     "scaleshift",

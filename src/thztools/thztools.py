@@ -708,9 +708,10 @@ def fit(
     *,
     ts: float = 1,
     noise_parms: ArrayLike = (1, 0, 0),
-    p_bounds: ArrayLike | None = None,
-    jac: Callable | None = None,
+    p_bounds: ArrayLike = None,
+    jac: Callable = None,
     args: ArrayLike = (),
+    kwargs: dict | None = None,
 ) -> dict:
     r"""
     Fit THz time-domain data to a transfer function.
@@ -722,7 +723,7 @@ def fit(
     Parameters
     ----------
         fun : callable
-            Transfer function, in the form fun(theta,w,*f_args), +iwt
+            Transfer function, in the form fun(theta,w,*args,**kwargs), +iwt
             convention.
         p0 : array_like
             Initial guess for the theta.
@@ -742,19 +743,39 @@ def fit(
             with respect to the fit parameter(s), theta.
         args : tuple, optional
             Additional arguments passed to `fun` and `jac`.
+        kwargs : dict, optional
+            Additional keyword arguments passed to `fun` and `jac`.
     Returns
     -------
         p : dict
             Output parameter dictionary containing:
-                popt : array_like
+                p_opt : array_like
                     Optimal fit parameters.
-                pcov : 2-D array
-                    Covariance matrix of p_opt.
+                p_cov : array_like
+                    Variance of p_opt.
+                mu_opt : array_like
+                    Optimal underlying waveform.
+                mu_var : array_like
+                    Variance of mu_opt.
+                resnorm : float
+                    The value of $\chi^2$.
+                delta : array_like
+                    Resiuals of the input waveform `xx`. # ???
+                epsilon : array_like
+                    Resiuals of the output waveform `yy`. # ???
+                success : bool
+                    True if one of the convergence criteria is satisfied.
     """
     fit_method = "trf"
-    if p_bounds is None:
-        p_bounds = [-np.inf, np.inf]
+
+    if (p_bounds is None) or (
+        p_bounds[0] == -np.inf and p_bounds[1] == np.inf
+    ):
+        p_bounds = (-np.inf, np.inf)
         fit_method = "lm"
+
+    if kwargs is None:
+        kwargs = {}
 
     p0 = np.asarray(p0)
     xx = np.asarray(xx)
@@ -763,32 +784,40 @@ def fit(
     n = yy.shape[-1]
     n_p = len(p0)
     w = 2 * np.pi * rfftfreq(n, ts)
+    n_f = len(w)
     sigma_x = noiseamp(noise_parms, xx, ts=ts)
     sigma_y = noiseamp(noise_parms, yy, ts=ts)
-    p_est = np.concatenate((p0, xx))
+    p0_est = np.concatenate((p0, np.ones(n)))
 
     def function(_theta, _w):
-        return fun(_theta, _w, *args)
+        return fun(_theta, _w, *args, **kwargs)
+
+    def function_flat(_x):
+        _tf = function(_x, w)
+        return np.concatenate((np.real(_tf), np.imag(_tf)))
+
+    def td_fun(_p, _x):
+        _h = irfft(rfft(_x) * function(_p, w), n=n)
+        return _h
 
     def jacobian(_p):
         if jac is None:
-            return fprime(_p, lambda _p0: fun(_p0, w, *args))[:, 0]
+            _tf_prime = fprime(_p, function_flat)
+            return _tf_prime[0:n_f] + 1j * _tf_prime[n_f:]
         else:
-            return jac(_p, w, *args)
-
-    def td_fun(_p, _x):
-        _y = irfft(rfft(_x) * fun(_p, w, *args), n=n)
-        return _y
+            return jac(_p, w, *args, **kwargs)
 
     def jac_fun(_x):
-        mu_est = _x[n_p:]
+        p_est = _x[:n_p]
+        mu_est = xx[:] - _x[n_p:]
         jac_tl = np.zeros((n, n_p))
-        jac_tr = np.diag(-1 / sigma_x)
-        jac_bl = np.row_stack(
-            -irfft(rfft(mu_est) * jacobian(_x[:n_p]), n=n) / sigma_y
-        )
-        jac_br = -(
-            la.circulant(td_fun(_x[:n_p], signal.unit_impulse(n))).T / sigma_y
+        jac_tr = np.diag(1 / sigma_x)
+        jac_bl = -(
+            irfft(rfft(mu_est) * np.atleast_2d(jacobian(p_est)).T, n=n)
+            / sigma_y
+        ).T
+        jac_br = (
+            la.circulant(td_fun(p_est, signal.unit_impulse(n))).T / sigma_y
         ).T
         jac_tot = np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
         return jac_tot
@@ -797,14 +826,14 @@ def fit(
         lambda _p: costfuntls(
             function,
             _p[:n_p],
-            _p[n_p:],
+            xx[:] - _p[n_p:],
             xx[:],
             yy[:],
             sigma_x,
             sigma_y,
             ts,
         ),
-        p_est,
+        p0_est,
         jac=jac_fun,
         bounds=p_bounds,
         method=fit_method,
@@ -814,10 +843,15 @@ def fit(
     # Parse output
     p = {}
     p["p_opt"] = result.x[:n_p]
-    p["mu_opt"] = result.x[n_p:]
-    r = np.linalg.qr(result.jac, mode="r")
-    r_inv = np.linalg.inv(r)
-    p["p_var"] = (r_inv @ r_inv.T)[:n_p, :n_p]
-    p["mu_var"] = (r_inv @ r_inv.T)[n_p:, n_p:]
+    p["mu_opt"] = xx - result.x[n_p:]
+    _, s, vt = la.svd(result.jac, full_matrices=False)
+    threshold = np.finfo(float).eps * max(result.jac.shape) * s[0]
+    s = s[s > threshold]
+    vt = vt[: s.size]
+    p["p_var"] = np.diag(np.dot(vt.T / s**2, vt))[:n_p]
+    p["mu_var"] = np.diag(np.dot(vt.T / s**2, vt))[n_p:]
     p["resnorm"] = 2 * result.cost
+    p["delta"] = xx - p["mu_opt"]
+    p["epsilon"] = yy - irfft(rfft(p["mu_opt"]) * function(p["p_opt"], w), n=n)
+    p["success"] = result.success
     return p

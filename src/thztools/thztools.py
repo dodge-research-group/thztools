@@ -11,7 +11,7 @@ from scipy.optimize import minimize
 from scipy.optimize import approx_fprime as fprime
 from scipy import signal
 import scipy.optimize as opt
-import matplotlib.pyplot as plt
+
 
 NUM_NOISE_PARAMETERS = 3
 

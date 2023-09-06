@@ -217,27 +217,26 @@ class TestTDNLL:
     a = np.ones(m)
     eta = np.zeros(m)
     ts = dt
+    desired_nll = x.size * np.log(2 * pi) / 2
 
     @pytest.mark.parametrize(
-        "fix_logv, fix_mu, fix_a, fix_eta, desired_nll, desired_gradnll",
+        "fix_logv, fix_mu, fix_a, fix_eta, desired_gradnll",
         [
             [
                 True,
                 True,
                 True,
                 True,
-                x.size * np.log(2 * pi) / 2,
                 np.array([]),
             ],
         ],
     )
-    def test_inputs(
+    def test_gradnll_calc(
         self,
         fix_logv,
         fix_mu,
         fix_a,
         fix_eta,
-        desired_nll,
         desired_gradnll,
     ):
         x = self.x
@@ -246,7 +245,7 @@ class TestTDNLL:
         a = self.a
         eta = self.eta
         ts = self.ts
-        nll, gradnll = tdnll(
+        _, gradnll = tdnll(
             x,
             mu,
             logv,
@@ -258,7 +257,6 @@ class TestTDNLL:
             fix_a=fix_a,
             fix_eta=fix_eta,
         )
-        assert_allclose(nll, desired_nll)
         assert_allclose(gradnll, desired_gradnll)
 
 

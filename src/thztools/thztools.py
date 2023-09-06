@@ -708,8 +708,8 @@ def fit(
     *,
     ts: float = 1,
     noise_parms: ArrayLike = (1, 0, 0),
-    p_bounds: ArrayLike = None,
-    jac: Callable = None,
+    p_bounds: ArrayLike | None = None,
+    jac: Callable | None = None,
     args: ArrayLike = (),
     kwargs: dict | None = None,
 ) -> dict:
@@ -768,9 +768,7 @@ def fit(
     """
     fit_method = "trf"
 
-    if (p_bounds is None) or (
-        p_bounds[0] == -np.inf and p_bounds[1] == np.inf
-    ):
+    if p_bounds is None:
         p_bounds = (-np.inf, np.inf)
         fit_method = "lm"
 

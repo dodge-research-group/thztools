@@ -7,13 +7,9 @@ import scipy.linalg as la
 import scipy.optimize as opt
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.typing import ArrayLike
-from scipy.optimize import minimize
-
-from scipy.optimize import approx_fprime as fprime
 from scipy import signal
 from scipy.optimize import approx_fprime as fprime
 from scipy.optimize import minimize
-
 
 NUM_NOISE_PARAMETERS = 3
 
@@ -735,11 +731,11 @@ def fit(
     yy: ArrayLike,
     *,
     ts: float = 1,
-    noise_parms: ArrayLike = [1, 0, 0],
+    noise_parms: ArrayLike = (1, 0, 0),
     p_bounds: ArrayLike = None,
     jac: Callable = None,
     args: ArrayLike = (),
-    kwargs: dict = {}
+    kwargs: dict | None = None,
 ) -> dict:
     r"""
     Fit THz time-domain data to a transfer function.
@@ -751,7 +747,8 @@ def fit(
     Parameters
     ----------
         fun : callable
-            Transfer function, in the form fun(theta,w,*args,**kwargs), +iwt convention.
+            Transfer function, in the form fun(theta,w,*args,**kwargs), +iwt
+            convention.
         p0 : array_like
             Initial guess for the theta.
         xx : array_like
@@ -793,10 +790,16 @@ def fit(
                 success : bool
                     True if one of the convergence criteria is satisfied.
     """
-    fit_method = 'trf'
-    if (p_bounds == None) or (p_bounds[0] == -np.inf and p_bounds[1] == np.inf):
+    fit_method = "trf"
+
+    if (p_bounds is None) or (
+        p_bounds[0] == -np.inf and p_bounds[1] == np.inf
+    ):
         p_bounds = (-np.inf, np.inf)
-        fit_method = 'lm'
+        fit_method = "lm"
+
+    if kwargs is None:
+        kwargs = {}
 
     p0 = np.asarray(p0)
     xx = np.asarray(xx)
@@ -814,27 +817,28 @@ def fit(
         return fun(_theta, _w, *args, **kwargs)
 
     def function_flat(_x):
-        _H = function(_x, w)
-        return np.concatenate((np.real(_H), np.imag(_H)))
+        _tf = function(_x, w)
+        return np.concatenate((np.real(_tf), np.imag(_tf)))
 
     def td_fun(_p, _x):
         _h = irfft(rfft(_x) * function(_p, w), n=n)
         return _h
 
     def jacobian(_p):
-        if jac == None:
-            _H_prime = fprime(_p, function_flat)
-            return _H_prime[0:n_f] + 1j*_H_prime[n_f:]
+        if jac is None:
+            _tf_prime = fprime(_p, function_flat)
+            return _tf_prime[0:n_f] + 1j * _tf_prime[n_f:]
         else:
             return jac(_p, w, *args, **kwargs)
 
     def jac_fun(_x):
         p_est = _x[:n_p]
-        mu_est = xx[:]-_x[n_p:]
+        mu_est = xx[:] - _x[n_p:]
         jac_tl = np.zeros((n, n_p))
         jac_tr = np.diag(1 / sigma_x)
         jac_bl = -(
-            irfft(rfft(mu_est) * np.atleast_2d(jacobian(p_est)).T, n=n) / sigma_y
+            irfft(rfft(mu_est) * np.atleast_2d(jacobian(p_est)).T, n=n)
+            / sigma_y
         ).T
         jac_br = (
             la.circulant(td_fun(p_est, signal.unit_impulse(n))).T / sigma_y
@@ -846,7 +850,7 @@ def fit(
         lambda _p: costfuntls(
             function,
             _p[:n_p],
-            xx[:]-_p[n_p:],
+            xx[:] - _p[n_p:],
             xx[:],
             yy[:],
             sigma_x,
@@ -864,15 +868,14 @@ def fit(
     p = {}
     p["p_opt"] = result.x[:n_p]
     p["mu_opt"] = xx - result.x[n_p:]
-    _, s, VT = la.svd(result.jac, full_matrices=False)
+    _, s, vt = la.svd(result.jac, full_matrices=False)
     threshold = np.finfo(float).eps * max(result.jac.shape) * s[0]
     s = s[s > threshold]
-    VT = VT[:s.size]
-    p["p_var"] = np.diag(np.dot(VT.T / s**2, VT))[:n_p]
-    p["mu_var"] = np.diag(np.dot(VT.T / s**2, VT))[n_p:]
+    vt = vt[: s.size]
+    p["p_var"] = np.diag(np.dot(vt.T / s**2, vt))[:n_p]
+    p["mu_var"] = np.diag(np.dot(vt.T / s**2, vt))[n_p:]
     p["resnorm"] = 2 * result.cost
     p["delta"] = xx - p["mu_opt"]
-    p["epsilon"] = (yy - irfft(rfft(p["mu_opt"]) *
-                    function(p["p_opt"], w), n=n))
+    p["epsilon"] = yy - irfft(rfft(p["mu_opt"]) * function(p["p_opt"], w), n=n)
     p["success"] = result.success
     return p

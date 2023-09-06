@@ -176,7 +176,7 @@ class TestScaleShift:
 
 
 class TestCostFunLSQ:
-    theta = np.asarray([1, 0])
+    theta = [1, 0]
     xx = np.arange(8)
     yy = xx
     sigmax = np.ones_like(xx)
@@ -184,13 +184,13 @@ class TestCostFunLSQ:
     ts = 1.0
 
     assert_allclose(
-        costfunlsq(tfun, theta, xx, yy, sigmax, sigmay, ts),  # type: ignore
+        costfunlsq(tfun, theta, xx, yy, sigmax, sigmay, ts),
         np.zeros_like(xx),
     )
 
 
 class TestCostFunTLS:
-    theta = np.asarray([1, 0])
+    theta = [1, 0]
     mu = np.arange(8)
     xx = mu
     yy = xx
@@ -199,9 +199,7 @@ class TestCostFunTLS:
     ts = 1.0
 
     assert_allclose(
-        costfuntls(
-            tfun, theta, mu, xx, yy, sigmax, sigmay, ts
-        ),  # type: ignore
+        costfuntls(tfun, theta, mu, xx, yy, sigmax, sigmay, ts),
         np.concatenate((np.zeros_like(xx), np.zeros_like(xx))),
     )
 
@@ -213,7 +211,7 @@ class TestTDNLL:
     t = np.arange(n) * dt
     mu = np.cos(2 * pi * t)
     x = np.tile(mu, [m, 1])
-    logv = np.array([0, -np.inf, -np.inf])
+    logv = [0, -np.inf, -np.inf]
     a = np.ones(m)
     eta = np.zeros(m)
     ts = dt
@@ -227,7 +225,7 @@ class TestTDNLL:
                 True,
                 True,
                 True,
-                np.array([]),
+                [],
             ],
         ],
     )

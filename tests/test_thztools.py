@@ -218,23 +218,21 @@ class TestTDNLL:
     desired_nll = x.size * np.log(2 * pi) / 2
 
     @pytest.mark.parametrize(
-        "fix_logv, fix_mu, fix_a, fix_eta, desired_gradnll",
+        "fix_logv, desired_gradnll",
         [
             [
                 True,
-                True,
-                True,
-                True,
                 [],
+            ],
+            [
+                False,
+                [16.0, 0.0, 0.0],
             ],
         ],
     )
     def test_gradnll_calc(
         self,
         fix_logv,
-        fix_mu,
-        fix_a,
-        fix_eta,
         desired_gradnll,
     ):
         x = self.x
@@ -251,9 +249,9 @@ class TestTDNLL:
             eta,
             ts,
             fix_logv=fix_logv,
-            fix_mu=fix_mu,
-            fix_a=fix_a,
-            fix_eta=fix_eta,
+            fix_mu=True,
+            fix_a=True,
+            fix_eta=True,
         )
         assert_allclose(gradnll, desired_gradnll)
 
@@ -265,7 +263,7 @@ class TestTDNoiseFit:
     ts = 1.0 / n
     t = np.arange(n) * ts
     mu, _ = thzgen(n, ts=ts, t0=n * ts / 2)
-    sigma = [1e-5, 0, 0]
+    sigma = np.array([1e-5, 0, 0])
     noise = noiseamp(sigma, mu, ts) * rng.standard_normal((m, n))
     x = np.array(mu + noise)
     a = np.ones(m)

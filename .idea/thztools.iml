@@ -12,6 +12,7 @@
       <excludeFolder url="file://$MODULE_DIR$/.idea/dictionaries" />
       <excludeFolder url="file://$MODULE_DIR$/.mypy_cache/3.11" />
       <excludeFolder url="file://$MODULE_DIR$/.ruff_cache/content" />
+      <excludeFolder url="file://$MODULE_DIR$/htmlcov" />
     </content>
     <orderEntry type="jdk" jdkName="thztools" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

@@ -12,6 +12,7 @@ from scipy.optimize import approx_fprime as fprime
 from scipy.optimize import minimize
 
 NUM_NOISE_PARAMETERS = 3
+NUM_NOISE_DATA_DIMENSIONS = 2
 
 
 def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
@@ -547,14 +548,15 @@ def tdnoisefit(
                 Negative loglikelihood cost function hessian from
                 scipy.optimize.minimize BFGS method.
     """
+    if fix_v and fix_mu and fix_a and fix_eta:
+        msg = "All variables are fixed"
+        raise ValueError(msg)
     # Parse and validate function inputs
     x = np.asarray(x)
-    # Preassign n, m
-    n = m = 0
-    try:
-        n, m = x.shape
-    except ValueError:
-        print("Data array x must be 2D.")
+    if x.ndim != NUM_NOISE_DATA_DIMENSIONS:
+        msg = "Data array x must be 2D"
+        raise ValueError(msg)
+    n, m = x.shape
 
     if v0 is None:
         v0 = np.mean(np.var(x, 1)) * np.array([1, 1, 1])

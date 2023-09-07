@@ -15,6 +15,7 @@ from thztools.thztools import (
     tdnll,
     tdnoisefit,
     thzgen,
+    fit,
 )
 
 atol = 1e-8
@@ -376,3 +377,19 @@ class TestTDNoiseFit:
             assert_allclose(
                 p["var"] * m / (m - 1), sigma**2, rtol=1e-8, atol=1e-10
             )
+
+
+class TestFit:
+    rng = np.random.default_rng(0)
+    n = 16
+    ts = 1.0 / n
+    t = np.arange(n) * ts
+    mu = np.cos(2 * pi * t)
+    p0 = [1, 0]
+    psi = mu
+    sigma = np.array([1e-5, 0, 0])
+    noise_amp = noiseamp(sigma, mu, ts)
+    x = mu + noise_amp * rng.standard_normal(n)
+    y = psi + noise_amp * rng.standard_normal(n)
+    p = fit(tfun, p0, x, y, ts=ts)
+    assert_allclose(p["p_opt"], p0, atol=1e-6)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 from numpy import pi
@@ -332,3 +334,61 @@ class TestTDNoiseFit:
         assert_allclose(
             p["var"] * m / (m - 1), sigma**2, rtol=1e-8, atol=1e-10
         )
+
+    @pytest.mark.parametrize(
+        "x, v0, mu0, a0, eta0",
+        [
+            [
+                x[0, :],
+                None,
+                None,
+                None,
+                None,
+            ],
+            [
+                x[0, 0],
+                None,
+                None,
+                None,
+                None,
+            ],
+            [
+                x,
+                [],
+                None,
+                None,
+                None,
+            ],
+            [
+                x,
+                None,
+                [],
+                None,
+                None,
+            ],
+            [
+                x,
+                None,
+                None,
+                [],
+                None,
+            ],
+            [
+                x,
+                None,
+                None,
+                None,
+                [],
+            ],
+        ],
+    )
+    def test_errors(
+        self,
+        x: ArrayLike,
+        v0: ArrayLike | None,
+        mu0: ArrayLike | None,
+        a0: ArrayLike | None,
+        eta0: ArrayLike | None,
+    ) -> None:
+        with pytest.raises(ValueError):
+            tdnoisefit(x.T, v0=v0, mu0=mu0, a0=a0, eta0=eta0)

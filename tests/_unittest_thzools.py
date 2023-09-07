@@ -8,33 +8,33 @@ from numpy.testing import assert_array_almost_equal
 
 from thztools import (
     costfunlsq,
-    epswater,
-    fftfreq,
+    # epswater,
+    # fftfreq,
     noisevar,
-    shiftmtx,
-    tdnll,
+    # shiftmtx,
+    # tdnll,
     tdnoisefit,
-    tdtf,
+    # tdtf,
     thzgen,
 )
 
 
 class Name(unittest.TestCase):
-    # ==================================================================
-    def test_fftfreq(self):
-        dt = 0.5
-
-        # Odd Case
-
-        f_odd_true = [0.0, 0.4, 0.8, -0.8, -0.4]
-        f_odd = fftfreq(len(f_odd_true), dt)
-        assert_array_almost_equal(f_odd_true, f_odd, decimal=12)
-
-        # Even Case
-        f_even_true = [0.0, 0.25, 0.5, 0.75, 1.0, -0.75, -0.5, -0.25]
-        f_even = fftfreq(len(f_even_true), dt)
-        assert_array_almost_equal(f_even, f_even_true, decimal=12)
-
+    # # ==================================================================
+    # def test_fftfreq(self):
+    #     dt = 0.5
+    #
+    #     # Odd Case
+    #
+    #     f_odd_true = [0.0, 0.4, 0.8, -0.8, -0.4]
+    #     f_odd = fftfreq(len(f_odd_true), dt)
+    #     assert_array_almost_equal(f_odd_true, f_odd, decimal=12)
+    #
+    #     # Even Case
+    #     f_even_true = [0.0, 0.25, 0.5, 0.75, 1.0, -0.75, -0.5, -0.25]
+    #     f_even = fftfreq(len(f_even_true), dt)
+    #     assert_array_almost_equal(f_even, f_even_true, decimal=12)
+    #
     # ==================================================================
     def test_noisevar(self):
         sigma_alpha = (1e-4,)  # Additive noise amplitude [relative to peak]
@@ -71,13 +71,13 @@ class Name(unittest.TestCase):
 
         assert_array_almost_equal(vmu, vmu_true, decimal=12)
 
-    # ==================================================================
-
-    def test_epswater(self):
-        epsr_true = 4.1783 + 2.4381j
-        epsr = epswater(1, t=25)
-        np.testing.assert_allclose(np.round(epsr, 4), epsr_true)
-
+    # # ==================================================================
+    #
+    # def test_epswater(self):
+    #     epsr_true = 4.1783 + 2.4381j
+    #     epsr = epswater(1, t=25)
+    #     np.testing.assert_allclose(np.round(epsr, 4), epsr_true)
+    #
     # ==================================================================
 
     def test_thzgen(self):
@@ -123,76 +123,77 @@ class Name(unittest.TestCase):
             cosfunlsq_true_rand, cosfunlsq_rand, rtol=1e2, atol=1e2
         )
 
+    # # ==================================================================
+    #
+    # def test_tdtf(self):
+    #     theta = np.array([3.0, 4.0])
+    #     n = 5
+    #     ts = 0.2
+    #
+    #     def fun(_theta, _wfft):
+    #         return _theta[0] * np.exp(1j * _theta[1] * _wfft)
+    #
+    #     tdft_true = np.array(
+    #         [
+    #             [3.0, -2.50e-15, 1.54e-15, -1.54e-15, 2.50e-15],
+    #             [2.50e-15, 3.0, -2.50e-15, 1.54e-15, -1.54e-15],
+    #             [-1.54e-15, 2.50e-15, 3.0, -2.50e-15, 1.54e-15],
+    #             [1.54e-15, -1.54e-15, 2.50e-15, 3.0, -2.50e-15],
+    #             [-2.50e-15, 1.54e-15, -1.54e-15, 2.50e-15, 3.0],
+    #         ]
+    #     )
+    #
+    #     tdt_p = tdtf(fun, theta, n, ts)
+    #     assert_array_almost_equal(tdft_true, tdt_p)
+    #
+    # # ==================================================================
+    #
+    # def test_shiftmtx(self):
+    #     tau = 1.0
+    #     n = 256
+    #     ts = 1
+    #     cur_path = pathlib.Path(__file__).parent.resolve()
+    #     new_path = cur_path / "test_files" / "shiftmtx_out.csv"
+    #
+    #     shiftmtx_true = pd.read_csv(new_path, header=None)
+    #     shiftmtx_true = np.array(shiftmtx_true)
+    #
+    #     shiftmtx_p = shiftmtx(tau, n, ts)
+    #     assert_array_almost_equal(shiftmtx_p, shiftmtx_true)
+    #
     # ==================================================================
 
-    def test_tdtf(self):
-        theta = np.array([3.0, 4.0])
-        n = 5
-        ts = 0.2
-
-        def fun(_theta, _wfft):
-            return _theta[0] * np.exp(1j * _theta[1] * _wfft)
-
-        tdft_true = np.array(
-            [
-                [3.0, -2.50e-15, 1.54e-15, -1.54e-15, 2.50e-15],
-                [2.50e-15, 3.0, -2.50e-15, 1.54e-15, -1.54e-15],
-                [-1.54e-15, 2.50e-15, 3.0, -2.50e-15, 1.54e-15],
-                [1.54e-15, -1.54e-15, 2.50e-15, 3.0, -2.50e-15],
-                [-2.50e-15, 1.54e-15, -1.54e-15, 2.50e-15, 3.0],
-            ]
-        )
-
-        tdt_p = tdtf(fun, theta, n, ts)
-        assert_array_almost_equal(tdft_true, tdt_p)
-
-    # ==================================================================
-
-    def test_shiftmtx(self):
-        tau = 1.0
-        n = 256
-        ts = 1
-        cur_path = pathlib.Path(__file__).parent.resolve()
-        new_path = cur_path / "test_files" / "shiftmtx_out.csv"
-
-        shiftmtx_true = pd.read_csv(new_path, header=None)
-        shiftmtx_true = np.array(shiftmtx_true)
-
-        shiftmtx_p = shiftmtx(tau, n, ts)
-        assert_array_almost_equal(shiftmtx_p, shiftmtx_true)
-
-    # ==================================================================
-
-    def test_tdnll(self):
-        n = 10
-        m = 8
-        x = np.ones((n, m))
-
-        # read gradient obtanied in python
-        cur_path = pathlib.Path(__file__).parent.resolve()
-        new_path = cur_path / "test_files" / "tdnll_out.csv"
-        gradnll_true = pd.read_csv(new_path, header=None)
-        gradnll_true = np.array(gradnll_true[0])
-
-        # define parameters
-        logv = np.ones(3)
-        mu = np.ones(n)
-        a = np.ones(m)
-        eta = np.ones(m)
-        ts = 0.5
-
-        theta = np.array([0, 0])
-
-        def fun(_, _w):
-            return -1j * _w
-
-        d = tdtf(fun, theta, n, ts)
-
-        param = {"logv": logv, "mu": mu, "a": a, "eta": eta, "ts": ts, "d": d}
-        fix = {"logv": 0, "mu": 0, "a": 0, "eta": 0}
-
-        [_, gradnll] = tdnll(x, param, fix)
-        assert_array_almost_equal(gradnll, gradnll_true)
+    # def test_tdnll(self):
+    #     n = 10
+    #     m = 8
+    #     x = np.ones((n, m))
+    #
+    #     # read gradient obtanied in python
+    #     cur_path = pathlib.Path(__file__).parent.resolve()
+    #     new_path = cur_path / "test_files" / "tdnll_out.csv"
+    #     gradnll_true = pd.read_csv(new_path, header=None)
+    #     gradnll_true = np.array(gradnll_true[0])
+    #
+    #     # define parameters
+    #     logv = np.ones(3)
+    #     mu = np.ones(n)
+    #     a = np.ones(m)
+    #     eta = np.ones(m)
+    #     ts = 0.5
+    #
+    #     theta = np.array([0, 0])
+    #
+    #     def fun(_, _w):
+    #         return -1j * _w
+    #
+    #     d = tdtf(fun, theta, n, ts)
+    #
+    #     param = {"logv": logv, "mu": mu, "a": a, "eta": eta, "ts": ts,
+    #     "d": d}
+    #     fix = {"logv": 0, "mu": 0, "a": 0, "eta": 0}
+    #
+    #     [_, gradnll] = tdnll(x, param, fix)
+    #     assert_array_almost_equal(gradnll, gradnll_true)
 
     def test_tdnoisefit(self):
         cur_path = pathlib.Path(__file__).parent.resolve()

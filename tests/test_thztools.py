@@ -218,7 +218,7 @@ class TestTDNLL:
     desired_nll = x.size * np.log(2 * pi) / 2
 
     @pytest.mark.parametrize(
-        "fix_logv, desired_gradnll",
+        "fix_logv, desired_gradnll_logv",
         [
             [
                 True,
@@ -230,10 +230,55 @@ class TestTDNLL:
             ],
         ],
     )
+    @pytest.mark.parametrize(
+        "fix_mu, desired_gradnll_mu",
+        [
+            [
+                True,
+                [],
+            ],
+            [
+                False,
+                np.zeros(n),
+            ],
+        ],
+    )
+    @pytest.mark.parametrize(
+        "fix_a, desired_gradnll_a",
+        [
+            [
+                True,
+                [],
+            ],
+            [
+                False,
+                np.zeros(m - 1),
+            ],
+        ],
+    )
+    @pytest.mark.parametrize(
+        "fix_eta, desired_gradnll_eta",
+        [
+            [
+                True,
+                [],
+            ],
+            [
+                False,
+                np.zeros(m - 1),
+            ],
+        ],
+    )
     def test_gradnll_calc(
         self,
         fix_logv,
-        desired_gradnll,
+        fix_mu,
+        fix_a,
+        fix_eta,
+        desired_gradnll_logv,
+        desired_gradnll_mu,
+        desired_gradnll_a,
+        desired_gradnll_eta,
     ):
         x = self.x
         mu = self.mu
@@ -241,6 +286,14 @@ class TestTDNLL:
         a = self.a
         eta = self.eta
         ts = self.ts
+        desired_gradnll = np.concatenate(
+            (
+                desired_gradnll_logv,
+                desired_gradnll_mu,
+                desired_gradnll_a,
+                desired_gradnll_eta,
+            )
+        )
         _, gradnll = tdnll(
             x,
             mu,
@@ -249,11 +302,13 @@ class TestTDNLL:
             eta,
             ts,
             fix_logv=fix_logv,
-            fix_mu=True,
-            fix_a=True,
-            fix_eta=True,
+            fix_mu=fix_mu,
+            fix_a=fix_a,
+            fix_eta=fix_eta,
         )
-        assert_allclose(gradnll, desired_gradnll)
+        assert_allclose(
+            gradnll, desired_gradnll, atol=10 * np.finfo(float).eps
+        )
 
 
 class TestTDNoiseFit:

@@ -326,69 +326,28 @@ class TestTDNoiseFit:
     a = np.ones(m)
     eta = np.zeros(m)
 
-    def test_inputs(self):
-        x = self.x
+    @pytest.mark.parametrize("x", [x, x[:, 0]])
+    @pytest.mark.parametrize("v0", [None, sigma**2, []])
+    @pytest.mark.parametrize("mu0", [None, mu, []])
+    @pytest.mark.parametrize("a0", [None, a, []])
+    @pytest.mark.parametrize("eta0", [None, eta, []])
+    def test_inputs_new(self, x, v0, mu0, a0, eta0):
         m = self.m
+        n = self.n
         sigma = self.sigma
-        p, fval, diagnostic = tdnoisefit(x.T)
-        assert_allclose(
-            p["var"] * m / (m - 1), sigma**2, rtol=1e-8, atol=1e-10
-        )
-
-    @pytest.mark.parametrize(
-        "x, v0, mu0, a0, eta0",
-        [
-            [
-                x[0, :],
-                None,
-                None,
-                None,
-                None,
-            ],
-            [
-                x[0, 0],
-                None,
-                None,
-                None,
-                None,
-            ],
-            [
-                x,
-                [],
-                None,
-                None,
-                None,
-            ],
-            [
-                x,
-                None,
-                [],
-                None,
-                None,
-            ],
-            [
-                x,
-                None,
-                None,
-                [],
-                None,
-            ],
-            [
-                x,
-                None,
-                None,
-                None,
-                [],
-            ],
-        ],
-    )
-    def test_errors(
-        self,
-        x: ArrayLike,
-        v0: ArrayLike | None,
-        mu0: ArrayLike | None,
-        a0: ArrayLike | None,
-        eta0: ArrayLike | None,
-    ) -> None:
-        with pytest.raises(ValueError):
-            tdnoisefit(x.T, v0=v0, mu0=mu0, a0=a0, eta0=eta0)
+        if (
+            x.ndim < 2
+            or (v0 is not None and len(v0) != 3)
+            or (mu0 is not None and len(mu0) != n)
+            or (a0 is not None and len(a0) != m)
+            or (eta0 is not None and len(eta0) != m)
+        ):
+            with pytest.raises(ValueError):
+                _, _, _ = tdnoisefit(x.T, v0=v0, mu0=mu0, a0=a0, eta0=eta0)
+        else:
+            p, fval, diagnostic = tdnoisefit(
+                x.T, v0=v0, mu0=mu0, a0=a0, eta0=eta0
+            )
+            assert_allclose(
+                p["var"] * m / (m - 1), sigma**2, rtol=1e-8, atol=1e-10
+            )

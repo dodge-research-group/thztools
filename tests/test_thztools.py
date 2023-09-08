@@ -9,13 +9,13 @@ from numpy.typing import ArrayLike
 from thztools.thztools import (
     costfunlsq,
     costfuntls,
+    fit,
     noiseamp,
     noisevar,
     scaleshift,
     tdnll,
     tdnoisefit,
     thzgen,
-    fit,
 )
 
 atol = 1e-8
@@ -24,6 +24,11 @@ rtol = 1e-5
 
 def tfun(p, w):
     return p[0] * np.exp(1j * p[1] * w)
+
+
+def jac_fun(p, w):
+    exp_ipw = np.exp(1j * p[1] * w)
+    return np.stack((exp_ipw, 1j * w * p[0] * exp_ipw)).T
 
 
 class TestNoise:
@@ -336,9 +341,7 @@ class TestTDNoiseFit:
     @pytest.mark.parametrize("fix_mu", [True, False])
     @pytest.mark.parametrize("fix_a", [True, False])
     @pytest.mark.parametrize("fix_eta", [True, False])
-    def test_inputs_new(
-        self, x, v0, mu0, a0, eta0, fix_v, fix_mu, fix_a, fix_eta
-    ):
+    def test_inputs(self, x, v0, mu0, a0, eta0, fix_v, fix_mu, fix_a, fix_eta):
         m = self.m
         n = self.n
         sigma = self.sigma
@@ -391,5 +394,33 @@ class TestFit:
     noise_amp = noiseamp(sigma, mu, ts)
     x = mu + noise_amp * rng.standard_normal(n)
     y = psi + noise_amp * rng.standard_normal(n)
-    p = fit(tfun, p0, x, y, ts=ts)
-    assert_allclose(p["p_opt"], p0, atol=1e-6)
+
+    @pytest.mark.parametrize("noise_parms", [(1, 0, 0), sigma**2])
+    @pytest.mark.parametrize("p_bounds", [None, ((0, -1), (2, 1))])
+    @pytest.mark.parametrize("jac", [None, jac_fun])
+    @pytest.mark.parametrize("kwargs", [None, {}])
+    def test_inputs(self, noise_parms, p_bounds, jac, kwargs):
+        p0 = self.p0
+        x = self.x
+        y = self.y
+        ts = self.ts
+        p = fit(
+            tfun,
+            p0,
+            x,
+            y,
+            ts=ts,
+            noise_parms=noise_parms,
+            p_bounds=p_bounds,
+            jac=jac,
+            kwargs=kwargs,
+        )
+        assert_allclose(p["p_opt"], p0, atol=1e-6)
+
+    def test_errors(self):
+        p0 = self.p0
+        x = self.x
+        y = self.y
+        ts = self.ts
+        with pytest.raises(ValueError):
+            _ = fit(tfun, p0, x, y, ts=ts, p_bounds=())

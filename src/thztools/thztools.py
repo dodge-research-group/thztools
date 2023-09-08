@@ -747,6 +747,7 @@ def fit(
             Additional arguments passed to `fun` and `jac`.
         kwargs : dict, optional
             Additional keyword arguments passed to `fun` and `jac`.
+
     Returns
     -------
         p : dict
@@ -762,20 +763,13 @@ def fit(
                 resnorm : float
                     The value of $\chi^2$.
                 delta : array_like
-                    Resiuals of the input waveform `xx`. # ???
+                    Residuals of the input waveform `xx`.
                 epsilon : array_like
-                    Resiuals of the output waveform `yy`. # ???
+                    Resiuals of the output waveform `yy`.
                 success : bool
                     True if one of the convergence criteria is satisfied.
     """
     fit_method = "trf"
-
-    if p_bounds is None:
-        p_bounds = (-np.inf, np.inf)
-        fit_method = "lm"
-
-    if kwargs is None:
-        kwargs = {}
 
     p0 = np.asarray(p0)
     xx = np.asarray(xx)
@@ -783,6 +777,22 @@ def fit(
 
     n = yy.shape[-1]
     n_p = len(p0)
+
+    if p_bounds is None:
+        p_bounds = (-np.inf, np.inf)
+        fit_method = "lm"
+    elif len(p_bounds) == 2:  # noqa: PLR2004
+        p_bounds = (
+            np.concatenate((p_bounds[0], np.full((n,), -np.inf))),
+            np.concatenate((p_bounds[1], np.full((n,), np.inf))),
+        )
+    else:
+        msg = "`bounds` must contain 2 elements."
+        raise ValueError(msg)
+
+    if kwargs is None:
+        kwargs = {}
+
     w = 2 * np.pi * rfftfreq(n, ts)
     n_f = len(w)
     sigma_x = noiseamp(noise_parms, xx, ts=ts)

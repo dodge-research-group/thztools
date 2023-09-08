@@ -12,6 +12,8 @@ Quick list
     :toctree: functions/
 
     costfunlsq
+    costfuntls
+    fit
     noiseamp
     noisevar
     scaleshift

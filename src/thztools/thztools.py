@@ -4,14 +4,18 @@ from typing import Callable
 
 import numpy as np
 import scipy.linalg as la
+import scipy.optimize as opt
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.typing import ArrayLike
+from scipy import signal
+from scipy.optimize import approx_fprime as fprime
 from scipy.optimize import minimize
 
 NUM_NOISE_PARAMETERS = 3
+NUM_NOISE_DATA_DIMENSIONS = 2
 
 
-def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
+def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     r"""
     Compute the time-domain noise variance.
 
@@ -44,7 +48,7 @@ def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
     return sigma[0] ** 2 + (sigma[1] * mu) ** 2 + (sigma[2] * mudot) ** 2
 
 
-def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> ArrayLike:
+def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     r"""
     Compute the time-domain noise amplitude.
 
@@ -80,7 +84,7 @@ def thzgen(
     taur: float = 0.3,
     tauc: float = 0.1,
     fwhm: float = 0.05,
-) -> tuple[ArrayLike, ArrayLike]:
+) -> tuple[np.ndarray, np.ndarray]:
     r"""
     Simulate a terahertz pulse.
 
@@ -142,7 +146,7 @@ def scaleshift(
     eta: ArrayLike | None = None,
     ts: float = 1.0,
     axis: int = -1,
-) -> ArrayLike:
+) -> np.ndarray:
     """Rescale and shift signal vectors.
 
     Parameters
@@ -222,7 +226,7 @@ def costfunlsq(
     sigmax: ArrayLike,
     sigmay: ArrayLike,
     ts: float,
-) -> ArrayLike:
+) -> np.ndarray:
     r"""Computes the residual vector for the maximum likelihood cost function.
 
     Parameters
@@ -254,6 +258,12 @@ def costfunlsq(
 
 
     """
+    theta = np.asarray(theta)
+    xx = np.asarray(xx)
+    yy = np.asarray(yy)
+    sigmax = np.asarray(sigmax)
+    sigmay = np.asarray(sigmay)
+
     n = xx.shape[0]
     w = 2 * np.pi * rfftfreq(n, ts)
     h_f = np.conj(fun(theta, w))
@@ -284,7 +294,7 @@ def costfuntls(
     sigmax: ArrayLike,
     sigmay: ArrayLike,
     ts: float,
-) -> ArrayLike:
+) -> np.ndarray:
     r"""Computes the residual vector for the total least squares cost function.
 
     Parameters
@@ -319,53 +329,23 @@ def costfuntls(
 
 
     """
+    theta = np.asarray(theta)
+    mu = np.asarray(mu)
+    xx = np.asarray(xx)
+    yy = np.asarray(yy)
+    sigmax = np.asarray(sigmax)
+    sigmay = np.asarray(sigmay)
+
     n = xx.shape[-1]
-    delta = (xx - mu) / sigmax
+    delta_norm = (xx - mu) / sigmax
     w = 2 * np.pi * rfftfreq(n, ts)
     h_f = fun(theta, w)
 
-    eps = (yy - irfft(rfft(mu) * h_f, n=n)) / sigmay
+    eps_norm = (yy - irfft(rfft(mu) * h_f, n=n)) / sigmay
 
-    res = np.concatenate((delta, eps))
+    res = np.concatenate((delta_norm, eps_norm))
 
     return res
-
-
-def tdtf(fun: Callable, theta: ArrayLike, n: int, ts: float) -> ArrayLike:
-    """
-    Computes the time-domain transfer matrix for a frequency response function.
-
-    Parameters
-    ----------
-        fun : callable
-            Frequency function, in the form fun(theta, w), where theta
-            is a vector of the function parameters. The function should be
-            expressed in the +iwt convention and must be Hermitian.
-
-        theta : array_like
-            Input parameters for the function.
-
-        n : int
-            Number of time samples.
-
-        ts : array_like
-            Sampling time.
-
-    Returns
-    -------
-        h : array_like
-            Transfer matrix with size (n,n).
-
-    """
-
-    f = rfftfreq(n, ts)
-    w = 2 * np.pi * f
-    tfunp = fun(theta, w)
-
-    imp = irfft(tfunp, n=n)
-    h = la.circulant(imp).T
-
-    return h
 
 
 def tdnll(
@@ -380,7 +360,7 @@ def tdnll(
     fix_mu: bool,
     fix_a: bool,
     fix_eta: bool,
-) -> tuple[ArrayLike, ArrayLike]:
+) -> tuple[float, np.ndarray]:
     r"""
     Compute negative log-likelihood for the time-domain noise model.
 
@@ -568,14 +548,15 @@ def tdnoisefit(
                 Negative loglikelihood cost function hessian from
                 scipy.optimize.minimize BFGS method.
     """
+    if fix_v and fix_mu and fix_a and fix_eta:
+        msg = "All variables are fixed"
+        raise ValueError(msg)
     # Parse and validate function inputs
     x = np.asarray(x)
-    # Preassign n, m
-    n = m = 0
-    try:
-        n, m = x.shape
-    except ValueError:
-        print("Data array x must be 2D.")
+    if x.ndim != NUM_NOISE_DATA_DIMENSIONS:
+        msg = "Data array x must be 2D"
+        raise ValueError(msg)
+    n, m = x.shape
 
     if v0 is None:
         v0 = np.mean(np.var(x, 1)) * np.array([1, 1, 1])
@@ -719,3 +700,168 @@ def tdnoisefit(
         diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
 
     return p, out.fun, diagnostic
+
+
+def fit(
+    fun: Callable,
+    p0: ArrayLike,
+    xx: ArrayLike,
+    yy: ArrayLike,
+    *,
+    ts: float = 1,
+    noise_parms: ArrayLike = (1, 0, 0),
+    p_bounds: ArrayLike | None = None,
+    jac: Callable | None = None,
+    args: ArrayLike = (),
+    kwargs: dict | None = None,
+) -> dict:
+    r"""
+    Fit THz time-domain data to a transfer function.
+
+    Computes the noise on the input `xx` and output `yy` time series using
+    `noiseamp`. Then uses the total residuals generated by `costfuntls` to fit
+    the input and output to the transfer function.
+
+    Parameters
+    ----------
+        fun : callable
+            Transfer function, in the form fun(theta,w,*args,**kwargs), +iwt
+            convention.
+        p0 : array_like
+            Initial guess for the theta.
+        xx : array_like
+            Measured input signal.
+        yy : array_like
+            Measured output signal.
+        ts : float, optional
+            Sampling time.
+        noise_parms : None or array_like, optional
+            Noise parameters with size (3,), expressed as standard deviation
+            amplitudes.
+        p_bounds : None, 2-tuple of array_like, or Bounds, optional
+            Lower and upper bounds on fit parameter(s).
+        jac : None or callable, optional
+            Method of calculating derivative of the output signal residuals
+            with respect to the fit parameter(s), theta.
+        args : tuple, optional
+            Additional arguments passed to `fun` and `jac`.
+        kwargs : dict, optional
+            Additional keyword arguments passed to `fun` and `jac`.
+
+    Returns
+    -------
+        p : dict
+            Output parameter dictionary containing:
+                p_opt : array_like
+                    Optimal fit parameters.
+                p_cov : array_like
+                    Variance of p_opt.
+                mu_opt : array_like
+                    Optimal underlying waveform.
+                mu_var : array_like
+                    Variance of mu_opt.
+                resnorm : float
+                    The value of $\chi^2$.
+                delta : array_like
+                    Residuals of the input waveform `xx`.
+                epsilon : array_like
+                    Resiuals of the output waveform `yy`.
+                success : bool
+                    True if one of the convergence criteria is satisfied.
+    """
+    fit_method = "trf"
+
+    p0 = np.asarray(p0)
+    xx = np.asarray(xx)
+    yy = np.asarray(yy)
+
+    n = yy.shape[-1]
+    n_p = len(p0)
+
+    if p_bounds is None:
+        p_bounds = (-np.inf, np.inf)
+        fit_method = "lm"
+    elif len(p_bounds) == 2:  # noqa: PLR2004
+        p_bounds = (
+            np.concatenate((p_bounds[0], np.full((n,), -np.inf))),
+            np.concatenate((p_bounds[1], np.full((n,), np.inf))),
+        )
+    else:
+        msg = "`bounds` must contain 2 elements."
+        raise ValueError(msg)
+
+    if kwargs is None:
+        kwargs = {}
+
+    w = 2 * np.pi * rfftfreq(n, ts)
+    n_f = len(w)
+    sigma_x = noiseamp(noise_parms, xx, ts=ts)
+    sigma_y = noiseamp(noise_parms, yy, ts=ts)
+    p0_est = np.concatenate((p0, np.ones(n)))
+
+    def function(_theta, _w):
+        return fun(_theta, _w, *args, **kwargs)
+
+    def function_flat(_x):
+        _tf = function(_x, w)
+        return np.concatenate((np.real(_tf), np.imag(_tf)))
+
+    def td_fun(_p, _x):
+        _h = irfft(rfft(_x) * function(_p, w), n=n)
+        return _h
+
+    def jacobian(_p):
+        if jac is None:
+            _tf_prime = fprime(_p, function_flat)
+            return _tf_prime[0:n_f] + 1j * _tf_prime[n_f:]
+        else:
+            return jac(_p, w, *args, **kwargs)
+
+    def jac_fun(_x):
+        p_est = _x[:n_p]
+        mu_est = xx[:] - _x[n_p:]
+        jac_tl = np.zeros((n, n_p))
+        jac_tr = np.diag(1 / sigma_x)
+        jac_bl = -(
+            irfft(rfft(mu_est) * np.atleast_2d(jacobian(p_est)).T, n=n)
+            / sigma_y
+        ).T
+        jac_br = (
+            la.circulant(td_fun(p_est, signal.unit_impulse(n))).T / sigma_y
+        ).T
+        jac_tot = np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
+        return jac_tot
+
+    result = opt.least_squares(
+        lambda _p: costfuntls(
+            function,
+            _p[:n_p],
+            xx[:] - _p[n_p:],
+            xx[:],
+            yy[:],
+            sigma_x,
+            sigma_y,
+            ts,
+        ),
+        p0_est,
+        jac=jac_fun,
+        bounds=p_bounds,
+        method=fit_method,
+        x_scale=np.concatenate((np.ones(n_p), sigma_x)),
+    )
+
+    # Parse output
+    p = {}
+    p["p_opt"] = result.x[:n_p]
+    p["mu_opt"] = xx - result.x[n_p:]
+    _, s, vt = la.svd(result.jac, full_matrices=False)
+    threshold = np.finfo(float).eps * max(result.jac.shape) * s[0]
+    s = s[s > threshold]
+    vt = vt[: s.size]
+    p["p_var"] = np.diag(np.dot(vt.T / s**2, vt))[:n_p]
+    p["mu_var"] = np.diag(np.dot(vt.T / s**2, vt))[n_p:]
+    p["resnorm"] = 2 * result.cost
+    p["delta"] = xx - p["mu_opt"]
+    p["epsilon"] = yy - irfft(rfft(p["mu_opt"]) * function(p["p_opt"], w), n=n)
+    p["success"] = result.success
+    return p

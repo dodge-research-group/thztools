@@ -59,6 +59,7 @@ test-cov = "coverage run -m pytest {args:tests}"
 cov-report = [
     "- coverage combine",
     "coverage report",
+    "coverage html",
 ]
 cov = [
     "test-cov",
@@ -191,6 +192,15 @@ build = "sphinx-build -b html docs/source docs/build/html"
 
 [tool.mypy]
 plugins = "numpy.typing.mypy_plugin"
+
+[[tool.mypy.overrides]]
+module = [
+    "pytest",
+    "scipy",
+    "scipy.linalg",
+    "scipy.optimize",
+]
+ignore_missing_imports = true
 
 [tool.hatch.build.targets.sdist]
 exclude = [

@@ -1,3 +1,7 @@
+# MacOS
+# General
+.DS_Store
+
 # Local .gitignore
 Untitled*.ipynb
 

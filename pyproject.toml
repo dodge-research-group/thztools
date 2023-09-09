@@ -179,6 +179,10 @@ exclude_lines = [
 addopts = [
     "--import-mode=importlib",
 ]
+# Show warnings as errors for debugging
+filterwarnings = [
+    "error",
+]
 
 [tool.hatch.envs.docs]
 dependencies = [

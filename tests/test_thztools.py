@@ -326,7 +326,7 @@ class TestTDNoiseFit:
     ts = 1.0 / n
     t = np.arange(n) * ts
     mu, _ = thzgen(n, ts=ts, t0=n * ts / 2)
-    sigma = np.array([1e-5, 0, 0])
+    sigma = np.array([1e-5, 1e-7, 1e-8])
     noise = noiseamp(sigma, mu, ts) * rng.standard_normal((m, n))
     x = np.array(mu + noise)
     a = np.ones(m)

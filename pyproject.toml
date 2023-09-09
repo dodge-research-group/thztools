@@ -33,7 +33,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "pandas",
+    "numpy",
     "scipy",
 ]
 

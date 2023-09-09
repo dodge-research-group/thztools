@@ -596,7 +596,9 @@ def tdnoisefit(
     # Set initial guesses for all free parameters
     x0 = np.array([])
     if not fix_v:
-        x0 = np.concatenate((x0, np.log(v0)))
+        # Replace log(x) with -inf when x <= 0
+        logv0 = np.ma.log(v0).filled(-np.inf)
+        x0 = np.concatenate((x0, logv0))
     if not fix_mu:
         x0 = np.concatenate((x0, mu0))
     if not fix_a:
@@ -607,7 +609,7 @@ def tdnoisefit(
     # Bundle free parameters together into objective function
     def objective(_p):
         if fix_v:
-            _logv = np.log(v0)
+            _logv = np.ma.log(v0).filled(-np.inf)
         else:
             _logv = _p[:3]
             _p = _p[3:]

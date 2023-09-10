@@ -7,6 +7,7 @@ import scipy.linalg as la
 import scipy.optimize as opt
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.typing import ArrayLike
+from scipy import linalg
 from scipy import signal
 from scipy.optimize import approx_fprime as fprime
 from scipy.optimize import minimize
@@ -641,7 +642,7 @@ def tdnoisefit(
         )
 
     # Minimize cost function with respect to free parameters
-    out = minimize(objective, x0, method="L-BFGS-B", jac=True)
+    out = minimize(objective, x0, method="BFGS", jac=True)
 
     # Parse output
     p = {}
@@ -672,34 +673,40 @@ def tdnoisefit(
     p["ts"] = ts
 
     diagnostic = {
-        # "grad": out.jac,
-        # "hess_inv": out.hess_inv,
-        # "err": {
-        #     "var": np.array([]),
-        #     "mu": np.array([]),
-        #     "a": np.array([]),
-        #     "eta": np.array([]),
-        # },
+        "grad": out.jac,
+        "cov": out.hess_inv,
+        "err": {
+            "var": np.array([]),
+            "mu": np.array([]),
+            "a": np.array([]),
+            "eta": np.array([]),
+        },
+        "success": out.success,
+        "status": out.status,
+        "message": out.message,
+        "nfev": out.nfev,
+        "njev": out.njev,
+        "nit": out.nit,
     }
-    # err = np.sqrt(np.diag(out.hess_inv))
-    # if not fix_v:
-    #     # Propagate error from log(V) to V
-    #     diagnostic["err"]["var"] = np.sqrt(
-    #         np.diag(np.diag(p["var"]) @ out.hess_inv[0:3, 0:3])
-    #         @ np.diag(p["var"])
-    #     )
-    #     err = err[3:]
-    #
-    # if not fix_mu:
-    #     diagnostic["err"]["mu"] = err[:n]
-    #     err = err[n:]
-    #
-    # if not fix_a:
-    #     diagnostic["err"]["a"] = np.concatenate(([0], err[: m - 1]))
-    #     err = err[m - 1 :]
-    #
-    # if not fix_eta:
-    #     diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
+    err = np.sqrt(np.diag(out.hess_inv))
+    if not fix_v:
+        # Propagate error from log(V) to V
+        diagnostic["err"]["var"] = np.sqrt(
+            np.diag(np.diag(p["var"]) @ out.hess_inv[0:3, 0:3])
+            @ np.diag(p["var"])
+        )
+        err = err[3:]
+
+    if not fix_mu:
+        diagnostic["err"]["mu"] = err[:n]
+        err = err[n:]
+
+    if not fix_a:
+        diagnostic["err"]["a"] = np.concatenate(([0], err[: m - 1]))
+        err = err[m - 1 :]
+
+    if not fix_eta:
+        diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
 
     return p, out.fun, diagnostic
 

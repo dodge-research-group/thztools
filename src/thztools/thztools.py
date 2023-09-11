@@ -17,6 +17,7 @@ import scipy.optimize as opt
 import matplotlib.pyplot as plt
 
 NUM_NOISE_PARAMETERS = 3
+NUM_NOISE_DATA_DIMENSIONS = 2
 
 
 def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
@@ -552,14 +553,15 @@ def tdnoisefit(
                 Negative loglikelihood cost function hessian from
                 scipy.optimize.minimize BFGS method.
     """
+    if fix_v and fix_mu and fix_a and fix_eta:
+        msg = "All variables are fixed"
+        raise ValueError(msg)
     # Parse and validate function inputs
     x = np.asarray(x)
-    # Preassign n, m
-    n = m = 0
-    try:
-        n, m = x.shape
-    except ValueError:
-        print("Data array x must be 2D.")
+    if x.ndim != NUM_NOISE_DATA_DIMENSIONS:
+        msg = "Data array x must be 2D"
+        raise ValueError(msg)
+    n, m = x.shape
 
     if v0 is None:
         v0 = np.mean(np.var(x, 1)) * np.array([1, 1, 1])
@@ -599,7 +601,9 @@ def tdnoisefit(
     # Set initial guesses for all free parameters
     x0 = np.array([])
     if not fix_v:
-        x0 = np.concatenate((x0, np.log(v0)))
+        # Replace log(x) with -inf when x <= 0
+        logv0 = np.ma.log(v0).filled(-np.inf)
+        x0 = np.concatenate((x0, logv0))
     if not fix_mu:
         x0 = np.concatenate((x0, mu0))
     if not fix_a:
@@ -610,7 +614,7 @@ def tdnoisefit(
     # Bundle free parameters together into objective function
     def objective(_p):
         if fix_v:
-            _logv = np.log(v0)
+            _logv = np.ma.log(v0).filled(-np.inf)
         else:
             _logv = _p[:3]
             _p = _p[3:]
@@ -642,7 +646,7 @@ def tdnoisefit(
         )
 
     # Minimize cost function with respect to free parameters
-    out = minimize(objective, x0, method="BFGS", jac=True)
+    out = minimize(objective, x0, method="L-BFGS-B", jac=True)
 
     # Parse output
     p = {}
@@ -673,14 +677,14 @@ def tdnoisefit(
     p["ts"] = ts
 
     diagnostic = {
-        "grad": out.jac,
-        "hess_inv": out.hess_inv,
-        "err": {
-            "var": np.array([]),
-            "mu": np.array([]),
-            "a": np.array([]),
-            "eta": np.array([]),
-        },
+        # "grad": out.jac,
+        # "hess_inv": out.hess_inv,
+        # "err": {
+        #     "var": np.array([]),
+        #     "mu": np.array([]),
+        #     "a": np.array([]),
+        #     "eta": np.array([]),
+        # },
     }
     err = np.sqrt(np.diag(out.hess_inv))
     if not fix_v:
@@ -697,7 +701,7 @@ def tdnoisefit(
 
     if not fix_a:
         diagnostic["err"]["a"] = np.concatenate(([0], err[: m - 1]))
-        err = err[m - 1:]
+        err = err[m - 1 :]
 
     if not fix_eta:
         diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
@@ -750,6 +754,7 @@ def fit(
             Additional arguments passed to `fun` and `jac`.
         kwargs : dict, optional
             Additional keyword arguments passed to `fun` and `jac`.
+
     Returns
     -------
         p : dict
@@ -765,20 +770,13 @@ def fit(
                 resnorm : float
                     The value of $\chi^2$.
                 delta : array_like
-                    Resiuals of the input waveform `xx`. # ???
+                    Residuals of the input waveform `xx`.
                 epsilon : array_like
-                    Resiuals of the output waveform `yy`. # ???
+                    Resiuals of the output waveform `yy`.
                 success : bool
                     True if one of the convergence criteria is satisfied.
     """
     fit_method = "trf"
-
-    if p_bounds is None:
-        p_bounds = (-np.inf, np.inf)
-        fit_method = "lm"
-
-    if kwargs is None:
-        kwargs = {}
 
     p0 = np.asarray(p0)
     xx = np.asarray(xx)
@@ -786,6 +784,22 @@ def fit(
 
     n = yy.shape[-1]
     n_p = len(p0)
+
+    if p_bounds is None:
+        p_bounds = (-np.inf, np.inf)
+        fit_method = "lm"
+    elif len(p_bounds) == 2:  # noqa: PLR2004
+        p_bounds = (
+            np.concatenate((p_bounds[0], np.full((n,), -np.inf))),
+            np.concatenate((p_bounds[1], np.full((n,), np.inf))),
+        )
+    else:
+        msg = "`bounds` must contain 2 elements."
+        raise ValueError(msg)
+
+    if kwargs is None:
+        kwargs = {}
+
     w = 2 * np.pi * rfftfreq(n, ts)
     n_f = len(w)
     sigma_x = noiseamp(noise_parms, xx, ts=ts)

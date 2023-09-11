@@ -33,7 +33,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "pandas",
+    "numpy",
     "scipy",
 ]
 
@@ -178,6 +178,10 @@ exclude_lines = [
 [tool.pytest.ini_options]
 addopts = [
     "--import-mode=importlib",
+]
+# Show warnings as errors for debugging
+filterwarnings = [
+    "error",
 ]
 
 [tool.hatch.envs.docs]

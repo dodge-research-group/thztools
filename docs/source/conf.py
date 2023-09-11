@@ -12,11 +12,11 @@
 #
 # The importlib.metadata library is used to import the version number from
 # PyPI using OPTION 2 below. Not needed for OPTION 1.
-import importlib.metadata
+# import importlib.metadata
 
 # The runpy package is used to import the version number from
 # __about__.py using OPTION 1 below. Not needed for OPTION 2.
-# import runpy
+import runpy
 import sys
 from pathlib import Path
 
@@ -37,12 +37,12 @@ project_copyright = f"{pkg_creation_year} - present, {author}"
 # Version number for docs
 # ========================
 # OPTION 1: Version number listed in GitHib
-# version = (runpy.run_path(Path(__file__).parents[2] / "src" / "thztools"
-#                           / "__about__.py")["__version__"])
+version = (runpy.run_path(Path(__file__).parents[2] / "src" / "thztools"
+                          / "__about__.py")["__version__"])
 #
 # OPTION 2: Version number listed in PyPI
-version = importlib.metadata.version(project)
-release = version
+# version = importlib.metadata.version(project)
+# release = version
 
 # -- General configuration ---------------------------------------------------
 

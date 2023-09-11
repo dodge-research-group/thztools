@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 from numpy import pi
@@ -7,6 +9,7 @@ from numpy.typing import ArrayLike
 from thztools.thztools import (
     costfunlsq,
     costfuntls,
+    fit,
     noiseamp,
     noisevar,
     scaleshift,
@@ -21,6 +24,11 @@ rtol = 1e-5
 
 def tfun(p, w):
     return p[0] * np.exp(1j * p[1] * w)
+
+
+def jac_fun(p, w):
+    exp_ipw = np.exp(1j * p[1] * w)
+    return np.stack((exp_ipw, 1j * w * p[0] * exp_ipw)).T
 
 
 class TestNoise:
@@ -318,17 +326,101 @@ class TestTDNoiseFit:
     ts = 1.0 / n
     t = np.arange(n) * ts
     mu, _ = thzgen(n, ts=ts, t0=n * ts / 2)
-    sigma = np.array([1e-5, 0, 0])
+    sigma = np.array([1e-5, 1e-7, 1e-8])
     noise = noiseamp(sigma, mu, ts) * rng.standard_normal((m, n))
     x = np.array(mu + noise)
     a = np.ones(m)
     eta = np.zeros(m)
 
-    def test_inputs(self):
-        x = self.x
+    @pytest.mark.parametrize("x", [x, x[:, 0]])
+    @pytest.mark.parametrize("v0", [None, sigma**2, []])
+    @pytest.mark.parametrize("mu0", [None, mu, []])
+    @pytest.mark.parametrize("a0", [None, a, []])
+    @pytest.mark.parametrize("eta0", [None, eta, []])
+    @pytest.mark.parametrize("fix_v", [True, False])
+    @pytest.mark.parametrize("fix_mu", [True, False])
+    @pytest.mark.parametrize("fix_a", [True, False])
+    @pytest.mark.parametrize("fix_eta", [True, False])
+    def test_inputs(self, x, v0, mu0, a0, eta0, fix_v, fix_mu, fix_a, fix_eta):
         m = self.m
+        n = self.n
         sigma = self.sigma
-        p, fval, diagnostic = tdnoisefit(x.T)
-        assert_allclose(
-            p["var"] * m / (m - 1), sigma**2, rtol=1e-8, atol=1e-10
+        if (
+            x.ndim < 2
+            or (v0 is not None and len(v0) != 3)
+            or (mu0 is not None and len(mu0) != n)
+            or (a0 is not None and len(a0) != m)
+            or (eta0 is not None and len(eta0) != m)
+            or (fix_v and fix_mu and fix_a and fix_eta)
+        ):
+            with pytest.raises(ValueError):
+                _, _, _ = tdnoisefit(
+                    x.T,
+                    v0=v0,
+                    mu0=mu0,
+                    a0=a0,
+                    eta0=eta0,
+                    fix_v=fix_v,
+                    fix_mu=fix_mu,
+                    fix_a=fix_a,
+                    fix_eta=fix_eta,
+                )
+        else:
+            p, fval, diagnostic = tdnoisefit(
+                x.T,
+                v0=v0,
+                mu0=mu0,
+                a0=a0,
+                eta0=eta0,
+                fix_v=fix_v,
+                fix_mu=fix_mu,
+                fix_a=fix_a,
+                fix_eta=fix_eta,
+            )
+            assert_allclose(
+                p["var"] * m / (m - 1), sigma**2, rtol=1e-8, atol=1e-10
+            )
+
+
+class TestFit:
+    rng = np.random.default_rng(0)
+    n = 16
+    ts = 1.0 / n
+    t = np.arange(n) * ts
+    mu = np.cos(2 * pi * t)
+    p0 = [1, 0]
+    psi = mu
+    sigma = np.array([1e-5, 0, 0])
+    noise_amp = noiseamp(sigma, mu, ts)
+    x = mu + noise_amp * rng.standard_normal(n)
+    y = psi + noise_amp * rng.standard_normal(n)
+
+    @pytest.mark.parametrize("noise_parms", [(1, 0, 0), sigma**2])
+    @pytest.mark.parametrize("p_bounds", [None, ((0, -1), (2, 1))])
+    @pytest.mark.parametrize("jac", [None, jac_fun])
+    @pytest.mark.parametrize("kwargs", [None, {}])
+    def test_inputs(self, noise_parms, p_bounds, jac, kwargs):
+        p0 = self.p0
+        x = self.x
+        y = self.y
+        ts = self.ts
+        p = fit(
+            tfun,
+            p0,
+            x,
+            y,
+            ts=ts,
+            noise_parms=noise_parms,
+            p_bounds=p_bounds,
+            jac=jac,
+            kwargs=kwargs,
         )
+        assert_allclose(p["p_opt"], p0, atol=1e-6)
+
+    def test_errors(self):
+        p0 = self.p0
+        x = self.x
+        y = self.y
+        ts = self.ts
+        with pytest.raises(ValueError):
+            _ = fit(tfun, p0, x, y, ts=ts, p_bounds=())

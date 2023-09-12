@@ -701,7 +701,7 @@ def tdnoisefit(
 
     if not fix_a:
         diagnostic["err"]["a"] = np.concatenate(([0], err[: m - 1]))
-        err = err[m - 1 :]
+        err = err[m - 1:]
 
     if not fix_eta:
         diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
@@ -717,6 +717,7 @@ def fit(
     *,
     ts: float = 1,
     noise_parms: ArrayLike = (1, 0, 0),
+    f_bounds: ArrayLike = (0, np.inf),
     p_bounds: ArrayLike | None = None,
     jac: Callable | None = None,
     args: ArrayLike = (),
@@ -794,20 +795,30 @@ def fit(
             np.concatenate((p_bounds[1], np.full((n,), np.inf))),
         )
     else:
-        msg = "`bounds` must contain 2 elements."
+        msg = "`p_bounds` must contain 2 elements."
         raise ValueError(msg)
 
     if kwargs is None:
         kwargs = {}
 
     w = 2 * np.pi * rfftfreq(n, ts)
+    w_bounds = 2 * np.pi * np.asarray(f_bounds)
+
     n_f = len(w)
     sigma_x = noiseamp(noise_parms, xx, ts=ts)
     sigma_y = noiseamp(noise_parms, yy, ts=ts)
     p0_est = np.concatenate((p0, np.ones(n)))
 
+    def etfe(_x, _y):
+        return rfft(_y)/rfft(_x)
+
     def function(_theta, _w):
-        return fun(_theta, _w, *args, **kwargs)
+        w_below_idx = _w <= w_bounds[0]
+        w_above_idx = _w > w_bounds[1]
+        w_in = np.intersect1d(_w[_w > w_bounds[0]], _w[_w <= w_bounds[1]])
+        print(w_in/(2*np.pi))
+        _H = etfe(xx, yy)
+        return np.concatenate((_H[w_below_idx], fun(_theta, w_in, *args, **kwargs), _H[w_above_idx]))
 
     def function_flat(_x):
         _tf = function(_x, w)

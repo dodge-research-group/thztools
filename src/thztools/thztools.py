@@ -12,11 +12,6 @@ from scipy import signal
 from scipy.optimize import approx_fprime as fprime
 from scipy.optimize import minimize
 
-from scipy.optimize import approx_fprime as fprime
-from scipy import signal
-import scipy.optimize as opt
-import matplotlib.pyplot as plt
-
 NUM_NOISE_PARAMETERS = 3
 NUM_NOISE_DATA_DIMENSIONS = 2
 
@@ -554,14 +549,15 @@ def tdnoisefit(
                 Negative loglikelihood cost function hessian from
                 scipy.optimize.minimize BFGS method.
     """
+    if fix_v and fix_mu and fix_a and fix_eta:
+        msg = "All variables are fixed"
+        raise ValueError(msg)
     # Parse and validate function inputs
     x = np.asarray(x)
-    # Preassign n, m
-    n = m = 0
-    try:
-        n, m = x.shape
-    except ValueError:
-        print("Data array x must be 2D.")
+    if x.ndim != NUM_NOISE_DATA_DIMENSIONS:
+        msg = "Data array x must be 2D"
+        raise ValueError(msg)
+    n, m = x.shape
 
     if v0 is None:
         v0 = np.mean(np.var(x, 1)) * np.array([1, 1, 1])
@@ -601,7 +597,9 @@ def tdnoisefit(
     # Set initial guesses for all free parameters
     x0 = np.array([])
     if not fix_v:
-        x0 = np.concatenate((x0, np.log(v0)))
+        # Replace log(x) with -inf when x <= 0
+        logv0 = np.ma.log(v0).filled(-np.inf)
+        x0 = np.concatenate((x0, logv0))
     if not fix_mu:
         x0 = np.concatenate((x0, mu0))
     if not fix_a:
@@ -612,7 +610,7 @@ def tdnoisefit(
     # Bundle free parameters together into objective function
     def objective(_p):
         if fix_v:
-            _logv = np.log(v0)
+            _logv = np.ma.log(v0).filled(-np.inf)
         else:
             _logv = _p[:3]
             _p = _p[3:]
@@ -625,7 +623,7 @@ def tdnoisefit(
             _a = a0
         else:
             _a = np.concatenate((np.array([1.0]), _p[: m - 1]))
-            _p = _p[m - 1:]
+            _p = _p[m - 1 :]
         if fix_eta:
             _eta = eta0
         else:
@@ -644,7 +642,7 @@ def tdnoisefit(
         )
 
     # Minimize cost function with respect to free parameters
-    out = minimize(objective, x0, method="BFGS", jac=True)
+    out = minimize(objective, x0, method="L-BFGS-B", jac=True)
 
     # Parse output
     p = {}
@@ -665,7 +663,7 @@ def tdnoisefit(
         p["a"] = a0
     else:
         p["a"] = np.concatenate(([1], x_out[: m - 1]))
-        x_out = x_out[m - 1:]
+        x_out = x_out[m - 1 :]
 
     if fix_eta:
         p["eta"] = eta0
@@ -690,25 +688,25 @@ def tdnoisefit(
         "njev": out.njev,
         "nit": out.nit,
     }
-    err = np.sqrt(np.diag(out.hess_inv))
-    if not fix_v:
-        # Propagate error from log(V) to V
-        diagnostic["err"]["var"] = np.sqrt(
-            np.diag(np.diag(p["var"]) @ out.hess_inv[0:3, 0:3])
-            @ np.diag(p["var"])
-        )
-        err = err[3:]
-
-    if not fix_mu:
-        diagnostic["err"]["mu"] = err[:n]
-        err = err[n:]
-
-    if not fix_a:
-        diagnostic["err"]["a"] = np.concatenate(([0], err[: m - 1]))
-        err = err[m - 1:]
-
-    if not fix_eta:
-        diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
+    # err = np.sqrt(np.diag(out.hess_inv))
+    # if not fix_v:
+    #     # Propagate error from log(V) to V
+    #     diagnostic["err"]["var"] = np.sqrt(
+    #         np.diag(np.diag(p["var"]) @ out.hess_inv[0:3, 0:3])
+    #         @ np.diag(p["var"])
+    #     )
+    #     err = err[3:]
+    #
+    # if not fix_mu:
+    #     diagnostic["err"]["mu"] = err[:n]
+    #     err = err[n:]
+    #
+    # if not fix_a:
+    #     diagnostic["err"]["a"] = np.concatenate(([0], err[: m - 1]))
+    #     err = err[m - 1 :]
+    #
+    # if not fix_eta:
+    #     diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
 
     return p, out.fun, diagnostic
 
@@ -721,7 +719,6 @@ def fit(
     *,
     ts: float = 1,
     noise_parms: ArrayLike = (1, 0, 0),
-    f_bounds: ArrayLike = (0, np.inf),
     p_bounds: ArrayLike | None = None,
     jac: Callable | None = None,
     args: ArrayLike = (),
@@ -750,8 +747,6 @@ def fit(
         noise_parms : None or array_like, optional
             Noise parameters with size (3,), expressed as standard deviation
             amplitudes.
-        f_bounds : array_like, optional
-            Frequency bounds.
         p_bounds : None, 2-tuple of array_like, or Bounds, optional
             Lower and upper bounds on fit parameter(s).
         jac : None or callable, optional
@@ -801,30 +796,20 @@ def fit(
             np.concatenate((p_bounds[1], np.full((n,), np.inf))),
         )
     else:
-        msg = "`p_bounds` must contain 2 elements."
+        msg = "`bounds` must contain 2 elements."
         raise ValueError(msg)
 
     if kwargs is None:
         kwargs = {}
 
     w = 2 * np.pi * rfftfreq(n, ts)
-    w_bounds = 2 * np.pi * np.asarray(f_bounds)
-    w_below_idx = w <= w_bounds[0]
-    w_above_idx = w > w_bounds[1]
-    w_in_idx = np.invert(w_below_idx) * np.invert(w_above_idx)
     n_f = len(w)
-
     sigma_x = noiseamp(noise_parms, xx, ts=ts)
     sigma_y = noiseamp(noise_parms, yy, ts=ts)
     p0_est = np.concatenate((p0, np.ones(n)))
 
-    def etfe(_x, _y):
-        return rfft(_y)/rfft(_x)
-
     def function(_theta, _w):
-        _H = etfe(xx, yy)
-        _w_in = _w[w_in_idx]
-        return np.concatenate((_H[w_below_idx], fun(_theta, _w_in, *args, **kwargs), _H[w_above_idx]))
+        return fun(_theta, _w, *args, **kwargs)
 
     def function_flat(_x):
         _tf = function(_x, w)
@@ -845,7 +830,7 @@ def fit(
         p_est = _x[:n_p]
         mu_est = xx[:] - _x[n_p:]
         jac_tl = np.zeros((n, n_p))
-        jac_tr = np.diag(1/sigma_x)
+        jac_tr = np.diag(1 / sigma_x)
         jac_bl = -(
             irfft(rfft(mu_est) * np.atleast_2d(jacobian(p_est)).T, n=n)
             / sigma_y

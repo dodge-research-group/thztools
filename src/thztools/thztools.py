@@ -7,7 +7,6 @@ import scipy.linalg as la
 import scipy.optimize as opt
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.typing import ArrayLike
-from scipy import linalg
 from scipy import signal
 from scipy.optimize import approx_fprime as fprime
 from scipy.optimize import minimize
@@ -770,7 +769,7 @@ def fit(
                 mu_var : array_like
                     Variance of mu_opt.
                 resnorm : float
-                    The value of $\chi^2$.
+                    The value of chi-squared.
                 delta : array_like
                     Residuals of the input waveform `xx`.
                 epsilon : array_like
@@ -790,14 +789,16 @@ def fit(
     if p_bounds is None:
         p_bounds = (-np.inf, np.inf)
         fit_method = "lm"
-    elif len(p_bounds) == 2:  # noqa: PLR2004
-        p_bounds = (
-            np.concatenate((p_bounds[0], np.full((n,), -np.inf))),
-            np.concatenate((p_bounds[1], np.full((n,), np.inf))),
-        )
     else:
-        msg = "`bounds` must contain 2 elements."
-        raise ValueError(msg)
+        p_bounds = np.asarray(p_bounds)
+        if p_bounds.shape[0] == 2:  # noqa: PLR2004
+            p_bounds = (
+                np.concatenate((p_bounds[0], np.full((n,), -np.inf))),
+                np.concatenate((p_bounds[1], np.full((n,), np.inf))),
+            )
+        else:
+            msg = "`bounds` must contain 2 elements."
+            raise ValueError(msg)
 
     if kwargs is None:
         kwargs = {}

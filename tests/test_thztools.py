@@ -377,7 +377,7 @@ class TestTDNoiseFit:
                 fix_a=fix_a,
                 fix_eta=fix_eta,
             )
-            assert(diagnostic["success"])
+            assert diagnostic["success"]
             assert_allclose(
                 p["var"] * m / (m - 1), sigma**2, rtol=1e-8, atol=1e-10
             )

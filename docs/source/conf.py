@@ -37,8 +37,9 @@ project_copyright = f"{pkg_creation_year} - present, {author}"
 # Version number for docs
 # ========================
 # OPTION 1: Version number listed in GitHib
-version = (runpy.run_path(Path(__file__).parents[2] / "src" / "thztools"
-                          / "__about__.py")["__version__"])
+version = runpy.run_path(
+    Path(__file__).parents[2] / "src" / "thztools" / "__about__.py"
+)["__version__"]
 #
 # OPTION 2: Version number listed in PyPI
 # version = importlib.metadata.version(project)

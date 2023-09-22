@@ -184,7 +184,7 @@ class TestScaleShift:
 
 
 class TestCostFunLSQ:
-    theta = [1, 0]
+    theta = (1, 0)
     xx = np.arange(8)
     yy = xx
     sigmax = np.ones_like(xx)
@@ -198,7 +198,7 @@ class TestCostFunLSQ:
 
 
 class TestCostFunTLS:
-    theta = [1, 0]
+    theta = (1, 0)
     mu = np.arange(8)
     xx = mu
     yy = xx
@@ -219,7 +219,7 @@ class TestTDNLL:
     t = np.arange(n) * dt
     mu = np.cos(2 * pi * t)
     x = np.tile(mu, [m, 1])
-    logv = [0, -np.inf, -np.inf]
+    logv = (0, -np.inf, -np.inf)
     a = np.ones(m)
     eta = np.zeros(m)
     ts = dt
@@ -389,7 +389,7 @@ class TestFit:
     ts = 1.0 / n
     t = np.arange(n) * ts
     mu = np.cos(2 * pi * t)
-    p0 = [1, 0]
+    p0 = (1, 0)
     psi = mu
     sigma = np.array([1e-5, 0, 0])
     noise_amp = noiseamp(sigma, mu, ts)

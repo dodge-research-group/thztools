@@ -48,7 +48,6 @@ path = "src/thztools/__about__.py"
 [tool.hatch.envs.default]
 dependencies = [
     "coverage[toml]>=6.5",
-    "h5py",
     "jupyter",
     "matplotlib",
     "pytest",

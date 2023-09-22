@@ -1,8 +1,10 @@
 name: thztools
 channels:
-  - defaults
   - conda-forge
+  - nodefaults
 dependencies:
+  - black
+  - mypy
   - scipy
   - pandas
   - jupyter
@@ -14,7 +16,6 @@ dependencies:
   - ruff
   - pytest-cov
   - coverage
-  - h5py
   - pip
   - pip:
     - -e ../

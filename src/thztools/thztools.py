@@ -559,7 +559,7 @@ def tdnoisefit(
     n, m = x.shape
 
     if v0 is None:
-        v0 = np.mean(np.var(x, 1)) * np.array([1, 1, 1])
+        v0 = np.mean(np.var(x, 1)) * np.ones(NUM_NOISE_PARAMETERS)
     else:
         v0 = np.asarray(v0)
         if v0.size != NUM_NOISE_PARAMETERS:

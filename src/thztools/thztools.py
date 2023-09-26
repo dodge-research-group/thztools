@@ -641,8 +641,8 @@ def tdnoisefit(
         )
 
     # Minimize cost function with respect to free parameters
-    out = minimize(objective, x0, method="L-BFGS-B", jac=True,
-                   options={"ftol": 1e-2})
+    out = minimize(objective, x0, method="BFGS", jac=True, tol=1e-2,
+                   options={"gtol": 1e-3, "disp": True})
 
     # Parse output
     p = {}
@@ -674,7 +674,7 @@ def tdnoisefit(
 
     diagnostic = {
         "grad": out.jac,
-        "cov": out.hess_inv.matmat(np.eye(out.hess_inv.shape[0])),
+        "cov": out.hess_inv,
         "err": {
             "var": np.array([]),
             "mu": np.array([]),

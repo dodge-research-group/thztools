@@ -11,11 +11,6 @@ from scipy import signal
 from scipy.optimize import approx_fprime as fprime
 from scipy.optimize import minimize
 
-from scipy.optimize import approx_fprime as fprime
-from scipy import signal
-import scipy.optimize as opt
-import matplotlib.pyplot as plt
-
 NUM_NOISE_PARAMETERS = 3
 NUM_NOISE_DATA_DIMENSIONS = 2
 
@@ -809,7 +804,7 @@ def fit(
 
     sigma_x = noiseamp(noise_parms, xx, ts=ts)
     sigma_y = noiseamp(noise_parms, yy, ts=ts)
-    p0_est = np.concatenate((p0, np.ones(n)))
+    p0_est = np.concatenate((p0, np.zeros(n)))
 
     def etfe(_x, _y):
         return rfft(_y)/rfft(_x)

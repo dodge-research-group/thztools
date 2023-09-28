@@ -457,7 +457,8 @@ def tdnll(
                 dvar * dzeta
             )
             gradnll = np.append(
-                gradnll, np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
+                gradnll, np.sum((irfft(exp_iweta * p, n=n).T * a).T,
+                                axis=0)
             )
         if not fix_a:
             # Gradient wrt A

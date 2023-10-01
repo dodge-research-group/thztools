@@ -857,7 +857,7 @@ def tdnoisefit(
         x_scale_shift = scaleshift(x.T, a=1.0 / _a, eta=-_eta, ts=ts)
 
         mu0 = np.mean(x_scale_shift, axis=0)
-        sol = opt.root(_grad_mu, mu0)
+        sol = opt.root(_grad_mu, mu0, tol=np.finfo(float).eps)
         mu_est = sol.x
 
         return tdnll(

@@ -35,6 +35,7 @@ classifiers = [
 dependencies = [
     "numpy",
     "scipy",
+    "numdifftools",
 ]
 
 [project.urls]

@@ -6,6 +6,7 @@ dependencies:
   - black
   - mypy
   - scipy
+  - numdifftools
   - pandas
   - jupyter
   - matplotlib

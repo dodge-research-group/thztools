@@ -334,34 +334,27 @@ class TestTDNoiseFit:
 
     @pytest.mark.parametrize("x", [x, x[:, 0]])
     @pytest.mark.parametrize("v0", [None, sigma**2, []])
-    @pytest.mark.parametrize("mu0", [None, mu, []])
     @pytest.mark.parametrize("a0", [None, a, []])
     @pytest.mark.parametrize("eta0", [None, eta, []])
     @pytest.mark.parametrize("fix_v", [True, False])
-    @pytest.mark.parametrize("fix_mu", [True, False])
     @pytest.mark.parametrize("fix_a", [True, False])
     @pytest.mark.parametrize("fix_eta", [True, False])
-    def test_inputs(self, x, v0, mu0, a0, eta0, fix_v, fix_mu, fix_a, fix_eta):
+    def test_inputs(self, x, v0, a0, eta0, fix_v, fix_a, fix_eta):
         m = self.m
-        n = self.n
-        sigma = self.sigma
         if (
             x.ndim < 2
             or (v0 is not None and len(v0) != 3)
-            or (mu0 is not None and len(mu0) != n)
             or (a0 is not None and len(a0) != m)
             or (eta0 is not None and len(eta0) != m)
-            or (fix_v and fix_mu and fix_a and fix_eta)
+            or (fix_v and fix_a and fix_eta)
         ):
             with pytest.raises(ValueError):
                 _, _, _ = tdnoisefit(
                     x.T,
                     v0=v0,
-                    mu0=mu0,
                     a0=a0,
                     eta0=eta0,
                     fix_v=fix_v,
-                    fix_mu=fix_mu,
                     fix_a=fix_a,
                     fix_eta=fix_eta,
                 )
@@ -369,21 +362,13 @@ class TestTDNoiseFit:
             p, fval, diagnostic = tdnoisefit(
                 x.T,
                 v0=v0,
-                mu0=mu0,
                 a0=a0,
                 eta0=eta0,
                 fix_v=fix_v,
-                fix_mu=fix_mu,
                 fix_a=fix_a,
                 fix_eta=fix_eta,
             )
             assert diagnostic["status"] == 0
-            # if not fix_v:
-            #     assert_allclose(
-            #         p["var"] * m / (m - 1), sigma**2, rtol=10, atol=0
-            #     )
-            # else:
-            #     pass
 
 
 class TestFit:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Callable
 
+import numdifftools as nd
 import numpy as np
 import scipy.linalg as la
 import scipy.optimize as opt
@@ -480,18 +481,255 @@ def tdnll(
     return nll, gradnll
 
 
+# def tdnoisefit(
+#     x: ArrayLike,
+#     *,
+#     v0: ArrayLike | None = None,
+#     mu0: ArrayLike | None = None,
+#     a0: ArrayLike | None = None,
+#     eta0: ArrayLike | None = None,
+#     ts: float = 1.0,
+#     fix_v: bool = False,
+#     fix_mu: bool = False,
+#     fix_a: bool = True,
+#     fix_eta: bool = True,
+# ) -> tuple[dict, float, dict]:
+#     r"""
+#     Compute time-domain noise model parameters.
+#
+#     Computes the noise parameters sigma and the underlying signal vector ``mu``
+#     for the data matrix ``x``, where the columns of ``x`` are each noisy
+#     measurements of ``mu``.
+#
+#     Parameters
+#     ----------
+#     x : ndarray
+#         Data array.
+#     v0 : ndarray, optional
+#         Initial guess, noise model parameters with size (3,), expressed as
+#         variance amplitudes.
+#     mu0 : ndarray, optional
+#         Initial guess, signal vector with size (n,).
+#     a0 : ndarray, optional
+#         Initial guess, amplitude vector with size (m,).
+#     eta0 : ndarray, optional
+#         Initial guess, delay vector with size (m,).
+#     ts : float, optional
+#         Sampling time
+#     fix_v : bool, optional
+#         Noise variance parameters.
+#     fix_mu : bool, optional
+#         Signal vector.
+#     fix_a : bool, optional
+#         Amplitude vector.
+#     fix_eta : bool, optional
+#         Delay vector.
+#
+#     Returns
+#     --------
+#     p : dict
+#         Output parameter dictionary containing:
+#             var : ndarray
+#                 Noise parameters, expressed as variance amplitudes.
+#             mu : ndarray
+#                 Signal vector.
+#             a : ndarray
+#                 Amplitude vector.
+#             eta : ndarray
+#                 Delay vector.
+#     fval : float
+#         Value of NLL cost function from FMINUNC
+#     Diagnostic : dict
+#         Dictionary containing diagnostic information
+#             err : dic
+#                 Dictionary containing  error of the parameters.
+#             grad : ndarray
+#                 Negative loglikelihood cost function gradient from
+#                 scipy.optimize.minimize BFGS method.
+#             hessian : ndarray
+#                 Negative loglikelihood cost function hessian from
+#                 scipy.optimize.minimize BFGS method.
+#     """
+#     if fix_v and fix_mu and fix_a and fix_eta:
+#         msg = "All variables are fixed"
+#         raise ValueError(msg)
+#     # Parse and validate function inputs
+#     x = np.asarray(x)
+#     if x.ndim != NUM_NOISE_DATA_DIMENSIONS:
+#         msg = "Data array x must be 2D"
+#         raise ValueError(msg)
+#     n, m = x.shape
+#
+#     if v0 is None:
+#         v0 = np.mean(np.var(x, 1)) * np.ones(NUM_NOISE_PARAMETERS)
+#     else:
+#         v0 = np.asarray(v0)
+#         if v0.size != NUM_NOISE_PARAMETERS:
+#             msg = (
+#                 "Noise parameter array logv must have "
+#                 f"{NUM_NOISE_PARAMETERS} elements."
+#             )
+#             raise ValueError(msg)
+#
+#     if mu0 is None:
+#         mu0 = np.mean(x, 1)
+#     else:
+#         mu0 = np.asarray(mu0)
+#         if mu0.size != n:
+#             msg = "Size of mu0 is incompatible with data array x."
+#             raise ValueError(msg)
+#
+#     if a0 is None:
+#         a0 = np.ones(m)
+#     else:
+#         a0 = np.asarray(a0)
+#         if a0.size != m:
+#             msg = "Size of a0 is incompatible with data array x."
+#             raise ValueError(msg)
+#
+#     if eta0 is None:
+#         eta0 = np.zeros(m)
+#     else:
+#         eta0 = np.asarray(eta0)
+#         if eta0.size != m:
+#             msg = "Size of eta0 is incompatible with data array x."
+#             raise ValueError(msg)
+#
+#     # Set initial guesses for all free parameters
+#     x0 = np.array([])
+#     if not fix_v:
+#         # Replace log(x) with -inf when x <= 0
+#         logv0 = np.ma.log(v0).filled(-np.inf)
+#         x0 = np.concatenate((x0, logv0))
+#     if not fix_mu:
+#         x0 = np.concatenate((x0, mu0))
+#     if not fix_a:
+#         x0 = np.concatenate((x0, a0[1:] / a0[0]))
+#     if not fix_eta:
+#         x0 = np.concatenate((x0, eta0[1:] - eta0[0]))
+#
+#     # Bundle free parameters together into objective function
+#     def objective(_p):
+#         if fix_v:
+#             _logv = np.ma.log(v0).filled(-np.inf)
+#         else:
+#             _logv = _p[:3]
+#             _p = _p[3:]
+#         if fix_mu:
+#             _mu = mu0
+#         else:
+#             _mu = _p[:n]
+#             _p = _p[n:]
+#         if fix_a:
+#             _a = a0
+#         else:
+#             _a = np.concatenate((np.array([1.0]), _p[: m - 1]))
+#             _p = _p[m - 1 :]
+#         if fix_eta:
+#             _eta = eta0
+#         else:
+#             _eta = np.concatenate((np.array([0.0]), _p[: m - 1]))
+#         return tdnll(
+#             x.T,
+#             _mu,
+#             _logv,
+#             _a,
+#             _eta,
+#             ts,
+#             fix_logv=fix_v,
+#             fix_mu=fix_mu,
+#             fix_a=fix_a,
+#             fix_eta=fix_eta,
+#         )
+#
+#     def obj_val(_p):
+#         return objective(_p)[0]
+#
+#     nll_hess = nd.Hessian(obj_val, step=1e-6)
+#
+#     # Minimize cost function with respect to free parameters
+#     # out = minimize(objective, x0, method="BFGS", jac=True, tol=1e-0,
+#     #                options={"gtol": 1e-0, "disp": True, "return_all": True})
+#     out = minimize(objective, x0, method="trust-exact", jac=True,
+#                    hess=nll_hess)
+#
+#     # Parse output
+#     p = {}
+#     x_out = out.x
+#     if fix_v:
+#         p["var"] = v0
+#     else:
+#         p["var"] = np.exp(x_out[:3])
+#         x_out = x_out[3:]
+#
+#     if fix_mu:
+#         p["mu"] = mu0
+#     else:
+#         p["mu"] = x_out[:n]
+#         x_out = x_out[n:]
+#
+#     if fix_a:
+#         p["a"] = a0
+#     else:
+#         p["a"] = np.concatenate(([1], x_out[: m - 1]))
+#         x_out = x_out[m - 1 :]
+#
+#     if fix_eta:
+#         p["eta"] = eta0
+#     else:
+#         p["eta"] = np.concatenate(([0], x_out[: m - 1]))
+#
+#     p["ts"] = ts
+#
+#     diagnostic = {
+#         "grad": out.jac,
+#         # "cov": out.hess_inv,
+#         "cov": la.inv(out.hess),
+#         "err": {
+#             "var": np.array([]),
+#             "mu": np.array([]),
+#             "a": np.array([]),
+#             "eta": np.array([]),
+#         },
+#         "success": out.success,
+#         "status": out.status,
+#         "message": out.message,
+#         "nfev": out.nfev,
+#         "njev": out.njev,
+#         "nit": out.nit,
+#     }
+#     err = np.sqrt(np.diag(diagnostic["cov"]))
+#     if not fix_v:
+#         # Propagate error from log(V) to V
+#         diagnostic["err"]["var"] = np.sqrt(
+#             np.diag(np.diag(p["var"]) @ diagnostic["cov"][0:3, 0:3])
+#             @ np.diag(p["var"])
+#         )
+#         err = err[3:]
+#
+#     if not fix_mu:
+#         diagnostic["err"]["mu"] = err[:n]
+#         err = err[n:]
+#
+#     if not fix_a:
+#         diagnostic["err"]["a"] = np.concatenate(([0], err[: m - 1]))
+#         err = err[m - 1 :]
+#
+#     if not fix_eta:
+#         diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
+#
+#     return p, out.fun, diagnostic
+
 def tdnoisefit(
-    x: ArrayLike,
-    *,
-    v0: ArrayLike | None = None,
-    mu0: ArrayLike | None = None,
-    a0: ArrayLike | None = None,
-    eta0: ArrayLike | None = None,
-    ts: float = 1.0,
-    fix_v: bool = False,
-    fix_mu: bool = False,
-    fix_a: bool = True,
-    fix_eta: bool = True,
+        x: ArrayLike,
+        *,
+        v0: ArrayLike | None = None,
+        a0: ArrayLike | None = None,
+        eta0: ArrayLike | None = None,
+        ts: float = 1.0,
+        fix_v: bool = False,
+        fix_a: bool = True,
+        fix_eta: bool = True,
 ) -> tuple[dict, float, dict]:
     r"""
     Compute time-domain noise model parameters.
@@ -507,8 +745,6 @@ def tdnoisefit(
     v0 : ndarray, optional
         Initial guess, noise model parameters with size (3,), expressed as
         variance amplitudes.
-    mu0 : ndarray, optional
-        Initial guess, signal vector with size (n,).
     a0 : ndarray, optional
         Initial guess, amplitude vector with size (m,).
     eta0 : ndarray, optional
@@ -517,8 +753,6 @@ def tdnoisefit(
         Sampling time
     fix_v : bool, optional
         Noise variance parameters.
-    fix_mu : bool, optional
-        Signal vector.
     fix_a : bool, optional
         Amplitude vector.
     fix_eta : bool, optional
@@ -549,7 +783,7 @@ def tdnoisefit(
                 Negative loglikelihood cost function hessian from
                 scipy.optimize.minimize BFGS method.
     """
-    if fix_v and fix_mu and fix_a and fix_eta:
+    if fix_v and fix_a and fix_eta:
         msg = "All variables are fixed"
         raise ValueError(msg)
     # Parse and validate function inputs
@@ -570,14 +804,6 @@ def tdnoisefit(
             )
             raise ValueError(msg)
 
-    if mu0 is None:
-        mu0 = np.mean(x, 1)
-    else:
-        mu0 = np.asarray(mu0)
-        if mu0.size != n:
-            msg = "Size of mu0 is incompatible with data array x."
-            raise ValueError(msg)
-
     if a0 is None:
         a0 = np.ones(m)
     else:
@@ -595,17 +821,15 @@ def tdnoisefit(
             raise ValueError(msg)
 
     # Set initial guesses for all free parameters
-    x0 = np.array([])
+    p0 = np.array([])
     if not fix_v:
         # Replace log(x) with -inf when x <= 0
         logv0 = np.ma.log(v0).filled(-np.inf)
-        x0 = np.concatenate((x0, logv0))
-    if not fix_mu:
-        x0 = np.concatenate((x0, mu0))
+        p0 = np.concatenate((p0, logv0))
     if not fix_a:
-        x0 = np.concatenate((x0, a0[1:] / a0[0]))
+        p0 = np.concatenate((p0, a0[1:] / a0[0]))
     if not fix_eta:
-        x0 = np.concatenate((x0, eta0[1:] - eta0[0]))
+        p0 = np.concatenate((p0, eta0[1:] - eta0[0]))
 
     # Bundle free parameters together into objective function
     def objective(_p):
@@ -614,36 +838,46 @@ def tdnoisefit(
         else:
             _logv = _p[:3]
             _p = _p[3:]
-        if fix_mu:
-            _mu = mu0
-        else:
-            _mu = _p[:n]
-            _p = _p[n:]
         if fix_a:
             _a = a0
         else:
             _a = np.concatenate((np.array([1.0]), _p[: m - 1]))
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
         if fix_eta:
             _eta = eta0
         else:
             _eta = np.concatenate((np.array([0.0]), _p[: m - 1]))
+
+        def _grad_mu(_mu: ArrayLike) -> ArrayLike:
+            _, grad = tdnll(x.T, _mu, _logv, _a, _eta, ts, fix_logv=True,
+                            fix_mu=False,
+                            fix_a=True, fix_eta=True)
+            return grad
+
+        x_scale_shift = scaleshift(x.T, a=1.0 / _a, eta=-_eta, ts=ts)
+
+        mu0 = np.mean(x_scale_shift, axis=0)
+        sol = opt.root(_grad_mu, mu0)
+        mu_est = sol.x
+
         return tdnll(
             x.T,
-            _mu,
+            mu_est,
             _logv,
             _a,
             _eta,
             ts,
             fix_logv=fix_v,
-            fix_mu=fix_mu,
+            fix_mu=True,
             fix_a=fix_a,
             fix_eta=fix_eta,
         )
 
+    def obj_val(_p):
+        return objective(_p)
+
     # Minimize cost function with respect to free parameters
-    out = minimize(objective, x0, method="BFGS", jac=True, tol=1e-0,
-                   options={"gtol": 1e-0, "disp": True, "return_all": True})
+    out = minimize(obj_val, p0, method="BFGS", jac=True)
 
     # Parse output
     p = {}
@@ -654,17 +888,11 @@ def tdnoisefit(
         p["var"] = np.exp(x_out[:3])
         x_out = x_out[3:]
 
-    if fix_mu:
-        p["mu"] = mu0
-    else:
-        p["mu"] = x_out[:n]
-        x_out = x_out[n:]
-
     if fix_a:
         p["a"] = a0
     else:
         p["a"] = np.concatenate(([1], x_out[: m - 1]))
-        x_out = x_out[m - 1 :]
+        x_out = x_out[m - 1:]
 
     if fix_eta:
         p["eta"] = eta0
@@ -698,13 +926,9 @@ def tdnoisefit(
         )
         err = err[3:]
 
-    if not fix_mu:
-        diagnostic["err"]["mu"] = err[:n]
-        err = err[n:]
-
     if not fix_a:
         diagnostic["err"]["a"] = np.concatenate(([0], err[: m - 1]))
-        err = err[m - 1 :]
+        err = err[m - 1:]
 
     if not fix_eta:
         diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))

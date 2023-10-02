@@ -643,7 +643,7 @@ def tdnoisefit(
         )
 
     # Minimize cost function with respect to free parameters
-    out = minimize(objective, x0, method="BFGS", jac=True, tol=1e-3,
+    out = minimize(objective, x0, method="BFGS", jac=True,
                    options={"gtol": 1e-3, "disp": True, "return_all": True})
 
     # Parse output

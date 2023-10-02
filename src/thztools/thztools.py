@@ -647,7 +647,7 @@ def tdnoisefit(
         method="BFGS",
         jac=True,
         options={
-            "gtol": 1e-1,
+            "gtol": 1e-0,
             "disp": True,
             "return_all": True,
             "xrtol": 1e-8,

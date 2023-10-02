@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Callable
 
-import numdifftools as nd
 import numpy as np
 import scipy.linalg as la
 import scipy.optimize as opt
@@ -458,8 +457,7 @@ def tdnll(
                 dvar * dzeta
             )
             gradnll = np.append(
-                gradnll, np.sum((irfft(exp_iweta * p, n=n).T * a).T,
-                                axis=0)
+                gradnll, np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
             )
         if not fix_a:
             # Gradient wrt A
@@ -526,7 +524,7 @@ def tdnoisefit(
         Delay vector.
 
     Returns
-    --------
+    -------
     p : dict
         Output parameter dictionary containing:
             var : ndarray
@@ -643,8 +641,18 @@ def tdnoisefit(
         )
 
     # Minimize cost function with respect to free parameters
-    out = minimize(objective, x0, method="BFGS", jac=True,
-                   options={"gtol": 1e-0, "disp": True, "return_all": True})
+    out = minimize(
+        objective,
+        x0,
+        method="BFGS",
+        jac=True,
+        options={
+            "gtol": 1e-1,
+            "disp": True,
+            "return_all": True,
+            "xrtol": 1e-8,
+        },
+    )
 
     # Parse output
     p = {}

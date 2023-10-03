@@ -646,10 +646,10 @@ def tdnoisefit(
         x0,
         method="BFGS",
         jac=True,
-        options={
-            "gtol": 1e-0,
-            "xrtol": 1e-8,
-        },
+        # options={
+        #     "gtol": 1e-0,
+        #     "xrtol": 1e-8,
+        # },
     )
 
     # Parse output

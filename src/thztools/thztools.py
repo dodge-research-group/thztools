@@ -648,8 +648,6 @@ def tdnoisefit(
         jac=True,
         options={
             "gtol": 1e-0,
-            "disp": True,
-            "return_all": True,
             "xrtol": 1e-8,
         },
     )

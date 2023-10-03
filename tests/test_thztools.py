@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+import scipy
 from numpy import pi
 from numpy.testing import assert_allclose
 from numpy.typing import ArrayLike
@@ -342,6 +343,7 @@ class TestTDNoiseFit:
     @pytest.mark.parametrize("fix_a", [True, False])
     @pytest.mark.parametrize("fix_eta", [True, False])
     def test_inputs(self, x, v0, mu0, a0, eta0, fix_v, fix_mu, fix_a, fix_eta):
+        print(f"{scipy.__version__=}")
         n = self.n
         m = self.m
         if (

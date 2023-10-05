@@ -606,10 +606,10 @@ def tdnoisefit(
             msg = "Size of mu0 is incompatible with data array x."
             raise ValueError(msg)
 
-    scale_logv = 1e-3 * np.ones(3)
+    scale_logv = 1e-4 * np.ones(3)
     scale_delta = 1e-4 * noiseamp(np.sqrt(v0), x[:, 0], ts)
     scale_alpha = 1e-6 * np.ones(m - 1)
-    scale_eta = 1e-8 * np.ones(m - 1)
+    scale_eta = 1e-9 * np.ones(m - 1)
 
     # Replace log(x) with -inf when x <= 0
     logv0 = np.ma.log(v0).filled(-np.inf) / scale_logv

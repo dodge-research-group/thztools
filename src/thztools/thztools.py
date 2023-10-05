@@ -458,12 +458,12 @@ def tdnll(
     vtau = v_scaled[2] * dzeta**2
     vtot_scaled = valpha + vbeta + vtau
 
-    resnormsq = ressq / vtot_scaled
-    nll = scale_v * (
+    resnormsq_scaled = ressq / vtot_scaled
+    nll = (
         scale_v * m * n * (np.log(2 * np.pi) + np.log(scale_v)) / 2
         + scale_v * np.sum(np.log(vtot_scaled)) / 2
-        + np.sum(resnormsq) / 2 / scale_v
-    )
+        + np.sum(resnormsq_scaled) / 2
+    ) / scale_v
 
     # Compute gradient
     gradnll = np.array([])
@@ -590,11 +590,13 @@ def tdnoisefit(
         raise ValueError(msg)
     n, m = x.shape
 
+    scale_v = 1.0
     if v0 is None:
-        v0 = np.mean(np.var(x, 1)) * np.ones(NUM_NOISE_PARAMETERS)
+        v0_scaled = (np.mean(np.var(x, 1) / scale_v)
+                     * np.ones(NUM_NOISE_PARAMETERS))
     else:
-        v0 = np.asarray(v0)
-        if v0.size != NUM_NOISE_PARAMETERS:
+        v0_scaled = np.asarray(v0 / scale_v)
+        if v0_scaled.size != NUM_NOISE_PARAMETERS:
             msg = (
                 "Noise parameter array logv must have "
                 f"{NUM_NOISE_PARAMETERS} elements."
@@ -610,12 +612,12 @@ def tdnoisefit(
             raise ValueError(msg)
 
     scale_logv = 1e-4 * np.ones(3)
-    scale_delta = 1e-4 * noiseamp(np.sqrt(v0), x[:, 0], ts)
+    scale_delta = 1e-4 * noiseamp(np.sqrt(v0_scaled), x[:, 0], ts)
     scale_alpha = 1e-6 * np.ones(m - 1)
     scale_eta = 1e-9 * np.ones(m - 1)
 
     # Replace log(x) with -inf when x <= 0
-    logv0 = np.ma.log(v0).filled(-np.inf) / scale_logv
+    logv0_scaled = np.ma.log(v0_scaled).filled(-np.inf) / scale_logv
     delta0 = (x[:, 0] - mu0) / scale_delta
 
     if a0 is None:
@@ -641,7 +643,7 @@ def tdnoisefit(
     # Set initial guesses for all free parameters
     x0 = np.array([])
     if not fix_v:
-        x0 = np.concatenate((x0, logv0))
+        x0 = np.concatenate((x0, logv0_scaled))
     if not fix_mu:
         x0 = np.concatenate((x0, delta0))
     if not fix_a:
@@ -652,7 +654,7 @@ def tdnoisefit(
     # Bundle free parameters together into objective function
     def objective(_p):
         if fix_v:
-            _logv = logv0
+            _logv = logv0_scaled
         else:
             _logv = _p[:3]
             _p = _p[3:]
@@ -685,6 +687,7 @@ def tdnoisefit(
             scale_delta=scale_delta,
             scale_alpha=scale_alpha,
             scale_eta=scale_eta,
+            scale_v=scale_v,
         )
 
     # Minimize cost function with respect to free parameters
@@ -704,7 +707,7 @@ def tdnoisefit(
     if fix_v:
         p["var"] = v0
     else:
-        p["var"] = np.exp(x_out[:3] * scale_logv)
+        p["var"] = np.exp(x_out[:3] * scale_logv) * scale_v
         x_out = x_out[3:]
 
     if fix_mu:
@@ -748,7 +751,7 @@ def tdnoisefit(
         diagnostic["err"]["var"] = np.sqrt(
             np.diag(np.diag(p["var"]) @ diagnostic["cov"][0:3, 0:3])
             @ np.diag(p["var"])
-        )
+        ) * scale_v
         err = err[3:]
 
     if not fix_mu:

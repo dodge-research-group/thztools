@@ -221,8 +221,9 @@ class TestTDNLL:
     mu = np.cos(2 * pi * t)
     x = np.tile(mu, [m, 1])
     logv = (0, -np.inf, -np.inf)
-    a = np.ones(m)
-    eta = np.zeros(m)
+    delta = np.zeros(n)
+    alpha = np.zeros(m - 1)
+    eta = np.zeros(m - 1)
     ts = dt
     desired_nll = x.size * np.log(2 * pi) / 2
 
@@ -240,7 +241,7 @@ class TestTDNLL:
         ],
     )
     @pytest.mark.parametrize(
-        "fix_mu, desired_gradnll_mu",
+        "fix_delta, desired_gradnll_delta",
         [
             [
                 True,
@@ -253,7 +254,7 @@ class TestTDNLL:
         ],
     )
     @pytest.mark.parametrize(
-        "fix_a, desired_gradnll_a",
+        "fix_alpha, desired_gradnll_alpha",
         [
             [
                 True,
@@ -281,39 +282,45 @@ class TestTDNLL:
     def test_gradnll_calc(
         self,
         fix_logv,
-        fix_mu,
-        fix_a,
+        fix_delta,
+        fix_alpha,
         fix_eta,
         desired_gradnll_logv,
-        desired_gradnll_mu,
-        desired_gradnll_a,
+        desired_gradnll_delta,
+        desired_gradnll_alpha,
         desired_gradnll_eta,
     ):
+        n = self.n
+        m = self.m
         x = self.x
-        mu = self.mu
         logv = self.logv
-        a = self.a
+        delta = self.delta
+        alpha = self.alpha
         eta = self.eta
         ts = self.ts
         desired_gradnll = np.concatenate(
             (
                 desired_gradnll_logv,
-                desired_gradnll_mu,
-                desired_gradnll_a,
+                desired_gradnll_delta,
+                desired_gradnll_alpha,
                 desired_gradnll_eta,
             )
         )
         _, gradnll = tdnll(
             x,
-            mu,
             logv,
-            a,
+            delta,
+            alpha,
             eta,
             ts,
             fix_logv=fix_logv,
-            fix_mu=fix_mu,
-            fix_a=fix_a,
+            fix_delta=fix_delta,
+            fix_alpha=fix_alpha,
             fix_eta=fix_eta,
+            scale_logv=np.ones(3),
+            scale_delta=np.ones(n),
+            scale_alpha=np.ones(m - 1),
+            scale_eta=np.ones(m - 1),
         )
         assert_allclose(
             gradnll, desired_gradnll, atol=10 * np.finfo(float).eps

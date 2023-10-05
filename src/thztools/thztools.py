@@ -348,7 +348,7 @@ def costfuntls(
     return res
 
 
-def tdnll(
+def tdnll_scaled(
     x: ArrayLike,
     logv: ArrayLike,
     delta: ArrayLike,
@@ -367,11 +367,11 @@ def tdnll(
     scale_v: float,
 ) -> tuple[float, np.ndarray]:
     r"""
-    Compute negative log-likelihood for the time-domain noise model.
+    Compute the scaled negative log-likelihood for the time-domain noise model.
 
-    Computes the negative log-likelihood function for obtaining the
+    Computes the scaled negative log-likelihood function for obtaining the
     data matrix `x` given `logv`, `delta`, `alpha`, `eta`, `scale_logv`,
-    `scale_delta`, `scale_alpha`, and `scale_eta`.
+    `scale_delta`, `scale_alpha`, `scale_eta`, and `scale_v`.
 
     Parameters
     ----------
@@ -410,11 +410,11 @@ def tdnll(
 
     Returns
     -------
-    nll : float
-        Negative log-likelihood.
-    gradnll : array_like
-        Gradient of the negative log-likelihood function with respect to free
-        parameters.
+    nll_scaled : float
+        Scaled negative log-likelihood.
+    gradnll_scaled : array_like
+        Gradient of the negative scaled log-likelihood function with respect to
+        free parameters.
     """
     x = np.asarray(x)
     logv = np.asarray(logv)
@@ -463,7 +463,7 @@ def tdnll(
         scale_v * m * n * (np.log(2 * np.pi) + np.log(scale_v)) / 2
         + scale_v * np.sum(np.log(vtot_scaled)) / 2
         + np.sum(resnormsq_scaled) / 2
-    ) / scale_v
+    )
 
     # Compute gradient
     gradnll = np.array([])
@@ -473,19 +473,21 @@ def tdnll(
         if not fix_logv:
             # Gradient wrt logv
             gradnll = np.append(
-                gradnll, 0.5 * np.sum(dvar) * v_scaled[0] * scale_logv[0] / scale_v
+                gradnll, 0.5 * np.sum(dvar) * v_scaled[0] * scale_logv[0]
             )
             gradnll = np.append(
-                gradnll, 0.5 * np.sum(zeta**2 * dvar) * v_scaled[1] * scale_logv[1] / scale_v
+                gradnll, 0.5 * np.sum(zeta**2 * dvar) * v_scaled[1]
+                         * scale_logv[1]
             )
             gradnll = np.append(
-                gradnll, 0.5 * np.sum(dzeta**2 * dvar) * v_scaled[2] * scale_logv[2] / scale_v
+                gradnll, 0.5 * np.sum(dzeta**2 * dvar) * v_scaled[2]
+                         * scale_logv[2]
             )
         if not fix_delta:
             # Gradient wrt delta
-            p = rfft(v_scaled[1] * dvar * zeta - reswt) - 1j * v_scaled[2] * w * rfft(
-                dvar * dzeta
-            )
+            p = (rfft(v_scaled[1] * dvar * zeta - reswt)
+                 - 1j * v_scaled[2] * w * rfft(dvar * dzeta)
+                 )
             gradnll = np.append(
                 gradnll,
                 -np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
@@ -672,7 +674,7 @@ def tdnoisefit(
             _eta = eta0
         else:
             _eta = _p[: m - 1]
-        return tdnll(
+        return tdnll_scaled(
             x.T,
             _logv,
             _delta,

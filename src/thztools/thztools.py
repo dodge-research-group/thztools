@@ -476,18 +476,18 @@ def tdnll_scaled(
                 gradnll, 0.5 * np.sum(dvar) * v_scaled[0] * scale_logv[0]
             )
             gradnll = np.append(
-                gradnll, 0.5 * np.sum(zeta**2 * dvar) * v_scaled[1]
-                         * scale_logv[1]
+                gradnll,
+                0.5 * np.sum(zeta**2 * dvar) * v_scaled[1] * scale_logv[1],
             )
             gradnll = np.append(
-                gradnll, 0.5 * np.sum(dzeta**2 * dvar) * v_scaled[2]
-                         * scale_logv[2]
+                gradnll,
+                0.5 * np.sum(dzeta**2 * dvar) * v_scaled[2] * scale_logv[2],
             )
         if not fix_delta:
             # Gradient wrt delta
-            p = (rfft(v_scaled[1] * dvar * zeta - reswt)
-                 - 1j * v_scaled[2] * w * rfft(dvar * dzeta)
-                 )
+            p = rfft(v_scaled[1] * dvar * zeta - reswt) - 1j * v_scaled[
+                2
+            ] * w * rfft(dvar * dzeta)
             gradnll = np.append(
                 gradnll,
                 -np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
@@ -503,7 +503,8 @@ def tdnll_scaled(
             # Gradient wrt eta
             ddzeta = irfft(-(w**2) * zeta_f, n=n)
             dnlldeta = -np.sum(
-                dvar * (zeta * dzeta * v_scaled[1] + dzeta * ddzeta * v_scaled[2])
+                dvar
+                * (zeta * dzeta * v_scaled[1] + dzeta * ddzeta * v_scaled[2])
                 - reswt * dzeta,
                 axis=1,
             )
@@ -592,12 +593,13 @@ def tdnoisefit(
         raise ValueError(msg)
     n, m = x.shape
 
-    scale_v = 1.0
+    scale_v = 1.0e-2
     if v0 is None:
-        v0_scaled = (np.mean(np.var(x, 1) / scale_v)
-                     * np.ones(NUM_NOISE_PARAMETERS))
+        v0_scaled = np.mean(np.var(x, 1) / scale_v) * np.ones(
+            NUM_NOISE_PARAMETERS
+        )
     else:
-        v0_scaled = np.asarray(v0 / scale_v)
+        v0_scaled = np.asarray(v0) / scale_v
         if v0_scaled.size != NUM_NOISE_PARAMETERS:
             msg = (
                 "Noise parameter array logv must have "
@@ -613,10 +615,10 @@ def tdnoisefit(
             msg = "Size of mu0 is incompatible with data array x."
             raise ValueError(msg)
 
-    scale_logv = 1e-4 * np.ones(3)
-    scale_delta = 1e-4 * noiseamp(np.sqrt(v0_scaled), x[:, 0], ts)
-    scale_alpha = 1e-6 * np.ones(m - 1)
-    scale_eta = 1e-9 * np.ones(m - 1)
+    scale_logv = 1e-2 * np.ones(3)
+    scale_delta = 1e-2 * noiseamp(np.sqrt(v0_scaled), x[:, 0], ts)
+    scale_alpha = 1e-4 * np.ones(m - 1)
+    scale_eta = 1e-7 * np.ones(m - 1)
 
     # Replace log(x) with -inf when x <= 0
     logv0_scaled = np.ma.log(v0_scaled).filled(-np.inf) / scale_logv
@@ -707,9 +709,9 @@ def tdnoisefit(
     p = {}
     x_out = out.x
     if fix_v:
-        p["var"] = v0
+        p["var"] = v0_scaled * scale_v
     else:
-        p["var"] = np.exp(x_out[:3] * scale_logv) * scale_v
+        p["var"] = np.exp(x_out[:3] * scale_logv)
         x_out = x_out[3:]
 
     if fix_mu:
@@ -753,7 +755,7 @@ def tdnoisefit(
         diagnostic["err"]["var"] = np.sqrt(
             np.diag(np.diag(p["var"]) @ diagnostic["cov"][0:3, 0:3])
             @ np.diag(p["var"])
-        ) * scale_v
+        )
         err = err[3:]
 
     if not fix_mu:
@@ -767,7 +769,7 @@ def tdnoisefit(
     if not fix_eta:
         diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
 
-    return p, out.fun, diagnostic
+    return p, out.fun / scale_v, diagnostic
 
 
 def fit(

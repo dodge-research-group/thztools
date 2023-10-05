@@ -14,7 +14,7 @@ from thztools.thztools import (
     noiseamp,
     noisevar,
     scaleshift,
-    tdnll,
+    tdnll_scaled,
     tdnoisefit,
     thzgen,
 )
@@ -306,7 +306,7 @@ class TestTDNLL:
                 desired_gradnll_eta,
             )
         )
-        _, gradnll = tdnll(
+        _, gradnll = tdnll_scaled(
             x,
             logv,
             delta,
@@ -321,6 +321,7 @@ class TestTDNLL:
             scale_delta=np.ones(n),
             scale_alpha=np.ones(m - 1),
             scale_eta=np.ones(m - 1),
+            scale_v=1.0,
         )
         assert_allclose(
             gradnll, desired_gradnll, atol=10 * np.finfo(float).eps

@@ -469,17 +469,17 @@ def tdnll(
     gradnll = np.array([])
     if not (fix_logv & fix_delta & fix_alpha & fix_eta):
         reswt = res / vtot_scaled
-        dvar = (vtot_scaled - ressq) / vtot_scaled**2
+        dvar = (scale_v * vtot_scaled - ressq) / vtot_scaled**2
         if not fix_logv:
             # Gradient wrt logv
             gradnll = np.append(
-                gradnll, 0.5 * np.sum(dvar) * v_scaled[0] * scale_logv[0]
+                gradnll, 0.5 * np.sum(dvar) * v_scaled[0] * scale_logv[0] / scale_v
             )
             gradnll = np.append(
-                gradnll, 0.5 * np.sum(zeta**2 * dvar) * v_scaled[1] * scale_logv[1]
+                gradnll, 0.5 * np.sum(zeta**2 * dvar) * v_scaled[1] * scale_logv[1] / scale_v
             )
             gradnll = np.append(
-                gradnll, 0.5 * np.sum(dzeta**2 * dvar) * v_scaled[2] * scale_logv[2]
+                gradnll, 0.5 * np.sum(dzeta**2 * dvar) * v_scaled[2] * scale_logv[2] / scale_v
             )
         if not fix_delta:
             # Gradient wrt delta

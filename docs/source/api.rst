@@ -17,6 +17,6 @@ Quick list
     noiseamp
     noisevar
     scaleshift
-    tdnll
+    tdnll_scaled
     tdnoisefit
     thzgen

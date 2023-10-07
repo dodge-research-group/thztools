@@ -430,7 +430,7 @@ def tdnll_scaled(
     m, n = x.shape
 
     # Compute scaled variance, mu, a, and eta
-    v_scaled = np.exp(logv * scale_logv) / scale_v
+    v_scaled = np.exp(logv * scale_logv)
     mu = x[0, :] - delta * scale_delta
     a = np.insert(1.0 + alpha * scale_alpha, 0, 1.0)
     eta = np.insert(eta * scale_eta, 0, 0.0)
@@ -459,28 +459,29 @@ def tdnll_scaled(
     vtot_scaled = valpha + vbeta + vtau
 
     resnormsq_scaled = ressq / vtot_scaled
-    nll = (
+    nll_scaled = (
         scale_v * m * n * (np.log(2 * np.pi) + np.log(scale_v)) / 2
         + scale_v * np.sum(np.log(vtot_scaled)) / 2
         + np.sum(resnormsq_scaled) / 2
     )
 
     # Compute gradient
-    gradnll = np.array([])
+    gradnll_scaled = np.array([])
     if not (fix_logv & fix_delta & fix_alpha & fix_eta):
         reswt = res / vtot_scaled
         dvar = (scale_v * vtot_scaled - ressq) / vtot_scaled**2
         if not fix_logv:
             # Gradient wrt logv
-            gradnll = np.append(
-                gradnll, 0.5 * np.sum(dvar) * v_scaled[0] * scale_logv[0]
+            gradnll_scaled = np.append(
+                gradnll_scaled,
+                0.5 * np.sum(dvar) * v_scaled[0] * scale_logv[0],
             )
-            gradnll = np.append(
-                gradnll,
+            gradnll_scaled = np.append(
+                gradnll_scaled,
                 0.5 * np.sum(zeta**2 * dvar) * v_scaled[1] * scale_logv[1],
             )
-            gradnll = np.append(
-                gradnll,
+            gradnll_scaled = np.append(
+                gradnll_scaled,
                 0.5 * np.sum(dzeta**2 * dvar) * v_scaled[2] * scale_logv[2],
             )
         if not fix_delta:
@@ -488,8 +489,8 @@ def tdnll_scaled(
             p = rfft(v_scaled[1] * dvar * zeta - reswt) - 1j * v_scaled[
                 2
             ] * w * rfft(dvar * dzeta)
-            gradnll = np.append(
-                gradnll,
+            gradnll_scaled = np.append(
+                gradnll_scaled,
                 -np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
                 * scale_delta,
             )
@@ -498,7 +499,9 @@ def tdnll_scaled(
             term = (vtot_scaled - valpha) * dvar - reswt * zeta
             dnllda = np.sum(term, axis=1).T / a
             # Exclude first term, which is held fixed
-            gradnll = np.append(gradnll, dnllda[1:] * scale_alpha)
+            gradnll_scaled = np.append(
+                gradnll_scaled, dnllda[1:] * scale_alpha
+            )
         if not fix_eta:
             # Gradient wrt eta
             ddzeta = irfft(-(w**2) * zeta_f, n=n)
@@ -509,9 +512,11 @@ def tdnll_scaled(
                 axis=1,
             )
             # Exclude first term, which is held fixed
-            gradnll = np.append(gradnll, dnlldeta[1:] * scale_eta)
+            gradnll_scaled = np.append(
+                gradnll_scaled, dnlldeta[1:] * scale_eta
+            )
 
-    return nll, gradnll
+    return nll_scaled, gradnll_scaled
 
 
 def tdnoisefit(
@@ -542,21 +547,24 @@ def tdnoisefit(
         Initial guess, noise model parameters with size (3,), expressed as
         variance amplitudes.
     mu0 : ndarray, optional
-        Initial guess, signal vector with size (n,).
+        Initial guess, signal vector with size (n,). Default is first column of
+        `x`.
     a0 : ndarray, optional
-        Initial guess, amplitude vector with size (m,).
+        Initial guess, amplitude vector with size (m,). Default is one for all
+        entries.
     eta0 : ndarray, optional
-        Initial guess, delay vector with size (m,).
+        Initial guess, delay vector with size (m,). Default is zero for all
+        entries.
     ts : float, optional
-        Sampling time
+        Sampling time. Default is 1.0.
     fix_v : bool, optional
-        Noise variance parameters.
+        Fix noise variance parameters. Default is False.
     fix_mu : bool, optional
-        Signal vector.
+        Fix signal vector. Default is False.
     fix_a : bool, optional
-        Amplitude vector.
+        Fix amplitude vector. Default is True.
     fix_eta : bool, optional
-        Delay vector.
+        Fix delay vector. Default is True.
 
     Returns
     -------
@@ -574,14 +582,29 @@ def tdnoisefit(
         Value of NLL cost function from FMINUNC
     Diagnostic : dict
         Dictionary containing diagnostic information
-            err : dic
-                Dictionary containing  error of the parameters.
-            grad : ndarray
-                Negative loglikelihood cost function gradient from
-                scipy.optimize.minimize BFGS method.
-            hessian : ndarray
-                Negative loglikelihood cost function hessian from
-                scipy.optimize.minimize BFGS method.
+            grad_scaled : ndarray
+                Gradient of the scaled negative log-likelihood function with
+                respect to the scaled fit parameters.
+            hess_inv_scaled : ndarray
+                Inverse of the Hessian obtained from scipy.optimize.minimize
+                using the BFGS method, which is determined for the scaled
+                negative log-likelihood function with respect to the scaled
+                fit parameters.
+            err : dict
+                Dictionary containing  error of the parameters. Uses the same
+                keys as `p`.
+            success : bool
+                Whether the fit terminated successfully.
+            status : int
+                Termination status of fit.
+            message : str
+                Description of the termination condition.
+            nfev, njev : int
+                Number of evaluations of the objective function and the
+                Jacobian.
+            nit : int
+                Number of iterations performed by `scipy.optimize.minimize`.
+
     """
     if fix_v and fix_mu and fix_a and fix_eta:
         msg = "All variables are fixed"
@@ -593,14 +616,11 @@ def tdnoisefit(
         raise ValueError(msg)
     n, m = x.shape
 
-    scale_v = 1.0e-2
     if v0 is None:
-        v0_scaled = np.mean(np.var(x, 1) / scale_v) * np.ones(
-            NUM_NOISE_PARAMETERS
-        )
+        v0 = np.mean(np.var(x, 1)) * np.ones(NUM_NOISE_PARAMETERS)
     else:
-        v0_scaled = np.asarray(v0) / scale_v
-        if v0_scaled.size != NUM_NOISE_PARAMETERS:
+        v0 = np.asarray(v0)
+        if v0.size != NUM_NOISE_PARAMETERS:
             msg = (
                 "Noise parameter array logv must have "
                 f"{NUM_NOISE_PARAMETERS} elements."
@@ -608,19 +628,21 @@ def tdnoisefit(
             raise ValueError(msg)
 
     if mu0 is None:
-        mu0 = np.mean(x, 1)
+        mu0 = x[:, 0]
     else:
         mu0 = np.asarray(mu0)
         if mu0.size != n:
             msg = "Size of mu0 is incompatible with data array x."
             raise ValueError(msg)
 
-    scale_logv = 1e-2 * np.ones(3)
-    scale_delta = 1e-2 * noiseamp(np.sqrt(v0_scaled), x[:, 0], ts)
-    scale_alpha = 1e-4 * np.ones(m - 1)
-    scale_eta = 1e-7 * np.ones(m - 1)
+    scale_logv = 1e0 * np.ones(3)
+    scale_delta = 1e-1 * noiseamp(np.sqrt(v0), x[:, 0], ts)
+    scale_alpha = 1e-1 * np.ones(m - 1)
+    scale_eta = 1e-2 * np.ones(m - 1)
+    scale_v = 1.0e-3
 
     # Replace log(x) with -inf when x <= 0
+    v0_scaled = np.asarray(v0, dtype=float) / scale_v
     logv0_scaled = np.ma.log(v0_scaled).filled(-np.inf) / scale_logv
     delta0 = (x[:, 0] - mu0) / scale_delta
 
@@ -700,9 +722,6 @@ def tdnoisefit(
         x0,
         method="BFGS",
         jac=True,
-        options={
-            "gtol": 1e-5,
-        },
     )
 
     # Parse output
@@ -711,7 +730,7 @@ def tdnoisefit(
     if fix_v:
         p["var"] = v0_scaled * scale_v
     else:
-        p["var"] = np.exp(x_out[:3] * scale_logv)
+        p["var"] = np.exp(x_out[:3] * scale_logv) * scale_v
         x_out = x_out[3:]
 
     if fix_mu:
@@ -731,14 +750,12 @@ def tdnoisefit(
     else:
         p["eta"] = np.concatenate(([0.0], x_out[: m - 1] * scale_eta))
 
-    p["ts"] = ts
-
     diagnostic = {
-        "grad": out.jac,
-        "cov": out.hess_inv,
+        "grad_scaled": out.jac,
+        "hess_inv_scaled": out.hess_inv,
         "err": {
             "var": np.array([]),
-            "mu": np.array([]),
+            "delta": np.array([]),
             "a": np.array([]),
             "eta": np.array([]),
         },
@@ -749,17 +766,39 @@ def tdnoisefit(
         "njev": out.njev,
         "nit": out.nit,
     }
-    err = np.sqrt(np.diag(diagnostic["cov"]))
+
+    # Concatenate scaling vectors for all sets of free parameters
+    scale_hess_inv = np.concatenate(
+        [
+            val
+            for tf, val in zip(
+                [fix_v, fix_mu, fix_a, fix_eta],
+                [scale_logv, scale_delta, scale_alpha, scale_eta],
+            )
+            if not tf
+        ]
+    )
+
+    # Convert inverse Hessian into unscaled parameters
+    hess_inv = scale_v * (
+        np.diag(scale_hess_inv)
+        @ diagnostic["hess_inv_scaled"]
+        @ np.diag(scale_hess_inv)
+    )
+
+    # Determine parameter uncertainty vector from diagonal entries
+    err = np.sqrt(np.diag(hess_inv))
+
+    # Parse error vector
     if not fix_v:
         # Propagate error from log(V) to V
         diagnostic["err"]["var"] = np.sqrt(
-            np.diag(np.diag(p["var"]) @ diagnostic["cov"][0:3, 0:3])
-            @ np.diag(p["var"])
+            np.diag(np.diag(p["var"]) @ hess_inv[0:3, 0:3]) @ np.diag(p["var"])
         )
         err = err[3:]
 
     if not fix_mu:
-        diagnostic["err"]["delta"] = err[:n] * scale_delta
+        diagnostic["err"]["delta"] = err[:n]
         err = err[n:]
 
     if not fix_a:

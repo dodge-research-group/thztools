@@ -37,6 +37,45 @@ def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     -------
     ndarray
         Time-domain noise variance.
+
+    Notes
+    -----
+    For noise parameters :math:`\sigma_\alpha`, :math:`\sigma_\beta`,
+    :math:`\sigma_\tau` and signal vector :math:`\boldsymbol{\mu}`, the
+    :math:`k`-th element of the time-domain noise variance
+    :math:`\boldsymbol{\sigma}^2` is given by [1]_
+
+    .. math:: \sigma_k^2 = \sigma_\alpha^2 + \sigma_\beta^2\mu_k^2 + \sigma_\tau^2(\mathbf{D}\boldsymbol{\mu})_k^2.
+
+    References
+    ----------
+    .. [1] Laleh Mohtashemi, Paul Westlund, Derek G. Sahota, Graham B. Lea,
+        Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-likelihood
+        parameter estimation in terahertz time-domain spectroscopy," Opt.
+        Express **29**, 4912-4926 (2021).
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import thztools as thz
+    >>> n = 128; ts = 0.05; t0 = 2.0
+    >>> sigma = [1e-5, 1e-2, 1e-4]
+    >>> mu, t = thz.thzgen(n, ts, t0)
+    >>> sigma_t = thz.noisevar(sigma, mu, ts)
+    >>> plt.plot(t, sigma_t)
+    >>> plt.show()
+
+    .. plot::
+
+        import matplotlib.pyplot as plt
+        import thztools as thz
+        n = 128; ts = 0.05; t0 = 2.0
+        sigma = [1e-5, 1e-2, 1e-4]
+        mu, t = thz.thzgen(n, ts, t0)
+        sigma_t = thz.noisevar(sigma, mu, ts)
+        plt.plot(t, sigma_t)
+        plt.show()
+
     """
     sigma = np.asarray(sigma)
     mu = np.asarray(mu)
@@ -70,6 +109,24 @@ def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     ndarray
         Time-domain noise amplitude, in signal units.
 
+    Notes
+    -----
+    For noise parameters :math:`\sigma_\alpha`, :math:`\sigma_\beta`,
+    :math:`\sigma_\tau` and signal vector :math:`\boldsymbol{\mu}`, the
+    :math:`k`-th element of the time-domain noise amplitude vector
+    :math:`\boldsymbol{\sigma}` is given by [1]_
+
+    .. math:: \sigma_k = \sqrt{\sigma_\alpha^2 + \sigma_\beta^2\mu_k^2 + \sigma_\tau^2(\mathbf{D}\boldsymbol{\mu})_k^2}.
+
+    References
+    ----------
+    .. [1] Laleh Mohtashemi, Paul Westlund, Derek G. Sahota, Graham B. Lea,
+        Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-likelihood
+        parameter estimation in terahertz time-domain spectroscopy," Opt.
+        Express **29**, 4912-4926 (2021).
+
+    Examples
+    --------
     """
 
     return np.sqrt(noisevar(sigma, mu, ts))

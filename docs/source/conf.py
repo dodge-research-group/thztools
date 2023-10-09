@@ -65,6 +65,8 @@ extensions = [
     "sphinx.ext.ifconfig",
 ]
 
+plot_rcparams = {"font.size": 14}
+
 # autodoc_typehints = "signature"
 autodoc_type_aliases = {
     "ArrayLike": "ArrayLike",

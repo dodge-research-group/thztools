@@ -15,6 +15,7 @@ NUM_NOISE_PARAMETERS = 3
 NUM_NOISE_DATA_DIMENSIONS = 2
 
 
+# noinspection PyShadowingNames
 def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     r"""
     Compute the time-domain noise variance.
@@ -23,15 +24,15 @@ def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     ----------
     sigma : array_like
         Noise parameter array with shape (3, ). The first element corresponds
-        to the amplitude noise, in signal units (ie, the same units as ``mu``);
-        the second element corresponds to multiplicative noise, which is
-        dimensionless; and the third element corresponds to timebase noise, in
+        to the amplitude noise, in signal units (ie, the same units as mu).
+        The second element corresponds to multiplicative noise, which is
+        dimensionless. The third element corresponds to timebase noise, in
         units of signal/time, where the units for time are the same as for
-        ``ts``.
+        `ts`.
     mu :  array_like
         Time-domain signal.
     ts : float
-        Sampling time.
+        Sampling time, normally in picoseconds.
 
     Returns
     -------
@@ -45,37 +46,44 @@ def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     :math:`k`-th element of the time-domain noise variance
     :math:`\boldsymbol{\sigma}^2` is given by [1]_
 
-    .. math:: \sigma_k^2 = \sigma_\alpha^2 + \sigma_\beta^2\mu_k^2 + \sigma_\tau^2(\mathbf{D}\boldsymbol{\mu})_k^2.
+    .. math:: \sigma_k^2 = \sigma_\alpha^2 + \sigma_\beta^2\mu_k^2 \
+        + \sigma_\tau^2(\mathbf{D}\boldsymbol{\mu})_k^2,
+
+    where :math:`\mathbf{D}` is the time-domain derivative operator.
 
     References
     ----------
     .. [1] Laleh Mohtashemi, Paul Westlund, Derek G. Sahota, Graham B. Lea,
         Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-likelihood
         parameter estimation in terahertz time-domain spectroscopy," Opt.
-        Express **29**, 4912-4926 (2021).
+        Express **29**, 4912-4926 (2021),
+        `<https://doi.org/10.1364/OE.417724>`_.
 
     Examples
     --------
-    >>> import matplotlib.pyplot as plt
-    >>> import thztools as thz
-    >>> n = 128; ts = 0.05; t0 = 2.0
-    >>> sigma = [1e-5, 1e-2, 1e-4]
-    >>> mu, t = thz.thzgen(n, ts, t0)
-    >>> sigma_t = thz.noisevar(sigma, mu, ts)
-    >>> plt.plot(t, sigma_t)
-    >>> plt.show()
+    The following example shows the noise variance :math:`\sigma^2(t)` for
+    noise parameters :math:`\sigma_\alpha = 10^{-4}`,
+    :math:`\sigma_\beta = 10^{-2}`, :math:`\sigma_\tau = 10^{-3}` and the
+    simulated signal :math:`\mu(t)`. The signal amplitude is normalized to its
+    peak magnitude, :math:`\mu_0`. The noise variance is normalized to its
+    peak magnitude, :math:`(\sigma_\beta\mu_0)^2`.
 
     .. plot::
+       :include-source: True
 
-        import matplotlib.pyplot as plt
-        import thztools as thz
-        n = 128; ts = 0.05; t0 = 2.0
-        sigma = [1e-5, 1e-2, 1e-4]
-        mu, t = thz.thzgen(n, ts, t0)
-        sigma_t = thz.noisevar(sigma, mu, ts)
-        plt.plot(t, sigma_t)
-        plt.show()
-
+        >>> import matplotlib.pyplot as plt
+        >>> import thztools as thz
+        >>> n = 256; ts = 0.05; t0 = 2.5
+        >>> sigma = [1e-4, 1e-2, 1e-3]
+        >>> mu, t = thz.thzgen(n, ts, t0)
+        >>> var_t = thz.noisevar(sigma, mu, ts)
+        >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
+        >>> axs[0].plot(t, var_t / sigma[1]**2)
+        >>> axs[0].set_ylabel(r"$\sigma^2/(\sigma_\beta\mu_0)^2$")
+        >>> axs[1].plot(t, mu)
+        >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
+        >>> axs[1].set_xlabel("t (ps)")
+        >>> plt.show()
     """
     sigma = np.asarray(sigma)
     mu = np.asarray(mu)
@@ -87,6 +95,7 @@ def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     return sigma[0] ** 2 + (sigma[1] * mu) ** 2 + (sigma[2] * mudot) ** 2
 
 
+# noinspection PyShadowingNames
 def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     r"""
     Compute the time-domain noise amplitude.
@@ -95,14 +104,15 @@ def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     ----------
     sigma : array_like
         Noise parameter array with shape (3, ). The first element corresponds
-        to the amplitude noise, in signal units (ie, the same units as mu);
-        the second element corresponds to multiplicative noise, which is
-        dimensionless; and the third element corresponds to timebase noise, in
-        units of signal/time, where the units for time are the same as for t.
+        to the amplitude noise, in signal units (ie, the same units as mu).
+        The second element corresponds to multiplicative noise, which is
+        dimensionless. The third element corresponds to timebase noise, in
+        units of signal/time, where the units for time are the same as for
+        `ts`.
     mu :  array_like
         Time-domain signal.
     ts : float
-        Sampling time.
+        Sampling time, normally in picoseconds.
 
     Returns
     -------
@@ -116,22 +126,50 @@ def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     :math:`k`-th element of the time-domain noise amplitude vector
     :math:`\boldsymbol{\sigma}` is given by [1]_
 
-    .. math:: \sigma_k = \sqrt{\sigma_\alpha^2 + \sigma_\beta^2\mu_k^2 + \sigma_\tau^2(\mathbf{D}\boldsymbol{\mu})_k^2}.
+    .. math:: \sigma_k = \sqrt{\sigma_\alpha^2 + \sigma_\beta^2\mu_k^2 \
+        + \sigma_\tau^2(\mathbf{D}\boldsymbol{\mu})_k^2},
+
+    where :math:`\mathbf{D}` is the time-domain derivative operator.
 
     References
     ----------
     .. [1] Laleh Mohtashemi, Paul Westlund, Derek G. Sahota, Graham B. Lea,
         Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-likelihood
         parameter estimation in terahertz time-domain spectroscopy," Opt.
-        Express **29**, 4912-4926 (2021).
+        Express **29**, 4912-4926 (2021),
+        `<https://doi.org/10.1364/OE.417724>`_.
 
     Examples
     --------
+    The following example shows the noise amplitude :math:`\sigma(t)` for
+    noise parameters :math:`\sigma_\alpha = 10^{-4}`,
+    :math:`\sigma_\beta = 10^{-2}`, :math:`\sigma_\tau = 10^{-3}` and the
+    simulated signal :math:`\mu(t)`. The signal amplitude is normalized to its
+    peak magnitude, :math:`\mu_0`. The noise amplitude is normalized to its
+    peak magnitude, :math:`\sigma_\beta\mu_0`.
+
+    .. plot::
+       :include-source: True
+
+        >>> import matplotlib.pyplot as plt
+        >>> import thztools as thz
+        >>> n = 256; ts = 0.05; t0 = 2.5
+        >>> sigma = [1e-4, 1e-2, 1e-3]
+        >>> mu, t = thz.thzgen(n, ts, t0)
+        >>> sigma_t = thz.noiseamp(sigma, mu, ts)
+        >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
+        >>> axs[0].plot(t, sigma_t / sigma[1])
+        >>> axs[0].set_ylabel(r"$\sigma/(\sigma_\beta\mu_0)$")
+        >>> axs[1].plot(t, mu)
+        >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
+        >>> axs[1].set_xlabel("t (ps)")
+        >>> plt.show()
     """
 
     return np.sqrt(noisevar(sigma, mu, ts))
 
 
+# noinspection PyShadowingNames
 def thzgen(
     n: int,
     ts: float,
@@ -143,7 +181,7 @@ def thzgen(
     fwhm: float = 0.05,
 ) -> tuple[np.ndarray, np.ndarray]:
     r"""
-    Simulate a terahertz pulse.
+    Simulate a terahertz waveform.
 
     Parameters
     ----------
@@ -152,22 +190,19 @@ def thzgen(
         Number of samples.
 
     ts : float
-        Sampling time.
+        Sampling time, normally in picoseconds.
 
     t0 : float
-        Pulse center.
+        Pulse center, normally in picoseconds.
 
     a : float, optional
-        Peak amplitude.
+        Peak amplitude. The default is one.
 
-    taur : float, optional
-        Current pulse rise time.
-
-    tauc : float, optional
-        Current pulse decay time.
-
-    fwhm : float, optional
-        Laser pulse FWHM.
+    taur, tauc, fwhm : float, optional
+        Current pulse rise time, current pulse decay time, and laser pulse
+        FWHM, respectively. The defaults are 0.3 ps, 0.1 ps, and 0.05 ps,
+        respectively, and assume that `ts` and `t0` are also given in
+        picoseconds.
 
     Returns
     -------
@@ -178,6 +213,43 @@ def thzgen(
     ndarray
         Array of time samples.
 
+    Notes
+    -----
+    This function uses a simplified model for terahertz generation from a
+    photoconducting switch [1]_. The impulse response of the switch is a
+    current pulse with an exponential rise time :math:`\tau_r` and an
+    exponential decay (capture) time, :math:`\tau_c`,
+
+    .. math:: I(t) \propto (1 - e^{-t/\tau_r})e^{-t/\tau_c},
+
+    which is convolved with a Gaussian laser pulse with a full-width,
+    half-maximum pulsewidth of `fwhm`.
+
+    References
+    ----------
+    .. [1] D. Grischkowsky and N. Katzenellenbogen, "Femtosecond Pulses of THz
+        Radiation: Physics and Applications," in Picosecond Electronics and
+        Optoelectronics, Technical Digest Series (Optica Publishing Group,
+        1991), paper WA2,
+        `<https://doi.org/10.1364/PEO.1991.WA2>`_.
+
+    Examples
+    --------
+    The following example shows the simulated signal :math:`\mu(t)` normalized
+    to its peak magnitude, :math:`\mu_0`.
+
+    .. plot::
+       :include-source: True
+
+        >>> import matplotlib.pyplot as plt
+        >>> import thztools as thz
+        >>> n = 256; ts = 0.05; t0 = 2.5
+        >>> mu, t = thz.thzgen(n, ts, t0)
+        >>> _, ax = plt.subplots(layout="constrained")
+        >>> ax.plot(t, mu)
+        >>> ax.set_xlabel("t (ps)")
+        >>> ax.set_ylabel(r"$\mu/\mu_0$")
+        >>> plt.show()
     """
     taul = fwhm / np.sqrt(2 * np.log(2))
 
@@ -693,10 +765,10 @@ def tdnoisefit(
             raise ValueError(msg)
 
     scale_logv = 1e0 * np.ones(3)
-    scale_delta = 1e-1 * noiseamp(np.sqrt(v0), x[:, 0], ts)
-    scale_alpha = 1e-1 * np.ones(m - 1)
-    scale_eta = 1e-2 * np.ones(m - 1)
-    scale_v = 1.0e-3
+    scale_delta = 1e-0 * noiseamp(np.sqrt(v0), x[:, 0], ts)
+    scale_alpha = 1e-2 * np.ones(m - 1)
+    scale_eta = 1e-3 * np.ones(m - 1)
+    scale_v = 1.0e-6
 
     # Replace log(x) with -inf when x <= 0
     v0_scaled = np.asarray(v0, dtype=float) / scale_v

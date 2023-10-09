@@ -1,8 +1,6 @@
-import numpy as np
 import matplotlib.pyplot as plt
-
+import numpy as np
 from matplotlib.collections import LineCollection
-from matplotlib.colors import BoundaryNorm, ListedColormap
 
 from thztools import thzgen
 
@@ -33,17 +31,20 @@ lc.set_array(t)
 lc.set_linewidth(4)
 line = ax.add_collection(lc)
 
-ax.text(2.0, 0, "THzTools",
-        fontname=fontname,
-        fontweight=fontweight,
-        fontstyle=fontstyle,
-        verticalalignment="bottom",
-        fontsize=48,
-        )
-ax.axis('off')
+ax.text(
+    2.0,
+    0,
+    "THzTools",
+    fontname=fontname,
+    fontweight=fontweight,
+    fontstyle=fontstyle,
+    verticalalignment="bottom",
+    fontsize=48,
+)
+ax.axis("off")
 ax.set_ylim(mu.min(), mu.max())
 ax.set_xlim(t.min(), t.max())
-plt.savefig('thztools_logo.svg', transparent=True)
+plt.savefig("thztools_logo.svg", transparent=True)
 
 del ax, norm, lc, line
 
@@ -56,15 +57,18 @@ lc.set_array(t)
 lc.set_linewidth(4)
 line = ax.add_collection(lc)
 
-ax.text(2.0, 0, "THzTools",
-        fontname=fontname,
-        fontweight=fontweight,
-        fontstyle=fontstyle,
-        verticalalignment="bottom",
-        fontsize=48,
-        color="white",
-        )
-ax.axis('off')
+ax.text(
+    2.0,
+    0,
+    "THzTools",
+    fontname=fontname,
+    fontweight=fontweight,
+    fontstyle=fontstyle,
+    verticalalignment="bottom",
+    fontsize=48,
+    color="white",
+)
+ax.axis("off")
 ax.set_ylim(mu.min(), mu.max())
 ax.set_xlim(t.min(), t.max())
-plt.savefig('thztools_logo_dark.svg', transparent=True)
+plt.savefig("thztools_logo_dark.svg", transparent=True)

@@ -11,7 +11,6 @@ Quick list
 .. autosummary::
     :toctree: functions/
 
-    costfunlsq
     costfuntls
     fit
     noiseamp

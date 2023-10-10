@@ -1,5 +1,4 @@
 from thztools.thztools import (
-    costfunlsq,
     costfuntls,
     fit,
     noiseamp,
@@ -11,7 +10,6 @@ from thztools.thztools import (
 )
 
 __all__ = [
-    "costfunlsq",
     "costfuntls",
     "fit",
     "noiseamp",

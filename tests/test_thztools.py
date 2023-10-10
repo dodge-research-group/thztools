@@ -8,12 +8,12 @@ from numpy.testing import assert_allclose
 from numpy.typing import ArrayLike
 
 from thztools.thztools import (
-    costfuntls,
+    _costfuntls,
+    _tdnll_scaled,
     fit,
     noiseamp,
     noisevar,
     scaleshift,
-    tdnll_scaled,
     tdnoisefit,
     thzgen,
 )
@@ -193,7 +193,7 @@ class TestCostFunTLS:
     ts = 1.0
 
     assert_allclose(
-        costfuntls(tfun, theta, mu, xx, yy, sigmax, sigmay, ts),
+        _costfuntls(tfun, theta, mu, xx, yy, sigmax, sigmay, ts),
         np.concatenate((np.zeros_like(xx), np.zeros_like(xx))),
     )
 
@@ -291,7 +291,7 @@ class TestTDNLL:
                 desired_gradnll_eta,
             )
         )
-        _, gradnll = tdnll_scaled(
+        _, gradnll = _tdnll_scaled(
             x,
             logv,
             delta,

@@ -354,8 +354,8 @@ def _costfuntls(
     fun: Callable,
     theta: ArrayLike,
     mu: ArrayLike,
-    xx: ArrayLike,
-    yy: ArrayLike,
+    x: ArrayLike,
+    y: ArrayLike,
     sigmax: ArrayLike,
     sigmay: ArrayLike,
     ts: float,
@@ -373,10 +373,10 @@ def _costfuntls(
         mu : array_like
             Estimated input signal.
 
-        xx : array_like
+        x : array_like
             Measured input signal.
 
-        yy : array_like
+        y : array_like
             Measured output signal.
 
         sigmax : array_like
@@ -396,17 +396,17 @@ def _costfuntls(
     """
     theta = np.asarray(theta)
     mu = np.asarray(mu)
-    xx = np.asarray(xx)
-    yy = np.asarray(yy)
+    x = np.asarray(x)
+    y = np.asarray(y)
     sigmax = np.asarray(sigmax)
     sigmay = np.asarray(sigmay)
 
-    n = xx.shape[-1]
-    delta_norm = (xx - mu) / sigmax
+    n = x.shape[-1]
+    delta_norm = (x - mu) / sigmax
     w = 2 * np.pi * rfftfreq(n, ts)
     h_f = fun(theta, w)
 
-    eps_norm = (yy - irfft(rfft(mu) * h_f, n=n)) / sigmay
+    eps_norm = (y - irfft(rfft(mu) * h_f, n=n)) / sigmay
 
     res = np.concatenate((delta_norm, eps_norm))
 
@@ -937,9 +937,9 @@ def fit(
                 resnorm : float
                     The value of chi-squared.
                 delta : array_like
-                    Residuals of the input waveform `xx`.
+                    Residuals of the input waveform `x`.
                 epsilon : array_like
-                    Resiuals of the output waveform `yy`.
+                    Resiuals of the output waveform `y`.
                 success : bool
                     True if one of the convergence criteria is satisfied.
     """
@@ -972,8 +972,8 @@ def fit(
     w = 2 * np.pi * rfftfreq(n, ts)
     n_f = len(w)
 
-    sigma_x = noiseamp(noise_parms, xx, ts=ts)
-    sigma_y = noiseamp(noise_parms, yy, ts=ts)
+    sigma_x = noiseamp(noise_parms, x, ts=ts)
+    sigma_y = noiseamp(noise_parms, y, ts=ts)
     p0_est = np.concatenate((p0, np.zeros(n)))
 
     def function(_theta, _w):

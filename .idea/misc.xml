@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Black">
-    <option name="sdkUUID" value="222f231b-0f82-4775-808f-5b5dbf18e603" />
+    <option name="sdkName" value="thztools" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="thztools" project-jdk-type="Python SDK" />
   <component name="PythonCompatibilityInspectionAdvertiser">

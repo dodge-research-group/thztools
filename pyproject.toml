@@ -14,6 +14,7 @@ authors = [
     { name="Steve Dodge", email="jsdodge@sfu.ca" },
     { name="Santiago Higuera Quintero", email="s.higuera@uniandes.edu.co" },
     { name="Jonathan Posada", email="jonathan.posada1@udea.edu.co" },
+    { name="Alireza Noori", email="alireza_noori@sfu.ca"}
 ]
 maintainers = [
     { name="Steve Dodge", email="jsdodge@sfu.ca" },
@@ -35,6 +36,7 @@ classifiers = [
 dependencies = [
     "numpy",
     "scipy",
+    "numdifftools",
 ]
 
 [project.urls]
@@ -48,7 +50,6 @@ path = "src/thztools/__about__.py"
 [tool.hatch.envs.default]
 dependencies = [
     "coverage[toml]>=6.5",
-    "h5py",
     "jupyter",
     "matplotlib",
     "pytest",
@@ -68,6 +69,14 @@ cov = [
 
 [[tool.hatch.envs.all.matrix]]
 python = ["3.8", "3.9", "3.10", "3.11"]
+
+[tool.hatch.envs.logo]
+dependencies = [
+    "matplotlib",
+    "numpy",
+]
+[tool.hatch.envs.logo.scripts]
+make-logo = ["python logo/make_logo.py; mv thztools_logo.svg docs/source/_static/;mv thztools_logo_dark.svg docs/source/_static/"]
 
 [tool.hatch.envs.lint]
 detached = true
@@ -179,13 +188,14 @@ exclude_lines = [
 addopts = [
     "--import-mode=importlib",
 ]
-# Show warnings as errors for debugging
-filterwarnings = [
-    "error",
-]
+## Show warnings as errors for debugging
+#filterwarnings = [
+#    "error",
+#]
 
 [tool.hatch.envs.docs]
 dependencies = [
+    "matplotlib",
     "sphinx",
     "pydata-sphinx-theme",
     "numpydoc",

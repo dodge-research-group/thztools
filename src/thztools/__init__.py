@@ -1,3 +1,4 @@
+from thztools.__about__ import __version__
 from thztools.thztools import (
     fit,
     noiseamp,
@@ -14,4 +15,5 @@ __all__ = [
     "scaleshift",
     "tdnoisefit",
     "thzgen",
+    "__version__",
 ]

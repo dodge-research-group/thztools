@@ -16,14 +16,14 @@ NUM_NOISE_DATA_DIMENSIONS = 2
 
 
 # noinspection PyShadowingNames
-def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
+def noisevar(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     r"""
     Compute the time-domain noise variance.
 
     Parameters
     ----------
-    sigma : array_like
-        Noise parameter array with shape (3, ). The first element corresponds
+    sigma_parms : array_like
+        Noise parameter array with 3 elements. The first element corresponds
         to the amplitude noise, in signal units (ie, the same units as mu).
         The second element corresponds to multiplicative noise, which is
         dimensionless. The third element corresponds to timebase noise, in
@@ -36,8 +36,8 @@ def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
 
     Returns
     -------
-    ndarray
-        Time-domain noise variance.
+    var_t : ndarray
+        Time-domain noise variance, in signal units (squared).
 
     Notes
     -----
@@ -74,37 +74,43 @@ def noisevar(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
         >>> n, ts, t0 = 256, 0.05, 2.5
-        >>> sigma = [1e-4, 1e-2, 1e-3]
+        >>> sigma_parms = [1e-4, 1e-2, 1e-3]
         >>> mu, t = thz.thzgen(n, ts, t0)
-        >>> var_t = thz.noisevar(sigma, mu, ts)
+        >>> var_t = thz.noisevar(sigma_parms, mu, ts)
 
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
-        >>> axs[0].plot(t, var_t / sigma[1]**2)
+        >>> axs[0].plot(t, var_t / sigma_parms[1]**2)
         >>> axs[0].set_ylabel(r"$\sigma^2/(\sigma_\beta\mu_0)^2$")
         >>> axs[1].plot(t, mu)
         >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
         >>> axs[1].set_xlabel("t (ps)")
         >>> plt.show()
     """
-    sigma = np.asarray(sigma)
+    sigma_parms = np.asarray(sigma_parms)
     mu = np.asarray(mu)
 
     n = mu.shape[0]
     w = 2 * np.pi * rfftfreq(n, ts)
     mudot = irfft(1j * w * rfft(mu), n=n)
 
-    return sigma[0] ** 2 + (sigma[1] * mu) ** 2 + (sigma[2] * mudot) ** 2
+    var_t = (
+        sigma_parms[0] ** 2
+        + (sigma_parms[1] * mu) ** 2
+        + (sigma_parms[2] * mudot) ** 2
+    )
+
+    return var_t
 
 
 # noinspection PyShadowingNames
-def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
+def noiseamp(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     r"""
     Compute the time-domain noise amplitude.
 
     Parameters
     ----------
-    sigma : array_like
-        Noise parameter array with shape (3, ). The first element corresponds
+    sigma_parms : array_like
+        Noise parameter array with 3 elements. The first element corresponds
         to the amplitude noise, in signal units (ie, the same units as mu).
         The second element corresponds to multiplicative noise, which is
         dimensionless. The third element corresponds to timebase noise, in
@@ -117,7 +123,7 @@ def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
 
     Returns
     -------
-    ndarray
+    sigma_t : ndarray
         Time-domain noise amplitude, in signal units.
 
     Notes
@@ -157,10 +163,10 @@ def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
         >>> n, ts, t0 = 256, 0.05, 2.5
         >>> sigma = [1e-4, 1e-2, 1e-3]
         >>> mu, t = thz.thzgen(n, ts, t0)
-        >>> sigma_t = thz.noiseamp(sigma, mu, ts)
+        >>> sigma_t = thz.noiseamp(sigma_parms, mu, ts)
 
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
-        >>> axs[0].plot(t, sigma_t / sigma[1])
+        >>> axs[0].plot(t, sigma_t / sigma_parms[1])
         >>> axs[0].set_ylabel(r"$\sigma/(\sigma_\beta\mu_0)$")
         >>> axs[1].plot(t, mu)
         >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
@@ -168,7 +174,7 @@ def noiseamp(sigma: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
         >>> plt.show()
     """
 
-    return np.sqrt(noisevar(sigma, mu, ts))
+    return np.sqrt(noisevar(sigma_parms, mu, ts))
 
 
 # noinspection PyShadowingNames
@@ -356,8 +362,8 @@ def _costfuntls(
     mu: ArrayLike,
     x: ArrayLike,
     y: ArrayLike,
-    sigmax: ArrayLike,
-    sigmay: ArrayLike,
+    sigma_x: ArrayLike,
+    sigma_y: ArrayLike,
     ts: float,
 ) -> np.ndarray:
     r"""Computes the residual vector for the total least squares cost function.
@@ -379,10 +385,10 @@ def _costfuntls(
         y : array_like
             Measured output signal.
 
-        sigmax : array_like
+        sigma_x : array_like
             Noise vector of the input signal.
 
-        sigmay : array_like
+        sigma_y : array_like
             Noise vector of the output signal.
 
         ts : float
@@ -398,15 +404,15 @@ def _costfuntls(
     mu = np.asarray(mu)
     x = np.asarray(x)
     y = np.asarray(y)
-    sigmax = np.asarray(sigmax)
-    sigmay = np.asarray(sigmay)
+    sigma_x = np.asarray(sigma_x)
+    sigma_y = np.asarray(sigma_y)
 
     n = x.shape[-1]
-    delta_norm = (x - mu) / sigmax
+    delta_norm = (x - mu) / sigma_x
     w = 2 * np.pi * rfftfreq(n, ts)
     h_f = fun(theta, w)
 
-    eps_norm = (y - irfft(rfft(mu) * h_f, n=n)) / sigmay
+    eps_norm = (y - irfft(rfft(mu) * h_f, n=n)) / sigma_y
 
     res = np.concatenate((delta_norm, eps_norm))
 
@@ -606,18 +612,18 @@ def tdnoisefit(
 
     Parameters
     ----------
-    x : ndarray
-        Data array.
-    v0 : ndarray, optional
+    x : ndarray, shape(n, m)
+        Data array with `m` waveforms, each composed of `n` points.
+    v0 : ndarray, shape (3,), optional
         Initial guess, noise model parameters with size (3,), expressed as
         variance amplitudes.
-    mu0 : ndarray, optional
+    mu0 : ndarray, shape(n,), optional
         Initial guess, signal vector with size (n,). Default is first column of
         `x`.
-    a0 : ndarray, optional
+    a0 : ndarray, shape(m,), optional
         Initial guess, amplitude vector with size (m,). Default is one for all
         entries.
-    eta0 : ndarray, optional
+    eta0 : ndarray, shape(m,), optional
         Initial guess, delay vector with size (m,). Default is zero for all
         entries.
     ts : float, optional
@@ -635,18 +641,20 @@ def tdnoisefit(
     -------
     p : dict
         Output parameter dictionary containing:
-            var : ndarray
+
+            var : ndarray, shape (3,)
                 Noise parameters, expressed as variance amplitudes.
-            mu : ndarray
+            mu : ndarray, shape (n,)
                 Signal vector.
-            a : ndarray
+            a : ndarray, shape (m,)
                 Amplitude vector.
-            eta : ndarray
+            eta : ndarray, shape (m,)
                 Delay vector.
     fval : float
         Value of NLL cost function from FMINUNC
-    Diagnostic : dict
-        Dictionary containing diagnostic information
+    diagnostic : dict
+        Dictionary containing diagnostic information:
+
             grad_scaled : ndarray
                 Gradient of the scaled negative log-likelihood function with
                 respect to the scaled fit parameters.
@@ -883,7 +891,7 @@ def fit(
     y: ArrayLike,
     *,
     ts: float = 1,
-    noise_parms: ArrayLike = (1, 0, 0),
+    sigma_parms: ArrayLike = (1, 0, 0),
     p_bounds: ArrayLike | None = None,
     jac: Callable | None = None,
     args: ArrayLike = (),
@@ -909,7 +917,7 @@ def fit(
             Measured output signal.
         ts : float, optional
             Sampling time.
-        noise_parms : None or array_like, optional
+        sigma_parms : None or array_like, optional
             Noise parameters with size (3,), expressed as standard deviation
             amplitudes.
         p_bounds : None, 2-tuple of array_like, or Bounds, optional
@@ -926,6 +934,7 @@ def fit(
     -------
         p : dict
             Output parameter dictionary containing:
+
                 p_opt : array_like
                     Optimal fit parameters.
                 p_cov : array_like
@@ -972,8 +981,8 @@ def fit(
     w = 2 * np.pi * rfftfreq(n, ts)
     n_f = len(w)
 
-    sigma_x = noiseamp(noise_parms, x, ts=ts)
-    sigma_y = noiseamp(noise_parms, y, ts=ts)
+    sigma_x = noiseamp(sigma_parms, x, ts=ts)
+    sigma_y = noiseamp(sigma_parms, y, ts=ts)
     p0_est = np.concatenate((p0, np.zeros(n)))
 
     def function(_theta, _w):

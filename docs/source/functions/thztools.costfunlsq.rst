@@ -1,6 +1,6 @@
-﻿thztools.tdnoisefit
+﻿thztools.costfunlsq
 ===================
 
 .. currentmodule:: thztools
 
-.. autofunction:: tdnoisefit
+.. autofunction:: costfunlsq

@@ -37,9 +37,8 @@ project_copyright = f"{pkg_creation_year} - present, {author}"
 # Version number for docs
 # ========================
 # OPTION 1: Version number listed in GitHib
-version = runpy.run_path(
-    Path(__file__).parents[2] / "src" / "thztools" / "__about__.py"
-)["__version__"]
+version = (runpy.run_path(Path(__file__).parents[2] / "src" / "thztools"
+                          / "__about__.py")["__version__"])
 #
 # OPTION 2: Version number listed in PyPI
 # version = importlib.metadata.version(project)
@@ -51,11 +50,9 @@ version = runpy.run_path(
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "matplotlib.sphinxext.plot_directive",
     "numpydoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.autodoc",
-    "sphinx.ext.doctest",
     "sphinx.ext.mathjax",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
@@ -64,8 +61,6 @@ extensions = [
     "sphinx.ext.extlinks",
     "sphinx.ext.ifconfig",
 ]
-
-plot_rcparams = {"font.size": 14}
 
 # autodoc_typehints = "signature"
 autodoc_type_aliases = {
@@ -135,12 +130,13 @@ html_theme = "pydata_sphinx_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["./_static"]
+html_static_path = ["_static"]
+
+# html_logo = './_static/logo.png'
 
 html_theme_options = {
     "logo": {
-        "image_light": "thztools_logo.svg",
-        "image_dark": "thztools_logo_dark.svg",
+        "text": "THzTools Documentation",
     },
     "icon_links": [
         {

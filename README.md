@@ -1,14 +1,6 @@
-<!-- # THzTools -->
-<h1 align="center">
-<img src="./docs/source/_static/thztools_logo.svg" width="600">
-</h1><br>
+# THzTools
 
-THzTools is an open-source Python package for data analysis in terahertz time-domain spectroscopy
-(THz-TDS). As the name suggests, THz-TDS involves measurements of terahertz-frequency
-electromagnetic waveforms that are acquired as a function of *time*, which users typically
-represent as a function of *frequency* for analysis. THzTools makes it easier for researchers
-to use statistically optimal methods for doing this analysis, as described in [L. Mohtashemi et al.,
- Opt. Express **29**, 4912 (2021)](https://doi.org/10.1364/OE.417724).
+Data analysis tools for terahertz time-domain spectroscopy.
 
 This is *alpha* software that is currently under development.
 

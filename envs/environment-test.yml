@@ -1,12 +1,12 @@
 name: thztools-test
 channels:
   - conda-forge
-  - nodefaults
 dependencies:
   - scipy
   - pandas
   - pytest-cov
   - coverage
+  - h5py
   - pip
   - pip:
     - -e ../

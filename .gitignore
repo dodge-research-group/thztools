@@ -4,6 +4,7 @@
 
 # Local .gitignore
 Untitled*.ipynb
+**/correspondence/
 
 # Python .gitignore:
 #	https://github.com/github/gitignore/blob/main/Python.gitignore

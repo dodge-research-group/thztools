@@ -891,7 +891,8 @@ def fit(
     y: ArrayLike,
     *,
     ts: float = 1,
-    sigma_parms: ArrayLike = (1, 0, 0),
+    noise_parms: ArrayLike = (1, 0, 0),
+    f_bounds: ArrayLike = (0, np.inf),
     p_bounds: ArrayLike | None = None,
     jac: Callable | None = None,
     args: ArrayLike = (),
@@ -920,6 +921,8 @@ def fit(
         sigma_parms : None or array_like, optional
             Noise parameters with size (3,), expressed as standard deviation
             amplitudes.
+        f_bounds : array_like, optional
+            Frequency bounds.
         p_bounds : None, 2-tuple of array_like, or Bounds, optional
             Lower and upper bounds on fit parameter(s).
         jac : None or callable, optional
@@ -979,14 +982,29 @@ def fit(
         kwargs = {}
 
     w = 2 * np.pi * rfftfreq(n, ts)
+    w_bounds = 2 * np.pi * np.asarray(f_bounds)
+    w_below_idx = w <= w_bounds[0]
+    w_above_idx = w > w_bounds[1]
+    w_in_idx = np.invert(w_below_idx) * np.invert(w_above_idx)
     n_f = len(w)
 
-    sigma_x = noiseamp(sigma_parms, x, ts=ts)
-    sigma_y = noiseamp(sigma_parms, y, ts=ts)
+    sigma_x = noiseamp(noise_parms, x, ts=ts)
+    sigma_y = noiseamp(noise_parms, y, ts=ts)
     p0_est = np.concatenate((p0, np.zeros(n)))
 
+    def etfe(_x, _y):
+        return rfft(_y) / rfft(_x)
+
     def function(_theta, _w):
-        return fun(_theta, _w, *args, **kwargs)
+        _h = etfe(x, y)
+        _w_in = _w[w_in_idx]
+        return np.concatenate(
+            (
+                _h[w_below_idx],
+                fun(_theta, _w_in, *args, **kwargs),
+                _h[w_above_idx],
+            )
+        )
 
     def function_flat(_x):
         _tf = function(_x, w)

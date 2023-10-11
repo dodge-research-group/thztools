@@ -891,7 +891,7 @@ def fit(
     y: ArrayLike,
     *,
     ts: float = 1,
-    noise_parms: ArrayLike = (1, 0, 0),
+    sigma_parms: ArrayLike = (1, 0, 0),
     f_bounds: ArrayLike = (0, np.inf),
     p_bounds: ArrayLike | None = None,
     jac: Callable | None = None,
@@ -988,8 +988,8 @@ def fit(
     w_in_idx = np.invert(w_below_idx) * np.invert(w_above_idx)
     n_f = len(w)
 
-    sigma_x = noiseamp(noise_parms, x, ts=ts)
-    sigma_y = noiseamp(noise_parms, y, ts=ts)
+    sigma_x = noiseamp(sigma_parms, x, ts=ts)
+    sigma_y = noiseamp(sigma_parms, y, ts=ts)
     p0_est = np.concatenate((p0, np.zeros(n)))
 
     def etfe(_x, _y):

@@ -5,7 +5,7 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org) for maintaining
 this file.
 
-## [0.3.1] - 2023-10-11
+## 0.3.1 - 2023-10-11
 
 _Changelog introduced._
 
@@ -26,7 +26,7 @@ _Changelog introduced._
 - Remove `costfunlsq`
 - Remove `costfuntls`, `tdnll` from public functions (rename as `_costfuntls` and `_tdnll_scaled`)
 
-## [0.3.0](https://github.com/dodge-research-group/thztools/releases/tag/v0.3.0) - 2023-09-07
+## [0.3.0] - 2023-09-07
 
 ### Added
 
@@ -36,3 +36,5 @@ _Changelog introduced._
 ### Removed
 
 - Remove `tdtf`
+
+[0.3.0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.0

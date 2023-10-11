@@ -971,10 +971,9 @@ def fit(
 
     w = 2 * np.pi * rfftfreq(n, ts)
     n_f = len(w)
-
-    sigma_x = noiseamp(noise_parms, xx, ts=ts)
-    sigma_y = noiseamp(noise_parms, yy, ts=ts)
-    p0_est = np.concatenate((p0, np.zeros(n)))
+    sigma_x = noiseamp(noise_parms, x, ts=ts)
+    sigma_y = noiseamp(noise_parms, y, ts=ts)
+    p0_est = np.concatenate((p0, np.ones(n)))
 
     def function(_theta, _w):
         return fun(_theta, _w, *args, **kwargs)

@@ -1,23 +1,19 @@
+from thztools.__about__ import __version__
 from thztools.thztools import (
-    costfunlsq,
-    costfuntls,
     fit,
     noiseamp,
     noisevar,
     scaleshift,
-    tdnll,
     tdnoisefit,
     thzgen,
 )
 
 __all__ = [
-    "costfunlsq",
-    "costfuntls",
     "fit",
     "noiseamp",
     "noisevar",
     "scaleshift",
-    "tdnll",
     "tdnoisefit",
     "thzgen",
+    "__version__",
 ]

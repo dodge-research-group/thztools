@@ -26,7 +26,7 @@ _Changelog introduced._
 - Remove `costfunlsq`
 - Remove `costfuntls`, `tdnll` from public functions (rename as `_costfuntls` and `_tdnll_scaled`)
 
-## [0.3.0](v0.3.0) - 2023-09-07
+## [v0.3.0] - 2023-09-07
 
 ### Added
 

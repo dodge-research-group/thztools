@@ -402,7 +402,7 @@ class TestFit:
             x,
             y,
             ts=ts,
-            noise_parms=noise_parms,
+            sigma_parms=noise_parms,
             p_bounds=p_bounds,
             jac=jac,
             kwargs=kwargs,

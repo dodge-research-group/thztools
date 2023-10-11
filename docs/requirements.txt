@@ -1,4 +1,5 @@
 # Use the PyData theme
-pydata-sphinx-theme
+matplotlib
 numpydoc
+pydata-sphinx-theme
 tomli

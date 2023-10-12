@@ -5,7 +5,7 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org) for maintaining
 this file.
 
-## 0.3.1 - 2023-10-11
+## [0.3.1] - 2023-10-11
 
 _Changelog introduced._
 
@@ -37,4 +37,5 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.3.1]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.1
 [0.3.0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.0

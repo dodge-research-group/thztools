@@ -161,7 +161,7 @@ def noiseamp(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
         >>> n, ts, t0 = 256, 0.05, 2.5
-        >>> sigma = [1e-4, 1e-2, 1e-3]
+        >>> sigma_parms = [1e-4, 1e-2, 1e-3]
         >>> mu, t = thz.thzgen(n, ts, t0)
         >>> sigma_t = thz.noiseamp(sigma_parms, mu, ts)
 

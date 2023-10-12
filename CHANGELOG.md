@@ -5,6 +5,12 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org) for maintaining
 this file.
 
+## 0.3.2 - 2023-10-11
+
+### Changed
+
+- Point logo link to raw image file on GitHub
+
 ## [0.3.1] - 2023-10-11
 
 _Changelog introduced._

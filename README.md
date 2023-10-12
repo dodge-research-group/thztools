@@ -1,6 +1,6 @@
 <!-- # THzTools -->
 <h1 align="center">
-<img src="./docs/source/_static/thztools_logo.svg" width="600">
+<img src="https://raw.githubusercontent.com/dodge-research-group/thztools/main/docs/source/_static/thztools_logo.svg" width="600">
 </h1><br>
 
 THzTools is an open-source Python package for data analysis in terahertz time-domain spectroscopy

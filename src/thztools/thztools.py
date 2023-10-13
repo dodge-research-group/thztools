@@ -16,6 +16,132 @@ NUM_NOISE_DATA_DIMENSIONS = 2
 
 
 # noinspection PyShadowingNames
+def tfout(
+    x: ArrayLike,
+    tfun: Callable,
+    ts: float,
+    *,
+    fft_sign: bool = True,
+    args: tuple = (),
+) -> np.ndarray:
+    r"""
+    Output from applying a transfer function to an input waveform.
+
+    Parameters
+    ----------
+     x : array_like
+        Data array.
+    tfun : callable
+        Transfer function.
+
+            ``tfun(omega, *args) -> np.ndarray``
+
+        where ``omega`` is an array of angular frequencies and ``args`` is a
+        tuple of the fixed parameters needed to completely specify
+        the function. The units of ``omega`` must be the inverse of the units
+        of ``ts``.
+    ts : float
+        Sampling time, normally in picoseconds.
+    fft_sign : bool, optional
+        Complex exponential sign convention for harmonic time dependence.
+    args : tuple, optional
+        Extra arguments passed to the transfer function
+
+    Returns
+    -------
+    y : np.ndarray
+        Result of applying the transfer function to ``x``.
+
+    Notes
+    -----
+    The output waveform is computed by transforming :math:`x[n]` into the
+    frequency domain, multiplying by the transfer function :math:`H[n]`,
+    then transforming back into the time domain.
+
+    .. math:: y[n] = \mathcal{F}^{-1}\{H[n] \mathcal{F}\{x[n]\}\}
+
+    Examples
+    --------
+
+    .. plot::
+       :include-source: True
+
+        Apply a transfer function that rescales and shifts the input.
+
+            .. math:: H(\omega) = a\exp(-i\omega\tau).
+
+        Note that this form assumes the :math:`e^{+i\omega t}` representation
+        of harmonic time dependence, which corresponds to the default setting
+        ``fft_sign=True``.
+
+        >>> import matplotlib.pyplot as plt
+        >>> import numpy as np
+        >>> import thztools as thz
+
+        >>> n, ts, t0 = 256, 0.05, 2.5
+        >>> x, t = thz.thzgen(n, ts, t0)
+
+        >>> def shiftscale(_w, _a, _tau):
+        >>>     return _a * np.exp(-1j * _w * _tau)
+        >>>
+        >>> y = thz.tfout(x, shiftscale, ts=ts, fft_sign=True, args=(0.5, 1))
+
+        >>> _, ax = plt.subplots()
+        >>>
+        >>> ax.plot(t, x, label='x')
+        >>> ax.plot(t, y, label='y')
+        >>>
+        >>> ax.legend()
+        >>> ax.set_xlabel('t (ps)')
+        >>> ax.set_ylabel('Amplitude (arb. units)')
+        >>>
+        >>> plt.show()
+
+        If the transfer function is expressed using the :math:`e^{-i\omega t}`
+        representation that is more common in physics,
+
+            .. math:: H(\omega) = a\exp(i\omega\tau),
+
+        set ``fft_sign=False``.
+
+        >>> def shiftscale_phys(_w, _a, _tau):
+        >>>     return _a * np.exp(1j * _w * _tau)
+        >>>
+        >>> y_p = thz.tfout(x, shiftscale_phys, ts=ts, fft_sign=False, \
+        args=(0.5, 1))
+
+        >>> _, ax = plt.subplots()
+        >>>
+        >>> ax.plot(t, x, label='x')
+        >>> ax.plot(t, y_p, label='y')
+        >>>
+        >>> ax.legend()
+        >>> ax.set_xlabel('t (ps)')
+        >>> ax.set_ylabel('Amplitude (arb. units)')
+        >>>
+        >>> plt.show()
+
+    """
+    x = np.asarray(x)
+    if x.ndim != 1:
+        msg = "x must be a one-dimensional array"
+        raise ValueError(msg)
+
+    if not isinstance(args, tuple):
+        args = (args,)
+
+    n = x.size
+    f = rfftfreq(n, ts)
+    w = 2 * np.pi * f
+    h = tfun(w, *args)
+    if not fft_sign:
+        h = np.conj(h)
+
+    y = np.fft.irfft(np.fft.rfft(x) * h, n=n)
+
+    return y
+
+
 def noisevar(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     r"""
     Compute the time-domain noise variance.
@@ -28,7 +154,7 @@ def noisevar(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
         The second element corresponds to multiplicative noise, which is
         dimensionless. The third element corresponds to timebase noise, in
         units of signal/time, where the units for time are the same as for
-        `ts`.
+        ``ts``.
     mu :  array_like
         Time-domain signal.
     ts : float
@@ -115,7 +241,7 @@ def noiseamp(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
         The second element corresponds to multiplicative noise, which is
         dimensionless. The third element corresponds to timebase noise, in
         units of signal/time, where the units for time are the same as for
-        `ts`.
+        ``ts``.
     mu :  array_like
         Time-domain signal.
     ts : float
@@ -160,6 +286,7 @@ def noiseamp(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
 
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
+
         >>> n, ts, t0 = 256, 0.05, 2.5
         >>> sigma_parms = [1e-4, 1e-2, 1e-3]
         >>> mu, t = thz.thzgen(n, ts, t0)
@@ -209,7 +336,7 @@ def thzgen(
     taur, tauc, fwhm : float, optional
         Current pulse rise time, current pulse decay time, and laser pulse
         FWHM, respectively. The defaults are 0.3 ps, 0.1 ps, and 0.05 ps,
-        respectively, and assume that `ts` and `t0` are also given in
+        respectively, and assume that ``ts`` and ``t0`` are also given in
         picoseconds.
 
     Returns
@@ -231,7 +358,7 @@ def thzgen(
     .. math:: I(t) \propto (1 - e^{-t/\tau_r})e^{-t/\tau_c},
 
     which is convolved with a Gaussian laser pulse with a full-width,
-    half-maximum pulsewidth of `fwhm`.
+    half-maximum pulsewidth of ``fwhm``.
 
     References
     ----------
@@ -441,8 +568,9 @@ def _tdnll_scaled(
     Compute the scaled negative log-likelihood for the time-domain noise model.
 
     Computes the scaled negative log-likelihood function for obtaining the
-    data matrix `x` given `logv`, `delta`, `alpha`, `eta`, `scale_logv`,
-    `scale_delta`, `scale_alpha`, `scale_eta`, and `scale_v`.
+    data matrix ``x`` given ``logv``, ``delta``, ``alpha``, ``eta``,
+    ``scale_logv``, ``scale_delta``, ``scale_alpha``, ``scale_eta``, and
+    ``scale_v``.
 
     Parameters
     ----------
@@ -469,13 +597,13 @@ def _tdnll_scaled(
     fix_eta : bool
         Exclude delay deviation vector from gradiate calculation when ``True``.
     scale_logv : array_like
-        Array of three scale parameters for `logv`.
+        Array of three scale parameters for ``logv``.
     scale_delta : array_like
-        Array of scale parameters for `delta` with shape (n,).
+        Array of scale parameters for ``delta`` with shape (n,).
     scale_alpha : array_like
-        Array of scale parameters for `alpha` with shape (m - 1,).
+        Array of scale parameters for ``alpha`` with shape (m - 1,).
     scale_eta : array_like
-        Array of scale parameters for `eta` with shape (m - 1,).
+        Array of scale parameters for ``eta`` with shape (m - 1,).
     scale_v : float
         Scale parameter for overall variance.
 
@@ -619,7 +747,7 @@ def tdnoisefit(
         variance amplitudes.
     mu0 : ndarray, shape(n,), optional
         Initial guess, signal vector with size (n,). Default is first column of
-        `x`.
+        ``x``.
     a0 : ndarray, shape(m,), optional
         Initial guess, amplitude vector with size (m,). Default is one for all
         entries.
@@ -665,7 +793,7 @@ def tdnoisefit(
                 fit parameters.
             err : dict
                 Dictionary containing  error of the parameters. Uses the same
-                keys as `p`.
+                keys as ``p``.
             success : bool
                 Whether the fit terminated successfully.
             status : int
@@ -901,17 +1029,20 @@ def fit(
     r"""
     Fit a transfer function to THz time-domain data.
 
-    Computes the noise on the input `x` and output `y` time series using
-    `noiseamp`. Then uses the total residuals generated by `_costfuntls` to fit
-    the input and output to the transfer function.
+    Computes the noise on the input ``x`` and output ``y`` time series using
+    ``noiseamp``. Then uses the total residuals generated by ``_costfuntls`` to
+    fit the input and output to the transfer function.
 
     Parameters
     ----------
         fun : callable
-            Transfer function, in the form fun(p, w, \*args, \*\*kwargs).
+            Transfer function.
+
+                ``fun(p, w, *args, **kwargs) -> np.ndarray``
+
             Assumes the +iwt convention.
         p0 : array_like
-            Initial guess for `p`.
+            Initial guess for ``p``.
         x : array_like
             Measured input signal.
         y : array_like
@@ -929,9 +1060,9 @@ def fit(
             Method of calculating derivative of the output signal residuals
             with respect to the fit parameter(s), theta.
         args : tuple, optional
-            Additional arguments passed to `fun` and `jac`.
+            Additional arguments passed to ``fun`` and ``jac``.
         kwargs : dict, optional
-            Additional keyword arguments passed to `fun` and `jac`.
+            Additional keyword arguments passed to ``fun`` and ``jac``.
 
     Returns
     -------
@@ -949,9 +1080,9 @@ def fit(
                 resnorm : float
                     The value of chi-squared.
                 delta : array_like
-                    Residuals of the input waveform `x`.
+                    Residuals of the input waveform ``x``.
                 epsilon : array_like
-                    Resiuals of the output waveform `y`.
+                    Resiuals of the output waveform ``y``.
                 success : bool
                     True if one of the convergence criteria is satisfied.
     """

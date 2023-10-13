@@ -15,6 +15,7 @@ from thztools.thztools import (
     noisevar,
     scaleshift,
     tdnoisefit,
+    tfout,
     thzgen,
 )
 
@@ -26,9 +27,45 @@ def tfun(p, w):
     return p[0] * np.exp(1j * p[1] * w)
 
 
+def tfun1(w, p):
+    return p[0] * np.exp(1j * p[1] * w)
+
+
+def tfun2(w, p0, p1):
+    return p0 * np.exp(1j * p1 * w)
+
+
 def jac_fun(p, w):
     exp_ipw = np.exp(1j * p[1] * w)
     return np.stack((exp_ipw, 1j * w * p[0] * exp_ipw)).T
+
+
+class TestTFOut:
+    n = 16
+    dt = 1.0 / n
+    t = np.arange(n) * dt
+    mu = np.cos(2 * pi * t)
+
+    @pytest.mark.parametrize("fft_sign", [True, False])
+    @pytest.mark.parametrize(
+        "x, t_fun, p, expected",
+        [
+            [mu, tfun1, [1.0, 0.0], mu],
+            [mu, tfun2, (1.0, 0.0), mu],
+        ],
+    )
+    def test_inputs(self, x, t_fun, fft_sign, p, expected):
+        ts = self.dt
+        assert_allclose(
+            tfout(x, t_fun, ts=ts, fft_sign=fft_sign, args=p),
+            expected,
+        )
+
+    @pytest.mark.parametrize("x", [np.ones((n, n))])
+    def test_error(self, x):
+        ts = self.dt
+        with pytest.raises(ValueError):
+            _ = tfout(x, tfun1, ts=ts, args=[1.0, 0.0])
 
 
 class TestNoise:

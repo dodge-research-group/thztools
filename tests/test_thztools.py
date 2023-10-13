@@ -15,8 +15,8 @@ from thztools.thztools import (
     noisevar,
     scaleshift,
     tdnoisefit,
-    tfout,
     thzgen,
+    transfer_out,
 )
 
 atol = 1e-8
@@ -40,7 +40,7 @@ def jac_fun(p, w):
     return np.stack((exp_ipw, 1j * w * p[0] * exp_ipw)).T
 
 
-class TestTFOut:
+class TestTransferOut:
     n = 16
     dt = 1.0 / n
     t = np.arange(n) * dt
@@ -57,7 +57,7 @@ class TestTFOut:
     def test_inputs(self, x, t_fun, fft_sign, p, expected):
         ts = self.dt
         assert_allclose(
-            tfout(x, t_fun, ts=ts, fft_sign=fft_sign, args=p),
+            transfer_out(x, t_fun, ts=ts, fft_sign=fft_sign, args=p),
             expected,
         )
 
@@ -65,7 +65,7 @@ class TestTFOut:
     def test_error(self, x):
         ts = self.dt
         with pytest.raises(ValueError):
-            _ = tfout(x, tfun1, ts=ts, args=[1.0, 0.0])
+            _ = transfer_out(x, tfun1, ts=ts, args=[1.0, 0.0])
 
 
 class TestNoise:

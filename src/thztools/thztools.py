@@ -16,7 +16,7 @@ NUM_NOISE_DATA_DIMENSIONS = 2
 
 
 # noinspection PyShadowingNames
-def tfout(
+def transfer_out(
     x: ArrayLike,
     tfun: Callable,
     ts: float,
@@ -84,7 +84,8 @@ def tfout(
         >>> def shiftscale(_w, _a, _tau):
         >>>     return _a * np.exp(-1j * _w * _tau)
         >>>
-        >>> y = thz.tfout(x, shiftscale, ts=ts, fft_sign=True, args=(0.5, 1))
+        >>> y = thz.transfer_out(x, shiftscale, ts=ts, fft_sign=True,
+        ...                      args=(0.5, 1))
 
         >>> _, ax = plt.subplots()
         >>>
@@ -107,8 +108,8 @@ def tfout(
         >>> def shiftscale_phys(_w, _a, _tau):
         >>>     return _a * np.exp(1j * _w * _tau)
         >>>
-        >>> y_p = thz.tfout(x, shiftscale_phys, ts=ts, fft_sign=False, \
-        args=(0.5, 1))
+        >>> y_p = thz.transfer_out(x, shiftscale_phys, ts=ts, fft_sign=False,
+        ...                        args=(0.5, 1))
 
         >>> _, ax = plt.subplots()
         >>>
@@ -497,29 +498,33 @@ def _costfuntls(
 
     Parameters
     ----------
-        fun : callable
-            Transfer function, in the form fun(theta,w), +iwt convention.
+    fun : callable
+        Transfer function.
 
-        theta : array_like
-            Input parameters for the function.
+            ``fun(p, w, *args, **kwargs) -> np.ndarray``
 
-        mu : array_like
-            Estimated input signal.
+        Assumes the :math:`+i\omega t` convention for harmonic time dependence.
 
-        x : array_like
-            Measured input signal.
+    theta : array_like
+        Input parameters for the function.
 
-        y : array_like
-            Measured output signal.
+    mu : array_like
+        Estimated input signal.
 
-        sigma_x : array_like
-            Noise vector of the input signal.
+    x : array_like
+        Measured input signal.
 
-        sigma_y : array_like
-            Noise vector of the output signal.
+    y : array_like
+        Measured output signal.
 
-        ts : float
-            Sampling time.
+    sigma_x : array_like
+        Noise vector of the input signal.
+
+    sigma_y : array_like
+        Noise vector of the output signal.
+
+    ts : float
+        Sampling time.
 
     Returns
     -------
@@ -1035,56 +1040,56 @@ def fit(
 
     Parameters
     ----------
-        fun : callable
-            Transfer function.
+    fun : callable
+        Transfer function.
 
-                ``fun(p, w, *args, **kwargs) -> np.ndarray``
+            ``fun(p, w, *args, **kwargs) -> np.ndarray``
 
-            Assumes the +iwt convention.
-        p0 : array_like
-            Initial guess for ``p``.
-        x : array_like
-            Measured input signal.
-        y : array_like
-            Measured output signal.
-        ts : float, optional
-            Sampling time.
-        sigma_parms : None or array_like, optional
-            Noise parameters with size (3,), expressed as standard deviation
-            amplitudes.
-        f_bounds : array_like, optional
-            Frequency bounds.
-        p_bounds : None, 2-tuple of array_like, or Bounds, optional
-            Lower and upper bounds on fit parameter(s).
-        jac : None or callable, optional
-            Method of calculating derivative of the output signal residuals
-            with respect to the fit parameter(s), theta.
-        args : tuple, optional
-            Additional arguments passed to ``fun`` and ``jac``.
-        kwargs : dict, optional
-            Additional keyword arguments passed to ``fun`` and ``jac``.
+        Assumes the :math:`+i\omega t` convention for harmonic time dependence.
+    p0 : array_like
+        Initial guess for ``p``.
+    x : array_like
+        Measured input signal.
+    y : array_like
+        Measured output signal.
+    ts : float, optional
+        Sampling time.
+    sigma_parms : None or array_like, optional
+        Noise parameters with size (3,), expressed as standard deviation
+        amplitudes.
+    f_bounds : array_like, optional
+        Frequency bounds.
+    p_bounds : None, 2-tuple of array_like, or Bounds, optional
+        Lower and upper bounds on fit parameter(s).
+    jac : None or callable, optional
+        Method of calculating derivative of the output signal residuals
+        with respect to the fit parameter(s), theta.
+    args : tuple, optional
+        Additional arguments passed to ``fun`` and ``jac``.
+    kwargs : dict, optional
+        Additional keyword arguments passed to ``fun`` and ``jac``.
 
     Returns
     -------
-        p : dict
-            Output parameter dictionary containing:
+    p : dict
+        Output parameter dictionary containing:
 
-                p_opt : array_like
-                    Optimal fit parameters.
-                p_cov : array_like
-                    Variance of p_opt.
-                mu_opt : array_like
-                    Optimal underlying waveform.
-                mu_var : array_like
-                    Variance of mu_opt.
-                resnorm : float
-                    The value of chi-squared.
-                delta : array_like
-                    Residuals of the input waveform ``x``.
-                epsilon : array_like
-                    Resiuals of the output waveform ``y``.
-                success : bool
-                    True if one of the convergence criteria is satisfied.
+            p_opt : array_like
+                Optimal fit parameters.
+            p_cov : array_like
+                Variance of p_opt.
+            mu_opt : array_like
+                Optimal underlying waveform.
+            mu_var : array_like
+                Variance of mu_opt.
+            resnorm : float
+                The value of chi-squared.
+            delta : array_like
+                Residuals of the input waveform ``x``.
+            epsilon : array_like
+                Resiuals of the output waveform ``y``.
+            success : bool
+                True if one of the convergence criteria is satisfied.
     """
     fit_method = "trf"
 

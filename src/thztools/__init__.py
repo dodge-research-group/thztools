@@ -5,8 +5,8 @@ from thztools.thztools import (
     noisevar,
     scaleshift,
     tdnoisefit,
-    tfout,
     thzgen,
+    transfer_out,
 )
 
 __all__ = [
@@ -15,7 +15,7 @@ __all__ = [
     "noisevar",
     "scaleshift",
     "tdnoisefit",
-    "tfout",
+    "transfer_out",
     "thzgen",
     "__version__",
 ]

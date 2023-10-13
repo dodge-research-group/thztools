@@ -16,5 +16,5 @@ Quick list
     noisevar
     scaleshift
     tdnoisefit
-    tfout
+    transfer_out
     thzgen

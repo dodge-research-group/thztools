@@ -75,7 +75,6 @@ def transfer_out(
         ``fft_sign=True``.
 
         >>> import matplotlib.pyplot as plt
-        >>> import numpy as np
         >>> import thztools as thz
 
         >>> n, ts, t0 = 256, 0.05, 2.5
@@ -413,7 +412,7 @@ def scaleshift(
     ts: float = 1.0,
     axis: int = -1,
 ) -> np.ndarray:
-    """Rescale and shift waveforms.
+    r"""Rescale and shift waveforms.
 
     Parameters
     ----------
@@ -434,6 +433,33 @@ def scaleshift(
     x_adjusted : ndarray
         Adjusted data array.
 
+    Examples
+    --------
+    The following example makes an array with 4 identical copies of the
+    signal ``mu`` returned by ``thztools.thzgen``. It then uses
+    ``thztools.scaleshift`` to rescale each copy by
+    ``a = [1.0, 0.5, 0.25, 0.125]`` and shift it by
+    ``eta = [0.0, 1.0, 2.0, 3.0]``.
+
+    .. plot::
+       :include-source: True
+
+        >>> import matplotlib.pyplot as plt
+        >>> import thztools as thz
+        >>> n, ts, t0 = 256, 0.05, 2.5
+        >>> mu, t = thz.thzgen(n, ts, t0)
+        >>> m = 4
+        >>> x = np.repeat(np.atleast_2d(mu), m, axis=0)
+        >>> a = 0.5**np.arange(m)
+        >>> eta = np.arange(m)
+        >>> x_adj = thz.scaleshift(x, a=a, eta=eta, ts=ts)
+
+        >>> _, ax = plt.subplots(layout="constrained")
+        >>> ax.plot(t, x_adj.T, label=[f"{k=}" for k in range(4)])
+        >>> ax.legend()
+        >>> ax.set_xlabel("t (ps)")
+        >>> ax.set_ylabel(r"$x_{\mathrm{adj}, k}$")
+        >>> plt.show()
     """
     x = np.asarray(x)
     if x.size == 0:

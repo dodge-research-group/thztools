@@ -937,7 +937,6 @@ def fit(
     -------
         p : dict
             Output parameter dictionary containing:
-
                 p_opt : array_like
                     Optimal fit parameters.
                 p_cov : array_like

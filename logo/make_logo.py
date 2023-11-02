@@ -40,6 +40,7 @@ ax.text(
     fontstyle=fontstyle,
     verticalalignment="bottom",
     fontsize=48,
+    color="#202328",
 )
 ax.axis("off")
 ax.set_ylim(mu.min(), mu.max())
@@ -66,7 +67,7 @@ ax.text(
     fontstyle=fontstyle,
     verticalalignment="bottom",
     fontsize=48,
-    color="white",
+    color="#E7EDF2",
 )
 ax.axis("off")
 ax.set_ylim(mu.min(), mu.max())

@@ -66,17 +66,10 @@ cov = [
     "test-cov",
     "cov-report",
 ]
+make-logo = ["python logo/make_logo.py; mv thztools_logo.svg docs/source/_static/;mv thztools_logo_dark.svg docs/source/_static/"]
 
 [[tool.hatch.envs.all.matrix]]
 python = ["3.8", "3.9", "3.10", "3.11"]
-
-[tool.hatch.envs.logo]
-dependencies = [
-    "matplotlib",
-    "numpy",
-]
-[tool.hatch.envs.logo.scripts]
-make-logo = ["python logo/make_logo.py; mv thztools_logo.svg docs/source/_static/;mv thztools_logo_dark.svg docs/source/_static/"]
 
 [tool.hatch.envs.lint]
 detached = true

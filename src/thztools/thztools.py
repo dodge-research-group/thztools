@@ -17,9 +17,9 @@ NUM_NOISE_DATA_DIMENSIONS = 2
 
 # noinspection PyShadowingNames
 def transfer_out(
-    x: ArrayLike,
     tfun: Callable,
-    ts: float,
+    x: ArrayLike,
+    dt: float,
     *,
     fft_sign: bool = True,
     args: tuple = (),
@@ -29,8 +29,6 @@ def transfer_out(
 
     Parameters
     ----------
-     x : array_like
-        Data array.
     tfun : callable
         Transfer function.
 
@@ -39,8 +37,10 @@ def transfer_out(
         where ``omega`` is an array of angular frequencies and ``args`` is a
         tuple of the fixed parameters needed to completely specify
         the function. The units of ``omega`` must be the inverse of the units
-        of ``ts``.
-    ts : float
+        of ``dt``, such as radians/picosecond.
+    x : array_like
+        Data array.
+    dt : float
         Sampling time, normally in picoseconds.
     fft_sign : bool, optional
         Complex exponential sign convention for harmonic time dependence.
@@ -77,13 +77,13 @@ def transfer_out(
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
 
-        >>> n, ts, t0 = 256, 0.05, 2.5
-        >>> x, t = thz.thzgen(n, ts, t0)
+        >>> n, dt, t0 = 256, 0.05, 2.5
+        >>> x, t = thz.thzgen(n, dt, t0)
 
         >>> def shiftscale(_w, _a, _tau):
         >>>     return _a * np.exp(-1j * _w * _tau)
         >>>
-        >>> y = thz.transfer_out(x, shiftscale, ts=ts, fft_sign=True,
+        >>> y = thz.transfer_out(shiftscale, x, dt=dt, fft_sign=True,
         ...                      args=(0.5, 1))
 
         >>> _, ax = plt.subplots()
@@ -107,7 +107,7 @@ def transfer_out(
         >>> def shiftscale_phys(_w, _a, _tau):
         >>>     return _a * np.exp(1j * _w * _tau)
         >>>
-        >>> y_p = thz.transfer_out(x, shiftscale_phys, ts=ts, fft_sign=False,
+        >>> y_p = thz.transfer_out(shiftscale_phys, x, dt=dt, fft_sign=False,
         ...                        args=(0.5, 1))
 
         >>> _, ax = plt.subplots()
@@ -131,7 +131,7 @@ def transfer_out(
         args = (args,)
 
     n = x.size
-    f = rfftfreq(n, ts)
+    f = rfftfreq(n, dt)
     w = 2 * np.pi * f
     h = tfun(w, *args)
     if not fft_sign:
@@ -142,7 +142,7 @@ def transfer_out(
     return y
 
 
-def noisevar(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
+def noisevar(sigma_parms: ArrayLike, mu: ArrayLike, dt: float) -> np.ndarray:
     r"""
     Compute the time-domain noise variance.
 
@@ -154,10 +154,10 @@ def noisevar(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
         The second element corresponds to multiplicative noise, which is
         dimensionless. The third element corresponds to timebase noise, in
         units of signal/time, where the units for time are the same as for
-        ``ts``.
+        ``dt``.
     mu :  array_like
         Time-domain signal.
-    ts : float
+    dt : float
         Sampling time, normally in picoseconds.
 
     Returns
@@ -199,10 +199,10 @@ def noisevar(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
 
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
-        >>> n, ts, t0 = 256, 0.05, 2.5
+        >>> n, dt, t0 = 256, 0.05, 2.5
         >>> sigma_parms = [1e-4, 1e-2, 1e-3]
-        >>> mu, t = thz.thzgen(n, ts, t0)
-        >>> var_t = thz.noisevar(sigma_parms, mu, ts)
+        >>> mu, t = thz.thzgen(n, dt, t0)
+        >>> var_t = thz.noisevar(sigma_parms, mu, dt)
 
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
         >>> axs[0].plot(t, var_t / sigma_parms[1]**2)
@@ -216,7 +216,7 @@ def noisevar(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
     mu = np.asarray(mu)
 
     n = mu.shape[0]
-    w = 2 * np.pi * rfftfreq(n, ts)
+    w = 2 * np.pi * rfftfreq(n, dt)
     mudot = irfft(1j * w * rfft(mu), n=n)
 
     var_t = (
@@ -229,7 +229,7 @@ def noisevar(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
 
 
 # noinspection PyShadowingNames
-def noiseamp(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
+def noiseamp(sigma_parms: ArrayLike, mu: ArrayLike, dt: float) -> np.ndarray:
     r"""
     Compute the time-domain noise amplitude.
 
@@ -241,10 +241,10 @@ def noiseamp(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
         The second element corresponds to multiplicative noise, which is
         dimensionless. The third element corresponds to timebase noise, in
         units of signal/time, where the units for time are the same as for
-        ``ts``.
+        ``dt``.
     mu :  array_like
         Time-domain signal.
-    ts : float
+    dt : float
         Sampling time, normally in picoseconds.
 
     Returns
@@ -287,10 +287,10 @@ def noiseamp(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
 
-        >>> n, ts, t0 = 256, 0.05, 2.5
+        >>> n, dt, t0 = 256, 0.05, 2.5
         >>> sigma_parms = [1e-4, 1e-2, 1e-3]
-        >>> mu, t = thz.thzgen(n, ts, t0)
-        >>> sigma_t = thz.noiseamp(sigma_parms, mu, ts)
+        >>> mu, t = thz.thzgen(n, dt, t0)
+        >>> sigma_t = thz.noiseamp(sigma_parms, mu, dt)
 
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
         >>> axs[0].plot(t, sigma_t / sigma_parms[1])
@@ -301,13 +301,13 @@ def noiseamp(sigma_parms: ArrayLike, mu: ArrayLike, ts: float) -> np.ndarray:
         >>> plt.show()
     """
 
-    return np.sqrt(noisevar(sigma_parms, mu, ts))
+    return np.sqrt(noisevar(sigma_parms, mu, dt))
 
 
 # noinspection PyShadowingNames
 def thzgen(
     n: int,
-    ts: float,
+    dt: float,
     t0: float,
     *,
     a: float = 1.0,
@@ -324,7 +324,7 @@ def thzgen(
     n : int
         Number of samples.
 
-    ts : float
+    dt : float
         Sampling time, normally in picoseconds.
 
     t0 : float
@@ -378,8 +378,8 @@ def thzgen(
 
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
-        >>> n, ts, t0 = 256, 0.05, 2.5
-        >>> mu, t = thz.thzgen(n, ts, t0)
+        >>> n, dt, t0 = 256, 0.05, 2.5
+        >>> mu, t = thz.thzgen(n, dt, t0)
 
         >>> _, ax = plt.subplots(layout="constrained")
         >>> ax.plot(t, mu)
@@ -389,14 +389,14 @@ def thzgen(
     """
     taul = fwhm / np.sqrt(2 * np.log(2))
 
-    f = rfftfreq(n, ts)
+    f = rfftfreq(n, dt)
 
     w = 2 * np.pi * f
     ell = np.exp(-((w * taul) ** 2) / 2) / np.sqrt(2 * np.pi * taul**2)
     r = 1 / (1 / taur - 1j * w) - 1 / (1 / taur + 1 / tauc - 1j * w)
     s = -1j * w * (ell * r) ** 2 * np.exp(1j * w * t0)
 
-    t = ts * np.arange(n)
+    t = dt * np.arange(n)
 
     x = irfft(np.conj(s), n=n)
     x = a * x / np.max(x)
@@ -409,7 +409,7 @@ def scaleshift(
     *,
     a: ArrayLike | None = None,
     eta: ArrayLike | None = None,
-    ts: float = 1.0,
+    dt: float = 1.0,
     axis: int = -1,
 ) -> np.ndarray:
     r"""Rescale and shift waveforms.
@@ -422,7 +422,7 @@ def scaleshift(
         Scale array.
     eta : array_like, optional
         Shift array.
-    ts : float, optional
+    dt : float, optional
         Sampling time. Default is 1.0.
     axis : int, optional
         Axis over which to apply the correction. If not given, applies over the
@@ -446,13 +446,13 @@ def scaleshift(
 
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
-        >>> n, ts, t0 = 256, 0.05, 2.5
-        >>> mu, t = thz.thzgen(n, ts, t0)
+        >>> n, dt, t0 = 256, 0.05, 2.5
+        >>> mu, t = thz.thzgen(n, dt, t0)
         >>> m = 4
         >>> x = np.repeat(np.atleast_2d(mu), m, axis=0)
         >>> a = 0.5**np.arange(m)
         >>> eta = np.arange(m)
-        >>> x_adj = thz.scaleshift(x, a=a, eta=eta, ts=ts)
+        >>> x_adj = thz.scaleshift(x, a=a, eta=eta, dt=dt)
 
         >>> _, ax = plt.subplots(layout="constrained")
         >>> ax.plot(t, x_adj.T, label=[f"{k=}" for k in range(4)])
@@ -495,7 +495,7 @@ def scaleshift(
             )
             raise ValueError(msg)
 
-    f = rfftfreq(n, ts)
+    f = rfftfreq(n, dt)
     w = 2 * np.pi * f
     phase = np.expand_dims(eta, axis=eta.ndim) * w
 
@@ -518,7 +518,7 @@ def _costfuntls(
     y: ArrayLike,
     sigma_x: ArrayLike,
     sigma_y: ArrayLike,
-    ts: float,
+    dt: float,
 ) -> np.ndarray:
     r"""Computes the residual vector for the total least squares cost function.
 
@@ -549,7 +549,7 @@ def _costfuntls(
     sigma_y : array_like
         Noise vector of the output signal.
 
-    ts : float
+    dt : float
         Sampling time.
 
     Returns
@@ -567,7 +567,7 @@ def _costfuntls(
 
     n = x.shape[-1]
     delta_norm = (x - mu) / sigma_x
-    w = 2 * np.pi * rfftfreq(n, ts)
+    w = 2 * np.pi * rfftfreq(n, dt)
     h_f = fun(theta, w)
 
     eps_norm = (y - irfft(rfft(mu) * h_f, n=n)) / sigma_y
@@ -583,7 +583,7 @@ def _tdnll_scaled(
     delta: ArrayLike,
     alpha: ArrayLike,
     eta: ArrayLike,
-    ts: float,
+    dt: float,
     *,
     fix_logv: bool,
     fix_delta: bool,
@@ -615,7 +615,7 @@ def _tdnll_scaled(
         Amplitude deviation vector with shape (m - 1,).
     eta : array_like
         Delay deviation vector with shape (m - 1,).
-    ts : float
+    dt : float
         Sampling time.
     fix_logv : bool
         Exclude noise parameters from gradiate calculation when ``True``.
@@ -666,7 +666,7 @@ def _tdnll_scaled(
     eta = np.insert(eta * scale_eta, 0, 0.0)
 
     # Compute frequency vector and Fourier coefficients of mu
-    f = rfftfreq(n, ts)
+    f = rfftfreq(n, dt)
     w = 2 * np.pi * f
     mu_f = rfft(mu)
 
@@ -756,7 +756,7 @@ def tdnoisefit(
     mu0: ArrayLike | None = None,
     a0: ArrayLike | None = None,
     eta0: ArrayLike | None = None,
-    ts: float = 1.0,
+    dt: float = 1.0,
     fix_v: bool = False,
     fix_mu: bool = False,
     fix_a: bool = True,
@@ -785,7 +785,7 @@ def tdnoisefit(
     eta0 : ndarray, shape(m,), optional
         Initial guess, delay vector with size (m,). Default is zero for all
         entries.
-    ts : float, optional
+    dt : float, optional
         Sampling time. Default is 1.0.
     fix_v : bool, optional
         Fix noise variance parameters. Default is False.
@@ -868,7 +868,7 @@ def tdnoisefit(
             raise ValueError(msg)
 
     scale_logv = 1e0 * np.ones(3)
-    scale_delta = 1e-0 * noiseamp(np.sqrt(v0), x[:, 0], ts)
+    scale_delta = 1e-0 * noiseamp(np.sqrt(v0), x[:, 0], dt)
     scale_alpha = 1e-2 * np.ones(m - 1)
     scale_eta = 1e-3 * np.ones(m - 1)
     scale_v = 1.0e-6
@@ -936,7 +936,7 @@ def tdnoisefit(
             _delta,
             _alpha,
             _eta,
-            ts,
+            dt,
             fix_logv=fix_v,
             fix_delta=fix_mu,
             fix_alpha=fix_a,
@@ -1049,9 +1049,9 @@ def fit(
     x: ArrayLike,
     y: ArrayLike,
     *,
-    ts: float = 1,
-    sigma_parms: ArrayLike = (1, 0, 0),
-    f_bounds: ArrayLike = (0, np.inf),
+    dt: float = 1.0,
+    sigma_parms: ArrayLike = (1.0, 0.0, 0.0),
+    f_bounds: ArrayLike = (0.0, np.inf),
     p_bounds: ArrayLike | None = None,
     jac: Callable | None = None,
     args: ArrayLike = (),
@@ -1078,7 +1078,7 @@ def fit(
         Measured input signal.
     y : array_like
         Measured output signal.
-    ts : float, optional
+    dt : float, optional
         Sampling time.
     sigma_parms : None or array_like, optional
         Noise parameters with size (3,), expressed as standard deviation
@@ -1143,15 +1143,15 @@ def fit(
     if kwargs is None:
         kwargs = {}
 
-    w = 2 * np.pi * rfftfreq(n, ts)
+    w = 2 * np.pi * rfftfreq(n, dt)
     w_bounds = 2 * np.pi * np.asarray(f_bounds)
     w_below_idx = w <= w_bounds[0]
     w_above_idx = w > w_bounds[1]
     w_in_idx = np.invert(w_below_idx) * np.invert(w_above_idx)
     n_f = len(w)
 
-    sigma_x = noiseamp(sigma_parms, x, ts=ts)
-    sigma_y = noiseamp(sigma_parms, y, ts=ts)
+    sigma_x = noiseamp(sigma_parms, x, dt=dt)
+    sigma_y = noiseamp(sigma_parms, y, dt=dt)
     p0_est = np.concatenate((p0, np.zeros(n)))
 
     def etfe(_x, _y):
@@ -1207,7 +1207,7 @@ def fit(
             y[:],
             sigma_x,
             sigma_y,
-            ts,
+            dt,
         ),
         p0_est,
         jac=jac_fun,

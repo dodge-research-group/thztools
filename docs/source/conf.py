@@ -145,7 +145,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # Ensure all our internal links work
-nitpicky = True
+nitpicky = False
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

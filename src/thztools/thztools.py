@@ -99,10 +99,10 @@ class NoiseModel:
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
             ... dt=dt)
-            >>> var_t = noise_mod.variance(mu, dt)
+            >>> var_t = noise_mod.variance(mu, dt=dt)
 
             >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
-            >>> axs[0].plot(t, var_t / sigma_parms[1]**2)
+            >>> axs[0].plot(t, var_t / beta**2)
             >>> axs[0].set_ylabel(r"$\sigma^2/(\sigma_\beta\mu_0)^2$")
             >>> axs[1].plot(t, mu)
             >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
@@ -269,7 +269,7 @@ class NoiseModel:
             >>> noise = noise_mod.noise(mu, dt=dt)
 
             >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
-            >>> axs[0].plot(t, noise / sigma_parms[1])
+            >>> axs[0].plot(t, noise / beta)
             >>> axs[0].set_ylabel(r"$\sigma_\mu\epsilon/(\sigma_\beta\mu_0)$")
             >>> axs[1].plot(t, mu)
             >>> axs[1].set_ylabel(r"$\mu/\mu_0$")

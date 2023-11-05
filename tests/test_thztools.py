@@ -14,8 +14,8 @@ from thztools.thztools import (
     fit,
     scaleshift,
     tdnoisefit,
-    sim_wave,
     transfer_out,
+    wave,
 )
 
 atol = 1e-8
@@ -181,7 +181,7 @@ class TestTHzGen:
         )
         t_expected = np.arange(n)
         assert_allclose(
-            sim_wave(n, dt, t0, **kwargs),  # type: ignore
+            wave(n, dt, t0, **kwargs),  # type: ignore
             (y_expected, t_expected),  # type: ignore
             atol=atol,
             rtol=rtol,
@@ -395,7 +395,7 @@ class TestTDNoiseFit:
     m = 64
     dt = 0.05
     t = np.arange(n) * dt
-    mu, _ = sim_wave(n, dt=dt, t0=n * dt / 3)
+    mu, _ = wave(n, dt=dt, t0=n * dt / 3)
     alpha, beta, tau = 1e-5, 1e-2, 1e-3
     sigma = np.array([alpha, beta, tau])
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)

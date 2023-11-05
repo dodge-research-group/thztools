@@ -20,8 +20,8 @@ Waveform simulation and transformation
     :toctree: generated/
 
     scaleshift
-    sim_wave
     transfer_out
+    wave
 
 Parameter estimation
 ^^^^^^^^^^^^^^^^^^^^

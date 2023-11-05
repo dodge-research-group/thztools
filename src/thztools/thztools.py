@@ -95,7 +95,7 @@ class NoiseModel:
             >>> import matplotlib.pyplot as plt
             >>> import thztools as thz
             >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> mu, t = thz.sim_wave(n, dt, t0)
+            >>> mu, t = thz.wave(n, dt, t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
             ... dt=dt)
@@ -184,7 +184,7 @@ class NoiseModel:
             >>> import thztools as thz
 
             >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> mu, t = thz.sim_wave(n, dt, t0)
+            >>> mu, t = thz.wave(n, dt, t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
             ... dt=dt)
@@ -262,7 +262,7 @@ class NoiseModel:
             >>> import thztools as thz
 
             >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> mu, t = thz.sim_wave(n, dt, t0)
+            >>> mu, t = thz.wave(n, dt, t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
             ... dt=dt)
@@ -356,7 +356,7 @@ def transfer_out(
         >>> import thztools as thz
 
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> x, t = thz.sim_wave(n, dt, t0)
+        >>> x, t = thz.wave(n, dt, t0)
 
         >>> def shiftscale(_w, _a, _tau):
         >>>     return _a * np.exp(-1j * _w * _tau)
@@ -420,7 +420,7 @@ def transfer_out(
     return y
 
 
-def sim_wave(
+def wave(
     n: int,
     dt: float,
     t0: float,
@@ -494,7 +494,7 @@ def sim_wave(
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> mu, t = thz.sim_wave(n, dt, t0)
+        >>> mu, t = thz.wave(n, dt, t0)
 
         >>> _, ax = plt.subplots(layout="constrained")
         >>> ax.plot(t, mu)
@@ -562,7 +562,7 @@ def scaleshift(
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> mu, t = thz.sim_wave(n, dt, t0)
+        >>> mu, t = thz.wave(n, dt, t0)
         >>> m = 4
         >>> x = np.repeat(np.atleast_2d(mu), m, axis=0)
         >>> a = 0.5**np.arange(m)

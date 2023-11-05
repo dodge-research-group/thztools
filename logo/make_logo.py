@@ -2,12 +2,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
 
-from thztools import sim_wave
+from thztools import wave
 
 n = 1024
 ts = 0.01
 t0 = 1
-mu, t = sim_wave(n, ts, t0)
+mu, t = wave(n, ts, t0)
 
 # Use the Multicolored Lines example in the Matplotlib documentation to produce
 # the rainbow-colored waveform.

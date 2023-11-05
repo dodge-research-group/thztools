@@ -8,6 +8,7 @@ from numpy.testing import assert_allclose
 from numpy.typing import ArrayLike
 
 from thztools.thztools import (
+    NoiseModel,
     _costfuntls,
     _tdnll_scaled,
     fit,
@@ -38,6 +39,91 @@ def tfun2(w, p0, p1):
 def jac_fun(p, w):
     exp_ipw = np.exp(1j * p[1] * w)
     return np.stack((exp_ipw, 1j * w * p[0] * exp_ipw)).T
+
+
+class TestNoiseModel:
+    n = 16
+    dt = 1.0 / n
+    t = np.arange(n) * dt
+    mu = np.cos(2 * pi * t)
+    mu_dot = -2 * pi * np.sin(2 * pi * t)
+
+    @pytest.mark.parametrize(
+        "alpha, beta, tau, mu, dt, axis, expected",
+        [
+            (1, 0, 0, mu, dt, -1, np.ones(n)),
+            (1, 0, 0, np.stack((mu, mu)), dt, -1, np.ones((2, n))),
+            (1, 0, 0, np.stack((mu, mu)).T, dt, 0, np.ones((n, 2))),
+            (0, 1, 0, mu, dt, -1, mu**2),
+            (0, 0, 1, mu, dt, -1, mu_dot**2),
+        ],
+    )
+    def test_var_definition(
+        self,
+        alpha: float,
+        beta: float,
+        tau: float,
+        mu: ArrayLike,
+        dt: float,
+        axis: int,
+        expected: ArrayLike,
+    ) -> None:
+        noise_model = NoiseModel(alpha, beta, tau, dt)
+        assert_allclose(
+            noise_model.variance(mu, dt=dt, axis=axis),  # type: ignore
+            expected,  # type: ignore
+            atol=atol,
+            rtol=rtol,
+        )
+
+    @pytest.mark.parametrize(
+        "alpha, beta, tau, mu, dt, axis, expected",
+        [
+            (1, 0, 0, mu, dt, -1, np.ones(n)),
+            (1, 0, 0, np.stack((mu, mu)), dt, -1, np.ones((2, n))),
+            (1, 0, 0, np.stack((mu, mu)).T, dt, 0, np.ones((n, 2))),
+            (0, 1, 0, mu, dt, -1, np.abs(mu)),
+            (0, 0, 1, mu, dt, -1, np.abs(mu_dot)),
+        ],
+    )
+    def test_amp_definition(
+        self,
+        alpha: float,
+        beta: float,
+        tau: float,
+        mu: ArrayLike,
+        dt: float,
+        axis: int,
+        expected: ArrayLike,
+    ) -> None:
+        noise_model = NoiseModel(alpha, beta, tau, dt)
+        assert_allclose(
+            noise_model.amplitude(mu, dt=dt, axis=axis),  # type: ignore
+            expected,  # type: ignore
+            atol=atol,
+            rtol=rtol,
+        )
+
+    @pytest.mark.parametrize(
+        "alpha, beta, tau, mu, dt, axis, expected",
+        [
+            (1, 0, 0, mu, dt, -1, (n,)),
+            (1, 0, 0, np.stack((mu, mu)), dt, -1, (2, n)),
+            (1, 0, 0, np.stack((mu, mu)).T, dt, 0, (n, 2)),
+        ],
+    )
+    def test_noise_definition(
+        self,
+        alpha: float,
+        beta: float,
+        tau: float,
+        mu: ArrayLike,
+        dt: float,
+        axis: int,
+        expected: ArrayLike,
+    ) -> None:
+        noise_model = NoiseModel(alpha, beta, tau, dt)
+        assert noise_model.noise(mu, dt=dt, axis=axis).shape == expected
 
 
 class TestTransferOut:

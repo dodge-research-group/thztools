@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import Callable
 from dataclasses import dataclass
+from typing import Callable
 
 import numpy as np
 import scipy.linalg as la
@@ -39,11 +39,9 @@ class NoiseModel:
     dt: float
 
     # noinspection PyShadowingNames
-    def variance(self,
-                 x: ArrayLike,
-                 *,
-                 dt: float,
-                 axis: int = -1) -> np.ndarray:
+    def variance(
+        self, x: ArrayLike, *, dt: float, axis: int = -1
+    ) -> np.ndarray:
         r"""
         Compute the time-domain noise variance.
 
@@ -77,9 +75,9 @@ class NoiseModel:
         References
         ----------
         .. [1] Laleh Mohtashemi, Paul Westlund, Derek G. Sahota, Graham B. Lea,
-            Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-likelihood
-            parameter estimation in terahertz time-domain spectroscopy," Opt.
-            Express **29**, 4912-4926 (2021),
+            Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-
+            likelihood parameter estimation in terahertz time-domain
+            spectroscopy," Opt. Express **29**, 4912-4926 (2021),
             `<https://doi.org/10.1364/OE.417724>`_.
 
         Examples
@@ -87,9 +85,9 @@ class NoiseModel:
         The following example shows the noise variance :math:`\sigma^2(t)` for
         noise parameters :math:`\sigma_\alpha = 10^{-4}`,
         :math:`\sigma_\beta = 10^{-2}`, :math:`\sigma_\tau = 10^{-3}` and the
-        simulated signal :math:`\mu(t)`. The signal amplitude is normalized to its
-        peak magnitude, :math:`\mu_0`. The noise variance is normalized to its
-        peak magnitude, :math:`(\sigma_\beta\mu_0)^2`.
+        simulated signal :math:`\mu(t)`. The signal amplitude is normalized to
+        its peak magnitude, :math:`\mu_0`. The noise variance is normalized to
+        its peak magnitude, :math:`(\sigma_\beta\mu_0)^2`.
 
         .. plot::
            :include-source: True
@@ -121,11 +119,7 @@ class NoiseModel:
         w = 2 * np.pi * rfftfreq(n, dt)
         xdot = irfft(1j * w * rfft(x), n=n)
 
-        var_t = (
-                self.alpha ** 2
-                + (self.beta * x) ** 2
-                + (self.tau * xdot) ** 2
-        )
+        var_t = self.alpha**2 + (self.beta * x) ** 2 + (self.tau * xdot) ** 2
 
         if x.ndim > 1:
             if axis != -1:
@@ -133,11 +127,9 @@ class NoiseModel:
 
         return var_t
 
-    def amplitude(self,
-                  x: ArrayLike,
-                  *,
-                  dt: float,
-                  axis: int = -1) -> np.ndarray:
+    def amplitude(
+        self, x: ArrayLike, *, dt: float, axis: int = -1
+    ) -> np.ndarray:
         r"""
         Compute the time-domain noise amplitude.
 
@@ -171,9 +163,9 @@ class NoiseModel:
         References
         ----------
         .. [1] Laleh Mohtashemi, Paul Westlund, Derek G. Sahota, Graham B. Lea,
-            Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-likelihood
-            parameter estimation in terahertz time-domain spectroscopy," Opt.
-            Express **29**, 4912-4926 (2021),
+            Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-
+            likelihood parameter estimation in terahertz time-domain
+            spectroscopy," Opt. Express **29**, 4912-4926 (2021),
             `<https://doi.org/10.1364/OE.417724>`_.
 
         Examples
@@ -181,9 +173,9 @@ class NoiseModel:
         The following example shows the noise amplitude :math:`\sigma(t)` for
         noise parameters :math:`\sigma_\alpha = 10^{-4}`,
         :math:`\sigma_\beta = 10^{-2}`, :math:`\sigma_\tau = 10^{-3}` and the
-        simulated signal :math:`\mu(t)`. The signal amplitude is normalized to its
-        peak magnitude, :math:`\mu_0`. The noise amplitude is normalized to its
-        peak magnitude, :math:`\sigma_\beta\mu_0`.
+        simulated signal :math:`\mu(t)`. The signal amplitude is normalized to
+        its peak magnitude, :math:`\mu_0`. The noise amplitude is normalized to
+        its peak magnitude, :math:`\sigma_\beta\mu_0`.
 
         .. plot::
            :include-source: True
@@ -208,12 +200,14 @@ class NoiseModel:
         """
         return np.sqrt(self.variance(x, dt=dt, axis=axis))
 
-    def noise(self,
-              x: ArrayLike,
-              *,
-              dt: float,
-              axis: int = -1,
-              seed: int | None = None) -> np.ndarray:
+    def noise(
+        self,
+        x: ArrayLike,
+        *,
+        dt: float,
+        axis: int = -1,
+        seed: int | None = None,
+    ) -> np.ndarray:
         r"""
         Compute a time-domain noise array.
 
@@ -249,9 +243,9 @@ class NoiseModel:
         References
         ----------
         .. [1] Laleh Mohtashemi, Paul Westlund, Derek G. Sahota, Graham B. Lea,
-            Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-likelihood
-            parameter estimation in terahertz time-domain spectroscopy," Opt.
-            Express **29**, 4912-4926 (2021),
+            Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-
+            likelihood parameter estimation in terahertz time-domain
+            spectroscopy," Opt. Express **29**, 4912-4926 (2021),
             `<https://doi.org/10.1364/OE.417724>`_.
 
         Examples

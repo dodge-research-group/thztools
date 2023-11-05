@@ -95,7 +95,7 @@ class NoiseModel:
             >>> import matplotlib.pyplot as plt
             >>> import thztools as thz
             >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> mu, t = thz.thzgen(n, dt, t0)
+            >>> mu, t = thz.sim_wave(n, dt, t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
             ... dt=dt)
@@ -184,14 +184,14 @@ class NoiseModel:
             >>> import thztools as thz
 
             >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> mu, t = thz.thzgen(n, dt, t0)
+            >>> mu, t = thz.sim_wave(n, dt, t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
             ... dt=dt)
-            >>> sigma_t = noise_mod.amplitude(mu, dt)
+            >>> sigma_t = noise_mod.amplitude(mu, dt=dt)
 
             >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
-            >>> axs[0].plot(t, sigma_t / sigma_parms[1])
+            >>> axs[0].plot(t, sigma_t / beta)
             >>> axs[0].set_ylabel(r"$\sigma/(\sigma_\beta\mu_0)$")
             >>> axs[1].plot(t, mu)
             >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
@@ -262,11 +262,11 @@ class NoiseModel:
             >>> import thztools as thz
 
             >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> mu, t = thz.thzgen(n, dt, t0)
+            >>> mu, t = thz.sim_wave(n, dt, t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
             ... dt=dt)
-            >>> noise = noise_mod.noise(mu, dt)
+            >>> noise = noise_mod.noise(mu, dt=dt)
 
             >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
             >>> axs[0].plot(t, noise / sigma_parms[1])
@@ -356,7 +356,7 @@ def transfer_out(
         >>> import thztools as thz
 
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> x, t = thz.thzgen(n, dt, t0)
+        >>> x, t = thz.sim_wave(n, dt, t0)
 
         >>> def shiftscale(_w, _a, _tau):
         >>>     return _a * np.exp(-1j * _w * _tau)
@@ -420,7 +420,7 @@ def transfer_out(
     return y
 
 
-def thzgen(
+def sim_wave(
     n: int,
     dt: float,
     t0: float,
@@ -494,7 +494,7 @@ def thzgen(
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> mu, t = thz.thzgen(n, dt, t0)
+        >>> mu, t = thz.sim_wave(n, dt, t0)
 
         >>> _, ax = plt.subplots(layout="constrained")
         >>> ax.plot(t, mu)
@@ -562,7 +562,7 @@ def scaleshift(
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> mu, t = thz.thzgen(n, dt, t0)
+        >>> mu, t = thz.sim_wave(n, dt, t0)
         >>> m = 4
         >>> x = np.repeat(np.atleast_2d(mu), m, axis=0)
         >>> a = 0.5**np.arange(m)

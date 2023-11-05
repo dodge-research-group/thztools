@@ -14,6 +14,6 @@ Quick list
     NoiseModel
     fit
     scaleshift
+    sim_wave
     tdnoisefit
     transfer_out
-    thzgen

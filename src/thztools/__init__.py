@@ -4,7 +4,7 @@ from thztools.thztools import (
     fit,
     scaleshift,
     tdnoisefit,
-    thzgen,
+    sim_wave,
     transfer_out,
 )
 
@@ -14,6 +14,6 @@ __all__ = [
     "scaleshift",
     "tdnoisefit",
     "transfer_out",
-    "thzgen",
+    "sim_wave",
     "__version__",
 ]

@@ -160,7 +160,7 @@ mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 # numpydoc
 numpydoc_attributes_as_param_list = True
 numpydoc_show_class_members = False
-numpydoc_class_members_toctree = True
+numpydoc_class_members_toctree = False
 
 # -- Options for HTML output -------------------------------------------------
 

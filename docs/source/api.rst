@@ -13,8 +13,6 @@ Quick list
 
     NoiseModel
     fit
-    noiseamp
-    noisevar
     scaleshift
     tdnoisefit
     transfer_out

@@ -12,8 +12,6 @@ from thztools.thztools import (
     _costfuntls,
     _tdnll_scaled,
     fit,
-    noiseamp,
-    noisevar,
     scaleshift,
     tdnoisefit,
     thzgen,
@@ -152,50 +150,6 @@ class TestTransferOut:
         dt = self.dt
         with pytest.raises(ValueError):
             _ = transfer_out(x, tfun1, dt=dt, args=[1.0, 0.0])
-
-
-class TestNoise:
-    n = 16
-    dt = 1.0 / n
-    t = np.arange(n) * dt
-    mu = np.cos(2 * pi * t)
-    mu_dot = -2 * pi * np.sin(2 * pi * t)
-
-    @pytest.mark.parametrize(
-        "sigma, mu, dt, expected",
-        [
-            ([1, 0, 0], mu, dt, np.ones(n)),
-            ([0, 1, 0], mu, dt, mu**2),
-            ([0, 0, 1], mu, dt, mu_dot**2),
-        ],
-    )
-    def test_var_definition(
-        self, sigma: ArrayLike, mu: ArrayLike, dt: float, expected: ArrayLike
-    ) -> None:
-        assert_allclose(
-            noisevar(sigma, mu, dt),  # type: ignore
-            expected,  # type: ignore
-            atol=atol,
-            rtol=rtol,
-        )
-
-    @pytest.mark.parametrize(
-        "sigma, mu, dt, expected",
-        [
-            ([1, 0, 0], mu, dt, np.ones(n)),
-            ([0, 1, 0], mu, dt, np.abs(mu)),
-            ([0, 0, 1], mu, dt, np.abs(mu_dot)),
-        ],
-    )
-    def test_amp_definition(
-        self, sigma: ArrayLike, mu: ArrayLike, dt: float, expected: ArrayLike
-    ) -> None:
-        assert_allclose(
-            noiseamp(sigma, mu, dt),  # type: ignore
-            expected,  # type: ignore
-            atol=atol,
-            rtol=rtol,
-        )
 
 
 class TestTHzGen:
@@ -442,8 +396,10 @@ class TestTDNoiseFit:
     dt = 0.05
     t = np.arange(n) * dt
     mu, _ = thzgen(n, dt=dt, t0=n * dt / 3)
-    sigma = np.array([1e-5, 1e-2, 1e-3])
-    noise = noiseamp(sigma, mu, dt) * rng.standard_normal((m, n))
+    alpha, beta, tau = 1e-5, 1e-2, 1e-3
+    sigma = np.array([alpha, beta, tau])
+    noise_model = NoiseModel(alpha, beta, tau, dt=dt)
+    noise = noise_model.amplitude(mu, dt=dt) * rng.standard_normal((m, n))
     x = np.array(mu + noise)
     a = np.ones(m)
     eta = np.zeros(m)
@@ -504,8 +460,10 @@ class TestFit:
     mu = np.cos(2 * pi * t)
     p0 = (1, 0)
     psi = mu
-    sigma = np.array([1e-5, 0, 0])
-    noise_amp = noiseamp(sigma, mu, dt)
+    alpha, beta, tau = 1e-5, 0, 0
+    sigma = np.array([alpha, beta, tau])
+    noise_model = NoiseModel(alpha, beta, tau, dt=dt)
+    noise_amp = noise_model.amplitude(mu, dt=dt)
     x = mu + noise_amp * rng.standard_normal(n)
     y = psi + noise_amp * rng.standard_normal(n)
 

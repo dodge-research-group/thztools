@@ -420,169 +420,6 @@ def transfer_out(
     return y
 
 
-def noisevar(sigma_parms: ArrayLike, mu: ArrayLike, dt: float) -> np.ndarray:
-    r"""
-    Compute the time-domain noise variance.
-
-    Parameters
-    ----------
-    sigma_parms : array_like
-        Noise parameter array with 3 elements. The first element corresponds
-        to the amplitude noise, in signal units (ie, the same units as mu).
-        The second element corresponds to multiplicative noise, which is
-        dimensionless. The third element corresponds to timebase noise, in
-        units of signal/time, where the units for time are the same as for
-        ``dt``.
-    mu :  array_like
-        Time-domain signal.
-    dt : float
-        Sampling time, normally in picoseconds.
-
-    Returns
-    -------
-    var_t : ndarray
-        Time-domain noise variance, in signal units (squared).
-
-    Notes
-    -----
-    For noise parameters :math:`\sigma_\alpha`, :math:`\sigma_\beta`,
-    :math:`\sigma_\tau` and signal vector :math:`\boldsymbol{\mu}`, the
-    :math:`k`-th element of the time-domain noise variance
-    :math:`\boldsymbol{\sigma}^2` is given by [1]_
-
-    .. math:: \sigma_k^2 = \sigma_\alpha^2 + \sigma_\beta^2\mu_k^2 \
-        + \sigma_\tau^2(\mathbf{D}\boldsymbol{\mu})_k^2,
-
-    where :math:`\mathbf{D}` is the time-domain derivative operator.
-
-    References
-    ----------
-    .. [1] Laleh Mohtashemi, Paul Westlund, Derek G. Sahota, Graham B. Lea,
-        Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-likelihood
-        parameter estimation in terahertz time-domain spectroscopy," Opt.
-        Express **29**, 4912-4926 (2021),
-        `<https://doi.org/10.1364/OE.417724>`_.
-
-    Examples
-    --------
-    The following example shows the noise variance :math:`\sigma^2(t)` for
-    noise parameters :math:`\sigma_\alpha = 10^{-4}`,
-    :math:`\sigma_\beta = 10^{-2}`, :math:`\sigma_\tau = 10^{-3}` and the
-    simulated signal :math:`\mu(t)`. The signal amplitude is normalized to its
-    peak magnitude, :math:`\mu_0`. The noise variance is normalized to its
-    peak magnitude, :math:`(\sigma_\beta\mu_0)^2`.
-
-    .. plot::
-       :include-source: True
-
-        >>> import matplotlib.pyplot as plt
-        >>> import thztools as thz
-        >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> sigma_parms = [1e-4, 1e-2, 1e-3]
-        >>> mu, t = thz.thzgen(n, dt, t0)
-        >>> var_t = thz.noisevar(sigma_parms, mu, dt)
-
-        >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
-        >>> axs[0].plot(t, var_t / sigma_parms[1]**2)
-        >>> axs[0].set_ylabel(r"$\sigma^2/(\sigma_\beta\mu_0)^2$")
-        >>> axs[1].plot(t, mu)
-        >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
-        >>> axs[1].set_xlabel("t (ps)")
-        >>> plt.show()
-    """
-    sigma_parms = np.asarray(sigma_parms)
-    mu = np.asarray(mu)
-
-    n = mu.shape[0]
-    w = 2 * np.pi * rfftfreq(n, dt)
-    mudot = irfft(1j * w * rfft(mu), n=n)
-
-    var_t = (
-        sigma_parms[0] ** 2
-        + (sigma_parms[1] * mu) ** 2
-        + (sigma_parms[2] * mudot) ** 2
-    )
-
-    return var_t
-
-
-# noinspection PyShadowingNames
-def noiseamp(sigma_parms: ArrayLike, mu: ArrayLike, dt: float) -> np.ndarray:
-    r"""
-    Compute the time-domain noise amplitude.
-
-    Parameters
-    ----------
-    sigma_parms : array_like
-        Noise parameter array with 3 elements. The first element corresponds
-        to the amplitude noise, in signal units (ie, the same units as mu).
-        The second element corresponds to multiplicative noise, which is
-        dimensionless. The third element corresponds to timebase noise, in
-        units of signal/time, where the units for time are the same as for
-        ``dt``.
-    mu :  array_like
-        Time-domain signal.
-    dt : float
-        Sampling time, normally in picoseconds.
-
-    Returns
-    -------
-    sigma_t : ndarray
-        Time-domain noise amplitude, in signal units.
-
-    Notes
-    -----
-    For noise parameters :math:`\sigma_\alpha`, :math:`\sigma_\beta`,
-    :math:`\sigma_\tau` and signal vector :math:`\boldsymbol{\mu}`, the
-    :math:`k`-th element of the time-domain noise amplitude vector
-    :math:`\boldsymbol{\sigma}` is given by [1]_
-
-    .. math:: \sigma_k = \sqrt{\sigma_\alpha^2 + \sigma_\beta^2\mu_k^2 \
-        + \sigma_\tau^2(\mathbf{D}\boldsymbol{\mu})_k^2},
-
-    where :math:`\mathbf{D}` is the time-domain derivative operator.
-
-    References
-    ----------
-    .. [1] Laleh Mohtashemi, Paul Westlund, Derek G. Sahota, Graham B. Lea,
-        Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-likelihood
-        parameter estimation in terahertz time-domain spectroscopy," Opt.
-        Express **29**, 4912-4926 (2021),
-        `<https://doi.org/10.1364/OE.417724>`_.
-
-    Examples
-    --------
-    The following example shows the noise amplitude :math:`\sigma(t)` for
-    noise parameters :math:`\sigma_\alpha = 10^{-4}`,
-    :math:`\sigma_\beta = 10^{-2}`, :math:`\sigma_\tau = 10^{-3}` and the
-    simulated signal :math:`\mu(t)`. The signal amplitude is normalized to its
-    peak magnitude, :math:`\mu_0`. The noise amplitude is normalized to its
-    peak magnitude, :math:`\sigma_\beta\mu_0`.
-
-    .. plot::
-       :include-source: True
-
-        >>> import matplotlib.pyplot as plt
-        >>> import thztools as thz
-
-        >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> sigma_parms = [1e-4, 1e-2, 1e-3]
-        >>> mu, t = thz.thzgen(n, dt, t0)
-        >>> sigma_t = thz.noiseamp(sigma_parms, mu, dt)
-
-        >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
-        >>> axs[0].plot(t, sigma_t / sigma_parms[1])
-        >>> axs[0].set_ylabel(r"$\sigma/(\sigma_\beta\mu_0)$")
-        >>> axs[1].plot(t, mu)
-        >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
-        >>> axs[1].set_xlabel("t (ps)")
-        >>> plt.show()
-    """
-
-    return np.sqrt(noisevar(sigma_parms, mu, dt))
-
-
-# noinspection PyShadowingNames
 def thzgen(
     n: int,
     dt: float,
@@ -1146,7 +983,9 @@ def tdnoisefit(
             raise ValueError(msg)
 
     scale_logv = 1e0 * np.ones(3)
-    scale_delta = 1e-0 * noiseamp(np.sqrt(v0), x[:, 0], dt)
+    alpha, beta, tau = np.sqrt(v0)
+    noise_model = NoiseModel(alpha, beta, tau, dt)
+    scale_delta = 1e-0 * noise_model.amplitude(x[:, 0], dt=dt)
     scale_alpha = 1e-2 * np.ones(m - 1)
     scale_eta = 1e-3 * np.ones(m - 1)
     scale_v = 1.0e-6
@@ -1339,8 +1178,8 @@ def fit(
     Fit a transfer function to THz time-domain data.
 
     Computes the noise on the input ``x`` and output ``y`` time series using
-    ``noiseamp``. Then uses the total residuals generated by ``_costfuntls`` to
-    fit the input and output to the transfer function.
+    a given ``NoiseModel``. Uses the total residuals generated by
+    ``_costfuntls`` to fit the input and output to the transfer function.
 
     Parameters
     ----------
@@ -1400,6 +1239,7 @@ def fit(
     p0 = np.asarray(p0)
     x = np.asarray(x)
     y = np.asarray(y)
+    sigma_parms = np.asarray(sigma_parms)
 
     n = y.shape[-1]
     n_p = len(p0)
@@ -1428,8 +1268,10 @@ def fit(
     w_in_idx = np.invert(w_below_idx) * np.invert(w_above_idx)
     n_f = len(w)
 
-    sigma_x = noiseamp(sigma_parms, x, dt=dt)
-    sigma_y = noiseamp(sigma_parms, y, dt=dt)
+    alpha, beta, tau = sigma_parms
+    noise_model = NoiseModel(alpha, beta, tau, dt)
+    sigma_x = noise_model.amplitude(x, dt=dt)
+    sigma_y = noise_model.amplitude(y, dt=dt)
     p0_est = np.concatenate((p0, np.zeros(n)))
 
     def etfe(_x, _y):

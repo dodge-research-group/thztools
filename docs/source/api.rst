@@ -11,6 +11,7 @@ Quick list
 .. autosummary::
     :toctree: functions/
 
+    NoiseModel
     fit
     noiseamp
     noisevar

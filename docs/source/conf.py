@@ -151,9 +151,8 @@ pygments_style = "default"
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 
 # numpydoc
-numpydoc_attributes_as_param_list = False
 numpydoc_show_class_members = False
-numpydoc_class_members_toctree = False
+
 # Report warnings for all validation checks
 numpydoc_validation_checks = {"all", "SA01", "ES01", "RT02", "EX01"}
 

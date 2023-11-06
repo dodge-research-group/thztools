@@ -125,6 +125,12 @@ autodoc_type_aliases = {
 autosummary_generate = True
 autodoc_typehints = "none"
 
+# numpydoc
+numpydoc_show_class_members = False
+
+# Report warnings for all validation checks
+numpydoc_validation_checks = {"all", "SA01", "ES01", "RT02", "EX01"}
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -149,12 +155,6 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 pygments_style = "default"
 
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
-
-# numpydoc
-numpydoc_show_class_members = False
-
-# Report warnings for all validation checks
-numpydoc_validation_checks = {"all", "SA01", "ES01", "RT02", "EX01"}
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/{.major}".format(sys.version_info),

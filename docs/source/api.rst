@@ -3,16 +3,13 @@ THzTools
 
 .. currentmodule:: thztools
 
-Noise model class and methods
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Noise model
+^^^^^^^^^^^
 
 .. autosummary::
     :toctree: generated/
 
     NoiseModel
-    NoiseModel.amplitude
-    NoiseModel.variance
-    NoiseModel.noise
 
 Waveform simulation and transformation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -22,7 +22,7 @@ class NoiseModel:
     r"""
     Terahertz noise model class.
 
-    Attributes
+    Parameters
     ----------
     alpha : float
         Additive noise amplitude.
@@ -275,7 +275,6 @@ class NoiseModel:
             >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
             >>> axs[1].set_xlabel("t (ps)")
             >>> plt.show()
-
         """
         x = np.asarray(x)
         axis = int(axis)
@@ -323,7 +322,7 @@ def transfer_out(
     fft_sign : bool, optional
         Complex exponential sign convention for harmonic time dependence.
     args : tuple, optional
-        Extra arguments passed to the transfer function
+        Extra arguments passed to the transfer function.
 
     Returns
     -------
@@ -398,7 +397,6 @@ def transfer_out(
         >>> ax.set_ylabel('Amplitude (arb. units)')
         >>>
         >>> plt.show()
-
     """
     x = np.asarray(x)
     if x.ndim != 1:
@@ -527,7 +525,8 @@ def scaleshift(
     dt: float = 1.0,
     axis: int = -1,
 ) -> np.ndarray:
-    r"""Rescale and shift waveforms.
+    r"""
+    Rescale and shift waveforms.
 
     Parameters
     ----------
@@ -914,7 +913,7 @@ def tdnoisefit(
     Returns
     -------
     p : dict
-        Output parameter dictionary containing:
+        Output parameter dictionary containing the following.
 
             var : ndarray, shape (3,)
                 Noise parameters, expressed as variance amplitudes.
@@ -925,7 +924,7 @@ def tdnoisefit(
             eta : ndarray, shape (m,)
                 Delay vector.
     fval : float
-        Value of NLL cost function from FMINUNC
+        Value of NLL cost function from FMINUNC.
     diagnostic : dict
         Dictionary containing diagnostic information:
 
@@ -951,7 +950,6 @@ def tdnoisefit(
                 Jacobian.
             nit : int
                 Number of iterations performed by `scipy.optimize.minimize`.
-
     """
     if fix_v and fix_mu and fix_a and fix_eta:
         msg = "All variables are fixed"

@@ -54,16 +54,16 @@ version = runpy.run_path(
 extensions = [
     "matplotlib.sphinxext.plot_directive",
     "numpydoc",
-    "sphinx.ext.autosummary",
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
-    "sphinx.ext.mathjax",
-    "sphinx.ext.todo",
-    "sphinx.ext.viewcode",
-    "sphinx.ext.napoleon",
-    "sphinx.ext.intersphinx",
     "sphinx.ext.extlinks",
     "sphinx.ext.ifconfig",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
 ]
 
 # -----------------------------------------------------------------------------
@@ -158,9 +158,11 @@ pygments_style = "default"
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 
 # numpydoc
-numpydoc_attributes_as_param_list = True
-numpydoc_show_class_members = False
-numpydoc_class_members_toctree = False
+# numpydoc_attributes_as_param_list = True
+# Report warnings for all validation checks
+numpydoc_validation_checks = {"all", "SA01", "ES01", "RT02", "EX01"}
+# numpydoc_show_class_members = False
+# numpydoc_class_members_toctree = False
 
 # -- Options for HTML output -------------------------------------------------
 

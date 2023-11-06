@@ -53,17 +53,14 @@ version = runpy.run_path(
 # ones.
 extensions = [
     "matplotlib.sphinxext.plot_directive",
-    "numpydoc",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
-    "sphinx.ext.doctest",
+    "sphinx.ext.coverage",
     "sphinx.ext.extlinks",
-    "sphinx.ext.ifconfig",
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
-    "sphinx.ext.napoleon",
-    "sphinx.ext.todo",
     "sphinx.ext.viewcode",
+    "numpydoc",
 ]
 
 # -----------------------------------------------------------------------------
@@ -100,7 +97,6 @@ plot_rcparams = {
     "text.usetex": False,
 }
 
-# autodoc_typehints = "signature"
 autodoc_type_aliases = {
     "ArrayLike": "ArrayLike",
     "Boolean": "bool",
@@ -128,9 +124,6 @@ autodoc_type_aliases = {
 
 autosummary_generate = True
 autodoc_typehints = "none"
-napoleon_google_docstring = False
-napoleon_use_param = False
-napoleon_use_ivar = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -145,7 +138,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # Ensure all our internal links work
-nitpicky = False
+nitpicky = True
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -158,11 +151,20 @@ pygments_style = "default"
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 
 # numpydoc
-# numpydoc_attributes_as_param_list = True
+numpydoc_attributes_as_param_list = False
+numpydoc_show_class_members = False
+numpydoc_class_members_toctree = False
 # Report warnings for all validation checks
 numpydoc_validation_checks = {"all", "SA01", "ES01", "RT02", "EX01"}
-# numpydoc_show_class_members = False
-# numpydoc_class_members_toctree = False
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/{.major}".format(sys.version_info),
+               None),
+    "numpy": ("https://numpy.org/doc/stable", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "matplotlib": ("https://matplotlib.org/", None),
+}
+
 
 # -- Options for HTML output -------------------------------------------------
 

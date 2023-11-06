@@ -125,8 +125,10 @@ autodoc_type_aliases = {
 autosummary_generate = True
 autodoc_typehints = "none"
 
-# numpydoc
-numpydoc_show_class_members = False
+# # numpydoc
+# numpydoc_show_class_members = True
+# numpydoc_attributes_as_param_list = False
+# numpy_class_members_toctree = False
 
 # Report warnings for all validation checks
 numpydoc_validation_checks = {"all", "SA01", "ES01", "RT02", "EX01"}

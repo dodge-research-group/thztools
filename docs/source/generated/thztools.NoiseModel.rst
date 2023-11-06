@@ -4,31 +4,30 @@
 .. currentmodule:: thztools
 
 .. autoclass:: NoiseModel
+   :no-members:
+   :no-inherited-members:
+   :no-special-members:
 
-   
-   .. automethod:: __init__
+  
+   .. HACK -- the point here is that we don't want this to appear in the output, but the autosummary should still generate the pages.
+      .. autosummary::
+         :toctree:
+      
+         NoiseModel.amplitude
+         NoiseModel.noise
+         NoiseModel.variance
+      
+  
 
-   
-   .. rubric:: Methods
-
-   .. autosummary::
-   
-      ~NoiseModel.__init__
-      ~NoiseModel.amplitude
-      ~NoiseModel.noise
-      ~NoiseModel.variance
-   
-   
-
-   
-   
-   .. rubric:: Attributes
-
-   .. autosummary::
-   
-      ~NoiseModel.alpha
-      ~NoiseModel.beta
-      ~NoiseModel.tau
-      ~NoiseModel.dt
-   
-   
+  
+  
+   .. HACK -- the point here is that we don't want this to appear in the output, but the autosummary should still generate the pages.
+      .. autosummary::
+         :toctree:
+      
+         NoiseModel.alpha
+         NoiseModel.beta
+         NoiseModel.tau
+         NoiseModel.dt
+  
+  

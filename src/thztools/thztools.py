@@ -163,10 +163,14 @@ class NoiseModel:
                 x = np.moveaxis(x, axis, -1)
 
         n = x.shape[-1]
-        w = 2 * np.pi * rfftfreq(n, dt)
+        w = 2 * np.pi * rfftfreq(n)
         xdot = irfft(1j * w * rfft(x), n=n)
 
-        var_t = self.alpha**2 + (self.beta * x) ** 2 + (self.tau * xdot) ** 2
+        var_t = (
+            self.alpha**2
+            + (self.beta * x) ** 2
+            + (self.tau * xdot / dt) ** 2
+        )
 
         if x.ndim > 1:
             if axis != -1:
@@ -454,8 +458,8 @@ def transfer_out(
         args = (args,)
 
     n = x.size
-    f = rfftfreq(n, dt)
-    w = 2 * np.pi * f
+    f_scaled = rfftfreq(n)
+    w = 2 * np.pi * f_scaled / dt
     h = tfun(w, *args)
     if not fft_sign:
         h = np.conj(h)
@@ -549,9 +553,9 @@ def wave(
     """
     taul = fwhm / np.sqrt(2 * np.log(2))
 
-    f = rfftfreq(n, dt)
+    f_scaled = rfftfreq(n)
 
-    w = 2 * np.pi * f
+    w = 2 * np.pi * f_scaled / dt
     ell = np.exp(-((w * taul) ** 2) / 2) / np.sqrt(2 * np.pi * taul**2)
     r = 1 / (1 / taur - 1j * w) - 1 / (1 / taur + 1 / tauc - 1j * w)
     s = -1j * w * (ell * r) ** 2 * np.exp(1j * w * t0)
@@ -656,8 +660,8 @@ def scaleshift(
             )
             raise ValueError(msg)
 
-    f = rfftfreq(n, dt)
-    w = 2 * np.pi * f
+    f_scaled = rfftfreq(n)
+    w = 2 * np.pi * f_scaled / dt
     phase = np.expand_dims(eta, axis=eta.ndim) * w
 
     x_adjusted = np.fft.irfft(
@@ -728,7 +732,7 @@ def _costfuntls(
 
     n = x.shape[-1]
     delta_norm = (x - mu) / sigma_x
-    w = 2 * np.pi * rfftfreq(n, dt)
+    w = 2 * np.pi * rfftfreq(n) / dt
     h_f = fun(theta, w)
 
     eps_norm = (y - irfft(rfft(mu) * h_f, n=n)) / sigma_y
@@ -743,8 +747,7 @@ def _tdnll_scaled(
     logv: ArrayLike,
     delta: ArrayLike,
     alpha: ArrayLike,
-    eta: ArrayLike,
-    dt: float,
+    eta_on_dt: ArrayLike,
     *,
     fix_logv: bool,
     fix_delta: bool,
@@ -774,10 +777,9 @@ def _tdnll_scaled(
         Signal deviation vector with shape (n,).
     alpha: array_like
         Amplitude deviation vector with shape (m - 1,).
-    eta : array_like
-        Delay deviation vector with shape (m - 1,).
-    dt : float
-        Sampling time.
+    eta_on_dt : array_like
+        Normalized delay deviation vector with shape (m - 1,), equal to
+        ``eta``/``dt``.
     fix_logv : bool
         Exclude noise parameters from gradiate calculation when ``True``.
     fix_delta : bool
@@ -811,7 +813,7 @@ def _tdnll_scaled(
     logv = np.asarray(logv)
     delta = np.asarray(delta)
     alpha = np.asarray(alpha)
-    eta = np.asarray(eta)
+    eta_on_dt = np.asarray(eta_on_dt)
 
     scale_logv = np.asarray(scale_logv)
     scale_delta = np.asarray(scale_delta)
@@ -824,14 +826,14 @@ def _tdnll_scaled(
     v_scaled = np.exp(logv * scale_logv)
     mu = x[0, :] - delta * scale_delta
     a = np.insert(1.0 + alpha * scale_alpha, 0, 1.0)
-    eta = np.insert(eta * scale_eta, 0, 0.0)
+    eta_on_dt = np.insert(eta_on_dt * scale_eta, 0, 0.0)
 
     # Compute frequency vector and Fourier coefficients of mu
-    f = rfftfreq(n, dt)
-    w = 2 * np.pi * f
+    f_scaled = rfftfreq(n)
+    w = 2 * np.pi * f_scaled
     mu_f = rfft(mu)
 
-    exp_iweta = np.exp(1j * np.outer(eta, w))
+    exp_iweta = np.exp(1j * np.outer(eta_on_dt, w))
     zeta_f = ((np.conj(exp_iweta) * mu_f).T * a).T
     zeta = irfft(zeta_f, n=n)
 
@@ -1097,8 +1099,7 @@ def tdnoisefit(
             _logv,
             _delta,
             _alpha,
-            _eta,
-            dt,
+            _eta / dt,
             fix_logv=fix_v,
             fix_delta=fix_mu,
             fix_alpha=fix_a,

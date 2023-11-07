@@ -357,8 +357,7 @@ class TestTDNLL:
         logv = self.logv
         delta = self.delta
         alpha = self.alpha
-        eta = self.eta
-        dt = self.dt
+        eta_on_dt = self.eta / self.dt
         desired_gradnll = np.concatenate(
             (
                 desired_gradnll_logv,
@@ -372,8 +371,7 @@ class TestTDNLL:
             logv,
             delta,
             alpha,
-            eta,
-            dt,
+            eta_on_dt,
             fix_logv=fix_logv,
             fix_delta=fix_delta,
             fix_alpha=fix_alpha,

@@ -22,6 +22,16 @@ class NoiseModel:
     r"""
     Terahertz noise model class.
 
+    For noise parameters :math:`\sigma_\alpha`, :math:`\sigma_\beta`,
+    :math:`\sigma_\tau` and signal vector :math:`\boldsymbol{\mu}`, the
+    :math:`k`-th element of the time-domain noise variance
+    :math:`\boldsymbol{\sigma}^2` is given by [1]_
+
+    .. math:: \sigma_k^2 = \sigma_\alpha^2 + \sigma_\beta^2\mu_k^2 \
+        + \sigma_\tau^2(\mathbf{D}\boldsymbol{\mu})_k^2,
+
+    where :math:`\mathbf{D}` is the time-domain derivative operator.
+
     Parameters
     ----------
     alpha : float
@@ -32,6 +42,43 @@ class NoiseModel:
         Timebase noise amplitude.
     dt : float
         Sampling time.
+
+    References
+    ----------
+    .. [1] Laleh Mohtashemi, Paul Westlund, Derek G. Sahota, Graham B. Lea,
+        Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-
+        likelihood parameter estimation in terahertz time-domain
+        spectroscopy," Opt. Express **29**, 4912-4926 (2021),
+        `<https://doi.org/10.1364/OE.417724>`_.
+
+    Examples
+    --------
+    The following example shows the noise variance :math:`\sigma^2(t)` for
+    noise parameters :math:`\sigma_\alpha = 10^{-4}`,
+    :math:`\sigma_\beta = 10^{-2}`, :math:`\sigma_\tau = 10^{-3}` and the
+    simulated signal :math:`\mu(t)`. The signal amplitude is normalized to
+    its peak magnitude, :math:`\mu_0`. The noise variance is normalized to
+    :math:`(\sigma_\beta\mu_0)^2`.
+
+    .. plot::
+       :include-source: True
+
+        >>> import matplotlib.pyplot as plt
+        >>> import thztools as thz
+        >>> n, dt, t0 = 256, 0.05, 2.5
+        >>> mu, t = thz.wave(n, dt, t0)
+        >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
+        >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
+        ... dt=dt)
+        >>> var_t = noise_mod.variance(mu, dt=dt)
+
+        >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
+        >>> axs[0].plot(t, var_t / beta**2)
+        >>> axs[0].set_ylabel(r"$\sigma^2/(\sigma_\beta\mu_0)^2$")
+        >>> axs[1].plot(t, mu)
+        >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
+        >>> axs[1].set_xlabel("t (ps)")
+        >>> plt.show()
     """
     alpha: float
     beta: float
@@ -87,7 +134,7 @@ class NoiseModel:
         :math:`\sigma_\beta = 10^{-2}`, :math:`\sigma_\tau = 10^{-3}` and the
         simulated signal :math:`\mu(t)`. The signal amplitude is normalized to
         its peak magnitude, :math:`\mu_0`. The noise variance is normalized to
-        its peak magnitude, :math:`(\sigma_\beta\mu_0)^2`.
+        :math:`(\sigma_\beta\mu_0)^2`.
 
         .. plot::
            :include-source: True
@@ -175,7 +222,7 @@ class NoiseModel:
         :math:`\sigma_\beta = 10^{-2}`, :math:`\sigma_\tau = 10^{-3}` and the
         simulated signal :math:`\mu(t)`. The signal amplitude is normalized to
         its peak magnitude, :math:`\mu_0`. The noise amplitude is normalized to
-        its peak magnitude, :math:`\sigma_\beta\mu_0`.
+        :math:`\sigma_\beta\mu_0`.
 
         .. plot::
            :include-source: True

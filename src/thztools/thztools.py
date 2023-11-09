@@ -40,7 +40,7 @@ class NoiseModel:
         Multiplicative noise amplitude.
     tau : float
         Timebase noise amplitude.
-    dt : float
+    dt : float, optional
         Sampling time.
 
     References
@@ -83,11 +83,11 @@ class NoiseModel:
     alpha: float
     beta: float
     tau: float
-    dt: float
+    dt: float | None = 1.0
 
     # noinspection PyShadowingNames
     def variance(
-        self, x: ArrayLike, *, dt: float, axis: int = -1
+        self, x: ArrayLike, *, dt: float = 1.0, axis: int = -1
     ) -> np.ndarray:
         r"""
         Compute the time-domain noise variance.
@@ -96,8 +96,8 @@ class NoiseModel:
         ----------
         x :  array_like
             Time-domain signal.
-        dt : float
-            Sampling time, normally in picoseconds.
+        dt : float, optional
+            Sampling time, normally in picoseconds. Default set to 1.0.
         axis : int, optional
             Axis over which to apply the correction. If not given, applies over
             the last axis in ``x``.
@@ -163,14 +163,10 @@ class NoiseModel:
                 x = np.moveaxis(x, axis, -1)
 
         n = x.shape[-1]
-        w = 2 * np.pi * rfftfreq(n)
-        xdot = irfft(1j * w * rfft(x), n=n)
+        w_scaled = 2 * np.pi * rfftfreq(n)
+        xdot = irfft(1j * w_scaled * rfft(x), n=n) / dt
 
-        var_t = (
-            self.alpha**2
-            + (self.beta * x) ** 2
-            + (self.tau * xdot / dt) ** 2
-        )
+        var_t = self.alpha**2 + (self.beta * x) ** 2 + (self.tau * xdot) ** 2
 
         if x.ndim > 1:
             if axis != -1:
@@ -179,7 +175,7 @@ class NoiseModel:
         return var_t
 
     def amplitude(
-        self, x: ArrayLike, *, dt: float, axis: int = -1
+        self, x: ArrayLike, *, dt: float = 1.0, axis: int = -1
     ) -> np.ndarray:
         r"""
         Compute the time-domain noise amplitude.
@@ -188,8 +184,8 @@ class NoiseModel:
         ----------
         x :  array_like
             Time-domain signal.
-        dt : float
-            Sampling time, normally in picoseconds.
+        dt : float, optional
+            Sampling time, normally in picoseconds. Default set to 1.0.
         axis : int, optional
             Axis over which to apply the correction. If not given, applies over
             the last axis in ``x``.
@@ -255,7 +251,7 @@ class NoiseModel:
         self,
         x: ArrayLike,
         *,
-        dt: float,
+        dt: float = 1.0,
         axis: int = -1,
         seed: int | None = None,
     ) -> np.ndarray:
@@ -266,8 +262,8 @@ class NoiseModel:
         ----------
         x :  array_like
             Time-domain signal.
-        dt : float
-            Sampling time, normally in picoseconds.
+        dt : float, optional
+            Sampling time, normally in picoseconds. Default set to 1.0.
         axis : int, optional
             Axis over which to apply the correction. If not given, applies over
             the last axis in ``x``.
@@ -487,16 +483,12 @@ def wave(
 
     n : int
         Number of samples.
-
     dt : float
         Sampling time, normally in picoseconds.
-
     t0 : float
         Pulse center, normally in picoseconds.
-
     a : float, optional
         Peak amplitude. The default is one.
-
     taur, tauc, fwhm : float, optional
         Current pulse rise time, current pulse decay time, and laser pulse
         FWHM, respectively. The defaults are 0.3 ps, 0.1 ps, and 0.05 ps,
@@ -508,7 +500,6 @@ def wave(
 
     x : ndarray
         Signal array.
-
     t : ndarray
         Array of time samples.
 
@@ -683,7 +674,7 @@ def _costfuntls(
     y: ArrayLike,
     sigma_x: ArrayLike,
     sigma_y: ArrayLike,
-    dt: float,
+    dt: float = 1.0,
 ) -> np.ndarray:
     r"""Computes the residual vector for the total least squares cost function.
 
@@ -714,8 +705,8 @@ def _costfuntls(
     sigma_y : array_like
         Noise vector of the output signal.
 
-    dt : float
-        Sampling time.
+    dt : float, optional
+        Sampling time. Default set to 1.0.
 
     Returns
     -------
@@ -830,10 +821,10 @@ def _tdnll_scaled(
 
     # Compute frequency vector and Fourier coefficients of mu
     f_scaled = rfftfreq(n)
-    w = 2 * np.pi * f_scaled
+    w_scaled = 2 * np.pi * f_scaled
     mu_f = rfft(mu)
 
-    exp_iweta = np.exp(1j * np.outer(eta_on_dt, w))
+    exp_iweta = np.exp(1j * np.outer(eta_on_dt, w_scaled))
     zeta_f = ((np.conj(exp_iweta) * mu_f).T * a).T
     zeta = irfft(zeta_f, n=n)
 
@@ -844,7 +835,7 @@ def _tdnll_scaled(
     ressq = res**2
 
     # Alternative case: A, eta, or both are not set to defaults
-    dzeta = irfft(1j * w * zeta_f, n=n)
+    dzeta = irfft(1j * w_scaled * zeta_f, n=n)
 
     valpha = v_scaled[0]
     vbeta = v_scaled[1] * zeta**2
@@ -881,7 +872,7 @@ def _tdnll_scaled(
             # Gradient wrt delta
             p = rfft(v_scaled[1] * dvar * zeta - reswt) - 1j * v_scaled[
                 2
-            ] * w * rfft(dvar * dzeta)
+            ] * w_scaled * rfft(dvar * dzeta)
             gradnll_scaled = np.append(
                 gradnll_scaled,
                 -np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
@@ -897,7 +888,7 @@ def _tdnll_scaled(
             )
         if not fix_eta:
             # Gradient wrt eta
-            ddzeta = irfft(-(w**2) * zeta_f, n=n)
+            ddzeta = irfft(-(w_scaled**2) * zeta_f, n=n)
             dnlldeta = -np.sum(
                 dvar
                 * (zeta * dzeta * v_scaled[1] + dzeta * ddzeta * v_scaled[2])
@@ -915,11 +906,11 @@ def _tdnll_scaled(
 def tdnoisefit(
     x: ArrayLike,
     *,
+    dt: float = 1.0,
     v0: ArrayLike | None = None,
     mu0: ArrayLike | None = None,
     a0: ArrayLike | None = None,
     eta0: ArrayLike | None = None,
-    dt: float = 1.0,
     fix_v: bool = False,
     fix_mu: bool = False,
     fix_a: bool = True,
@@ -936,6 +927,8 @@ def tdnoisefit(
     ----------
     x : ndarray, shape(n, m)
         Data array with `m` waveforms, each composed of `n` points.
+    dt : float, optional
+        Sampling time. Default is 1.0.
     v0 : ndarray, shape (3,), optional
         Initial guess, noise model parameters with size (3,), expressed as
         variance amplitudes.
@@ -948,8 +941,6 @@ def tdnoisefit(
     eta0 : ndarray, shape(m,), optional
         Initial guess, delay vector with size (m,). Default is zero for all
         entries.
-    dt : float, optional
-        Sampling time. Default is 1.0.
     fix_v : bool, optional
         Fix noise variance parameters. Default is False.
     fix_mu : bool, optional

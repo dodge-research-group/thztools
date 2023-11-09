@@ -25,9 +25,9 @@
       .. autosummary::
          :toctree:
       
+         NoiseModel.dt
          NoiseModel.alpha
          NoiseModel.beta
          NoiseModel.tau
-         NoiseModel.dt
   
   

@@ -17,6 +17,57 @@ NUM_NOISE_PARAMETERS = 3
 NUM_NOISE_DATA_DIMENSIONS = 2
 
 
+@dataclass
+class NoiseResult:
+    r"""
+    Represents the noise parameter estimate output.
+
+    Parameters
+    ----------
+    p : dict
+        Output parameter dictionary containing the following.
+
+            var : ndarray, shape (3,)
+                Noise parameters, expressed as variance amplitudes.
+            mu : ndarray, shape (n,)
+                Signal vector.
+            a : ndarray, shape (m,)
+                Amplitude vector.
+            eta : ndarray, shape (m,)
+                Delay vector.
+    fval : float
+        Value of NLL cost function from FMINUNC.
+    diagnostic : dict
+        Dictionary containing diagnostic information:
+
+            grad_scaled : ndarray
+                Gradient of the scaled negative log-likelihood function with
+                respect to the scaled fit parameters.
+            hess_inv_scaled : ndarray
+                Inverse of the Hessian obtained from scipy.optimize.minimize
+                using the BFGS method, which is determined for the scaled
+                negative log-likelihood function with respect to the scaled
+                fit parameters.
+            err : dict
+                Dictionary containing  error of the parameters. Uses the same
+                keys as ``p``.
+            success : bool
+                Whether the fit terminated successfully.
+            status : int
+                Termination status of fit.
+            message : str
+                Description of the termination condition.
+            nfev, njev : int
+                Number of evaluations of the objective function and the
+                Jacobian.
+            nit : int
+                Number of iterations performed by `scipy.optimize.minimize`.
+    """
+    p: dict
+    fval: float
+    diagnostic: dict
+
+
 # noinspection PyShadowingNames
 @dataclass
 class NoiseModel:
@@ -72,7 +123,7 @@ class NoiseModel:
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
         >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
         ... dt=dt)
-        >>> var_t = noise_mod.variance(mu, dt=dt)
+        >>> var_t = noise_mod.variance(mu)
 
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
         >>> axs[0].plot(t, var_t / beta**2)
@@ -913,7 +964,7 @@ def tdnoisefit(
     fix_mu: bool = False,
     fix_a: bool = True,
     fix_eta: bool = True,
-) -> tuple[dict, float, dict]:
+) -> NoiseResult:
     r"""
     Estimate noise model parameters.
 
@@ -950,44 +1001,8 @@ def tdnoisefit(
 
     Returns
     -------
-    p : dict
-        Output parameter dictionary containing the following.
-
-            var : ndarray, shape (3,)
-                Noise parameters, expressed as variance amplitudes.
-            mu : ndarray, shape (n,)
-                Signal vector.
-            a : ndarray, shape (m,)
-                Amplitude vector.
-            eta : ndarray, shape (m,)
-                Delay vector.
-    fval : float
-        Value of NLL cost function from FMINUNC.
-    diagnostic : dict
-        Dictionary containing diagnostic information:
-
-            grad_scaled : ndarray
-                Gradient of the scaled negative log-likelihood function with
-                respect to the scaled fit parameters.
-            hess_inv_scaled : ndarray
-                Inverse of the Hessian obtained from scipy.optimize.minimize
-                using the BFGS method, which is determined for the scaled
-                negative log-likelihood function with respect to the scaled
-                fit parameters.
-            err : dict
-                Dictionary containing  error of the parameters. Uses the same
-                keys as ``p``.
-            success : bool
-                Whether the fit terminated successfully.
-            status : int
-                Termination status of fit.
-            message : str
-                Description of the termination condition.
-            nfev, njev : int
-                Number of evaluations of the objective function and the
-                Jacobian.
-            nit : int
-                Number of iterations performed by `scipy.optimize.minimize`.
+    res : NoiseResult
+        Fit result, represented as a ``NoiseResult`` object.
     """
     if fix_v and fix_mu and fix_a and fix_eta:
         msg = "All variables are fixed"
@@ -1192,7 +1207,7 @@ def tdnoisefit(
     if not fix_eta:
         diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
 
-    return p, out.fun / scale_v, diagnostic
+    return NoiseResult(p, out.fun / scale_v, diagnostic)
 
 
 def fit(

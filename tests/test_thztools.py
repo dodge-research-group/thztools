@@ -444,7 +444,7 @@ class TestTDNoiseFit:
                     fix_eta=fix_eta,
                 )
         else:
-            p, fval, diagnostic = tdnoisefit(
+            res = tdnoisefit(
                 x.T,
                 v0=v0,
                 mu0=mu0,
@@ -455,7 +455,7 @@ class TestTDNoiseFit:
                 fix_a=fix_a,
                 fix_eta=fix_eta,
             )
-            assert diagnostic["status"] == 0
+            assert res.diagnostic["status"] == 0
 
 
 class TestFit:

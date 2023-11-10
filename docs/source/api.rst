@@ -10,6 +10,7 @@ Noise model
     :toctree: generated/
 
     NoiseModel
+    NoiseResult
 
 Waveform simulation and transformation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

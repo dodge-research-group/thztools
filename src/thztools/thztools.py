@@ -17,6 +17,7 @@ NUM_NOISE_PARAMETERS = 3
 NUM_NOISE_DATA_DIMENSIONS = 2
 
 
+# noinspection PyShadowingNames
 @dataclass
 class NoiseModel:
     r"""
@@ -40,8 +41,9 @@ class NoiseModel:
         Multiplicative noise amplitude.
     tau : float
         Timebase noise amplitude.
-    dt : float, optional
-        Sampling time.
+    dt : float or None, optional
+        Sampling time, normally in picoseconds. Default set to None, for which
+        the ``tau`` parameter is given in units of the sampling time.
 
     References
     ----------
@@ -83,11 +85,11 @@ class NoiseModel:
     alpha: float
     beta: float
     tau: float
-    dt: float | None = 1.0
+    dt: float | None = None
 
     # noinspection PyShadowingNames
     def variance(
-        self, x: ArrayLike, *, dt: float = 1.0, axis: int = -1
+        self, x: ArrayLike, *, axis: int = -1
     ) -> np.ndarray:
         r"""
         Compute the time-domain noise variance.
@@ -96,8 +98,6 @@ class NoiseModel:
         ----------
         x :  array_like
             Time-domain signal.
-        dt : float, optional
-            Sampling time, normally in picoseconds. Default set to 1.0.
         axis : int, optional
             Axis over which to apply the correction. If not given, applies over
             the last axis in ``x``.
@@ -146,7 +146,7 @@ class NoiseModel:
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
             ... dt=dt)
-            >>> var_t = noise_mod.variance(mu, dt=dt)
+            >>> var_t = noise_mod.variance(mu)
 
             >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
             >>> axs[0].plot(t, var_t / beta**2)
@@ -156,6 +156,9 @@ class NoiseModel:
             >>> axs[1].set_xlabel("t (ps)")
             >>> plt.show()
         """
+        dt = self.dt
+        if dt is None:
+            dt = 1.0
         x = np.asarray(x)
         axis = int(axis)
         if x.ndim > 1:
@@ -174,8 +177,9 @@ class NoiseModel:
 
         return var_t
 
+    # noinspection PyShadowingNames
     def amplitude(
-        self, x: ArrayLike, *, dt: float = 1.0, axis: int = -1
+        self, x: ArrayLike, *, axis: int = -1
     ) -> np.ndarray:
         r"""
         Compute the time-domain noise amplitude.
@@ -184,8 +188,6 @@ class NoiseModel:
         ----------
         x :  array_like
             Time-domain signal.
-        dt : float, optional
-            Sampling time, normally in picoseconds. Default set to 1.0.
         axis : int, optional
             Axis over which to apply the correction. If not given, applies over
             the last axis in ``x``.
@@ -235,7 +237,7 @@ class NoiseModel:
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
             ... dt=dt)
-            >>> sigma_t = noise_mod.amplitude(mu, dt=dt)
+            >>> sigma_t = noise_mod.amplitude(mu)
 
             >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
             >>> axs[0].plot(t, sigma_t / beta)
@@ -245,13 +247,13 @@ class NoiseModel:
             >>> axs[1].set_xlabel("t (ps)")
             >>> plt.show()
         """
-        return np.sqrt(self.variance(x, dt=dt, axis=axis))
+        return np.sqrt(self.variance(x, axis=axis))
 
+    # noinspection PyShadowingNames
     def noise(
         self,
         x: ArrayLike,
         *,
-        dt: float = 1.0,
         axis: int = -1,
         seed: int | None = None,
     ) -> np.ndarray:
@@ -262,8 +264,6 @@ class NoiseModel:
         ----------
         x :  array_like
             Time-domain signal.
-        dt : float, optional
-            Sampling time, normally in picoseconds. Default set to 1.0.
         axis : int, optional
             Axis over which to apply the correction. If not given, applies over
             the last axis in ``x``.
@@ -313,7 +313,7 @@ class NoiseModel:
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
             ... dt=dt)
-            >>> noise = noise_mod.noise(mu, dt=dt)
+            >>> noise = noise_mod.noise(mu)
 
             >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
             >>> axs[0].plot(t, noise / beta)
@@ -329,7 +329,7 @@ class NoiseModel:
             if axis != -1:
                 x = np.moveaxis(x, axis, -1)
 
-        amp = self.amplitude(x, dt=dt)
+        amp = self.amplitude(x)
         rng = default_rng(seed)
         noise = amp * rng.standard_normal(size=x.shape)
         if x.ndim > 1:
@@ -465,6 +465,7 @@ def transfer_out(
     return y
 
 
+# noinspection PyShadowingNames
 def wave(
     n: int,
     dt: float,
@@ -559,6 +560,7 @@ def wave(
     return x, t
 
 
+# noinspection PyShadowingNames
 def scaleshift(
     x: ArrayLike,
     *,
@@ -1023,7 +1025,7 @@ def tdnoisefit(
     scale_logv = 1e0 * np.ones(3)
     alpha, beta, tau = np.sqrt(v0)
     noise_model = NoiseModel(alpha, beta, tau, dt)
-    scale_delta = 1e-0 * noise_model.amplitude(x[:, 0], dt=dt)
+    scale_delta = 1e-0 * noise_model.amplitude(x[:, 0])
     scale_alpha = 1e-2 * np.ones(m - 1)
     scale_eta = 1e-3 * np.ones(m - 1)
     scale_v = 1.0e-6
@@ -1307,8 +1309,8 @@ def fit(
 
     alpha, beta, tau = sigma_parms
     noise_model = NoiseModel(alpha, beta, tau, dt)
-    sigma_x = noise_model.amplitude(x, dt=dt)
-    sigma_y = noise_model.amplitude(y, dt=dt)
+    sigma_x = noise_model.amplitude(x)
+    sigma_y = noise_model.amplitude(y)
     p0_est = np.concatenate((p0, np.zeros(n)))
 
     def etfe(_x, _y):

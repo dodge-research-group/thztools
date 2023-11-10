@@ -1,19 +1,29 @@
-thztools
-===============
-
-Functions in the thztools package.
-
-Quick list
-^^^^^^^^^^
+THzTools
+========
 
 .. currentmodule:: thztools
 
+Noise model
+^^^^^^^^^^^
+
 .. autosummary::
-    :toctree: functions/
+    :toctree: generated/
+
+    NoiseModel
+
+Waveform simulation and transformation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. autosummary::
+    :toctree: generated/
+
+    scaleshift
+    transfer_out
+    wave
+
+Parameter estimation
+^^^^^^^^^^^^^^^^^^^^
+.. autosummary::
+    :toctree: generated/
 
     fit
-    noiseamp
-    noisevar
-    scaleshift
     tdnoisefit
-    thzgen

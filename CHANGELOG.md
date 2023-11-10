@@ -5,7 +5,34 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org) for maintaining
 this file.
 
-## 0.3.2 - 2023-10-11
+## [0.3.3] - 2023-11-09
+
+### Changed
+
+- Prune and update notebooks
+- Fix error in `noiseamp` docstring example (now `amplitude` method of `NoiseModel` class)
+- Darken text color for logo in dark mode
+- Move make-logo script into default hatch environment
+- Rename sampling time variable from `ts` to `dt`
+- Rename `thzgen` as `wave`
+- Revise `conf.py` in Sphinx documentation
+- Add SciPy templates for `attributes.rst`, `class.rst` and `method.rst`
+- Refactor code to decouple computations from sampling time
+- Make `dt` parameter optional in most functions
+- Set default `dt` to `None`, to indicate that time units are unspecified
+
+### Added
+
+- `NoiseModel` class
+- `transfer_out` function
+- Example for `scaleshift` function
+- Specify logo based on light/dark theme
+
+### Removed
+
+- `noiseamp` and `noisevar` functions
+
+## [0.3.2] - 2023-10-11
 
 ### Changed
 
@@ -43,5 +70,7 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.3.3]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.3
+[0.3.2]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.2
 [0.3.1]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.1
 [0.3.0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.0

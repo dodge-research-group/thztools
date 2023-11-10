@@ -2,12 +2,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
 
-from thztools import thzgen
+from thztools import wave
 
 n = 1024
 ts = 0.01
 t0 = 1
-mu, t = thzgen(n, ts, t0)
+mu, t = wave(n, ts, t0)
 
 # Use the Multicolored Lines example in the Matplotlib documentation to produce
 # the rainbow-colored waveform.
@@ -40,6 +40,7 @@ ax.text(
     fontstyle=fontstyle,
     verticalalignment="bottom",
     fontsize=48,
+    color="#202328",
 )
 ax.axis("off")
 ax.set_ylim(mu.min(), mu.max())
@@ -66,7 +67,7 @@ ax.text(
     fontstyle=fontstyle,
     verticalalignment="bottom",
     fontsize=48,
-    color="white",
+    color="#E7EDF2",
 )
 ax.axis("off")
 ax.set_ylim(mu.min(), mu.max())

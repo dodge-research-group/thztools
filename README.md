@@ -1,6 +1,9 @@
-<!-- # THzTools -->
 <h1 align="center">
-<img src="https://raw.githubusercontent.com/dodge-research-group/thztools/main/docs/source/_static/thztools_logo.svg" width="600">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/dodge-research-group/thztools/main/docs/source/_static/thztools_logo_dark.svg" width="600">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/dodge-research-group/thztools/main/docs/source/_static/thztools_logo.svg" width="600">
+  <img alt="THzTools logo." src="https://raw.githubusercontent.com/dodge-research-group/thztools/main/docs/source/_static/thztools_logo.svg" width="600">
+</picture>
 </h1><br>
 
 THzTools is an open-source Python package for data analysis in terahertz time-domain spectroscopy

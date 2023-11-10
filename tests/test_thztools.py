@@ -8,14 +8,14 @@ from numpy.testing import assert_allclose
 from numpy.typing import ArrayLike
 
 from thztools.thztools import (
+    NoiseModel,
     _costfuntls,
     _tdnll_scaled,
     fit,
-    noiseamp,
-    noisevar,
     scaleshift,
     tdnoisefit,
-    thzgen,
+    transfer_out,
+    wave,
 )
 
 atol = 1e-8
@@ -26,12 +26,20 @@ def tfun(p, w):
     return p[0] * np.exp(1j * p[1] * w)
 
 
+def tfun1(w, p):
+    return p[0] * np.exp(1j * p[1] * w)
+
+
+def tfun2(w, p0, p1):
+    return p0 * np.exp(1j * p1 * w)
+
+
 def jac_fun(p, w):
     exp_ipw = np.exp(1j * p[1] * w)
     return np.stack((exp_ipw, 1j * w * p[0] * exp_ipw)).T
 
 
-class TestNoise:
+class TestNoiseModel:
     n = 16
     dt = 1.0 / n
     t = np.arange(n) * dt
@@ -39,40 +47,117 @@ class TestNoise:
     mu_dot = -2 * pi * np.sin(2 * pi * t)
 
     @pytest.mark.parametrize(
-        "sigma, mu, dt, expected",
+        "alpha, beta, tau, mu, dt, axis, expected",
         [
-            ([1, 0, 0], mu, dt, np.ones(n)),
-            ([0, 1, 0], mu, dt, mu**2),
-            ([0, 0, 1], mu, dt, mu_dot**2),
+            (1, 0, 0, mu, dt, -1, np.ones(n)),
+            (1, 0, 0, np.stack((mu, mu)), dt, -1, np.ones((2, n))),
+            (1, 0, 0, np.stack((mu, mu)).T, dt, 0, np.ones((n, 2))),
+            (0, 1, 0, mu, dt, -1, mu**2),
+            (0, 0, 1, mu, dt, -1, mu_dot**2),
+            (0, 0, 1 / dt, mu, None, -1, mu_dot**2),
         ],
     )
     def test_var_definition(
-        self, sigma: ArrayLike, mu: ArrayLike, dt: float, expected: ArrayLike
+        self,
+        alpha: float,
+        beta: float,
+        tau: float,
+        mu: ArrayLike,
+        dt: float | None,
+        axis: int,
+        expected: ArrayLike,
     ) -> None:
-        assert_allclose(
-            noisevar(sigma, mu, dt),  # type: ignore
-            expected,  # type: ignore
-            atol=atol,
-            rtol=rtol,
-        )
+        if dt is None:
+            noise_model = NoiseModel(alpha, beta, tau)
+            result = noise_model.variance(mu, axis=axis)
+        else:
+            noise_model = NoiseModel(alpha, beta, tau, dt)
+            result = noise_model.variance(mu, axis=axis)
+        assert_allclose(result, expected, atol=atol, rtol=rtol)  # type: ignore
 
     @pytest.mark.parametrize(
-        "sigma, mu, dt, expected",
+        "alpha, beta, tau, mu, dt, axis, expected",
         [
-            ([1, 0, 0], mu, dt, np.ones(n)),
-            ([0, 1, 0], mu, dt, np.abs(mu)),
-            ([0, 0, 1], mu, dt, np.abs(mu_dot)),
+            (1, 0, 0, mu, dt, -1, np.ones(n)),
+            (1, 0, 0, np.stack((mu, mu)), dt, -1, np.ones((2, n))),
+            (1, 0, 0, np.stack((mu, mu)).T, dt, 0, np.ones((n, 2))),
+            (0, 1, 0, mu, dt, -1, np.abs(mu)),
+            (0, 0, 1, mu, dt, -1, np.abs(mu_dot)),
+            (0, 0, 1 / dt, mu, None, -1, np.abs(mu_dot)),
         ],
     )
     def test_amp_definition(
-        self, sigma: ArrayLike, mu: ArrayLike, dt: float, expected: ArrayLike
+        self,
+        alpha: float,
+        beta: float,
+        tau: float,
+        mu: ArrayLike,
+        dt: float,
+        axis: int,
+        expected: ArrayLike,
     ) -> None:
+        if dt is None:
+            noise_model = NoiseModel(alpha, beta, tau)
+            result = noise_model.amplitude(mu, axis=axis)
+        else:
+            noise_model = NoiseModel(alpha, beta, tau, dt)
+            result = noise_model.amplitude(mu, axis=axis)
+        assert_allclose(result, expected, atol=atol, rtol=rtol)  # type: ignore
+
+    @pytest.mark.parametrize(
+        "alpha, beta, tau, mu, dt, axis, expected",
+        [
+            (1, 0, 0, mu, dt, -1, (n,)),
+            (1, 0, 0, mu, None, -1, (n,)),
+            (1, 0, 0, np.stack((mu, mu)), dt, -1, (2, n)),
+            (1, 0, 0, np.stack((mu, mu)).T, dt, 0, (n, 2)),
+        ],
+    )
+    def test_noise_definition(
+        self,
+        alpha: float,
+        beta: float,
+        tau: float,
+        mu: ArrayLike,
+        dt: float,
+        axis: int,
+        expected: ArrayLike,
+    ) -> None:
+        if dt is None:
+            noise_model = NoiseModel(alpha, beta, tau)
+            result = noise_model.noise(mu, axis=axis)
+        else:
+            noise_model = NoiseModel(alpha, beta, tau, dt)
+            result = noise_model.noise(mu, axis=axis)
+        assert result.shape == expected
+
+
+class TestTransferOut:
+    n = 16
+    dt = 1.0 / n
+    t = np.arange(n) * dt
+    mu = np.cos(2 * pi * t)
+
+    @pytest.mark.parametrize("fft_sign", [True, False])
+    @pytest.mark.parametrize(
+        "t_fun, x, p, expected",
+        [
+            [tfun1, mu, [1.0, 0.0], mu],
+            [tfun2, mu, (1.0, 0.0), mu],
+        ],
+    )
+    def test_inputs(self, t_fun, x, fft_sign, p, expected):
+        ts = self.dt
         assert_allclose(
-            noiseamp(sigma, mu, dt),  # type: ignore
-            expected,  # type: ignore
-            atol=atol,
-            rtol=rtol,
+            transfer_out(t_fun, x, dt=ts, fft_sign=fft_sign, args=p),
+            expected,
         )
+
+    @pytest.mark.parametrize("x", [np.ones((n, n))])
+    def test_error(self, x):
+        dt = self.dt
+        with pytest.raises(ValueError):
+            _ = transfer_out(x, tfun1, dt=dt, args=[1.0, 0.0])
 
 
 class TestTHzGen:
@@ -88,7 +173,7 @@ class TestTHzGen:
     )
     def test_inputs(self, kwargs: dict) -> None:
         n = 8
-        ts = 1.0
+        dt = 1.0
         t0 = 2.0
         y_expected = np.array(
             [
@@ -104,7 +189,7 @@ class TestTHzGen:
         )
         t_expected = np.arange(n)
         assert_allclose(
-            thzgen(n, ts, t0, **kwargs),  # type: ignore
+            wave(n, dt, t0, **kwargs),  # type: ignore
             (y_expected, t_expected),  # type: ignore
             atol=atol,
             rtol=rtol,
@@ -126,7 +211,7 @@ class TestScaleShift:
             [x, {"a": 2}, 2 * x],
             [x, {"eta": 1}, np.cos(2 * pi * (t - dt))],
             [x, {"a": 2, "eta": 1}, 2 * np.cos(2 * pi * (t - dt))],
-            [x, {"a": 2, "eta": dt, "ts": dt}, 2 * np.cos(2 * pi * (t - dt))],
+            [x, {"a": 2, "eta": dt, "dt": dt}, 2 * np.cos(2 * pi * (t - dt))],
             [x_2, {"a": [2, 0.5]}, np.stack((2 * x, 0.5 * x))],
             [
                 x_2,
@@ -137,7 +222,7 @@ class TestScaleShift:
             ],
             [
                 x_2,
-                {"eta": [dt, -dt], "ts": dt},
+                {"eta": [dt, -dt], "dt": dt},
                 np.stack(
                     (np.cos(2 * pi * (t - dt)), np.cos(2 * pi * (t + dt)))
                 ),
@@ -154,7 +239,7 @@ class TestScaleShift:
             ],
             [
                 x_2,
-                {"a": [2, 0.5], "eta": [dt, -dt], "ts": dt},
+                {"a": [2, 0.5], "eta": [dt, -dt], "dt": dt},
                 np.stack(
                     (
                         2 * np.cos(2 * pi * (t - dt)),
@@ -190,15 +275,15 @@ class TestCostFunTLS:
     yy = xx
     sigmax = np.ones_like(xx)
     sigmay = sigmax
-    ts = 1.0
+    dt = 1.0
 
     assert_allclose(
-        _costfuntls(tfun, theta, mu, xx, yy, sigmax, sigmay, ts),
+        _costfuntls(tfun, theta, mu, xx, yy, sigmax, sigmay, dt),
         np.concatenate((np.zeros_like(xx), np.zeros_like(xx))),
     )
 
 
-class TestTDNLL:
+class TestTDNLLScaled:
     m = 2
     n = 16
     dt = 1.0 / n
@@ -209,7 +294,6 @@ class TestTDNLL:
     delta = np.zeros(n)
     alpha = np.zeros(m - 1)
     eta = np.zeros(m - 1)
-    ts = dt
     desired_nll = x.size * np.log(2 * pi) / 2
 
     @pytest.mark.parametrize(
@@ -281,8 +365,7 @@ class TestTDNLL:
         logv = self.logv
         delta = self.delta
         alpha = self.alpha
-        eta = self.eta
-        ts = self.ts
+        eta_on_dt = self.eta / self.dt
         desired_gradnll = np.concatenate(
             (
                 desired_gradnll_logv,
@@ -296,8 +379,7 @@ class TestTDNLL:
             logv,
             delta,
             alpha,
-            eta,
-            ts,
+            eta_on_dt,
             fix_logv=fix_logv,
             fix_delta=fix_delta,
             fix_alpha=fix_alpha,
@@ -317,11 +399,13 @@ class TestTDNoiseFit:
     rng = np.random.default_rng(0)
     n = 256
     m = 64
-    ts = 0.05
-    t = np.arange(n) * ts
-    mu, _ = thzgen(n, ts=ts, t0=n * ts / 3)
-    sigma = np.array([1e-5, 1e-2, 1e-3])
-    noise = noiseamp(sigma, mu, ts) * rng.standard_normal((m, n))
+    dt = 0.05
+    t = np.arange(n) * dt
+    mu, _ = wave(n, dt=dt, t0=n * dt / 3)
+    alpha, beta, tau = 1e-5, 1e-2, 1e-3
+    sigma = np.array([alpha, beta, tau])
+    noise_model = NoiseModel(alpha, beta, tau, dt=dt)
+    noise = noise_model.amplitude(mu) * rng.standard_normal((m, n))
     x = np.array(mu + noise)
     a = np.ones(m)
     eta = np.zeros(m)
@@ -377,13 +461,15 @@ class TestTDNoiseFit:
 class TestFit:
     rng = np.random.default_rng(0)
     n = 16
-    ts = 1.0 / n
-    t = np.arange(n) * ts
+    dt = 1.0 / n
+    t = np.arange(n) * dt
     mu = np.cos(2 * pi * t)
     p0 = (1, 0)
     psi = mu
-    sigma = np.array([1e-5, 0, 0])
-    noise_amp = noiseamp(sigma, mu, ts)
+    alpha, beta, tau = 1e-5, 0, 0
+    sigma = np.array([alpha, beta, tau])
+    noise_model = NoiseModel(alpha, beta, tau, dt=dt)
+    noise_amp = noise_model.amplitude(mu)
     x = mu + noise_amp * rng.standard_normal(n)
     y = psi + noise_amp * rng.standard_normal(n)
 
@@ -395,13 +481,13 @@ class TestFit:
         p0 = self.p0
         x = self.x
         y = self.y
-        ts = self.ts
+        dt = self.dt
         p = fit(
             tfun,
             p0,
             x,
             y,
-            ts=ts,
+            dt=dt,
             sigma_parms=noise_parms,
             p_bounds=p_bounds,
             jac=jac,
@@ -413,6 +499,6 @@ class TestFit:
         p0 = self.p0
         x = self.x
         y = self.y
-        ts = self.ts
+        dt = self.dt
         with pytest.raises(ValueError):
-            _ = fit(tfun, p0, x, y, ts=ts, p_bounds=())
+            _ = fit(tfun, p0, x, y, dt=dt, p_bounds=())

@@ -16,6 +16,7 @@
 
 # The runpy package is used to import the version number from
 # __about__.py using OPTION 1 below. Not needed for OPTION 2.
+import math
 import runpy
 import sys
 from pathlib import Path
@@ -52,22 +53,50 @@ version = runpy.run_path(
 # ones.
 extensions = [
     "matplotlib.sphinxext.plot_directive",
-    "numpydoc",
-    "sphinx.ext.autosummary",
     "sphinx.ext.autodoc",
-    "sphinx.ext.doctest",
-    "sphinx.ext.mathjax",
-    "sphinx.ext.todo",
-    "sphinx.ext.viewcode",
-    "sphinx.ext.napoleon",
-    "sphinx.ext.intersphinx",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.coverage",
     "sphinx.ext.extlinks",
-    "sphinx.ext.ifconfig",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.viewcode",
+    "numpydoc",
 ]
 
-plot_rcparams = {"font.size": 14}
+# -----------------------------------------------------------------------------
+# Matplotlib plot_directive options (adapted from SciPy docs)
+# -----------------------------------------------------------------------------
 
-# autodoc_typehints = "signature"
+plot_pre_code = """
+import numpy as np
+np.random.seed(123)
+"""
+
+plot_include_source = True
+plot_formats = [("png", 96)]
+plot_html_show_formats = False
+plot_html_show_source_link = False
+
+phi = (math.sqrt(5) + 1) / 2
+
+font_size = 13 * 72 / 96.0  # 13 px
+
+plot_rcparams = {
+    "font.size": font_size,
+    "axes.titlesize": font_size,
+    "axes.labelsize": font_size,
+    "xtick.labelsize": font_size,
+    "ytick.labelsize": font_size,
+    "legend.fontsize": font_size,
+    "figure.figsize": (3 * phi, 3),
+    "figure.subplot.bottom": 0.2,
+    "figure.subplot.left": 0.2,
+    "figure.subplot.right": 0.9,
+    "figure.subplot.top": 0.85,
+    "figure.subplot.wspace": 0.4,
+    "text.usetex": False,
+}
+
 autodoc_type_aliases = {
     "ArrayLike": "ArrayLike",
     "Boolean": "bool",
@@ -95,9 +124,9 @@ autodoc_type_aliases = {
 
 autosummary_generate = True
 autodoc_typehints = "none"
-napoleon_google_docstring = False
-napoleon_use_param = False
-napoleon_use_ivar = True
+
+# Report warnings for all validation checks
+numpydoc_validation_checks = {"all", "SA01", "ES01", "RT02", "EX01"}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -111,6 +140,9 @@ source_suffix = ".rst"
 # The master toctree document.
 master_doc = "index"
 
+# Ensure all our internal links work
+nitpicky = True
+
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
@@ -121,8 +153,16 @@ pygments_style = "default"
 
 mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 
-# numpydoc
-numpydoc_attributes_as_param_list = False
+intersphinx_mapping = {
+    "python": (
+        f"https://docs.python.org/{sys.version_info.major}",
+        None,
+    ),
+    "numpy": ("https://numpy.org/doc/stable", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "matplotlib": ("https://matplotlib.org/", None),
+}
+
 
 # -- Options for HTML output -------------------------------------------------
 

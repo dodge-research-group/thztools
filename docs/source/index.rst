@@ -10,14 +10,10 @@ represent as a function of *frequency* for analysis. THzTools makes it easier fo
 to use statistically optimal methods for doing this analysis, as described in Laleh Mohtashemi
 et al., Opt. Express **29**, 4912 (2021), `<https://doi.org/10.1364/OE.417724>`_.
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
 Table of Contents
 -------------------
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    Getting started <gettingstarted>
    API Reference <api>

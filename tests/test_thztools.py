@@ -54,7 +54,7 @@ class TestNoiseModel:
             (1, 0, 0, np.stack((mu, mu)).T, dt, 0, np.ones((n, 2))),
             (0, 1, 0, mu, dt, -1, mu**2),
             (0, 0, 1, mu, dt, -1, mu_dot**2),
-            (0, 0, 1 / dt, mu, None, -1, mu_dot ** 2),
+            (0, 0, 1 / dt, mu, None, -1, mu_dot**2),
         ],
     )
     def test_var_definition(

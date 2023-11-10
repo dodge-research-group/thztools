@@ -88,9 +88,7 @@ class NoiseModel:
     dt: float | None = None
 
     # noinspection PyShadowingNames
-    def variance(
-        self, x: ArrayLike, *, axis: int = -1
-    ) -> np.ndarray:
+    def variance(self, x: ArrayLike, *, axis: int = -1) -> np.ndarray:
         r"""
         Compute the time-domain noise variance.
 
@@ -178,9 +176,7 @@ class NoiseModel:
         return var_t
 
     # noinspection PyShadowingNames
-    def amplitude(
-        self, x: ArrayLike, *, axis: int = -1
-    ) -> np.ndarray:
+    def amplitude(self, x: ArrayLike, *, axis: int = -1) -> np.ndarray:
         r"""
         Compute the time-domain noise amplitude.
 

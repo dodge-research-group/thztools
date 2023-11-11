@@ -1,8 +1,10 @@
 from thztools.__about__ import __version__
 from thztools.thztools import (
+    GlobalOptions,
     NoiseModel,
     NoiseResult,
     fit,
+    global_options,
     scaleshift,
     tdnoisefit,
     transfer_out,
@@ -10,9 +12,11 @@ from thztools.thztools import (
 )
 
 __all__ = [
+    "GlobalOptions",
     "NoiseModel",
     "NoiseResult",
     "fit",
+    "global_options",
     "scaleshift",
     "tdnoisefit",
     "transfer_out",

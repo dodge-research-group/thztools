@@ -28,3 +28,11 @@ Parameter estimation
 
     fit
     tdnoisefit
+
+Global options
+^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+
+    GlobalOptions

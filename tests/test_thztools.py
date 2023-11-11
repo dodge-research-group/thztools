@@ -7,6 +7,7 @@ from numpy import pi
 from numpy.testing import assert_allclose
 from numpy.typing import ArrayLike
 
+import thztools
 from thztools.thztools import (
     NoiseModel,
     _costfuntls,
@@ -37,6 +38,13 @@ def tfun2(w, p0, p1):
 def jac_fun(p, w):
     exp_ipw = np.exp(1j * p[1] * w)
     return np.stack((exp_ipw, 1j * w * p[0] * exp_ipw)).T
+
+
+class TestGlobalOptions:
+    def test_sampling_time(self):
+        assert thztools.global_options.sampling_time is None
+        thztools.global_options.sampling_time = 0.1
+        assert_allclose(thztools.global_options.sampling_time, 0.1)
 
 
 class TestNoiseModel:

@@ -18,6 +18,28 @@ NUM_NOISE_DATA_DIMENSIONS = 2
 
 
 @dataclass
+class GlobalOptions:
+    r"""
+    Class for global options.
+
+    Currently, this just includes the ``sampling_time`` parameter.
+
+    Parameters
+    ----------
+    sampling_time : float | None, optional
+        Global sampling time, normally in picoseconds. When set to None, the
+        default, times and frequencies are treated as dimensionless quantities
+        that are scaled by the (undetermined) sampling time.
+    """
+    sampling_time: float | None
+
+
+global_options = GlobalOptions(
+    sampling_time=None,
+)
+
+
+@dataclass
 class NoiseResult:
     r"""
     Represents the noise parameter estimate output.

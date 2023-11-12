@@ -5,6 +5,13 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org) for maintaining
 this file.
 
+## [0.3.5] - 2023-11-11
+
+### Added
+
+- `GlobalOptions` class
+- `global_options` module constant
+
 ## [0.3.4] - 2023-11-10
 
 ### Changed
@@ -81,6 +88,7 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.3.5]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.5
 [0.3.4]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.4
 [0.3.3]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.3
 [0.3.2]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.2

@@ -12,6 +12,7 @@ from thztools.thztools import (
     NoiseModel,
     _costfuntls,
     _tdnll_scaled,
+    _validate_sampling_time,
     fit,
     scaleshift,
     tdnoisefit,
@@ -41,13 +42,38 @@ def jac_fun(p, w):
 
 
 class TestGlobalOptions:
+    thztools.global_options.sampling_time = None
+
     def test_sampling_time(self):
         assert thztools.global_options.sampling_time is None
         thztools.global_options.sampling_time = 0.1
         assert_allclose(thztools.global_options.sampling_time, 0.1)
 
+    @pytest.mark.parametrize("global_sampling_time", [None, 0.1])
+    @pytest.mark.parametrize("dt", [None, 0.1, 1.0])
+    def test_validation(self, global_sampling_time, dt):
+        thztools.global_options.sampling_time = global_sampling_time
+        if global_sampling_time is None and dt is None:
+            assert np.isclose(_validate_sampling_time(dt), 1.0)
+        elif global_sampling_time is None and dt is not None:
+            assert np.isclose(_validate_sampling_time(dt), dt)
+        elif global_sampling_time is not None and dt is None:
+            assert np.isclose(
+                _validate_sampling_time(dt), global_sampling_time
+            )
+        elif global_sampling_time is not None and np.isclose(
+            dt, global_sampling_time
+        ):
+            assert np.isclose(
+                _validate_sampling_time(dt), global_sampling_time
+            )
+        else:
+            with pytest.warns(UserWarning):
+                assert np.isclose(_validate_sampling_time(dt), dt)
+
 
 class TestNoiseModel:
+    thztools.global_options.sampling_time = None
     n = 16
     dt = 1.0 / n
     t = np.arange(n) * dt
@@ -156,6 +182,7 @@ class TestTransferOut:
     )
     def test_inputs(self, t_fun, x, fft_sign, p, expected):
         ts = self.dt
+        thztools.global_options.sampling_time = None
         assert_allclose(
             transfer_out(t_fun, x, dt=ts, fft_sign=fft_sign, args=p),
             expected,
@@ -169,6 +196,8 @@ class TestTransferOut:
 
 
 class TestTHzGen:
+    thztools.global_options.sampling_time = None
+
     @pytest.mark.parametrize(
         "kwargs",
         [
@@ -205,6 +234,7 @@ class TestTHzGen:
 
 
 class TestScaleShift:
+    thztools.global_options.sampling_time = None
     n = 16
     dt = 1.0 / n
     t = np.arange(n) * dt
@@ -277,6 +307,7 @@ class TestScaleShift:
 
 
 class TestCostFunTLS:
+    thztools.global_options.sampling_time = None
     theta = (1, 0)
     mu = np.arange(8)
     xx = mu
@@ -292,6 +323,7 @@ class TestCostFunTLS:
 
 
 class TestTDNLLScaled:
+    thztools.global_options.sampling_time = None
     m = 2
     n = 16
     dt = 1.0 / n
@@ -404,6 +436,7 @@ class TestTDNLLScaled:
 
 
 class TestTDNoiseFit:
+    thztools.global_options.sampling_time = None
     rng = np.random.default_rng(0)
     n = 256
     m = 64
@@ -440,7 +473,7 @@ class TestTDNoiseFit:
             or (fix_v and fix_mu and fix_a and fix_eta)
         ):
             with pytest.raises(ValueError):
-                _, _, _ = tdnoisefit(
+                _ = tdnoisefit(
                     x.T,
                     v0=v0,
                     mu0=mu0,
@@ -467,6 +500,7 @@ class TestTDNoiseFit:
 
 
 class TestFit:
+    thztools.global_options.sampling_time = None
     rng = np.random.default_rng(0)
     n = 16
     dt = 1.0 / n

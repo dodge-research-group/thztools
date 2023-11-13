@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from typing import Callable
 
@@ -39,58 +40,26 @@ global_options = GlobalOptions(
 )
 
 
-@dataclass
-class NoiseResult:
-    r"""
-    Represents the noise parameter estimate output.
-
-    Parameters
-    ----------
-    p : dict
-        Output parameter dictionary containing the following.
-
-            var : ndarray, shape (3,)
-                Noise parameters, expressed as variance amplitudes.
-            mu : ndarray, shape (n,)
-                Signal vector.
-            a : ndarray, shape (m,)
-                Amplitude vector.
-            eta : ndarray, shape (m,)
-                Delay vector.
-    fval : float
-        Value of NLL cost function from FMINUNC.
-    diagnostic : dict
-        Dictionary containing diagnostic information:
-
-            grad_scaled : ndarray
-                Gradient of the scaled negative log-likelihood function with
-                respect to the scaled fit parameters.
-            hess_inv_scaled : ndarray
-                Inverse of the Hessian obtained from scipy.optimize.minimize
-                using the BFGS method, which is determined for the scaled
-                negative log-likelihood function with respect to the scaled
-                fit parameters.
-            err : dict
-                Dictionary containing  error of the parameters. Uses the same
-                keys as ``p``.
-            success : bool
-                Whether the fit terminated successfully.
-            status : int
-                Termination status of fit.
-            message : str
-                Description of the termination condition.
-            nfev, njev : int
-                Number of evaluations of the objective function and the
-                Jacobian.
-            nit : int
-                Number of iterations performed by `scipy.optimize.minimize`.
-    """
-    p: dict
-    fval: float
-    diagnostic: dict
+def _validate_sampling_time(dt: float | None) -> float:
+    if dt is None and global_options.sampling_time is None:
+        dt_out = 1.0
+    if dt is None and global_options.sampling_time is not None:
+        dt_out = global_options.sampling_time
+    if dt is not None and global_options.sampling_time is None:
+        dt_out = dt
+    if dt is not None and global_options.sampling_time is not None:
+        if np.isclose(dt, global_options.sampling_time):
+            dt_out = dt
+        else:
+            msg = (
+                f"Input sampling time {dt=} conflicts with "
+                f"{global_options.sampling_time=}, using {dt=}"
+            )
+            warnings.warn(msg, category=UserWarning, stacklevel=2)
+            dt_out = dt
+    return dt_out
 
 
-# noinspection PyShadowingNames
 @dataclass
 class NoiseModel:
     r"""
@@ -409,10 +378,62 @@ class NoiseModel:
 
 
 # noinspection PyShadowingNames
+@dataclass
+class NoiseResult:
+    r"""
+    Represents the noise parameter estimate output.
+
+    Parameters
+    ----------
+    noise_model : NoiseModel
+        Noise parameters, represented as a NoiseModel object.
+    mu : ndarray, shape (n,)
+        Signal vector.
+    a : ndarray, shape (m,)
+        Amplitude vector.
+    eta : ndarray, shape (m,)
+        Delay vector.
+    fval : float
+        Value of NLL cost function from FMINUNC.
+    diagnostic : dict
+        Dictionary containing diagnostic information:
+
+            grad_scaled : ndarray
+                Gradient of the scaled negative log-likelihood function with
+                respect to the scaled fit parameters.
+            hess_inv_scaled : ndarray
+                Inverse of the Hessian obtained from scipy.optimize.minimize
+                using the BFGS method, which is determined for the scaled
+                negative log-likelihood function with respect to the scaled
+                fit parameters.
+            err : dict
+                Dictionary containing  error of the parameters. Uses the same
+                keys as ``p``.
+            success : bool
+                Whether the fit terminated successfully.
+            status : int
+                Termination status of fit.
+            message : str
+                Description of the termination condition.
+            nfev, njev : int
+                Number of evaluations of the objective function and the
+                Jacobian.
+            nit : int
+                Number of iterations performed by `scipy.optimize.minimize`.
+    """
+    noise_model: NoiseModel
+    mu: ArrayLike
+    a: ArrayLike
+    eta: ArrayLike
+    fval: float
+    diagnostic: dict
+
+
+# noinspection PyShadowingNames
 def transfer_out(
     tfun: Callable,
     x: ArrayLike,
-    dt: float,
+    dt: float | None,
     *,
     fft_sign: bool = True,
     args: tuple = (),
@@ -433,7 +454,7 @@ def transfer_out(
         of ``dt``, such as radians/picosecond.
     x : array_like
         Data array.
-    dt : float
+    dt : float or None
         Sampling time, normally in picoseconds.
     fft_sign : bool, optional
         Complex exponential sign convention for harmonic time dependence.
@@ -522,6 +543,7 @@ def transfer_out(
     if not isinstance(args, tuple):
         args = (args,)
 
+    dt = _validate_sampling_time(dt)
     n = x.size
     f_scaled = rfftfreq(n)
     w = 2 * np.pi * f_scaled / dt
@@ -537,7 +559,7 @@ def transfer_out(
 # noinspection PyShadowingNames
 def wave(
     n: int,
-    dt: float,
+    dt: float | None,
     t0: float,
     *,
     a: float = 1.0,
@@ -553,7 +575,7 @@ def wave(
 
     n : int
         Number of samples.
-    dt : float
+    dt : float or None
         Sampling time, normally in picoseconds.
     t0 : float
         Pulse center, normally in picoseconds.
@@ -612,6 +634,8 @@ def wave(
         >>> ax.set_ylabel(r"$\mu/\mu_0$")
         >>> plt.show()
     """
+    dt = _validate_sampling_time(dt)
+
     taul = fwhm / np.sqrt(2 * np.log(2))
 
     f_scaled = rfftfreq(n)
@@ -635,7 +659,7 @@ def scaleshift(
     *,
     a: ArrayLike | None = None,
     eta: ArrayLike | None = None,
-    dt: float = 1.0,
+    dt: float | None = 1.0,
     axis: int = -1,
 ) -> np.ndarray:
     r"""
@@ -649,7 +673,7 @@ def scaleshift(
         Scale array.
     eta : array_like, optional
         Shift array.
-    dt : float, optional
+    dt : float or None, optional
         Sampling time. Default is 1.0.
     axis : int, optional
         Axis over which to apply the correction. If not given, applies over the
@@ -691,6 +715,8 @@ def scaleshift(
     x = np.asarray(x)
     if x.size == 0:
         return np.empty(x.shape)
+
+    dt = _validate_sampling_time(dt)
 
     axis = int(axis)
     if x.ndim > 1:
@@ -745,7 +771,7 @@ def _costfuntls(
     y: ArrayLike,
     sigma_x: ArrayLike,
     sigma_y: ArrayLike,
-    dt: float = 1.0,
+    dt: float | None = 1.0,
 ) -> np.ndarray:
     r"""Computes the residual vector for the total least squares cost function.
 
@@ -776,7 +802,7 @@ def _costfuntls(
     sigma_y : array_like
         Noise vector of the output signal.
 
-    dt : float, optional
+    dt : float or None, optional
         Sampling time. Default set to 1.0.
 
     Returns
@@ -791,6 +817,8 @@ def _costfuntls(
     y = np.asarray(y)
     sigma_x = np.asarray(sigma_x)
     sigma_y = np.asarray(sigma_y)
+
+    dt = _validate_sampling_time(dt)
 
     n = x.shape[-1]
     delta_norm = (x - mu) / sigma_x
@@ -977,7 +1005,7 @@ def _tdnll_scaled(
 def tdnoisefit(
     x: ArrayLike,
     *,
-    dt: float = 1.0,
+    dt: float | None = 1.0,
     v0: ArrayLike | None = None,
     mu0: ArrayLike | None = None,
     a0: ArrayLike | None = None,
@@ -998,7 +1026,7 @@ def tdnoisefit(
     ----------
     x : ndarray, shape(n, m)
         Data array with `m` waveforms, each composed of `n` points.
-    dt : float, optional
+    dt : float or None, optional
         Sampling time. Default is 1.0.
     v0 : ndarray, shape (3,), optional
         Initial guess, noise model parameters with size (3,), expressed as
@@ -1035,6 +1063,8 @@ def tdnoisefit(
         msg = "Data array x must be 2D"
         raise ValueError(msg)
     n, m = x.shape
+
+    dt = _validate_sampling_time(dt)
 
     if v0 is None:
         v0 = np.mean(np.var(x, 1)) * np.ones(NUM_NOISE_PARAMETERS)
@@ -1146,30 +1176,31 @@ def tdnoisefit(
     )
 
     # Parse output
-    p = {}
     x_out = out.x
     if fix_v:
-        p["var"] = v0_scaled * scale_v
+        v_out = v0_scaled * scale_v
     else:
-        p["var"] = np.exp(x_out[:3] * scale_logv) * scale_v
+        v_out = np.exp(x_out[:3] * scale_logv) * scale_v
         x_out = x_out[3:]
+    alpha, beta, tau = np.sqrt(v_out)
+    noise_model = NoiseModel(alpha, beta, tau, dt)
 
     if fix_mu:
-        p["mu"] = mu0
+        mu_out = mu0
     else:
-        p["mu"] = x[:, 0] - x_out[:n] * scale_delta
+        mu_out = x[:, 0] - x_out[:n] * scale_delta
         x_out = x_out[n:]
 
     if fix_a:
-        p["a"] = a0
+        a_out = a0
     else:
-        p["a"] = np.concatenate(([1.0], 1.0 + x_out[: m - 1] * scale_alpha))
+        a_out = np.concatenate(([1.0], 1.0 + x_out[: m - 1] * scale_alpha))
         x_out = x_out[m - 1 :]
 
     if fix_eta:
-        p["eta"] = eta0
+        eta_out = eta0
     else:
-        p["eta"] = np.concatenate(([0.0], x_out[: m - 1] * scale_eta))
+        eta_out = np.concatenate(([0.0], x_out[: m - 1] * scale_eta))
 
     diagnostic = {
         "grad_scaled": out.jac,
@@ -1214,7 +1245,7 @@ def tdnoisefit(
     if not fix_v:
         # Propagate error from log(V) to V
         diagnostic["err"]["var"] = np.sqrt(
-            np.diag(np.diag(p["var"]) @ hess_inv[0:3, 0:3]) @ np.diag(p["var"])
+            np.diag(np.diag(v_out) @ hess_inv[0:3, 0:3]) @ np.diag(v_out)
         )
         err = err[3:]
 
@@ -1229,7 +1260,9 @@ def tdnoisefit(
     if not fix_eta:
         diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
 
-    return NoiseResult(p, out.fun / scale_v, diagnostic)
+    return NoiseResult(
+        noise_model, mu_out, a_out, eta_out, out.fun / scale_v, diagnostic
+    )
 
 
 def fit(
@@ -1312,6 +1345,8 @@ def fit(
     x = np.asarray(x)
     y = np.asarray(y)
     sigma_parms = np.asarray(sigma_parms)
+
+    dt = _validate_sampling_time(dt)
 
     n = y.shape[-1]
     n_p = len(p0)

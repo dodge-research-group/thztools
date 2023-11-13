@@ -195,9 +195,13 @@ class TestTransferOut:
             _ = transfer_out(x, tfun1, dt=dt, args=[1.0, 0.0])
 
 
-class TestTHzGen:
+class TestWave:
     thztools.global_options.sampling_time = None
 
+    @pytest.mark.parametrize(
+        "t0",
+        [2.4, None],
+    )
     @pytest.mark.parametrize(
         "kwargs",
         [
@@ -208,25 +212,24 @@ class TestTHzGen:
             {"fwhm": 0.05},
         ],
     )
-    def test_inputs(self, kwargs: dict) -> None:
+    def test_inputs(self, t0: float | None, kwargs: dict) -> None:
         n = 8
         dt = 1.0
-        t0 = 2.0
         y_expected = np.array(
             [
-                0.05651348,
-                -0.13522073,
+                0.14461846,
+                -0.34228814,
                 1.0,
-                -0.65804181,
-                -0.28067975,
-                0.05182924,
-                -0.01837401,
-                -0.01602642,
+                0.23498975,
+                -1.14395207,
+                0.22969067,
+                -0.10596293,
+                -0.01709574,
             ]
         )
         t_expected = np.arange(n)
         assert_allclose(
-            wave(n, dt, t0, **kwargs),  # type: ignore
+            wave(n, dt=dt, t0=t0, **kwargs),  # type: ignore
             (y_expected, t_expected),  # type: ignore
             atol=atol,
             rtol=rtol,

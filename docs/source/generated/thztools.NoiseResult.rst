@@ -27,6 +27,11 @@
          NoiseResult.a
          NoiseResult.eta
          NoiseResult.fval
+         NoiseResult.hess_inv
+         NoiseResult.err_var
+         NoiseResult.err_delta
+         NoiseResult.err_alpha
+         NoiseResult.err_eta
          NoiseResult.diagnostic
   
   

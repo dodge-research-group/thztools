@@ -11,8 +11,8 @@ from numpy.fft import irfft, rfft, rfftfreq
 from numpy.random import default_rng
 from numpy.typing import ArrayLike
 from scipy import signal
+from scipy.optimize import OptimizeResult, minimize
 from scipy.optimize import approx_fprime as fprime
-from scipy.optimize import minimize
 
 NUM_NOISE_PARAMETERS = 3
 NUM_NOISE_DATA_DIMENSIONS = 2
@@ -41,13 +41,12 @@ global_options = GlobalOptions(
 
 
 def _validate_sampling_time(dt: float | None) -> float:
-    if dt is None and global_options.sampling_time is None:
-        dt_out = 1.0
+    dt_out = 1.0
     if dt is None and global_options.sampling_time is not None:
         dt_out = global_options.sampling_time
-    if dt is not None and global_options.sampling_time is None:
+    elif dt is not None and global_options.sampling_time is None:
         dt_out = dt
-    if dt is not None and global_options.sampling_time is not None:
+    elif dt is not None and global_options.sampling_time is not None:
         if np.isclose(dt, global_options.sampling_time):
             dt_out = dt
         else:
@@ -110,7 +109,7 @@ class NoiseModel:
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> mu, t = thz.wave(n, dt, t0)
+        >>> mu, t = thz.wave(n, dt=dt, t0=t0)
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
         >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
         ... dt=dt)
@@ -182,7 +181,7 @@ class NoiseModel:
             >>> import matplotlib.pyplot as plt
             >>> import thztools as thz
             >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> mu, t = thz.wave(n, dt, t0)
+            >>> mu, t = thz.wave(n, dt=dt, t0=t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
             ... dt=dt)
@@ -271,7 +270,7 @@ class NoiseModel:
             >>> import thztools as thz
 
             >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> mu, t = thz.wave(n, dt, t0)
+            >>> mu, t = thz.wave(n, dt=dt, t0=t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
             ... dt=dt)
@@ -347,7 +346,7 @@ class NoiseModel:
             >>> import thztools as thz
 
             >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> mu, t = thz.wave(n, dt, t0)
+            >>> mu, t = thz.wave(n, dt=dt, t0=t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
             ... dt=dt)
@@ -394,39 +393,33 @@ class NoiseResult:
     eta : ndarray, shape (m,)
         Delay vector.
     fval : float
-        Value of NLL cost function from FMINUNC.
-    diagnostic : dict
-        Dictionary containing diagnostic information:
-
-            grad_scaled : ndarray
-                Gradient of the scaled negative log-likelihood function with
-                respect to the scaled fit parameters.
-            hess_inv_scaled : ndarray
-                Inverse of the Hessian obtained from scipy.optimize.minimize
-                using the BFGS method, which is determined for the scaled
-                negative log-likelihood function with respect to the scaled
-                fit parameters.
-            err : dict
-                Dictionary containing  error of the parameters. Uses the same
-                keys as ``p``.
-            success : bool
-                Whether the fit terminated successfully.
-            status : int
-                Termination status of fit.
-            message : str
-                Description of the termination condition.
-            nfev, njev : int
-                Number of evaluations of the objective function and the
-                Jacobian.
-            nit : int
-                Number of iterations performed by `scipy.optimize.minimize`.
+        Value of optimized NLL cost function.
+    hess_inv : ndarray
+        Inverse Hessian matrix of optimized NLL cost function.
+    err_var : ndarray
+        Estimated uncertainty in the noise model variance parameters.
+    err_delta : ndarray
+        Estimated uncertainty in ``mu``.
+    err_alpha : ndarray
+        Estimated uncertainty in ``a``.
+    err_eta : ndarray
+        Estimated uncertainty in ``eta``.
+    diagnostic : OptimizeResult
+        Optimization result returned by ``scipy.optimize.minimize``. Note that
+        the attributes ``fun``, ``jac``, and ``hess_inv`` represent functions
+        over the internally scaled parameters.
     """
     noise_model: NoiseModel
-    mu: ArrayLike
-    a: ArrayLike
-    eta: ArrayLike
+    mu: np.ndarray
+    a: np.ndarray
+    eta: np.ndarray
     fval: float
-    diagnostic: dict
+    hess_inv: np.ndarray
+    err_var: np.ndarray
+    err_delta: np.ndarray
+    err_alpha: np.ndarray
+    err_eta: np.ndarray
+    diagnostic: OptimizeResult
 
 
 # noinspection PyShadowingNames
@@ -492,7 +485,7 @@ def transfer_out(
         >>> import thztools as thz
 
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> x, t = thz.wave(n, dt, t0)
+        >>> x, t = thz.wave(n, dt=dt, t0=t0)
 
         >>> def shiftscale(_w, _a, _tau):
         >>>     return _a * np.exp(-1j * _w * _tau)
@@ -559,9 +552,9 @@ def transfer_out(
 # noinspection PyShadowingNames
 def wave(
     n: int,
-    dt: float | None,
-    t0: float,
     *,
+    dt: float | None = None,
+    t0: float | None = None,
     a: float = 1.0,
     taur: float = 0.3,
     tauc: float = 0.1,
@@ -575,16 +568,18 @@ def wave(
 
     n : int
         Number of samples.
-    dt : float or None
-        Sampling time, normally in picoseconds.
-    t0 : float
-        Pulse center, normally in picoseconds.
+    dt : float or None, optional
+        Sampling time, normally in picoseconds. Default is
+        ``thztools.global_options.sampling_time``, or ``1.0`` if
+        ``thztools.global_options.sampling_time = None``.
+    t0 : float or None, optional
+        Pulse location, normally in picoseconds. Default is ``0.3 * n * dt``.
     a : float, optional
         Peak amplitude. The default is one.
     taur, tauc, fwhm : float, optional
         Current pulse rise time, current pulse decay time, and laser pulse
         FWHM, respectively. The defaults are 0.3 ps, 0.1 ps, and 0.05 ps,
-        respectively, and assume that ``ts`` and ``t0`` are also given in
+        respectively, and assume that ``dt`` and ``t0`` are also given in
         picoseconds.
 
     Returns
@@ -626,7 +621,7 @@ def wave(
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> mu, t = thz.wave(n, dt, t0)
+        >>> mu, t = thz.wave(n, dt=dt, t0=t0)
 
         >>> _, ax = plt.subplots(layout="constrained")
         >>> ax.plot(t, mu)
@@ -635,6 +630,8 @@ def wave(
         >>> plt.show()
     """
     dt = _validate_sampling_time(dt)
+    if t0 is None:
+        t0 = 0.3 * n * dt
 
     taul = fwhm / np.sqrt(2 * np.log(2))
 
@@ -657,9 +654,9 @@ def wave(
 def scaleshift(
     x: ArrayLike,
     *,
+    dt: float | None = None,
     a: ArrayLike | None = None,
     eta: ArrayLike | None = None,
-    dt: float | None = 1.0,
     axis: int = -1,
 ) -> np.ndarray:
     r"""
@@ -669,12 +666,12 @@ def scaleshift(
     ----------
     x : array_like
         Data array.
+    dt : float or None, optional
+        Sampling time. Default is 1.0.
     a : array_like, optional
         Scale array.
     eta : array_like, optional
         Shift array.
-    dt : float or None, optional
-        Sampling time. Default is 1.0.
     axis : int, optional
         Axis over which to apply the correction. If not given, applies over the
         last axis in ``x``.
@@ -698,7 +695,7 @@ def scaleshift(
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> mu, t = thz.wave(n, dt, t0)
+        >>> mu, t = thz.wave(n, dt=dt, t0=t0)
         >>> m = 4
         >>> x = np.repeat(np.atleast_2d(mu), m, axis=0)
         >>> a = 0.5**np.arange(m)
@@ -1005,7 +1002,7 @@ def _tdnll_scaled(
 def tdnoisefit(
     x: ArrayLike,
     *,
-    dt: float | None = 1.0,
+    dt: float | None = None,
     v0: ArrayLike | None = None,
     mu0: ArrayLike | None = None,
     a0: ArrayLike | None = None,
@@ -1202,22 +1199,8 @@ def tdnoisefit(
     else:
         eta_out = np.concatenate(([0.0], x_out[: m - 1] * scale_eta))
 
-    diagnostic = {
-        "grad_scaled": out.jac,
-        "hess_inv_scaled": out.hess_inv,
-        "err": {
-            "var": np.array([]),
-            "delta": np.array([]),
-            "a": np.array([]),
-            "eta": np.array([]),
-        },
-        "success": out.success,
-        "status": out.status,
-        "message": out.message,
-        "nfev": out.nfev,
-        "njev": out.njev,
-        "nit": out.nit,
-    }
+    diagnostic = out
+    fun = out.fun / scale_v
 
     # Concatenate scaling vectors for all sets of free parameters
     scale_hess_inv = np.concatenate(
@@ -1233,35 +1216,47 @@ def tdnoisefit(
 
     # Convert inverse Hessian into unscaled parameters
     hess_inv = scale_v * (
-        np.diag(scale_hess_inv)
-        @ diagnostic["hess_inv_scaled"]
-        @ np.diag(scale_hess_inv)
+        np.diag(scale_hess_inv) @ out.hess_inv @ np.diag(scale_hess_inv)
     )
 
     # Determine parameter uncertainty vector from diagonal entries
     err = np.sqrt(np.diag(hess_inv))
+    err_var = np.array([])
+    err_delta = np.array([])
+    err_alpha = np.array([])
+    err_eta = np.array([])
 
     # Parse error vector
     if not fix_v:
         # Propagate error from log(V) to V
-        diagnostic["err"]["var"] = np.sqrt(
+        err_var = np.sqrt(
             np.diag(np.diag(v_out) @ hess_inv[0:3, 0:3]) @ np.diag(v_out)
         )
         err = err[3:]
 
     if not fix_mu:
-        diagnostic["err"]["delta"] = err[:n]
+        err_delta = err[:n]
         err = err[n:]
 
     if not fix_a:
-        diagnostic["err"]["alpha"] = np.concatenate(([0], err[: m - 1]))
+        err_alpha = np.concatenate(([0], err[: m - 1]))
         err = err[m - 1 :]
 
     if not fix_eta:
-        diagnostic["err"]["eta"] = np.concatenate(([0], err[: m - 1]))
+        err_eta = np.concatenate(([0], err[: m - 1]))
 
     return NoiseResult(
-        noise_model, mu_out, a_out, eta_out, out.fun / scale_v, diagnostic
+        noise_model,
+        mu_out,
+        a_out,
+        eta_out,
+        fun,
+        hess_inv,
+        err_var,
+        err_delta,
+        err_alpha,
+        err_eta,
+        diagnostic,
     )
 
 
@@ -1271,7 +1266,7 @@ def fit(
     x: ArrayLike,
     y: ArrayLike,
     *,
-    dt: float = 1.0,
+    dt: float | None = None,
     sigma_parms: ArrayLike = (1.0, 0.0, 0.0),
     f_bounds: ArrayLike = (0.0, np.inf),
     p_bounds: ArrayLike | None = None,

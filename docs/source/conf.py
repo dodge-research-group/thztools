@@ -46,22 +46,51 @@ version = runpy.run_path(
 # version = importlib.metadata.version(project)
 # release = version
 
-# -- General configuration ---------------------------------------------------
+# -----------------------------------------------------------------------------
+# General configuration
+# -----------------------------------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "matplotlib.sphinxext.plot_directive",
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
-    "sphinx.ext.coverage",
-    "sphinx.ext.extlinks",
+    "numpydoc",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.coverage",
+    "sphinx.ext.autosummary",
+    "matplotlib.sphinxext.plot_directive",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
-    "numpydoc",
+    "sphinx.ext.extlinks",
 ]
+
+# Add any paths that contain templates here, relative to this directory.
+templates_path = ["_templates"]
+
+# The suffix(es) of source filenames.
+# You can specify multiple suffix as a list of string:
+#
+# source_suffix = ['.rst', '.md']
+source_suffix = ".rst"
+
+# List of patterns, relative to source directory, that match files and
+# directories to ignore when looking for source files.
+# This pattern also affects html_static_path and html_extra_path.
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
+# -----------------------------------------------------------------------------
+# NumPy extensions
+# -----------------------------------------------------------------------------
+
+# Make numpydoc to generate plots for example sections
+numpydoc_use_plots = True
+
+# Report warnings for all validation checks
+numpydoc_validation_checks = {"all", "SA01", "ES01", "RT02", "EX01"}
+
+# Ensure all our internal links work
+nitpicky = True
 
 # -----------------------------------------------------------------------------
 # Matplotlib plot_directive options (adapted from SciPy docs)
@@ -73,7 +102,7 @@ np.random.seed(123)
 """
 
 plot_include_source = True
-plot_formats = [("png", 96)]
+plot_formats = [("png", 100), "pdf"]
 plot_html_show_formats = False
 plot_html_show_source_link = False
 
@@ -97,72 +126,27 @@ plot_rcparams = {
     "text.usetex": False,
 }
 
-autodoc_type_aliases = {
-    "ArrayLike": "ArrayLike",
-    "Boolean": "bool",
-    "BooleanOrArrayLike": "BooleanOrArrayLike",
-    "BooleanOrNDArray": "BooleanOrNDArray",
-    "DType": "DType",
-    "DTypeBoolean": "DTypeBoolean",
-    "DTypeComplex": "DTypeComplex",
-    "DTypeFloating": "DTypeFloating",
-    "DTypeInteger": "DTypeInteger",
-    "DTypeNumber": "DTypeNumber",
-    "Floating": "float",
-    "FloatingOrArrayLike": "FloatingOrArrayLike",
-    "FloatingOrNDArray": "FloatingOrNDArray",
-    "Integer": "int",
-    "IntegerOrArrayLike": "IntegerOrArrayLike",
-    "IntegerOrNDArray": "IntegerOrNDArray",
-    "NestedSequence": "NestedSequence",
-    "Number": "Number",
-    "NumberOrArrayLike": "NumberOrArrayLike",
-    "NumberOrNDArray": "NumberOrNDArray",
-    "StrOrArrayLike": "StrOrArrayLike",
-    "StrOrNDArray": "StrOrNDArray",
-}
+# -----------------------------------------------------------------------------
+# Autodoc
+# -----------------------------------------------------------------------------
 
-autosummary_generate = True
 autodoc_typehints = "none"
 
-# Report warnings for all validation checks
-numpydoc_validation_checks = {"all", "SA01", "ES01", "RT02", "EX01"}
+# -----------------------------------------------------------------------------
+# Autosummary
+# -----------------------------------------------------------------------------
 
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
+autosummary_generate = True
 
-# The suffix(es) of source filenames.
-# You can specify multiple suffix as a list of string:
-#
-# source_suffix = ['.rst', '.md']
-source_suffix = ".rst"
-
-# The master toctree document.
-master_doc = "index"
-
-# Ensure all our internal links work
-nitpicky = True
-
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = "default"
-
-mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+# -----------------------------------------------------------------------------
+# Intersphinx configuration
+# -----------------------------------------------------------------------------
 
 intersphinx_mapping = {
-    "python": (
-        f"https://docs.python.org/{sys.version_info.major}",
-        None,
-    ),
-    "numpy": ("https://numpy.org/doc/stable", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
-    "matplotlib": ("https://matplotlib.org/", None),
+    'python': ('https://docs.python.org/3', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy', None),
+    'matplotlib': ('https://matplotlib.org/stable', None),
 }
-
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -197,12 +181,20 @@ html_theme_options = {
     ],
 }
 
+mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = "default"
+
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = "thztoolsdoc"
 
 # -- Options for LaTeX output ------------------------------------------------
+
+# The master toctree document.
+master_doc = "index"
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').

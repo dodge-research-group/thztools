@@ -1,10 +1,10 @@
 :orphan:
 
-thztools.NoiseResult.hess\_inv
+thztools.NoiseModel.sigma\_tau
 ==============================
 
 .. currentmodule:: thztools
 
 attribute
 
-.. autoattribute:: thztools.NoiseResult.hess_inv
+.. autoattribute:: thztools.NoiseModel.sigma_tau

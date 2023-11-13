@@ -1,8 +1,10 @@
 :orphan:
 
-thztools.NoiseResult.err_alpha
-==============================
+thztools.NoiseResult.err\_alpha
+===============================
 
 .. currentmodule:: thztools
 
-.. autoattribute:: NoiseResult.err_alpha
+attribute
+
+.. autoattribute:: thztools.NoiseResult.err_alpha

@@ -1,8 +1,10 @@
 :orphan:
 
-thztools.NoiseResult.err_eta
-============================
+thztools.NoiseResult.err\_eta
+=============================
 
 .. currentmodule:: thztools
 
-.. autoattribute:: NoiseResult.err_eta
+attribute
+
+.. autoattribute:: thztools.NoiseResult.err_eta

@@ -1,8 +1,10 @@
 :orphan:
 
-thztools.NoiseResult.err_delta
-==============================
+thztools.NoiseResult.err\_delta
+===============================
 
 .. currentmodule:: thztools
 
-.. autoattribute:: NoiseResult.err_delta
+attribute
+
+.. autoattribute:: thztools.NoiseResult.err_delta

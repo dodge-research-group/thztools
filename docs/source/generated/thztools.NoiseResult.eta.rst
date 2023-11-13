@@ -5,4 +5,6 @@ thztools.NoiseResult.eta
 
 .. currentmodule:: thztools
 
-.. autoattribute:: NoiseResult.eta
+attribute
+
+.. autoattribute:: thztools.NoiseResult.eta

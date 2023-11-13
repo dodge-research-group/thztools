@@ -1,8 +1,10 @@
 :orphan:
 
-thztools.NoiseResult.noise_model
-================================
+thztools.NoiseResult.noise\_model
+=================================
 
 .. currentmodule:: thztools
 
-.. autoattribute:: NoiseResult.noise_model
+attribute
+
+.. autoattribute:: thztools.NoiseResult.noise_model

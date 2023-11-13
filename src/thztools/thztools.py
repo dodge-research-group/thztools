@@ -38,6 +38,9 @@ class GlobalOptions:
 global_options = GlobalOptions(
     sampling_time=None,
 )
+r"""
+An instance of the :class:`GlobalOptions` class for handling global options.
+"""
 
 
 def _validate_sampling_time(dt: float | None) -> float:
@@ -62,7 +65,7 @@ def _validate_sampling_time(dt: float | None) -> float:
 @dataclass
 class NoiseModel:
     r"""
-    Terahertz noise model class.
+    Noise model class.
 
     For noise parameters :math:`\sigma_\alpha`, :math:`\sigma_\beta`,
     :math:`\sigma_\tau` and signal vector :math:`\boldsymbol{\mu}`, the
@@ -76,17 +79,25 @@ class NoiseModel:
 
     Parameters
     ----------
-    alpha : float
+    sigma_alpha : float
         Additive noise amplitude.
-    beta : float
+    sigma_beta : float
         Multiplicative noise amplitude.
-    tau : float
+    sigma_tau : float
         Timebase noise amplitude.
     dt : float or None, optional
         Sampling time, normally in picoseconds. Default is None, which sets
         the sampling time to ``thztools.global_options.sampling_time``. If both
         ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
         ``tau`` parameter is given in units of the sampling time.
+
+    Warns
+    -----
+    UserWarning
+        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        are both not ``None`` and are set to different ``float`` values, the
+        function will set the sampling time to ``dt`` and raise a
+        ``UserWarning``.
 
     References
     ----------
@@ -113,8 +124,8 @@ class NoiseModel:
         >>> n, dt, t0 = 256, 0.05, 2.5
         >>> mu, t = thz.wave(n, dt=dt, t0=t0)
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
-        >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
-        ... dt=dt)
+        >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+        ...  sigma_tau=tau, dt=dt)
         >>> var_t = noise_mod.variance(mu)
 
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
@@ -125,9 +136,9 @@ class NoiseModel:
         >>> axs[1].set_xlabel("t (ps)")
         >>> plt.show()
     """
-    alpha: float
-    beta: float
-    tau: float
+    sigma_alpha: float
+    sigma_beta: float
+    sigma_tau: float
     dt: float | None = None
 
     # noinspection PyShadowingNames
@@ -185,8 +196,8 @@ class NoiseModel:
             >>> n, dt, t0 = 256, 0.05, 2.5
             >>> mu, t = thz.wave(n, dt=dt, t0=t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
-            >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
-            ... dt=dt)
+            >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+            ... sigma_tau=tau, dt=dt)
             >>> var_t = noise_mod.variance(mu)
 
             >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
@@ -210,7 +221,8 @@ class NoiseModel:
         w_scaled = 2 * np.pi * rfftfreq(n)
         xdot = irfft(1j * w_scaled * rfft(x), n=n) / dt
 
-        var_t = self.alpha**2 + (self.beta * x) ** 2 + (self.tau * xdot) ** 2
+        var_t = (self.sigma_alpha**2 + (self.sigma_beta * x) ** 2
+                 + (self.sigma_tau * xdot) ** 2)
 
         if x.ndim > 1:
             if axis != -1:
@@ -274,8 +286,8 @@ class NoiseModel:
             >>> n, dt, t0 = 256, 0.05, 2.5
             >>> mu, t = thz.wave(n, dt=dt, t0=t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
-            >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
-            ... dt=dt)
+            >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+            ... sigma_tau=tau, dt=dt)
             >>> sigma_t = noise_mod.amplitude(mu)
 
             >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
@@ -350,8 +362,8 @@ class NoiseModel:
             >>> n, dt, t0 = 256, 0.05, 2.5
             >>> mu, t = thz.wave(n, dt=dt, t0=t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
-            >>> noise_mod = thz.NoiseModel(alpha=alpha, beta=beta, tau=tau,
-            ... dt=dt)
+            >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+            ... sigma_tau=tau, dt=dt)
             >>> noise = noise_mod.noise(mu)
 
             >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
@@ -387,7 +399,7 @@ class NoiseResult:
     Parameters
     ----------
     noise_model : NoiseModel
-        Noise parameters, represented as a NoiseModel object.
+        Noise parameters, represented as a :class:`NoiseModel` object.
     mu : ndarray, shape (n,)
         Signal vector.
     a : ndarray, shape (m,)
@@ -410,6 +422,11 @@ class NoiseResult:
         Optimization result returned by ``scipy.optimize.minimize``. Note that
         the attributes ``fun``, ``jac``, and ``hess_inv`` represent functions
         over the internally scaled parameters.
+
+    See Also
+    --------
+    NoiseModel : Noise model class.
+    tdnoisefit : Estimate noise model parameters.
     """
     noise_model: NoiseModel
     mu: np.ndarray
@@ -466,6 +483,18 @@ def transfer_out(
     -------
     y : np.ndarray
         Result of applying the transfer function to ``x``.
+
+    Warns
+    -----
+    UserWarning
+        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        are both not ``None`` and are set to different ``float`` values, the
+        function will set the sampling time to ``dt`` and raise a
+        ``UserWarning``.
+
+    See Also
+    --------
+    fit : Fit a transfer function to time-domain data.
 
     Notes
     -----
@@ -599,6 +628,14 @@ def wave(
     t : ndarray
         Array of time samples.
 
+    Warns
+    -----
+    UserWarning
+        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        are both not ``None`` and are set to different ``float`` values, the
+        function will set the sampling time to ``dt`` and raise a
+        ``UserWarning``.
+
     Notes
     -----
     This function uses a simplified model for terahertz generation from a
@@ -691,8 +728,16 @@ def scaleshift(
 
     Returns
     -------
-    x_adjusted : ndarray
+    x_adj : ndarray
         Adjusted data array.
+
+    Warns
+    -----
+    UserWarning
+        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        are both not ``None`` and are set to different ``float`` values, the
+        function will set the sampling time to ``dt`` and raise a
+        ``UserWarning``.
 
     Examples
     --------
@@ -818,6 +863,14 @@ def _costfuntls(
     -------
     res : array_like
         Residual array.
+
+    Warns
+    -----
+    UserWarning
+        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        are both not ``None`` and are set to different ``float`` values, the
+        function will set the sampling time to ``dt`` and raise a
+        ``UserWarning``.
     """
     theta = np.asarray(theta)
     mu = np.asarray(mu)
@@ -1066,6 +1119,14 @@ def tdnoisefit(
     -------
     res : NoiseResult
         Fit result, represented as a ``NoiseResult`` object.
+
+    Warns
+    -----
+    UserWarning
+        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        are both not ``None`` and are set to different ``float`` values, the
+        function will set the sampling time to ``dt`` and raise a
+        ``UserWarning``.
     """
     if fix_v and fix_mu and fix_a and fix_eta:
         msg = "All variables are fixed"
@@ -1355,6 +1416,14 @@ def fit(
                 Resiuals of the output waveform ``y``.
             success : bool
                 True if one of the convergence criteria is satisfied.
+
+    Warns
+    -----
+    UserWarning
+        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        are both not ``None`` and are set to different ``float`` values, the
+        function will set the sampling time to ``dt`` and raise a
+        ``UserWarning``.
     """
     fit_method = "trf"
 

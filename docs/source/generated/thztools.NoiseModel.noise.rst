@@ -5,4 +5,6 @@ thztools.NoiseModel.noise
 
 .. currentmodule:: thztools
 
-.. automethod:: NoiseModel.noise
+method
+
+.. automethod:: thztools.NoiseModel.noise

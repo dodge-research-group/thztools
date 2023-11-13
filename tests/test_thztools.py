@@ -105,7 +105,7 @@ class TestNoiseModel:
             noise_model = NoiseModel(alpha, beta, tau)
             result = noise_model.variance(mu, axis=axis)
         else:
-            noise_model = NoiseModel(alpha, beta, tau, dt)
+            noise_model = NoiseModel(alpha, beta, tau, dt=dt)
             result = noise_model.variance(mu, axis=axis)
         assert_allclose(result, expected, atol=atol, rtol=rtol)  # type: ignore
 
@@ -134,7 +134,7 @@ class TestNoiseModel:
             noise_model = NoiseModel(alpha, beta, tau)
             result = noise_model.amplitude(mu, axis=axis)
         else:
-            noise_model = NoiseModel(alpha, beta, tau, dt)
+            noise_model = NoiseModel(alpha, beta, tau, dt=dt)
             result = noise_model.amplitude(mu, axis=axis)
         assert_allclose(result, expected, atol=atol, rtol=rtol)  # type: ignore
 
@@ -161,7 +161,7 @@ class TestNoiseModel:
             noise_model = NoiseModel(alpha, beta, tau)
             result = noise_model.noise(mu, axis=axis)
         else:
-            noise_model = NoiseModel(alpha, beta, tau, dt)
+            noise_model = NoiseModel(alpha, beta, tau, dt=dt)
             result = noise_model.noise(mu, axis=axis)
         assert result.shape == expected
 
@@ -305,7 +305,7 @@ class TestScaleShift:
         "x, kwargs", [[x, {"a": [2, 0.5]}], [x, {"eta": [1, -1]}]]
     )
     def test_errors(self, x: ArrayLike, kwargs: dict) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="correction with shape"):
             scaleshift(x, **kwargs)
 
 

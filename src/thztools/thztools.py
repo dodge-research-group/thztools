@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from dataclasses import dataclass, KW_ONLY
+from dataclasses import KW_ONLY, dataclass
 from typing import Callable
 
 import numpy as np
@@ -25,7 +25,7 @@ class GlobalOptions:
 
     Currently, this just includes the ``sampling_time`` parameter.
 
-    Parameters
+    Attributes
     ----------
     sampling_time : float | None, optional
         Global sampling time, normally in picoseconds. When set to None, the
@@ -88,9 +88,8 @@ class NoiseModel:
     dt : float or None, optional
         Sampling time, normally in picoseconds. Default is None, which sets
         the sampling time to ``thztools.global_options.sampling_time``. If both
-        :attr:`dt` and ``thztools.global_options.sampling_time`` are ``None``, the
-        :attr:`sigma_tau` parameter is given in units of the
-        sampling time.
+        :attr:`dt` and ``thztools.global_options.sampling_time`` are ``None``,
+        the :attr:`sigma_tau` parameter is given in units of the sampling time.
 
     Warns
     -----
@@ -144,7 +143,7 @@ class NoiseModel:
     sigma_alpha: float
     sigma_beta: float
     sigma_tau: float
-    _ : KW_ONLY
+    _: KW_ONLY
     dt: float | None = None
 
     # noinspection PyShadowingNames
@@ -227,8 +226,11 @@ class NoiseModel:
         w_scaled = 2 * np.pi * rfftfreq(n)
         xdot = irfft(1j * w_scaled * rfft(x), n=n) / dt
 
-        var_t = (self.sigma_alpha**2 + (self.sigma_beta * x) ** 2
-                 + (self.sigma_tau * xdot) ** 2)
+        var_t = (
+            self.sigma_alpha**2
+            + (self.sigma_beta * x) ** 2
+            + (self.sigma_tau * xdot) ** 2
+        )
 
         if x.ndim > 1:
             if axis != -1:
@@ -1167,7 +1169,7 @@ def tdnoisefit(
 
     scale_logv = 1e0 * np.ones(3)
     alpha, beta, tau = np.sqrt(v0)
-    noise_model = NoiseModel(alpha, beta, tau, dt)
+    noise_model = NoiseModel(alpha, beta, tau, dt=dt)
     scale_delta = 1e-0 * noise_model.amplitude(x[:, 0])
     scale_alpha = 1e-2 * np.ones(m - 1)
     scale_eta = 1e-3 * np.ones(m - 1)
@@ -1263,7 +1265,7 @@ def tdnoisefit(
         v_out = np.exp(x_out[:3] * scale_logv) * scale_v
         x_out = x_out[3:]
     alpha, beta, tau = np.sqrt(v_out)
-    noise_model = NoiseModel(alpha, beta, tau, dt)
+    noise_model = NoiseModel(alpha, beta, tau, dt=dt)
 
     if fix_mu:
         mu_out = mu0
@@ -1468,7 +1470,7 @@ def fit(
     n_f = len(w)
 
     alpha, beta, tau = sigma_parms
-    noise_model = NoiseModel(alpha, beta, tau, dt)
+    noise_model = NoiseModel(alpha, beta, tau, dt=dt)
     sigma_x = noise_model.amplitude(x)
     sigma_y = noise_model.amplitude(y)
     p0_est = np.concatenate((p0, np.zeros(n)))

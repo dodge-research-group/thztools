@@ -86,8 +86,12 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # Make numpydoc to generate plots for example sections
 numpydoc_use_plots = True
 
+numpydoc_class_members_toctree = True
+numpydoc_attributes_as_param_list = False
+numpydoc_xref_param_type = True
+
 # Report warnings for all validation checks
-numpydoc_validation_checks = {"all", "SA01", "ES01", "RT02", "EX01"}
+numpydoc_validation_checks = {"all", "SA01", "ES01", "RT02", "EX01", "PR01"}
 
 # Ensure all our internal links work
 nitpicky = True
@@ -132,6 +136,10 @@ plot_rcparams = {
 
 autodoc_typehints = "none"
 
+# If true, '()' will be appended to :func: etc. cross-reference text.
+add_function_parentheses = False
+
+
 # -----------------------------------------------------------------------------
 # Autosummary
 # -----------------------------------------------------------------------------
@@ -143,9 +151,10 @@ autosummary_generate = True
 # -----------------------------------------------------------------------------
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy', None),
-    'matplotlib': ('https://matplotlib.org/stable', None),
+    "numpy": ("https://numpy.org/devdocs", None),
+    "python": ("https://docs.python.org/3", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy", None),
+    "matplotlib": ("https://matplotlib.org/stable", None),
 }
 
 # -- Options for HTML output -------------------------------------------------

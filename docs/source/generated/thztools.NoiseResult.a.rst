@@ -1,8 +1,8 @@
 :orphan:
 
-thztools.NoiseResult.p
+thztools.NoiseResult.a
 ======================
 
 .. currentmodule:: thztools
 
-.. autoattribute:: NoiseResult.p
+.. autoattribute:: NoiseResult.a

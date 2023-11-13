@@ -22,7 +22,10 @@
       .. autosummary::
          :toctree:
       
-         NoiseResult.p
+         NoiseResult.noise_model
+         NoiseResult.mu
+         NoiseResult.a
+         NoiseResult.eta
          NoiseResult.fval
          NoiseResult.diagnostic
   

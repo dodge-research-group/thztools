@@ -7,7 +7,7 @@ from thztools.thztools import (
     global_options,
     scaleshift,
     tdnoisefit,
-    transfer_out,
+    transfer,
     wave,
 )
 
@@ -19,7 +19,7 @@ __all__ = [
     "global_options",
     "scaleshift",
     "tdnoisefit",
-    "transfer_out",
+    "transfer",
     "wave",
     "__version__",
 ]

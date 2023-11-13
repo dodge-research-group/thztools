@@ -426,7 +426,7 @@ class NoiseResult:
         Estimated uncertainty in ``a``.
     err_eta : ndarray
         Estimated uncertainty in ``eta``.
-    diagnostic : OptimizeResult
+    diagnostic : scipy.optimize.OptimizeResult
         Instance of :class:`scipy.optimize.OptimizeResult` returned by
         :func:`scipy.optimize.minimize`. Note that the attributes ``fun``,
         ``jac``, and ``hess_inv`` represent functions over the internally
@@ -451,7 +451,7 @@ class NoiseResult:
 
 
 # noinspection PyShadowingNames
-def transfer_out(
+def transfer(
     tfun: Callable,
     x: ArrayLike,
     *,
@@ -536,7 +536,7 @@ def transfer_out(
         >>> def shiftscale(_w, _a, _tau):
         >>>     return _a * np.exp(-1j * _w * _tau)
         >>>
-        >>> y = thz.transfer_out(shiftscale, x, dt=dt, fft_sign=True,
+        >>> y = thz.transfer(shiftscale, x, dt=dt, fft_sign=True,
         ...                      args=(0.5, 1))
 
         >>> _, ax = plt.subplots()
@@ -560,7 +560,7 @@ def transfer_out(
         >>> def shiftscale_phys(_w, _a, _tau):
         >>>     return _a * np.exp(1j * _w * _tau)
         >>>
-        >>> y_p = thz.transfer_out(shiftscale_phys, x, dt=dt, fft_sign=False,
+        >>> y_p = thz.transfer(shiftscale_phys, x, dt=dt, fft_sign=False,
         ...                        args=(0.5, 1))
 
         >>> _, ax = plt.subplots()
@@ -1169,6 +1169,7 @@ def tdnoisefit(
 
     scale_logv = 1e0 * np.ones(3)
     alpha, beta, tau = np.sqrt(v0)
+    # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
     scale_delta = 1e-0 * noise_model.amplitude(x[:, 0])
     scale_alpha = 1e-2 * np.ones(m - 1)
@@ -1265,6 +1266,7 @@ def tdnoisefit(
         v_out = np.exp(x_out[:3] * scale_logv) * scale_v
         x_out = x_out[3:]
     alpha, beta, tau = np.sqrt(v_out)
+    # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
 
     if fix_mu:
@@ -1470,6 +1472,7 @@ def fit(
     n_f = len(w)
 
     alpha, beta, tau = sigma_parms
+    # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
     sigma_x = noise_model.amplitude(x)
     sigma_y = noise_model.amplitude(y)

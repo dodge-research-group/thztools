@@ -19,15 +19,7 @@ Noise model
 
     NoiseModel
     NoiseResult
-
-Waveform simulation and transformation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autosummary::
-    :toctree: generated/
-
-    scaleshift
-    transfer_out
-    wave
+    tdnoisefit
 
 Parameter estimation
 ^^^^^^^^^^^^^^^^^^^^
@@ -35,4 +27,12 @@ Parameter estimation
     :toctree: generated/
 
     fit
-    tdnoisefit
+
+Waveform simulation and transformation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. autosummary::
+    :toctree: generated/
+
+    scaleshift
+    transfer
+    wave

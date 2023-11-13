@@ -88,7 +88,9 @@ numpydoc_use_plots = True
 
 numpydoc_class_members_toctree = True
 numpydoc_attributes_as_param_list = False
-numpydoc_xref_param_type = True
+
+# Cross-reference parameter types when True
+numpydoc_xref_param_type = False
 
 # Report warnings for all validation checks
 numpydoc_validation_checks = {"all", "SA01", "ES01", "RT02", "EX01", "PR01"}

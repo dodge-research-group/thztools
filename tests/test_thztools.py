@@ -16,7 +16,7 @@ from thztools.thztools import (
     fit,
     scaleshift,
     tdnoisefit,
-    transfer_out,
+    transfer,
     wave,
 )
 
@@ -184,7 +184,7 @@ class TestTransferOut:
         ts = self.dt
         thztools.global_options.sampling_time = None
         assert_allclose(
-            transfer_out(t_fun, x, dt=ts, fft_sign=fft_sign, args=p),
+            transfer(t_fun, x, dt=ts, fft_sign=fft_sign, args=p),
             expected,
         )
 
@@ -192,7 +192,7 @@ class TestTransferOut:
     def test_error(self, x):
         dt = self.dt
         with pytest.raises(ValueError):
-            _ = transfer_out(x, tfun1, dt=dt, args=[1.0, 0.0])
+            _ = transfer(x, tfun1, dt=dt, args=[1.0, 0.0])
 
 
 class TestWave:

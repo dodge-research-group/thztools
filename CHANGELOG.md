@@ -5,6 +5,19 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org) for maintaining
 this file.
 
+## [0.3.6] - 2023-11-12
+
+### Changed
+
+- Reorganized `NoiseResult` dataclass
+- Initialize tests with `thztools.global_options.sampling_time = None`
+
+### Added
+
+- Add [Zenodo](https://zenodo.org/records/10115206) badge to README
+- Internal `_validate_sampling_time` function to handle sampling time input
+- Tests for `_validate_sampling_time`
+
 ## [0.3.5] - 2023-11-11
 
 ### Added
@@ -88,6 +101,7 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.3.6]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.6
 [0.3.5]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.5
 [0.3.4]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.4
 [0.3.3]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.3

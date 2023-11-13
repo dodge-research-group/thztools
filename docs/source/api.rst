@@ -3,6 +3,14 @@ THzTools
 
 .. currentmodule:: thztools
 
+Global options
+^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+
+    GlobalOptions
+
 Noise model
 ^^^^^^^^^^^
 
@@ -28,11 +36,3 @@ Parameter estimation
 
     fit
     tdnoisefit
-
-Global options
-^^^^^^^^^^^^^^
-
-.. autosummary::
-    :toctree: generated/
-
-    GlobalOptions

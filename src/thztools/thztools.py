@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, KW_ONLY
 from typing import Callable
 
 import numpy as np
@@ -88,16 +88,21 @@ class NoiseModel:
     dt : float or None, optional
         Sampling time, normally in picoseconds. Default is None, which sets
         the sampling time to ``thztools.global_options.sampling_time``. If both
-        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
-        ``tau`` parameter is given in units of the sampling time.
+        :attr:`dt` and ``thztools.global_options.sampling_time`` are ``None``, the
+        :attr:`sigma_tau` parameter is given in units of the
+        sampling time.
 
     Warns
     -----
     UserWarning
-        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
-        are both not ``None`` and are set to different ``float`` values, the
-        function will set the sampling time to ``dt`` and raise a
-        ``UserWarning``.
+        If ``thztools.global_options.sampling_time`` and the :attr:`dt`
+        parameter are both not ``None`` and are set to different ``float``
+        values, the function will set the sampling time to :attr:`dt` and raise
+        a :class:`UserWarning`.
+
+    See Also
+    --------
+    tdnoisefit : Estimate noise model parameters.
 
     References
     ----------
@@ -139,6 +144,7 @@ class NoiseModel:
     sigma_alpha: float
     sigma_beta: float
     sigma_tau: float
+    _ : KW_ONLY
     dt: float | None = None
 
     # noinspection PyShadowingNames
@@ -419,9 +425,10 @@ class NoiseResult:
     err_eta : ndarray
         Estimated uncertainty in ``eta``.
     diagnostic : OptimizeResult
-        Optimization result returned by ``scipy.optimize.minimize``. Note that
-        the attributes ``fun``, ``jac``, and ``hess_inv`` represent functions
-        over the internally scaled parameters.
+        Instance of :class:`scipy.optimize.OptimizeResult` returned by
+        :func:`scipy.optimize.minimize`. Note that the attributes ``fun``,
+        ``jac``, and ``hess_inv`` represent functions over the internally
+        scaled parameters.
 
     See Also
     --------
@@ -490,7 +497,7 @@ def transfer_out(
         If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
-        ``UserWarning``.
+        :class:`UserWarning`.
 
     See Also
     --------
@@ -634,7 +641,7 @@ def wave(
         If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
-        ``UserWarning``.
+        :class:`UserWarning`.
 
     Notes
     -----
@@ -737,14 +744,13 @@ def scaleshift(
         If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
-        ``UserWarning``.
+        :class:`UserWarning`.
 
     Examples
     --------
     The following example makes an array with 4 identical copies of the
-    signal ``mu`` returned by ``thztools.thzgen``. It then uses
-    ``thztools.scaleshift`` to rescale each copy by
-    ``a = [1.0, 0.5, 0.25, 0.125]`` and shift it by
+    signal ``mu`` returned by :func:`wave`. It then uses :func:`scaleshift` to
+    rescale each copy by ``a = [1.0, 0.5, 0.25, 0.125]`` and shift it by
     ``eta = [0.0, 1.0, 2.0, 3.0]``.
 
     .. plot::
@@ -870,7 +876,7 @@ def _costfuntls(
         If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
-        ``UserWarning``.
+        :class:`UserWarning`.
     """
     theta = np.asarray(theta)
     mu = np.asarray(mu)
@@ -1092,7 +1098,7 @@ def tdnoisefit(
         the sampling time to ``thztools.global_options.sampling_time``. If both
         ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
         sampling time is set to `1.0`. In this case, the unit of time is the
-        sampling time for the noise model parameter ``tau``, the delay
+        sampling time for the noise model parameter ``sigma_tau``, the delay
         parameter array ``eta``, and the initial guesses for both quantities.
     v0 : ndarray, shape (3,), optional
         Initial guess, noise model parameters with size (3,), expressed as
@@ -1118,7 +1124,7 @@ def tdnoisefit(
     Returns
     -------
     res : NoiseResult
-        Fit result, represented as a ``NoiseResult`` object.
+        Fit result, represented as a :class:`NoiseResult` object.
 
     Warns
     -----
@@ -1126,7 +1132,7 @@ def tdnoisefit(
         If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
-        ``UserWarning``.
+        :class:`UserWarning`.
     """
     if fix_v and fix_mu and fix_a and fix_eta:
         msg = "All variables are fixed"
@@ -1423,7 +1429,7 @@ def fit(
         If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
-        ``UserWarning``.
+        :class:`UserWarning`.
     """
     fit_method = "trf"
 

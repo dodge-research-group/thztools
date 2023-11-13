@@ -83,8 +83,10 @@ class NoiseModel:
     tau : float
         Timebase noise amplitude.
     dt : float or None, optional
-        Sampling time, normally in picoseconds. Default set to None, for which
-        the ``tau`` parameter is given in units of the sampling time.
+        Sampling time, normally in picoseconds. Default is None, which sets
+        the sampling time to ``thztools.global_options.sampling_time``. If both
+        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        ``tau`` parameter is given in units of the sampling time.
 
     References
     ----------
@@ -426,8 +428,8 @@ class NoiseResult:
 def transfer_out(
     tfun: Callable,
     x: ArrayLike,
-    dt: float | None,
     *,
+    dt: float | None = None,
     fft_sign: bool = True,
     args: tuple = (),
 ) -> np.ndarray:
@@ -447,8 +449,14 @@ def transfer_out(
         of ``dt``, such as radians/picosecond.
     x : array_like
         Data array.
-    dt : float or None
-        Sampling time, normally in picoseconds.
+    dt : float or None, optional
+        Sampling time, normally in picoseconds. Default is None, which sets
+        the sampling time to ``thztools.global_options.sampling_time``. If both
+        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        sampling time is set to `1.0`. In this case, the angular frequency
+        ``omega`` must be given in units of radians per sampling time, and any
+        parameters in ``args`` must be expressed with the sampling time as the
+        unit of time.
     fft_sign : bool, optional
         Complex exponential sign convention for harmonic time dependence.
     args : tuple, optional
@@ -569,9 +577,10 @@ def wave(
     n : int
         Number of samples.
     dt : float or None, optional
-        Sampling time, normally in picoseconds. Default is
-        ``thztools.global_options.sampling_time``, or ``1.0`` if
-        ``thztools.global_options.sampling_time = None``.
+        Sampling time, normally in picoseconds. Default is None, which sets
+        the sampling time to ``thztools.global_options.sampling_time``. If both
+        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        sampling time is set to 1.0.
     t0 : float or None, optional
         Pulse location, normally in picoseconds. Default is ``0.3 * n * dt``.
     a : float, optional
@@ -667,7 +676,11 @@ def scaleshift(
     x : array_like
         Data array.
     dt : float or None, optional
-        Sampling time. Default is 1.0.
+        Sampling time, normally in picoseconds. Default is None, which sets
+        the sampling time to ``thztools.global_options.sampling_time``. If both
+        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        sampling time is set to `1.0`. In this case, ``eta`` must be given in
+        units of the sampling time.
     a : array_like, optional
         Scale array.
     eta : array_like, optional
@@ -780,33 +793,31 @@ def _costfuntls(
             ``fun(p, w, *args, **kwargs) -> np.ndarray``
 
         Assumes the :math:`+i\omega t` convention for harmonic time dependence.
-
     theta : array_like
         Input parameters for the function.
-
     mu : array_like
         Estimated input signal.
-
     x : array_like
         Measured input signal.
-
     y : array_like
         Measured output signal.
-
     sigma_x : array_like
         Noise vector of the input signal.
-
     sigma_y : array_like
         Noise vector of the output signal.
-
     dt : float or None, optional
-        Sampling time. Default set to 1.0.
+        Sampling time, normally in picoseconds. Default is None, which sets
+        the sampling time to ``thztools.global_options.sampling_time``. If both
+        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        sampling time is set to `1.0`. In this case, the angular frequency
+        ``omega`` must be given in units of radians per sampling time, and any
+        parameters in ``args`` must be expressed with the sampling time as the
+        unit of time.
 
     Returns
     -------
     res : array_like
-
-
+        Residual array.
     """
     theta = np.asarray(theta)
     mu = np.asarray(mu)
@@ -866,7 +877,7 @@ def _tdnll_scaled(
         Amplitude deviation vector with shape (m - 1,).
     eta_on_dt : array_like
         Normalized delay deviation vector with shape (m - 1,), equal to
-        ``eta``/``dt``.
+        ``eta / dt``.
     fix_logv : bool
         Exclude noise parameters from gradiate calculation when ``True``.
     fix_delta : bool
@@ -1024,7 +1035,12 @@ def tdnoisefit(
     x : ndarray, shape(n, m)
         Data array with `m` waveforms, each composed of `n` points.
     dt : float or None, optional
-        Sampling time. Default is 1.0.
+        Sampling time, normally in picoseconds. Default is None, which sets
+        the sampling time to ``thztools.global_options.sampling_time``. If both
+        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        sampling time is set to `1.0`. In this case, the unit of time is the
+        sampling time for the noise model parameter ``tau``, the delay
+        parameter array ``eta``, and the initial guesses for both quantities.
     v0 : ndarray, shape (3,), optional
         Initial guess, noise model parameters with size (3,), expressed as
         variance amplitudes.
@@ -1295,8 +1311,14 @@ def fit(
         Measured input signal.
     y : array_like
         Measured output signal.
-    dt : float, optional
-        Sampling time.
+    dt : float or None, optional
+        Sampling time, normally in picoseconds. Default is None, which sets
+        the sampling time to ``thztools.global_options.sampling_time``. If both
+        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        sampling time is set to `1.0`. In this case, the angular frequency
+        ``omega`` must be given in units of radians per sampling time, and any
+        parameters in ``args`` must be expressed with the sampling time as the
+        unit of time.
     sigma_parms : None or array_like, optional
         Noise parameters with size (3,), expressed as standard deviation
         amplitudes.

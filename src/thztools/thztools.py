@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from dataclasses import KW_ONLY, dataclass
+from dataclasses import dataclass
 from typing import Callable
 
 import numpy as np
@@ -143,7 +143,6 @@ class NoiseModel:
     sigma_alpha: float
     sigma_beta: float
     sigma_tau: float
-    _: KW_ONLY
     dt: float | None = None
 
     # noinspection PyShadowingNames

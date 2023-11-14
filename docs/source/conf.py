@@ -104,7 +104,7 @@ nitpicky = True
 
 plot_pre_code = """
 import numpy as np
-np.random.seed(123)
+rng = np.random.default_rng(0)
 """
 
 plot_include_source = True

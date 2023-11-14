@@ -1081,20 +1081,33 @@ def tdnoisefit(
     eta0: ArrayLike | None = None,
     fix_v: bool = False,
     fix_mu: bool = False,
-    fix_a: bool = True,
-    fix_eta: bool = True,
+    fix_a: bool = False,
+    fix_eta: bool = False,
 ) -> NoiseResult:
     r"""
-    Estimate noise model parameters.
+    Estimate noise model from a set of nominally identical waveforms.
 
-    Computes the noise parameters sigma and the underlying signal vector ``mu``
-    for the data matrix ``x``, where the columns of ``x`` are each noisy
-    measurements of ``mu``.
+    The data array ``x`` should include ``m`` nominally identical waveform
+    measurements, where each waveform comprises ``n`` samples that are spaced
+    equally in time. The model assumes that the amplitude and the location
+    of the waveform may drift between measurements, and that the noise within
+    each waveform is given by [1]_
+
+    .. math:: \sigma_k^2 = \sigma_\alpha^2 + \sigma_\beta^2\zeta_k^2 \
+        + \sigma_\tau^2(\mathbf{D}\boldsymbol{\zeta})_k^2,
+
+    where :math:`\sigma_k^2` is the the :math:`k`-th element of the time-domain
+    noise variance, :math:`\sigma_\alpha`, :math:`\sigma_\beta` and
+    :math:`\sigma_\tau` are the noise model parameters,
+    :math:`\boldsymbol{\zeta}` is the ideal signal vector, including drift,
+    and :math:`\mathbf{D}` is the time-domain derivative operator. See
+    `Notes` for details.
 
     Parameters
     ----------
-    x : ndarray, shape(n, m)
-        Data array with `m` waveforms, each composed of `n` points.
+    x : array_like with shape (n, m)
+        Data array composed of ``m`` waveforms, each of which is sampled at
+        ``n`` points.
     dt : float or None, optional
         Sampling time, normally in picoseconds. Default is None, which sets
         the sampling time to ``thztools.global_options.sampling_time``. If both
@@ -1102,31 +1115,59 @@ def tdnoisefit(
         sampling time is set to `1.0`. In this case, the unit of time is the
         sampling time for the noise model parameter ``sigma_tau``, the delay
         parameter array ``eta``, and the initial guesses for both quantities.
-    v0 : ndarray, shape (3,), optional
-        Initial guess, noise model parameters with size (3,), expressed as
+    v0 : array_like, optional
+        Initial guess, noise model parameters with shape (3,), expressed as
         variance amplitudes.
-    mu0 : ndarray, shape(n,), optional
-        Initial guess, signal vector with size (n,). Default is first column of
-        ``x``.
-    a0 : ndarray, shape(m,), optional
-        Initial guess, amplitude vector with size (m,). Default is one for all
+    mu0 : array_like with shape(n,), optional
+        Initial guess, signal vector with shape (n,). Default is first column
+        of ``x``.
+    a0 : array_like with shape(m,), optional
+        Initial guess, amplitude vector with shape (m,). Default is one for all
         entries.
-    eta0 : ndarray, shape(m,), optional
-        Initial guess, delay vector with size (m,). Default is zero for all
+    eta0 : array_like with shape(m,), optional
+        Initial guess, delay vector with shape (m,). Default is zero for all
         entries.
     fix_v : bool, optional
         Fix noise variance parameters. Default is False.
     fix_mu : bool, optional
         Fix signal vector. Default is False.
     fix_a : bool, optional
-        Fix amplitude vector. Default is True.
+        Fix amplitude vector. Default is False.
     fix_eta : bool, optional
-        Fix delay vector. Default is True.
+        Fix delay vector. Default is False.
 
     Returns
     -------
     res : NoiseResult
-        Fit result, represented as a :class:`NoiseResult` object.
+        Fit result, represented as an object with attributes:
+
+        noise_model : NoiseModel
+            Estimated noise parameters, represented as a :class:`NoiseModel`
+            object.
+        mu : ndarray
+            Estimated signal vector.
+        a : ndarray
+            Estimated amplitude vector.
+        eta : ndarray
+            Estimated delay vector.
+        fval : float
+            Value of optimized NLL cost function.
+        hess_inv : ndarray
+            Inverse Hessian matrix of NLL cost function, evaluated at the
+            optimized parameter values.
+        err_var : ndarray
+            Estimated uncertainty in the noise model variance parameters.
+        err_delta : ndarray
+            Estimated uncertainty in ``mu``.
+        err_alpha : ndarray
+            Estimated uncertainty in ``a``.
+        err_eta : ndarray
+            Estimated uncertainty in ``eta``.
+        diagnostic : scipy.optimize.OptimizeResult
+            Instance of :class:`scipy.optimize.OptimizeResult` returned by
+            :func:`scipy.optimize.minimize`. Note that the attributes ``fun``,
+            ``jac``, and ``hess_inv`` represent functions over the internally
+            scaled parameters.
 
     Warns
     -----
@@ -1135,6 +1176,75 @@ def tdnoisefit(
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
         :class:`UserWarning`.
+
+    See Also
+    --------
+    NoiseModel : Noise model class.
+
+    Notes
+    -----
+    The model assumes an ideal primary waveform, :math:`\mu(t)`, which drifts
+    in amplitude and temporal location over a timescale longer than the
+    waveform acquisition time. We associate each column :math:`l`: of the data
+    array ``x`` with a noisy measurement of the secondary waveform,
+
+    .. math:: \zeta(t; A_l, \eta_l) = A_l\mu(t - \eta_l),
+
+    where :math:`A_l` is the relative amplitude and :math:`\eta_l` is the
+    temporal shift associated with the measurement. To fix the scale and
+    location of the (unknown) :math:`\mu(t)`, we set :math:`A_0 = 1` and
+    :math:`\eta_0 = 0`. Representing the data array as :math:`\mathbf{X}`,
+    we can define the secondary waveform array as :math:`\mathbf{Z}`, where
+    :math:`Z_{kl} = \zeta(t_k; A_l, \eta_l) = A_l\mu(t_k - \eta_l)`.
+
+    The maximum-likelihood cost function is
+
+    .. math:: \begin{split}\
+        Q_\text{ML}\
+        (\sigma_\alpha,\sigma_\beta,\sigma_\tau,\boldsymbol{\mu},\
+        \mathbf{A},\boldsymbol{\eta};\mathbf{X})\
+        = \sum_{k=0}^{N-1}\sum_{l=0}^{M-1}& \
+        \Biggl\{\ln\left[\sigma_\alpha^2 \
+        + \sigma_\beta^2 Z_{kl}^2 \
+        + \sigma_\tau^2(\mathbf{D}\mathbf{Z})_{kl}^2\right] \\\
+        & + \frac{(X_{kl} - Z_{kl})^2}{\sigma_\alpha^2 \
+        + \sigma_\beta^2 Z_{kl}^2 \
+        + \sigma_\tau^2(\mathbf{D}\mathbf{Z})_{kl}^2}\Biggr\},\
+        \end{split}
+
+    References
+    ----------
+    .. [1] Laleh Mohtashemi, Paul Westlund, Derek G. Sahota, Graham B. Lea,
+        Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-
+        likelihood parameter estimation in terahertz time-domain
+        spectroscopy," Opt. Express **29**, 4912-4926 (2021),
+        `<https://doi.org/10.1364/OE.417724>`_.
+
+    Examples
+    --------
+    .. plot::
+       :include-source: True
+
+        >>> import matplotlib.pyplot as plt
+        >>> import thztools as thz
+        >>> n, dt, t0 = 256, 0.05, 2.5
+        >>> mu, t = thz.wave(n, dt=dt, t0=t0)
+        >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
+        >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+        ...  sigma_tau=tau, dt=dt)
+        >>> m = 50
+        >>> a = 1.0 + 1e-2 * np.concatenate(([0.0],
+        ...                                 rng.standard_normal(m - 1)))
+        >>> eta = 1e-3 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
+        >>> z = thz.scaleshift(np.repeat(np.atleast_2d(mu), m, axis=0),
+        ...                     a=a, eta=eta, dt=dt)
+        >>> x = z + noise_mod.noise(z)
+        >>> noise_res = thz.tdnoisefit(x.T, dt=dt)
+        >>> noise_res.noise_model
+        NoiseModel(sigma_alpha=9.979602804703231e-05,
+                   sigma_beta=0.013952020715871073,
+                   sigma_tau=0.02845566519153561,
+                   dt=0.05)
     """
     if fix_v and fix_mu and fix_a and fix_eta:
         msg = "All variables are fixed"

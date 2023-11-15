@@ -1086,21 +1086,11 @@ def tdnoisefit(
     r"""
     Estimate noise model from a set of nominally identical waveforms.
 
-    The data array ``x`` should include ``m`` nominally identical waveform
-    measurements, where each waveform comprises ``n`` samples that are spaced
-    equally in time. The model assumes that the amplitude and the location
-    of the waveform may drift between measurements, and that the noise within
-    each waveform is given by [1]_
-
-    .. math:: \sigma_k^2 = \sigma_\alpha^2 + \sigma_\beta^2\zeta_k^2 \
-        + \sigma_\tau^2(\mathbf{D}\boldsymbol{\zeta})_k^2,
-
-    where :math:`\sigma_k^2` is the the :math:`k`-th element of the time-domain
-    noise variance, :math:`\sigma_\alpha`, :math:`\sigma_\beta` and
-    :math:`\sigma_\tau` are the noise model parameters,
-    :math:`\boldsymbol{\zeta}` is the ideal signal vector, including drift,
-    and :math:`\mathbf{D}` is the time-domain derivative operator. See
-    `Notes` for details.
+    The data array ``x`` should include `m` nominally identical waveform
+    measurements, where each waveform comprises `n` samples that are spaced
+    equally in time. The ``noise_model`` attribute of the return object
+    is an instance of the :class:`NoiseModel` class that represents the
+    estimated noise parameters. See `Notes` for details.
 
     Parameters
     ----------
@@ -1141,8 +1131,8 @@ def tdnoisefit(
         Fit result, represented as an object with attributes:
 
         noise_model : NoiseModel
-            Estimated noise parameters, represented as a :class:`NoiseModel`
-            object.
+            Instance of :class:`NoiseModel` with the estimated noise
+            parameters.
         mu : ndarray
             Estimated signal vector.
         a : ndarray
@@ -1182,21 +1172,9 @@ def tdnoisefit(
 
     Notes
     -----
-    The model assumes an ideal primary waveform, :math:`\mu(t)`, which drifts
-    in amplitude and temporal location over a timescale longer than the
-    waveform acquisition time. We associate each column :math:`l`: of the data
-    array ``x`` with a noisy measurement of the secondary waveform,
-
-    .. math:: \zeta(t; A_l, \eta_l) = A_l\mu(t - \eta_l),
-
-    where :math:`A_l` is the relative amplitude and :math:`\eta_l` is the
-    temporal shift associated with the measurement. To fix the scale and
-    location of the (unknown) :math:`\mu(t)`, we set :math:`A_0 = 1` and
-    :math:`\eta_0 = 0`. Representing the data array as :math:`\mathbf{X}`,
-    we can define the secondary waveform array as :math:`\mathbf{Z}`, where
-    :math:`Z_{kl} = \zeta(t_k; A_l, \eta_l) = A_l\mu(t_k - \eta_l)`.
-
-    The maximum-likelihood cost function is
+    Given an :math:`N\times M` data array :math:`\mathbf{X}`, the function uses
+    the BFGS method of :func:`scipy.optimize.minimize` to minimize the
+    maximum-likelihood cost function [1]_
 
     .. math:: \begin{split}\
         Q_\text{ML}\
@@ -1208,8 +1186,30 @@ def tdnoisefit(
         + \sigma_\tau^2(\mathbf{D}\mathbf{Z})_{kl}^2\right] \\\
         & + \frac{(X_{kl} - Z_{kl})^2}{\sigma_\alpha^2 \
         + \sigma_\beta^2 Z_{kl}^2 \
-        + \sigma_\tau^2(\mathbf{D}\mathbf{Z})_{kl}^2}\Biggr\},\
+        + \sigma_\tau^2(\mathbf{D}\mathbf{Z})_{kl}^2}\Biggr\}\
         \end{split}
+
+    with respect to the unknown model parameters :math:`\sigma_\alpha`,
+    :math:`\sigma_\beta`, :math:`\sigma_\tau`, :math:`\boldsymbol{\mu}`,
+    :math:`\mathbf{A}` and :math:`\boldsymbol{\eta}`. The model assumes that
+    the elements of :math:`\mathbf{X}` are normally distributed around the
+    corresponding elements of :math:`\mathbf{Z}` with variances given by
+    :math:`\boldsymbol{\sigma}^2`, which are in turn given by
+
+    .. math:: Z_{kl} = A_l\mu(t_k - \eta_l)
+
+    and
+
+    .. math:: \sigma_{kl}^2 = \sigma_\alpha^2 + \sigma_\beta^2 Z_{kl}^2 \
+        + \sigma_\tau^2(\mathbf{D}\mathbf{Z})_{kl}^2,
+
+    where :math:`\mathbf{D}` is the time-domain derivative operator. The
+    function :math:`\mu(t)` represents an ideal primary waveform, which drifts
+    in amplitude and temporal location between each of the :math:`M` waveform
+    measurements. Each waveform comprises :math:`N` samples at the nominal
+    times :math:`t_k`, and the drift in the amplitude and the temporal location
+    of the :math:`l` waveform are given by :math:`A_l` and :math:`\eta_l`,
+    respectively.
 
     References
     ----------

@@ -42,17 +42,16 @@ def jac_fun(p, w):
 
 
 class TestGlobalOptions:
-    thztools.global_options.sampling_time = None
+    # thztools.global_options.sampling_time = None
 
     def test_sampling_time(self):
         assert thztools.global_options.sampling_time is None
-        thztools.global_options.sampling_time = 0.1
-        assert_allclose(thztools.global_options.sampling_time, 0.1)
 
     @pytest.mark.parametrize("global_sampling_time", [None, 0.1])
     @pytest.mark.parametrize("dt", [None, 0.1, 1.0])
-    def test_validation(self, global_sampling_time, dt):
-        thztools.global_options.sampling_time = global_sampling_time
+    def test_assignment(self, global_sampling_time, dt, monkeypatch):
+        monkeypatch.setattr(thztools.global_options, "sampling_time",
+                            global_sampling_time)
         if global_sampling_time is None and dt is None:
             assert np.isclose(_assign_sampling_time(dt), 1.0)
         elif global_sampling_time is None and dt is not None:
@@ -100,7 +99,6 @@ class TestNoiseModel:
         axis: int,
         expected: ArrayLike,
     ) -> None:
-        thztools.global_options.sampling_time = None
         if dt is None:
             noise_model = NoiseModel(alpha, beta, tau)
             result = noise_model.variance(mu, axis=axis)

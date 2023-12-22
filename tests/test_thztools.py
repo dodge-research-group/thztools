@@ -12,7 +12,7 @@ from thztools.thztools import (
     NoiseModel,
     _costfuntls,
     _tdnll_scaled,
-    _validate_sampling_time,
+    _assign_sampling_time,
     fit,
     scaleshift,
     tdnoisefit,
@@ -54,26 +54,25 @@ class TestGlobalOptions:
     def test_validation(self, global_sampling_time, dt):
         thztools.global_options.sampling_time = global_sampling_time
         if global_sampling_time is None and dt is None:
-            assert np.isclose(_validate_sampling_time(dt), 1.0)
+            assert np.isclose(_assign_sampling_time(dt), 1.0)
         elif global_sampling_time is None and dt is not None:
-            assert np.isclose(_validate_sampling_time(dt), dt)
+            assert np.isclose(_assign_sampling_time(dt), dt)
         elif global_sampling_time is not None and dt is None:
             assert np.isclose(
-                _validate_sampling_time(dt), global_sampling_time
+                _assign_sampling_time(dt), global_sampling_time
             )
         elif global_sampling_time is not None and np.isclose(
             dt, global_sampling_time
         ):
             assert np.isclose(
-                _validate_sampling_time(dt), global_sampling_time
+                _assign_sampling_time(dt), global_sampling_time
             )
         else:
             with pytest.warns(UserWarning):
-                assert np.isclose(_validate_sampling_time(dt), dt)
+                assert np.isclose(_assign_sampling_time(dt), dt)
 
 
 class TestNoiseModel:
-    thztools.global_options.sampling_time = None
     n = 16
     dt = 1.0 / n
     t = np.arange(n) * dt
@@ -101,6 +100,7 @@ class TestNoiseModel:
         axis: int,
         expected: ArrayLike,
     ) -> None:
+        thztools.global_options.sampling_time = None
         if dt is None:
             noise_model = NoiseModel(alpha, beta, tau)
             result = noise_model.variance(mu, axis=axis)

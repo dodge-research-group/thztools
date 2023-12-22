@@ -43,7 +43,7 @@ An instance of the :class:`GlobalOptions` class for handling global options.
 """
 
 
-def _validate_sampling_time(dt: float | None) -> float:
+def _assign_sampling_time(dt: float | None) -> float:
     dt_out = 1.0
     if dt is None and global_options.sampling_time is not None:
         dt_out = global_options.sampling_time
@@ -69,7 +69,7 @@ class NoiseModel:
 
     For noise parameters :math:`\sigma_\alpha`, :math:`\sigma_\beta`,
     :math:`\sigma_\tau` and signal vector :math:`\boldsymbol{\mu}`, the
-    :math:`k`-th element of the time-domain noise variance
+    :math:`k`-th element of the time-domain noise variance vector
     :math:`\boldsymbol{\sigma}^2` is given by [1]_
 
     .. math:: \sigma_k^2 = \sigma_\alpha^2 + \sigma_\beta^2\mu_k^2 \
@@ -212,9 +212,7 @@ class NoiseModel:
             >>> axs[1].set_xlabel("t (ps)")
             >>> plt.show()
         """
-        dt = self.dt
-        if dt is None:
-            dt = 1.0
+        dt = _assign_sampling_time(self.dt)
         x = np.asarray(x)
         axis = int(axis)
         if x.ndim > 1:
@@ -581,7 +579,7 @@ def transfer(
     if not isinstance(args, tuple):
         args = (args,)
 
-    dt = _validate_sampling_time(dt)
+    dt = _assign_sampling_time(dt)
     n = x.size
     f_scaled = rfftfreq(n)
     w = 2 * np.pi * f_scaled / dt
@@ -683,7 +681,7 @@ def wave(
         >>> ax.set_ylabel(r"$\mu/\mu_0$")
         >>> plt.show()
     """
-    dt = _validate_sampling_time(dt)
+    dt = _assign_sampling_time(dt)
     if t0 is None:
         t0 = 0.3 * n * dt
 
@@ -778,7 +776,7 @@ def scaleshift(
     if x.size == 0:
         return np.empty(x.shape)
 
-    dt = _validate_sampling_time(dt)
+    dt = _assign_sampling_time(dt)
 
     axis = int(axis)
     if x.ndim > 1:
@@ -886,7 +884,7 @@ def _costfuntls(
     sigma_x = np.asarray(sigma_x)
     sigma_y = np.asarray(sigma_y)
 
-    dt = _validate_sampling_time(dt)
+    dt = _assign_sampling_time(dt)
 
     n = x.shape[-1]
     delta_norm = (x - mu) / sigma_x
@@ -1255,7 +1253,7 @@ def tdnoisefit(
         raise ValueError(msg)
     n, m = x.shape
 
-    dt = _validate_sampling_time(dt)
+    dt = _assign_sampling_time(dt)
 
     if v0 is None:
         v0 = np.mean(np.var(x, 1)) * np.ones(NUM_NOISE_PARAMETERS)
@@ -1551,7 +1549,7 @@ def fit(
     y = np.asarray(y)
     sigma_parms = np.asarray(sigma_parms)
 
-    dt = _validate_sampling_time(dt)
+    dt = _assign_sampling_time(dt)
 
     n = y.shape[-1]
     n_p = len(p0)

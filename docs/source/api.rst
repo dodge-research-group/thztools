@@ -33,5 +33,6 @@ Waveform simulation and transformation
     :toctree: generated/
 
     scaleshift
+    timebase
     transfer
     wave

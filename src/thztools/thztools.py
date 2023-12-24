@@ -121,15 +121,18 @@ class NoiseModel:
     :math:`(\sigma_\beta\mu_0)^2`.
 
     .. plot::
-       :include-source: True
+        :format: python
+        :context: reset
 
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> mu, t = thz.wave(n, dt=dt, t0=t0)
+        >>> thz.global_options.sampling_time = dt
+        >>> t = thz.timebase(n)
+        >>> mu = thz.wave(n, t0=t0)
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
         >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
-        ...  sigma_tau=tau, dt=dt)
+        ...  sigma_tau=tau)
         >>> var_t = noise_mod.variance(mu)
 
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
@@ -193,15 +196,18 @@ class NoiseModel:
         :math:`(\sigma_\beta\mu_0)^2`.
 
         .. plot::
-           :include-source: True
+            :format: python
+            :context: reset
 
             >>> import matplotlib.pyplot as plt
             >>> import thztools as thz
             >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> mu, t = thz.wave(n, dt=dt, t0=t0)
+            >>> thz.global_options.sampling_time = dt
+            >>> t = thz.timebase(n)
+            >>> mu = thz.wave(n, t0=t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
-            ... sigma_tau=tau, dt=dt)
+            ... sigma_tau=tau)
             >>> var_t = noise_mod.variance(mu)
 
             >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
@@ -283,16 +289,19 @@ class NoiseModel:
         :math:`\sigma_\beta\mu_0`.
 
         .. plot::
-           :include-source: True
+            :format: python
+            :context: reset
 
             >>> import matplotlib.pyplot as plt
             >>> import thztools as thz
 
             >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> mu, t = thz.wave(n, dt=dt, t0=t0)
+            >>> thz.global_options.sampling_time = dt
+            >>> t = thz.timebase(n)
+            >>> mu = thz.wave(n, t0=t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
-            ... sigma_tau=tau, dt=dt)
+            ... sigma_tau=tau)
             >>> sigma_t = noise_mod.amplitude(mu)
 
             >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
@@ -359,16 +368,19 @@ class NoiseModel:
         :math:`\sigma_\tau = 10^{-3}` and the simulated signal :math:`\mu(t)`.
 
         .. plot::
-           :include-source: True
+            :format: python
+            :context: reset
 
             >>> import matplotlib.pyplot as plt
             >>> import thztools as thz
 
             >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> mu, t = thz.wave(n, dt=dt, t0=t0)
+            >>> thz.global_options.sampling_time = dt
+            >>> t = thz.timebase(n)
+            >>> mu = thz.wave(n, t0=t0)
             >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
             >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
-            ... sigma_tau=tau, dt=dt)
+            ... sigma_tau=tau)
             >>> noise = noise_mod.noise(mu)
 
             >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
@@ -512,30 +524,35 @@ def transfer(
 
     Examples
     --------
+    Apply a transfer function that rescales and shifts the input.
+
+        .. math:: H(\omega) = a\exp(-i\omega\tau).
+
+    Note that this form assumes the :math:`e^{+i\omega t}` representation
+    of harmonic time dependence, which corresponds to the default setting
+    ``fft_sign=True``.
+
+    If the transfer function is expressed using the :math:`e^{-i\omega t}`
+    representation that is more common in physics,
+
+        .. math:: H(\omega) = a\exp(i\omega\tau),
+
+    set ``fft_sign=False``.
 
     .. plot::
-       :include-source: True
-
-        Apply a transfer function that rescales and shifts the input.
-
-            .. math:: H(\omega) = a\exp(-i\omega\tau).
-
-        Note that this form assumes the :math:`e^{+i\omega t}` representation
-        of harmonic time dependence, which corresponds to the default setting
-        ``fft_sign=True``.
+        :format: python
+        :context: reset
 
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
-
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> x, t = thz.wave(n, dt=dt, t0=t0)
-
+        >>> thz.global_options.sampling_time = dt
+        >>> t = thz.timebase(n)
+        >>> x = thz.wave(n, t0=t0)
         >>> def shiftscale(_w, _a, _tau):
         >>>     return _a * np.exp(-1j * _w * _tau)
         >>>
-        >>> y = thz.transfer(shiftscale, x, dt=dt, fft_sign=True,
-        ...                      args=(0.5, 1))
-
+        >>> y = thz.transfer(shiftscale, x, fft_sign=True, args=(0.5, 1))
         >>> _, ax = plt.subplots()
         >>>
         >>> ax.plot(t, x, label='x')
@@ -546,20 +563,11 @@ def transfer(
         >>> ax.set_ylabel('Amplitude (arb. units)')
         >>>
         >>> plt.show()
-
-        If the transfer function is expressed using the :math:`e^{-i\omega t}`
-        representation that is more common in physics,
-
-            .. math:: H(\omega) = a\exp(i\omega\tau),
-
-        set ``fft_sign=False``.
-
         >>> def shiftscale_phys(_w, _a, _tau):
         >>>     return _a * np.exp(1j * _w * _tau)
         >>>
-        >>> y_p = thz.transfer(shiftscale_phys, x, dt=dt, fft_sign=False,
+        >>> y_p = thz.transfer(shiftscale_phys, x, fft_sign=False,
         ...                        args=(0.5, 1))
-
         >>> _, ax = plt.subplots()
         >>>
         >>> ax.plot(t, x, label='x')
@@ -581,9 +589,8 @@ def transfer(
 
     dt = _assign_sampling_time(dt)
     n = x.size
-    f_scaled = rfftfreq(n)
-    w = 2 * np.pi * f_scaled / dt
-    h = tfun(w, *args)
+    w_scaled = 2 * np.pi * rfftfreq(n)
+    h = tfun(w_scaled / dt, *args)
     if not fft_sign:
         h = np.conj(h)
 
@@ -593,16 +600,82 @@ def transfer(
 
 
 # noinspection PyShadowingNames
+def timebase(n: int,
+             *,
+             dt: float | None = None,
+             t_init: float = 0.0) -> np.ndarray:
+    r"""
+    Timebase for time-domain waveforms.
+
+    Parameters
+    ----------
+    n : int
+        Number of samples.
+    dt : float or None, optional
+        Sampling time, normally in picoseconds. Default is None, which sets
+        the sampling time to ``thztools.global_options.sampling_time``. If both
+        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        sampling time is set to 1.0.
+    t_init : float, optional
+        Value of the initial time point. Default is ``0.0``.
+
+    Returns
+    -------
+    t : ndarray
+        Array of time samples.
+
+    Warns
+    -----
+    UserWarning
+        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        are both not ``None`` and are set to different ``float`` values, the
+        function will set the sampling time to ``dt`` and raise a
+        :class:`UserWarning`.
+
+    Notes
+    -----
+    This is a helper function that computes
+
+        ``t = t_init + dt * numpy.arange(n)``.
+
+    Examples
+    --------
+    The following example computes the timebase with different methods for
+    assigning the sampling time.
+
+    .. doctest::
+
+        >>> import thztools as thz
+        >>> thz.global_options.sampling_time = None
+        >>> n, dt, t_init = 256, 0.05, 2.5
+        >>> t_1 = thz.timebase(n)
+        >>> t_2 = thz.timebase(n, dt=dt)
+        >>> thz.global_options.sampling_time = dt
+        >>> t_3 = thz.timebase(n)
+        >>> t_4 = thz.timebase(n, t_init=t_init)
+        >>> print(t_1[:3])
+        [0. 1. 2.]
+        >>> print(t_2[:3])
+        [0.   0.05 0.1 ]
+        >>> print(t_3[:3])
+        [0.   0.05 0.1 ]
+        >>> print(t_4[:3])
+        [2.5  2.55 2.6 ]
+    """
+    dt = _assign_sampling_time(dt)
+    return t_init + dt * np.arange(n)
+
+
 def wave(
     n: int,
     *,
     dt: float | None = None,
     t0: float | None = None,
     a: float = 1.0,
-    taur: float = 0.3,
-    tauc: float = 0.1,
-    fwhm: float = 0.05,
-) -> tuple[np.ndarray, np.ndarray]:
+    taur: float | None = None,
+    tauc: float | None = None,
+    fwhm: float | None = None,
+) -> np.ndarray:
     r"""
     Simulate a terahertz waveform.
 
@@ -620,19 +693,16 @@ def wave(
         Pulse location, normally in picoseconds. Default is ``0.3 * n * dt``.
     a : float, optional
         Peak amplitude. The default is one.
-    taur, tauc, fwhm : float, optional
+    taur, tauc, fwhm : float or None, optional
         Current pulse rise time, current pulse decay time, and laser pulse
-        FWHM, respectively. The defaults are 0.3 ps, 0.1 ps, and 0.05 ps,
-        respectively, and assume that ``dt`` and ``t0`` are also given in
-        picoseconds.
+        FWHM, respectively. The defaults are ``6.0 * dt``, ``2.0 * dt``, and
+        ``1.0 * dt``, respectively.
 
     Returns
     -------
 
     x : ndarray
         Signal array.
-    t : ndarray
-        Array of time samples.
 
     Warns
     -----
@@ -668,12 +738,15 @@ def wave(
     to its peak magnitude, :math:`\mu_0`.
 
     .. plot::
-       :include-source: True
+        :format: python
+        :context: reset
 
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> mu, t = thz.wave(n, dt=dt, t0=t0)
+        >>> thz.global_options.sampling_time = dt
+        >>> t = thz.timebase(n)
+        >>> mu = thz.wave(n)
 
         >>> _, ax = plt.subplots(layout="constrained")
         >>> ax.plot(t, mu)
@@ -685,6 +758,15 @@ def wave(
     if t0 is None:
         t0 = 0.3 * n * dt
 
+    if taur is None:
+        taur = 6.0 * dt
+
+    if tauc is None:
+        tauc = 2.0 * dt
+
+    if fwhm is None:
+        fwhm = dt
+
     taul = fwhm / np.sqrt(2 * np.log(2))
 
     f_scaled = rfftfreq(n)
@@ -694,12 +776,10 @@ def wave(
     r = 1 / (1 / taur - 1j * w) - 1 / (1 / taur + 1 / tauc - 1j * w)
     s = -1j * w * (ell * r) ** 2 * np.exp(1j * w * t0)
 
-    t = dt * np.arange(n)
-
     x = irfft(np.conj(s), n=n)
     x = a * x / np.max(x)
 
-    return x, t
+    return x
 
 
 # noinspection PyShadowingNames
@@ -753,12 +833,15 @@ def scaleshift(
     ``eta = [0.0, 1.0, 2.0, 3.0]``.
 
     .. plot::
-       :include-source: True
+        :format: python
+        :context: reset
 
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> mu, t = thz.wave(n, dt=dt, t0=t0)
+        >>> thz.global_options.sampling_time = dt
+        >>> t = thz.timebase(n)
+        >>> mu = thz.wave(n, t0=t0)
         >>> m = 4
         >>> x = np.repeat(np.atleast_2d(mu), m, axis=0)
         >>> a = 0.5**np.arange(m)
@@ -1219,16 +1302,15 @@ def tdnoisefit(
 
     Examples
     --------
-    .. plot::
-       :include-source: True
-
         >>> import matplotlib.pyplot as plt
         >>> import thztools as thz
         >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> mu, t = thz.wave(n, dt=dt, t0=t0)
+        >>> thz.global_options.sampling_time = dt
+        >>> t = thz.timebase(n)
+        >>> mu = thz.wave(n, t0=t0)
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
         >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
-        ...  sigma_tau=tau, dt=dt)
+        ...  sigma_tau=tau)
         >>> m = 50
         >>> a = 1.0 + 1e-2 * np.concatenate(([0.0],
         ...                                 rng.standard_normal(m - 1)))
@@ -1237,11 +1319,6 @@ def tdnoisefit(
         ...                     a=a, eta=eta, dt=dt)
         >>> x = z + noise_mod.noise(z)
         >>> noise_res = thz.tdnoisefit(x.T, dt=dt)
-        >>> noise_res.noise_model
-        NoiseModel(sigma_alpha=9.979602804703231e-05,
-                   sigma_beta=0.013952020715871073,
-                   sigma_tau=0.02845566519153561,
-                   dt=0.05)
     """
     if fix_v and fix_mu and fix_a and fix_eta:
         msg = "All variables are fixed"

@@ -58,6 +58,7 @@ extensions = [
     "numpydoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.coverage",
+    "sphinx.ext.doctest",
     "sphinx.ext.autosummary",
     "matplotlib.sphinxext.plot_directive",
     "sphinx.ext.mathjax",
@@ -78,6 +79,15 @@ source_suffix = ".rst"
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
+# Show successful tests
+doctest_show_successes = True
+
+# Setup code for doctests
+doctest_global_setup = """
+import numpy as np
+rng = np.random.default_rng(0)
+"""
 
 # -----------------------------------------------------------------------------
 # NumPy extensions
@@ -107,6 +117,7 @@ import numpy as np
 rng = np.random.default_rng(0)
 """
 
+# Display source code for Matplotlib plot directives
 plot_include_source = True
 plot_formats = [("png", 100), "pdf"]
 plot_html_show_formats = False

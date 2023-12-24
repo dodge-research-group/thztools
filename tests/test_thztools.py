@@ -193,8 +193,29 @@ class TestTransferOut:
             _ = transfer(x, tfun1, dt=dt, args=[1.0, 0.0])
 
 
+class TestTimebase:
+    @pytest.mark.parametrize(
+        "dt",
+        [None, 1.0, 2.0,],
+    )
+    @pytest.mark.parametrize(
+        "t_init",
+        [None, 1.0, 2.0,]
+    )
+    def test_timebase(self, dt, t_init):
+        n = 8
+        if t_init is None:
+            t = thztools.timebase(n, dt=dt)
+            t_init = 0.0
+        else:
+            t = thztools.timebase(n, dt=dt, t_init=t_init)
+        dt = _assign_sampling_time(dt)
+        t_expected = t_init + np.arange(n) * dt
+        assert_allclose(t, t_expected, rtol=rtol, atol=atol)
+
+
 class TestWave:
-    thztools.global_options.sampling_time = None
+    # thztools.global_options.sampling_time = None
 
     @pytest.mark.parametrize(
         "t0",
@@ -205,9 +226,9 @@ class TestWave:
         [
             {},
             {"a": 1.0},
-            {"taur": 0.3},
-            {"tauc": 0.1},
-            {"fwhm": 0.05},
+            {"taur": 6.0},
+            {"tauc": 2.0},
+            {"fwhm": 1.0},
         ],
     )
     def test_inputs(self, t0: float | None, kwargs: dict) -> None:
@@ -215,20 +236,19 @@ class TestWave:
         dt = 1.0
         y_expected = np.array(
             [
-                0.14461846,
-                -0.34228814,
-                1.0,
-                0.23498975,
-                -1.14395207,
-                0.22969067,
-                -0.10596293,
-                -0.01709574,
+                0.07767792,
+                -0.63041598,
+                -1.03807638,
+                -0.81199085,
+                -0.03955531,
+                0.72418661,
+                1.,
+                0.71817398,
             ]
         )
-        t_expected = np.arange(n)
         assert_allclose(
             wave(n, dt=dt, t0=t0, **kwargs),  # type: ignore
-            (y_expected, t_expected),  # type: ignore
+            y_expected,  # type: ignore
             atol=atol,
             rtol=rtol,
         )
@@ -443,7 +463,7 @@ class TestTDNoiseFit:
     m = 64
     dt = 0.05
     t = np.arange(n) * dt
-    mu, _ = wave(n, dt=dt, t0=n * dt / 3)
+    mu = wave(n, dt=dt, t0=n * dt / 3)
     alpha, beta, tau = 1e-5, 1e-2, 1e-3
     sigma = np.array([alpha, beta, tau])
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)

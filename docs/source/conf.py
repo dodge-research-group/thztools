@@ -86,6 +86,7 @@ doctest_show_successes = True
 # Setup code for doctests
 doctest_global_setup = """
 import numpy as np
+import thztools as thz
 rng = np.random.default_rng(0)
 """
 
@@ -112,16 +113,16 @@ nitpicky = True
 # Matplotlib plot_directive options (adapted from SciPy docs)
 # -----------------------------------------------------------------------------
 
-plot_pre_code = """
-import numpy as np
-rng = np.random.default_rng(0)
-"""
-
 # Display source code for Matplotlib plot directives
 plot_include_source = True
 plot_formats = [("png", 100), "pdf"]
 plot_html_show_formats = False
 plot_html_show_source_link = False
+plot_pre_code = """
+import numpy as np
+rng = np.random.default_rng(0)
+"""
+plot_apply_rcparams = True
 
 phi = (math.sqrt(5) + 1) / 2
 
@@ -175,7 +176,6 @@ intersphinx_mapping = {
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-# html_theme = 'sphinx_rtd_theme'
 html_theme = "pydata_sphinx_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,

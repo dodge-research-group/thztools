@@ -120,28 +120,28 @@ class NoiseModel:
     its peak magnitude, :math:`\mu_0`. The noise variance is normalized to
     :math:`(\sigma_\beta\mu_0)^2`.
 
-    .. plot::
-        :format: python
-        :context: reset
-
-        >>> import matplotlib.pyplot as plt
-        >>> import thztools as thz
-        >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> thz.global_options.sampling_time = dt
-        >>> t = thz.timebase(n)
-        >>> mu = thz.wave(n, t0=t0)
-        >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
-        >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
-        ...  sigma_tau=tau)
-        >>> var_t = noise_mod.variance(mu)
-
-        >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
-        >>> axs[0].plot(t, var_t / beta**2)
-        >>> axs[0].set_ylabel(r"$\sigma^2/(\sigma_\beta\mu_0)^2$")
-        >>> axs[1].plot(t, mu)
-        >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
-        >>> axs[1].set_xlabel("t (ps)")
-        >>> plt.show()
+    >>> import thztools as thz
+    >>> from matplotlib import pyplot as plt
+    >>> n, dt = 256, 0.05
+    >>> thz.global_options.sampling_time = dt
+    >>> t = thz.timebase(n)
+    >>> mu = thz.wave(n)
+    >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
+    >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+    ...  sigma_tau=tau)
+    >>> var_t = noise_mod.variance(mu)
+    >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
+    >>> axs[0].plot(t, var_t / beta**2)
+    [<matplotlib.lines.Line2D object at 0x...>]
+    >>> axs[0].set_ylabel(r"$\sigma^2/(\sigma_\beta\mu_0)^2$")
+    Text(0, 0.5, '$\\sigma^2/(\\sigma_\\beta\\mu_0)^2$')
+    >>> axs[1].plot(t, mu)
+    [<matplotlib.lines.Line2D object at 0x...>]
+    >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
+    Text(0, 0.5, '$\\mu/\\mu_0$')
+    >>> axs[1].set_xlabel("t (ps)")
+    Text(0.5, 0, 't (ps)')
+    >>> plt.show()
     """
     sigma_alpha: float
     sigma_beta: float
@@ -195,28 +195,29 @@ class NoiseModel:
         its peak magnitude, :math:`\mu_0`. The noise variance is normalized to
         :math:`(\sigma_\beta\mu_0)^2`.
 
-        .. plot::
-            :format: python
-            :context: reset
+        >>> import thztools as thz
+        >>> from matplotlib import pyplot as plt
+        >>> n, dt = 256, 0.05
+        >>> thz.global_options.sampling_time = dt
+        >>> t = thz.timebase(n)
+        >>> mu = thz.wave(n)
+        >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
+        >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+        ... sigma_tau=tau)
+        >>> var_t = noise_mod.variance(mu)
 
-            >>> import matplotlib.pyplot as plt
-            >>> import thztools as thz
-            >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> thz.global_options.sampling_time = dt
-            >>> t = thz.timebase(n)
-            >>> mu = thz.wave(n, t0=t0)
-            >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
-            >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
-            ... sigma_tau=tau)
-            >>> var_t = noise_mod.variance(mu)
-
-            >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
-            >>> axs[0].plot(t, var_t / beta**2)
-            >>> axs[0].set_ylabel(r"$\sigma^2/(\sigma_\beta\mu_0)^2$")
-            >>> axs[1].plot(t, mu)
-            >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
-            >>> axs[1].set_xlabel("t (ps)")
-            >>> plt.show()
+        >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
+        >>> axs[0].plot(t, var_t / beta**2)
+        [<matplotlib.lines.Line2D object at 0x...>]
+        >>> axs[0].set_ylabel(r"$\sigma^2/(\sigma_\beta\mu_0)^2$")
+        Text(0, 0.5, '$\\sigma^2/(\\sigma_\\beta\\mu_0)^2$')
+        >>> axs[1].plot(t, mu)
+        [<matplotlib.lines.Line2D object at 0x...>]
+        >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
+        Text(0, 0.5, '$\\mu/\\mu_0$')
+        >>> axs[1].set_xlabel("t (ps)")
+        Text(0.5, 0, 't (ps)')
+        >>> plt.show()
         """
         dt = _assign_sampling_time(self.dt)
         x = np.asarray(x)
@@ -288,29 +289,28 @@ class NoiseModel:
         its peak magnitude, :math:`\mu_0`. The noise amplitude is normalized to
         :math:`\sigma_\beta\mu_0`.
 
-        .. plot::
-            :format: python
-            :context: reset
-
-            >>> import matplotlib.pyplot as plt
-            >>> import thztools as thz
-
-            >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> thz.global_options.sampling_time = dt
-            >>> t = thz.timebase(n)
-            >>> mu = thz.wave(n, t0=t0)
-            >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
-            >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
-            ... sigma_tau=tau)
-            >>> sigma_t = noise_mod.amplitude(mu)
-
-            >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
-            >>> axs[0].plot(t, sigma_t / beta)
-            >>> axs[0].set_ylabel(r"$\sigma/(\sigma_\beta\mu_0)$")
-            >>> axs[1].plot(t, mu)
-            >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
-            >>> axs[1].set_xlabel("t (ps)")
-            >>> plt.show()
+        >>> import thztools as thz
+        >>> from matplotlib import pyplot as plt
+        >>> n, dt = 256, 0.05
+        >>> thz.global_options.sampling_time = dt
+        >>> t = thz.timebase(n)
+        >>> mu = thz.wave(n)
+        >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
+        >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+        ... sigma_tau=tau)
+        >>> sigma_t = noise_mod.amplitude(mu)
+        >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
+        >>> axs[0].plot(t, sigma_t / beta)
+        [<matplotlib.lines.Line2D object at 0x...>]
+        >>> axs[0].set_ylabel(r"$\sigma/(\sigma_\beta\mu_0)$")
+        Text(0, 0.5, '$\\sigma/(\\sigma_\\beta\\mu_0)$')
+        >>> axs[1].plot(t, mu)
+        [<matplotlib.lines.Line2D object at 0x...>]
+        >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
+        Text(0, 0.5, '$\\mu/\\mu_0$')
+        >>> axs[1].set_xlabel("t (ps)")
+        Text(0.5, 0, 't (ps)')
+        >>> plt.show()
         """
         return np.sqrt(self.variance(x, axis=axis))
 
@@ -367,29 +367,28 @@ class NoiseModel:
         :math:`\sigma_\alpha = 10^{-4}`, :math:`\sigma_\beta = 10^{-2}`,
         :math:`\sigma_\tau = 10^{-3}` and the simulated signal :math:`\mu(t)`.
 
-        .. plot::
-            :format: python
-            :context: reset
-
-            >>> import matplotlib.pyplot as plt
-            >>> import thztools as thz
-
-            >>> n, dt, t0 = 256, 0.05, 2.5
-            >>> thz.global_options.sampling_time = dt
-            >>> t = thz.timebase(n)
-            >>> mu = thz.wave(n, t0=t0)
-            >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
-            >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
-            ... sigma_tau=tau)
-            >>> noise = noise_mod.noise(mu)
-
-            >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
-            >>> axs[0].plot(t, noise / beta)
-            >>> axs[0].set_ylabel(r"$\sigma_\mu\epsilon/(\sigma_\beta\mu_0)$")
-            >>> axs[1].plot(t, mu)
-            >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
-            >>> axs[1].set_xlabel("t (ps)")
-            >>> plt.show()
+        >>> import thztools as thz
+        >>> from matplotlib import pyplot as plt
+        >>> n, dt = 256, 0.05
+        >>> thz.global_options.sampling_time = dt
+        >>> t = thz.timebase(n)
+        >>> mu = thz.wave(n)
+        >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
+        >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+        ... sigma_tau=tau)
+        >>> noise = noise_mod.noise(mu)
+        >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
+        >>> axs[0].plot(t, noise / beta)
+        [<matplotlib.lines.Line2D object at 0x...>]
+        >>> axs[0].set_ylabel(r"$\sigma_\mu\epsilon/(\sigma_\beta\mu_0)$")
+        Text(0, 0.5, '$\\sigma_\\mu\\epsilon/(\\sigma_\\beta\\mu_0)$')
+        >>> axs[1].plot(t, mu)
+        [<matplotlib.lines.Line2D object at 0x...>]
+        >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
+        Text(0, 0.5, '$\\mu/\\mu_0$')
+        >>> axs[1].set_xlabel("t (ps)")
+        Text(0.5, 0, 't (ps)')
+        >>> plt.show()
         """
         x = np.asarray(x)
         axis = int(axis)
@@ -539,45 +538,52 @@ def transfer(
 
     set ``fft_sign=False``.
 
-    .. plot::
-        :format: python
-        :context: reset
+    >>> import thztools as thz
+    >>> from matplotlib import pyplot as plt
+    >>> n, dt = 256, 0.05
+    >>> thz.global_options.sampling_time = dt
+    >>> t = thz.timebase(n)
+    >>> x = thz.wave(n)
+    >>> def shiftscale(_w, _a, _tau):
+    ...     return _a * np.exp(-1j * _w * _tau)
+    >>>
+    >>> y = thz.transfer(shiftscale, x, fft_sign=True, args=(0.5, 1))
+    >>> _, ax = plt.subplots()
+    >>>
+    >>> ax.plot(t, x, label='x')
+    [<matplotlib.lines.Line2D object at 0x...>]
+    >>> ax.plot(t, y, label='y')
+    [<matplotlib.lines.Line2D object at 0x...>]
+    >>>
+    >>> ax.legend()
+    <matplotlib.legend.Legend object at 0x...>
+    >>> ax.set_xlabel('t (ps)')
+    Text(0.5, 0, 't (ps)')
+    >>> ax.set_ylabel('Amplitude (arb. units)')
+    Text(0, 0.5, 'Amplitude (arb. units)')
+    >>>
+    >>> plt.show()
 
-        >>> import matplotlib.pyplot as plt
-        >>> import thztools as thz
-        >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> thz.global_options.sampling_time = dt
-        >>> t = thz.timebase(n)
-        >>> x = thz.wave(n, t0=t0)
-        >>> def shiftscale(_w, _a, _tau):
-        >>>     return _a * np.exp(-1j * _w * _tau)
-        >>>
-        >>> y = thz.transfer(shiftscale, x, fft_sign=True, args=(0.5, 1))
-        >>> _, ax = plt.subplots()
-        >>>
-        >>> ax.plot(t, x, label='x')
-        >>> ax.plot(t, y, label='y')
-        >>>
-        >>> ax.legend()
-        >>> ax.set_xlabel('t (ps)')
-        >>> ax.set_ylabel('Amplitude (arb. units)')
-        >>>
-        >>> plt.show()
-        >>> def shiftscale_phys(_w, _a, _tau):
-        >>>     return _a * np.exp(1j * _w * _tau)
-        >>>
-        >>> y_p = thz.transfer(shiftscale_phys, x, fft_sign=False,
-        ...                        args=(0.5, 1))
-        >>> _, ax = plt.subplots()
-        >>>
-        >>> ax.plot(t, x, label='x')
-        >>> ax.plot(t, y_p, label='y')
-        >>>
-        >>> ax.legend()
-        >>> ax.set_xlabel('t (ps)')
-        >>> ax.set_ylabel('Amplitude (arb. units)')
-        >>>
-        >>> plt.show()
+    >>> def shiftscale_phys(_w, _a, _tau):
+    ...     return _a * np.exp(1j * _w * _tau)
+    >>>
+    >>> y_p = thz.transfer(shiftscale_phys, x, fft_sign=False,
+    ...                        args=(0.5, 1))
+    >>> _, ax = plt.subplots()
+    >>>
+    >>> ax.plot(t, x, label='x')
+    [<matplotlib.lines.Line2D object at 0x...>]
+    >>> ax.plot(t, y_p, label='y')
+    [<matplotlib.lines.Line2D object at 0x...>]
+    >>>
+    >>> ax.legend()
+    <matplotlib.legend.Legend object at 0x...>
+    >>> ax.set_xlabel('t (ps)')
+    Text(0.5, 0, 't (ps)')
+    >>> ax.set_ylabel('Amplitude (arb. units)')
+    Text(0, 0.5, 'Amplitude (arb. units)')
+    >>>
+    >>> plt.show()
     """
     x = np.asarray(x)
     if x.ndim != 1:
@@ -600,10 +606,9 @@ def transfer(
 
 
 # noinspection PyShadowingNames
-def timebase(n: int,
-             *,
-             dt: float | None = None,
-             t_init: float = 0.0) -> np.ndarray:
+def timebase(
+    n: int, *, dt: float | None = None, t_init: float = 0.0
+) -> np.ndarray:
     r"""
     Timebase for time-domain waveforms.
 
@@ -643,24 +648,22 @@ def timebase(n: int,
     The following example computes the timebase with different methods for
     assigning the sampling time.
 
-    .. doctest::
-
-        >>> import thztools as thz
-        >>> thz.global_options.sampling_time = None
-        >>> n, dt, t_init = 256, 0.05, 2.5
-        >>> t_1 = thz.timebase(n)
-        >>> t_2 = thz.timebase(n, dt=dt)
-        >>> thz.global_options.sampling_time = dt
-        >>> t_3 = thz.timebase(n)
-        >>> t_4 = thz.timebase(n, t_init=t_init)
-        >>> print(t_1[:3])
-        [0. 1. 2.]
-        >>> print(t_2[:3])
-        [0.   0.05 0.1 ]
-        >>> print(t_3[:3])
-        [0.   0.05 0.1 ]
-        >>> print(t_4[:3])
-        [2.5  2.55 2.6 ]
+    >>> import thztools as thz
+    >>> thz.global_options.sampling_time = None
+    >>> n, dt, t_init = 256, 0.05, 2.5
+    >>> t_1 = thz.timebase(n)
+    >>> t_2 = thz.timebase(n, dt=dt)
+    >>> thz.global_options.sampling_time = dt
+    >>> t_3 = thz.timebase(n)
+    >>> t_4 = thz.timebase(n, t_init=t_init)
+    >>> print(t_1[:3])
+    [0. 1. 2.]
+    >>> print(t_2[:3])
+    [0.   0.05 0.1 ]
+    >>> print(t_3[:3])
+    [0.   0.05 0.1 ]
+    >>> print(t_4[:3])
+    [2.5  2.55 2.6 ]
     """
     dt = _assign_sampling_time(dt)
     return t_init + dt * np.arange(n)
@@ -737,22 +740,20 @@ def wave(
     The following example shows the simulated signal :math:`\mu(t)` normalized
     to its peak magnitude, :math:`\mu_0`.
 
-    .. plot::
-        :format: python
-        :context: reset
-
-        >>> import matplotlib.pyplot as plt
-        >>> import thztools as thz
-        >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> thz.global_options.sampling_time = dt
-        >>> t = thz.timebase(n)
-        >>> mu = thz.wave(n)
-
-        >>> _, ax = plt.subplots(layout="constrained")
-        >>> ax.plot(t, mu)
-        >>> ax.set_xlabel("t (ps)")
-        >>> ax.set_ylabel(r"$\mu/\mu_0$")
-        >>> plt.show()
+    >>> import thztools as thz
+    >>> from matplotlib import pyplot as plt
+    >>> n, dt = 256, 0.05
+    >>> thz.global_options.sampling_time = dt
+    >>> t = thz.timebase(n)
+    >>> mu = thz.wave(n)
+    >>> _, ax = plt.subplots(layout="constrained")
+    >>> ax.plot(t, mu)
+    [<matplotlib.lines.Line2D object at 0x...>]
+    >>> ax.set_xlabel("t (ps)")
+    Text(0.5, 0, 't (ps)')
+    >>> ax.set_ylabel(r"$\mu/\mu_0$")
+    Text(0, 0.5, '$\\mu/\\mu_0$')
+    >>> plt.show()
     """
     dt = _assign_sampling_time(dt)
     if t0 is None:
@@ -832,28 +833,26 @@ def scaleshift(
     rescale each copy by ``a = [1.0, 0.5, 0.25, 0.125]`` and shift it by
     ``eta = [0.0, 1.0, 2.0, 3.0]``.
 
-    .. plot::
-        :format: python
-        :context: reset
-
-        >>> import matplotlib.pyplot as plt
-        >>> import thztools as thz
-        >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> thz.global_options.sampling_time = dt
-        >>> t = thz.timebase(n)
-        >>> mu = thz.wave(n, t0=t0)
-        >>> m = 4
-        >>> x = np.repeat(np.atleast_2d(mu), m, axis=0)
-        >>> a = 0.5**np.arange(m)
-        >>> eta = np.arange(m)
-        >>> x_adj = thz.scaleshift(x, a=a, eta=eta, dt=dt)
-
-        >>> _, ax = plt.subplots(layout="constrained")
-        >>> ax.plot(t, x_adj.T, label=[f"{k=}" for k in range(4)])
-        >>> ax.legend()
-        >>> ax.set_xlabel("t (ps)")
-        >>> ax.set_ylabel(r"$x_{\mathrm{adj}, k}$")
-        >>> plt.show()
+    >>> import thztools as thz
+    >>> from matplotlib import pyplot as plt
+    >>> n, dt = 256, 0.05
+    >>> thz.global_options.sampling_time = dt
+    >>> t = thz.timebase(n)
+    >>> mu = thz.wave(n)
+    >>> m = 4
+    >>> x = np.repeat(np.atleast_2d(mu), m, axis=0)
+    >>> a = 0.5**np.arange(m)
+    >>> eta = np.arange(m)
+    >>> x_adj = thz.scaleshift(x, a=a, eta=eta, dt=dt)
+    >>> plt.plot(t, x_adj.T, label=[f"{k=}" for k in range(4)])
+    [<matplotlib.lines.Line2D object at 0x...>, ...]
+    >>> plt.legend()
+    <matplotlib.legend.Legend object at 0x...>
+    >>> plt.xlabel("t (ps)")
+    Text(0.5, 0, 't (ps)')
+    >>> plt.ylabel(r"$x_{\mathrm{adj}, k}$")
+    Text(0, 0.5, '$x_{\\mathrm{adj}, k}$')
+    >>> plt.show()
     """
     x = np.asarray(x)
     if x.size == 0:
@@ -1302,23 +1301,22 @@ def tdnoisefit(
 
     Examples
     --------
-        >>> import matplotlib.pyplot as plt
-        >>> import thztools as thz
-        >>> n, dt, t0 = 256, 0.05, 2.5
-        >>> thz.global_options.sampling_time = dt
-        >>> t = thz.timebase(n)
-        >>> mu = thz.wave(n, t0=t0)
-        >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
-        >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
-        ...  sigma_tau=tau)
-        >>> m = 50
-        >>> a = 1.0 + 1e-2 * np.concatenate(([0.0],
-        ...                                 rng.standard_normal(m - 1)))
-        >>> eta = 1e-3 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
-        >>> z = thz.scaleshift(np.repeat(np.atleast_2d(mu), m, axis=0),
-        ...                     a=a, eta=eta, dt=dt)
-        >>> x = z + noise_mod.noise(z)
-        >>> noise_res = thz.tdnoisefit(x.T, dt=dt)
+    >>> import thztools as thz
+    >>> n, dt = 256, 0.05
+    >>> thz.global_options.sampling_time = dt
+    >>> t = thz.timebase(n)
+    >>> mu = thz.wave(n)
+    >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
+    >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+    ...  sigma_tau=tau)
+    >>> m = 50
+    >>> a = 1.0 + 1e-2 * np.concatenate(([0.0],
+    ...                                 rng.standard_normal(m - 1)))
+    >>> eta = 1e-3 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
+    >>> z = thz.scaleshift(np.repeat(np.atleast_2d(mu), m, axis=0),
+    ...                     a=a, eta=eta, dt=dt)
+    >>> x = z + noise_mod.noise(z)
+    >>> noise_res = thz.tdnoisefit(x.T, dt=dt)
     """
     if fix_v and fix_mu and fix_a and fix_eta:
         msg = "All variables are fixed"

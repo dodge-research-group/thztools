@@ -10,9 +10,9 @@ from numpy.typing import ArrayLike
 import thztools
 from thztools.thztools import (
     NoiseModel,
+    _assign_sampling_time,
     _costfuntls,
     _tdnll_scaled,
-    _assign_sampling_time,
     fit,
     scaleshift,
     tdnoisefit,
@@ -50,22 +50,19 @@ class TestGlobalOptions:
     @pytest.mark.parametrize("global_sampling_time", [None, 0.1])
     @pytest.mark.parametrize("dt", [None, 0.1, 1.0])
     def test_assignment(self, global_sampling_time, dt, monkeypatch):
-        monkeypatch.setattr(thztools.global_options, "sampling_time",
-                            global_sampling_time)
+        monkeypatch.setattr(
+            thztools.global_options, "sampling_time", global_sampling_time
+        )
         if global_sampling_time is None and dt is None:
             assert np.isclose(_assign_sampling_time(dt), 1.0)
         elif global_sampling_time is None and dt is not None:
             assert np.isclose(_assign_sampling_time(dt), dt)
         elif global_sampling_time is not None and dt is None:
-            assert np.isclose(
-                _assign_sampling_time(dt), global_sampling_time
-            )
+            assert np.isclose(_assign_sampling_time(dt), global_sampling_time)
         elif global_sampling_time is not None and np.isclose(
             dt, global_sampling_time
         ):
-            assert np.isclose(
-                _assign_sampling_time(dt), global_sampling_time
-            )
+            assert np.isclose(_assign_sampling_time(dt), global_sampling_time)
         else:
             with pytest.warns(UserWarning):
                 assert np.isclose(_assign_sampling_time(dt), dt)
@@ -196,11 +193,19 @@ class TestTransferOut:
 class TestTimebase:
     @pytest.mark.parametrize(
         "dt",
-        [None, 1.0, 2.0,],
+        [
+            None,
+            1.0,
+            2.0,
+        ],
     )
     @pytest.mark.parametrize(
         "t_init",
-        [None, 1.0, 2.0,]
+        [
+            None,
+            1.0,
+            2.0,
+        ],
     )
     def test_timebase(self, dt, t_init):
         n = 8
@@ -242,7 +247,7 @@ class TestWave:
                 -0.81199085,
                 -0.03955531,
                 0.72418661,
-                1.,
+                1.0,
                 0.71817398,
             ]
         )

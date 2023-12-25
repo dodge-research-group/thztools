@@ -101,7 +101,7 @@ class NoiseModel:
 
     See Also
     --------
-    tdnoisefit : Estimate noise model parameters.
+    noisefit : Estimate noise model parameters.
 
     References
     ----------
@@ -444,7 +444,7 @@ class NoiseResult:
     See Also
     --------
     NoiseModel : Noise model class.
-    tdnoisefit : Estimate noise model parameters.
+    noisefit : Estimate noise model parameters.
     """
     noise_model: NoiseModel
     mu: np.ndarray
@@ -1151,7 +1151,7 @@ def _tdnll_scaled(
     return nll_scaled, gradnll_scaled
 
 
-def tdnoisefit(
+def noisefit(
     x: ArrayLike,
     *,
     dt: float | None = None,
@@ -1318,7 +1318,7 @@ def tdnoisefit(
     >>> z = thz.scaleshift(np.repeat(np.atleast_2d(mu), m, axis=0),
     ...                     a=a, eta=eta)
     >>> x = z + noise_mod.noise(z, seed=1234)
-    >>> noise_res = thz.tdnoisefit(x.T)
+    >>> noise_res = thz.noisefit(x.T)
     >>> noise_res.noise_model  #doctest: +NORMALIZE_WHITESPACE
     NoiseModel(sigma_alpha=9.9619...e-05, sigma_beta=0.0094825...,
     sigma_tau=0.027513..., dt=0.05)

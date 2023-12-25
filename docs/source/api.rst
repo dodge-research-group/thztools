@@ -18,7 +18,7 @@ Noise model
     :toctree: generated/
 
     NoiseModel
-    tdnoisefit
+    noisefit
 
 Parameter estimation
 ^^^^^^^^^^^^^^^^^^^^

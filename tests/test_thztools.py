@@ -14,8 +14,8 @@ from thztools.thztools import (
     _costfuntls,
     _tdnll_scaled,
     fit,
+    noisefit,
     scaleshift,
-    tdnoisefit,
     transfer,
     wave,
 )
@@ -499,7 +499,7 @@ class TestTDNoiseFit:
             or (fix_v and fix_mu and fix_a and fix_eta)
         ):
             with pytest.raises(ValueError):
-                _ = tdnoisefit(
+                _ = noisefit(
                     x.T,
                     v0=v0,
                     mu0=mu0,
@@ -511,7 +511,7 @@ class TestTDNoiseFit:
                     fix_eta=fix_eta,
                 )
         else:
-            res = tdnoisefit(
+            res = noisefit(
                 x.T,
                 v0=v0,
                 mu0=mu0,

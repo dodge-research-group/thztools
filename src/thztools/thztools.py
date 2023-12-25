@@ -369,6 +369,7 @@ class NoiseModel:
 
         >>> import thztools as thz
         >>> from matplotlib import pyplot as plt
+        >>> rng = np.random.default_rng(0)
         >>> n, dt = 256, 0.05
         >>> thz.global_options.sampling_time = dt
         >>> t = thz.timebase(n)
@@ -376,7 +377,7 @@ class NoiseModel:
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
         >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
         ... sigma_tau=tau)
-        >>> noise = noise_mod.noise(mu)
+        >>> noise = noise_mod.noise(mu, seed=1234)
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
         >>> axs[0].plot(t, noise / beta)
         [<matplotlib.lines.Line2D object at 0x...>]
@@ -1302,6 +1303,7 @@ def tdnoisefit(
     Examples
     --------
     >>> import thztools as thz
+    >>> rng = np.random.default_rng(0)
     >>> n, dt = 256, 0.05
     >>> thz.global_options.sampling_time = dt
     >>> t = thz.timebase(n)
@@ -1314,9 +1316,12 @@ def tdnoisefit(
     ...                                 rng.standard_normal(m - 1)))
     >>> eta = 1e-3 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
     >>> z = thz.scaleshift(np.repeat(np.atleast_2d(mu), m, axis=0),
-    ...                     a=a, eta=eta, dt=dt)
-    >>> x = z + noise_mod.noise(z)
-    >>> noise_res = thz.tdnoisefit(x.T, dt=dt)
+    ...                     a=a, eta=eta)
+    >>> x = z + noise_mod.noise(z, seed=1234)
+    >>> noise_res = thz.tdnoisefit(x.T)
+    >>> noise_res.noise_model  #doctest: +NORMALIZE_WHITESPACE
+    NoiseModel(sigma_alpha=9.9619...e-05, sigma_beta=0.0094825...,
+    sigma_tau=0.027513..., dt=0.05)
     """
     if fix_v and fix_mu and fix_a and fix_eta:
         msg = "All variables are fixed"

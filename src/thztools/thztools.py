@@ -1309,7 +1309,7 @@ def noisefit(
     >>> thz.global_options.sampling_time = dt
     >>> t = thz.timebase(n)
     >>> mu = thz.wave(n)
-    >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
+    >>> alpha, beta, tau = 1e-5, 1e-2, 1e-3
     >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
     ...  sigma_tau=tau)
     >>> m = 50
@@ -1321,8 +1321,8 @@ def noisefit(
     >>> x = z + noise_mod.noise(z, seed=1234)
     >>> noise_res = thz.noisefit(x.T)
     >>> noise_res.noise_model  #doctest: +NORMALIZE_WHITESPACE
-    NoiseModel(sigma_alpha=9.9619...e-05, sigma_beta=0.0094825...,
-    sigma_tau=0.027513..., dt=0.05)
+    NoiseModel(sigma_alpha=9.380...e-06, sigma_beta=0.01408...,
+    sigma_tau=0.00097200..., dt=0.05)
     """
     if fix_v and fix_mu and fix_a and fix_eta:
         msg = "All variables are fixed"

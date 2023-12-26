@@ -1355,14 +1355,14 @@ def noisefit(
             msg = "Size of mu0 is incompatible with data array x."
             raise ValueError(msg)
 
-    scale_logv = 1e0 * np.ones(3)
+    scale_logv = 1e1 * np.ones(NUM_NOISE_PARAMETERS)
     alpha, beta, tau = np.sqrt(v0)
     # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
-    scale_delta = 1e-0 * noise_model.amplitude(x[:, 0])
-    scale_alpha = 1e-4 * np.ones(m - 1)
-    scale_eta = 1e-3 * np.ones(m - 1)
-    scale_v = 1.0e-4
+    scale_delta = 1e-6 * np.ones(n)  # noise_model.amplitude(x[:, 0])
+    scale_alpha = 1e-1 * np.ones(m - 1)
+    scale_eta = 1e-1 * np.ones(m - 1)
+    scale_v = 1.0e-5
     scale_sigma = np.array([1, 1, dt])
 
     # Replace log(x) with -inf when x <= 0
@@ -1388,7 +1388,7 @@ def noisefit(
             msg = "Size of eta0 is incompatible with data array x."
             raise ValueError(msg)
 
-    eta0 = eta0[1:] / scale_eta
+    eta_on_dt0 = eta0[1:] / dt / scale_eta
 
     # Set initial guesses for all free parameters
     x0 = np.array([])
@@ -1399,7 +1399,7 @@ def noisefit(
     if not fix_a:
         x0 = np.concatenate((x0, alpha0))
     if not fix_eta:
-        x0 = np.concatenate((x0, eta0))
+        x0 = np.concatenate((x0, eta_on_dt0))
 
     # Bundle free parameters together into objective function
     def objective(_p):
@@ -1419,15 +1419,15 @@ def noisefit(
             _alpha = _p[: m - 1]
             _p = _p[m - 1 :]
         if fix_eta:
-            _eta = eta0
+            _eta_on_dt = eta_on_dt0
         else:
-            _eta = _p[: m - 1]
+            _eta_on_dt = _p[: m - 1]
         return _tdnll_scaled(
             x.T,
             _logv,
             _delta,
             _alpha,
-            _eta / dt,
+            _eta_on_dt,
             fix_logv=fix_v,
             fix_delta=fix_mu,
             fix_alpha=fix_a,
@@ -1473,7 +1473,7 @@ def noisefit(
     if fix_eta:
         eta_out = eta0
     else:
-        eta_out = np.concatenate(([0.0], x_out[: m - 1] * scale_eta))
+        eta_out = np.concatenate(([0.0], x_out[: m - 1] * dt * scale_eta))
 
     diagnostic = out
     fun = out.fun / scale_v

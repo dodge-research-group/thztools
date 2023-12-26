@@ -461,8 +461,7 @@ class TestTDNLLScaled:
         )
 
 
-class TestTDNoiseFit:
-    thztools.global_options.sampling_time = None
+class TestNoiseFit:
     rng = np.random.default_rng(0)
     n = 256
     m = 64
@@ -472,7 +471,7 @@ class TestTDNoiseFit:
     alpha, beta, tau = 1e-5, 1e-2, 1e-3
     sigma = np.array([alpha, beta, tau])
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
-    noise = noise_model.amplitude(mu) * rng.standard_normal((m, n))
+    noise = noise_model.noise(np.ones((m, 1)) * mu, seed=0)
     x = np.array(mu + noise)
     a = np.ones(m)
     eta = np.zeros(m)
@@ -490,6 +489,7 @@ class TestTDNoiseFit:
         print(f"{scipy.__version__=}")
         n = self.n
         m = self.m
+        dt = self.dt
         if (
             x.ndim < 2
             or (v0 is not None and len(v0) != 3)
@@ -501,6 +501,7 @@ class TestTDNoiseFit:
             with pytest.raises(ValueError):
                 _ = noisefit(
                     x.T,
+                    dt=dt,
                     v0=v0,
                     mu0=mu0,
                     a0=a0,
@@ -513,6 +514,7 @@ class TestTDNoiseFit:
         else:
             res = noisefit(
                 x.T,
+                dt=dt,
                 v0=v0,
                 mu0=mu0,
                 a0=a0,

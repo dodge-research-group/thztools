@@ -1002,7 +1002,7 @@ def _tdnll_scaled(
     Compute the scaled negative log-likelihood for the time-domain noise model.
 
     Computes the scaled negative log-likelihood function for obtaining the
-    data matrix ``x`` given ``logv``, ``delta``, ``alpha``, ``eta``,
+    data matrix ``x`` given ``logv``, ``delta``, ``alpha``, ``eta_on_dt``,
     ``scale_logv``, ``scale_delta``, ``scale_alpha``, ``scale_eta``, and
     ``scale_v``.
 
@@ -1011,7 +1011,8 @@ def _tdnll_scaled(
     x : array_like
         Data matrix with shape (m, n), row-oriented.
     logv : array_like
-        Array of three noise parameters.
+        Array of three noise parameters, with sigma_tau given in units of
+        sampling time.
     delta : array_like
         Signal deviation vector with shape (n,).
     alpha: array_like
@@ -1359,12 +1360,13 @@ def noisefit(
     # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
     scale_delta = 1e-0 * noise_model.amplitude(x[:, 0])
-    scale_alpha = 1e-2 * np.ones(m - 1)
+    scale_alpha = 1e-4 * np.ones(m - 1)
     scale_eta = 1e-3 * np.ones(m - 1)
-    scale_v = 1.0e-6
+    scale_v = 1.0e-4
+    scale_sigma = np.array([1, 1, dt])
 
     # Replace log(x) with -inf when x <= 0
-    v0_scaled = np.asarray(v0, dtype=float) / scale_v
+    v0_scaled = np.asarray(v0, dtype=float) / scale_sigma**2 / scale_v
     logv0_scaled = np.ma.log(v0_scaled).filled(-np.inf) / scale_logv
     delta0 = (x[:, 0] - mu0) / scale_delta
 
@@ -1448,9 +1450,9 @@ def noisefit(
     # Parse output
     x_out = out.x
     if fix_v:
-        v_out = v0_scaled * scale_v
+        v_out = v0_scaled * scale_sigma**2 * scale_v
     else:
-        v_out = np.exp(x_out[:3] * scale_logv) * scale_v
+        v_out = np.exp(x_out[:3] * scale_logv) * scale_sigma**2 * scale_v
         x_out = x_out[3:]
     alpha, beta, tau = np.sqrt(v_out)
     # noinspection PyArgumentList

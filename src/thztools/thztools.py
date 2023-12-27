@@ -1263,12 +1263,8 @@ def noisefit(
         (\sigma_\alpha,\sigma_\beta,\sigma_\tau,\boldsymbol{\mu},\
         \mathbf{A},\boldsymbol{\eta};\mathbf{X})\
         = \sum_{k=0}^{N-1}\sum_{l=0}^{M-1}& \
-        \Biggl\{\ln\left[\sigma_\alpha^2 \
-        + \sigma_\beta^2 Z_{kl}^2 \
-        + \sigma_\tau^2(\mathbf{D}\mathbf{Z})_{kl}^2\right] \\\
-        & + \frac{(X_{kl} - Z_{kl})^2}{\sigma_\alpha^2 \
-        + \sigma_\beta^2 Z_{kl}^2 \
-        + \sigma_\tau^2(\mathbf{D}\mathbf{Z})_{kl}^2}\Biggr\}\
+        \left[\ln\sigma_{kl}^2 + \frac{(X_{kl} \
+        - Z_{kl})^2}{\sigma_{kl}^2}\right]\
         \end{split}
 
     with respect to the unknown model parameters :math:`\sigma_\alpha`,
@@ -1355,14 +1351,14 @@ def noisefit(
             msg = "Size of mu0 is incompatible with data array x."
             raise ValueError(msg)
 
-    scale_logv = 1e1 * np.ones(NUM_NOISE_PARAMETERS)
+    scale_logv = 1e0 * np.ones(NUM_NOISE_PARAMETERS)
     alpha, beta, tau = np.sqrt(v0)
     # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
-    scale_delta = 1e-6 * np.ones(n)  # noise_model.amplitude(x[:, 0])
-    scale_alpha = 1e-1 * np.ones(m - 1)
-    scale_eta = 1e-1 * np.ones(m - 1)
-    scale_v = 1.0e-5
+    scale_delta = 1e0 * noise_model.amplitude(x[:, 0])
+    scale_alpha = 1e0 * np.ones(m - 1)
+    scale_eta = 1e0 * np.ones(m - 1)
+    scale_v = 1.0e-4
     scale_sigma = np.array([1, 1, dt])
 
     # Replace log(x) with -inf when x <= 0

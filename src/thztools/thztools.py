@@ -1356,9 +1356,9 @@ def noisefit(
     # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
     scale_delta = 1e0 * noise_model.amplitude(x[:, 0])
-    scale_alpha = 1e0 * np.ones(m - 1)
-    scale_eta = 1e0 * np.ones(m - 1)
-    scale_v = 1.0e-4
+    scale_alpha = 1e-2 * np.ones(m - 1)
+    scale_eta = 1e-3 * np.ones(m - 1) / dt
+    scale_v = 1.0e-5
     scale_sigma = np.array([1, 1, dt])
 
     # Replace log(x) with -inf when x <= 0

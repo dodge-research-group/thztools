@@ -1156,11 +1156,15 @@ def noisefit(
     x: ArrayLike,
     *,
     dt: float | None = None,
-    v0: ArrayLike | None = None,
+    sigma_alpha0: float | None = None,
+    sigma_beta0: float | None = None,
+    sigma_tau0: float | None = None,
     mu0: ArrayLike | None = None,
     a0: ArrayLike | None = None,
     eta0: ArrayLike | None = None,
-    fix_v: bool = False,
+    fix_sigma_alpha: bool = False,
+    fix_sigma_beta: bool = False,
+    fix_sigma_tau: bool = False,
     fix_mu: bool = False,
     fix_a: bool = False,
     fix_eta: bool = False,
@@ -1186,9 +1190,12 @@ def noisefit(
         sampling time is set to `1.0`. In this case, the unit of time is the
         sampling time for the noise model parameter ``sigma_tau``, the delay
         parameter array ``eta``, and the initial guesses for both quantities.
-    v0 : array_like, optional
-        Initial guess, noise model parameters with shape (3,), expressed as
-        variance amplitudes.
+    sigma_alpha0 : float, optional
+        Initial guess for noise parameter ``sigma_alpha``.
+    sigma_beta0 : float, optional
+        Initial guess for noise parameter ``sigma_beta``.
+    sigma_tau0 : float, optional
+        Initial guess for noise parameter ``sigma_tau``.
     mu0 : array_like with shape(n,), optional
         Initial guess, signal vector with shape (n,). Default is first column
         of ``x``.
@@ -1198,8 +1205,12 @@ def noisefit(
     eta0 : array_like with shape(m,), optional
         Initial guess, delay vector with shape (m,). Default is zero for all
         entries.
-    fix_v : bool, optional
-        Fix noise variance parameters. Default is False.
+    fix_sigma_alpha : bool, optional
+        Fix noise parameter ``sigma_alpha``. Default is False.
+    fix_sigma_beta : bool, optional
+        Fix noise parameter ``sigma_beta``. Default is False.
+    fix_sigma_tau : bool, optional
+        Fix noise parameter ``sigma_tau``. Default is False.
     fix_mu : bool, optional
         Fix signal vector. Default is False.
     fix_a : bool, optional
@@ -1320,7 +1331,8 @@ def noisefit(
     NoiseModel(sigma_alpha=9.380...e-06, sigma_beta=0.01408...,
     sigma_tau=0.00097200..., dt=0.05)
     """
-    if fix_v and fix_mu and fix_a and fix_eta:
+    if (fix_sigma_alpha and fix_sigma_beta and fix_sigma_tau and fix_mu
+            and fix_a and fix_eta):
         msg = "All variables are fixed"
         raise ValueError(msg)
     # Parse and validate function inputs
@@ -1332,16 +1344,14 @@ def noisefit(
 
     dt = _assign_sampling_time(dt)
 
-    if v0 is None:
-        v0 = np.mean(np.var(x, 1)) * np.ones(NUM_NOISE_PARAMETERS)
-    else:
-        v0 = np.asarray(v0)
-        if v0.size != NUM_NOISE_PARAMETERS:
-            msg = (
-                "Noise parameter array logv must have "
-                f"{NUM_NOISE_PARAMETERS} elements."
-            )
-            raise ValueError(msg)
+    if sigma_alpha0 is None:
+        sigma_alpha0 = np.sqrt(np.mean(np.var(x, 1)))
+
+    if sigma_beta0 is None:
+        sigma_beta0 = np.sqrt(np.mean(np.var(x, 1)))
+
+    if sigma_tau0 is None:
+        sigma_tau0 = np.sqrt(np.mean(np.var(x, 1)))
 
     if mu0 is None:
         mu0 = x[:, 0]
@@ -1352,9 +1362,8 @@ def noisefit(
             raise ValueError(msg)
 
     scale_logv = 1e0 * np.ones(NUM_NOISE_PARAMETERS)
-    alpha, beta, tau = np.sqrt(v0)
     # noinspection PyArgumentList
-    noise_model = NoiseModel(alpha, beta, tau, dt=dt)
+    noise_model = NoiseModel(sigma_alpha0, sigma_beta0, sigma_tau0, dt=dt)
     scale_delta = 1e0 * noise_model.amplitude(x[:, 0])
     scale_alpha = 1e-2 * np.ones(m - 1)
     scale_eta = 1e-3 * np.ones(m - 1) / dt
@@ -1362,7 +1371,8 @@ def noisefit(
     scale_sigma = np.array([1, 1, dt])
 
     # Replace log(x) with -inf when x <= 0
-    v0_scaled = np.asarray(v0, dtype=float) / scale_sigma**2 / scale_v
+    v0_scaled = np.asarray([sigma_alpha0, sigma_beta0, sigma_tau0],
+                           dtype=float)**2 / scale_sigma**2 / scale_v
     logv0_scaled = np.ma.log(v0_scaled).filled(-np.inf) / scale_logv
     delta0 = (x[:, 0] - mu0) / scale_delta
 
@@ -1388,6 +1398,7 @@ def noisefit(
 
     # Set initial guesses for all free parameters
     x0 = np.array([])
+    fix_v = fix_sigma_alpha and fix_sigma_beta and fix_sigma_tau
     if not fix_v:
         x0 = np.concatenate((x0, logv0_scaled))
     if not fix_mu:

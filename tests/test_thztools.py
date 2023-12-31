@@ -356,14 +356,16 @@ class TestTDNLLScaled:
     t = np.arange(n) * dt
     mu = np.cos(2 * pi * t)
     x = np.tile(mu, [m, 1])
-    logv = (0, -np.inf, -np.inf)
+    logv_alpha = 0
+    logv_beta = -np.inf
+    logv_tau = -np.inf
     delta = np.zeros(n)
     alpha = np.zeros(m - 1)
     eta = np.zeros(m - 1)
     desired_nll = x.size * np.log(2 * pi) / 2
 
     @pytest.mark.parametrize(
-        "fix_logv, desired_gradnll_logv",
+        "fix_logv_alpha, desired_gradnll_logv_alpha",
         [
             [
                 True,
@@ -371,7 +373,33 @@ class TestTDNLLScaled:
             ],
             [
                 False,
-                [16.0, 0.0, 0.0],
+                [16.0],
+            ],
+        ],
+    )
+    @pytest.mark.parametrize(
+        "fix_logv_beta, desired_gradnll_logv_beta",
+        [
+            [
+                True,
+                [],
+            ],
+            [
+                False,
+                [0.0],
+            ],
+        ],
+    )
+    @pytest.mark.parametrize(
+        "fix_logv_tau, desired_gradnll_logv_tau",
+        [
+            [
+                True,
+                [],
+            ],
+            [
+                False,
+                [0.0],
             ],
         ],
     )
@@ -416,11 +444,15 @@ class TestTDNLLScaled:
     )
     def test_gradnll_calc(
         self,
-        fix_logv,
+        fix_logv_alpha,
+        fix_logv_beta,
+        fix_logv_tau,
         fix_delta,
         fix_alpha,
         fix_eta,
-        desired_gradnll_logv,
+        desired_gradnll_logv_alpha,
+        desired_gradnll_logv_beta,
+        desired_gradnll_logv_tau,
         desired_gradnll_delta,
         desired_gradnll_alpha,
         desired_gradnll_eta,
@@ -428,13 +460,17 @@ class TestTDNLLScaled:
         n = self.n
         m = self.m
         x = self.x
-        logv = self.logv
+        logv_alpha = self.logv_alpha
+        logv_beta = self.logv_beta
+        logv_tau = self.logv_tau
         delta = self.delta
         alpha = self.alpha
         eta_on_dt = self.eta / self.dt
         desired_gradnll = np.concatenate(
             (
-                desired_gradnll_logv,
+                desired_gradnll_logv_alpha,
+                desired_gradnll_logv_beta,
+                desired_gradnll_logv_tau,
                 desired_gradnll_delta,
                 desired_gradnll_alpha,
                 desired_gradnll_eta,
@@ -442,11 +478,15 @@ class TestTDNLLScaled:
         )
         _, gradnll = _tdnll_scaled(
             x,
-            logv,
+            logv_alpha,
+            logv_beta,
+            logv_tau,
             delta,
             alpha,
             eta_on_dt,
-            fix_logv=fix_logv,
+            fix_logv_alpha=fix_logv_alpha,
+            fix_logv_beta=fix_logv_beta,
+            fix_logv_tau=fix_logv_tau,
             fix_delta=fix_delta,
             fix_alpha=fix_alpha,
             fix_eta=fix_eta,

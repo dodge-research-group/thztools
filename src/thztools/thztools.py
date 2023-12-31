@@ -1190,12 +1190,9 @@ def noisefit(
         sampling time is set to `1.0`. In this case, the unit of time is the
         sampling time for the noise model parameter ``sigma_tau``, the delay
         parameter array ``eta``, and the initial guesses for both quantities.
-    sigma_alpha0 : float, optional
-        Initial guess for noise parameter ``sigma_alpha``.
-    sigma_beta0 : float, optional
-        Initial guess for noise parameter ``sigma_beta``.
-    sigma_tau0 : float, optional
-        Initial guess for noise parameter ``sigma_tau``.
+    sigma_alpha0, sigma_beta0, sigma_tau0 : float, optional
+        Initial guesses for noise parameters. When set to
+        ``None``, the default, use ``np.sqrt(np.mean(np.var(x, 1)))``.
     mu0 : array_like with shape(n,), optional
         Initial guess, signal vector with shape (n,). Default is first column
         of ``x``.
@@ -1205,12 +1202,8 @@ def noisefit(
     eta0 : array_like with shape(m,), optional
         Initial guess, delay vector with shape (m,). Default is zero for all
         entries.
-    fix_sigma_alpha : bool, optional
-        Fix noise parameter ``sigma_alpha``. Default is False.
-    fix_sigma_beta : bool, optional
-        Fix noise parameter ``sigma_beta``. Default is False.
-    fix_sigma_tau : bool, optional
-        Fix noise parameter ``sigma_tau``. Default is False.
+    fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau : bool, optional
+        Fix the associated noise parameter. Default is False.
     fix_mu : bool, optional
         Fix signal vector. Default is False.
     fix_a : bool, optional
@@ -1328,11 +1321,17 @@ def noisefit(
     >>> x = z + noise_mod.noise(z, seed=1234)
     >>> noise_res = thz.noisefit(x.T)
     >>> noise_res.noise_model  #doctest: +NORMALIZE_WHITESPACE
-    NoiseModel(sigma_alpha=9.380...e-06, sigma_beta=0.01408...,
-    sigma_tau=0.00097200..., dt=0.05)
+    NoiseModel(sigma_alpha=1.000...e-05, sigma_beta=0.009613...,
+    sigma_tau=0.00092547..., dt=0.05)
     """
-    if (fix_sigma_alpha and fix_sigma_beta and fix_sigma_tau and fix_mu
-            and fix_a and fix_eta):
+    if (
+        fix_sigma_alpha
+        and fix_sigma_beta
+        and fix_sigma_tau
+        and fix_mu
+        and fix_a
+        and fix_eta
+    ):
         msg = "All variables are fixed"
         raise ValueError(msg)
     # Parse and validate function inputs
@@ -1371,8 +1370,11 @@ def noisefit(
     scale_sigma = np.array([1, 1, dt])
 
     # Replace log(x) with -inf when x <= 0
-    v0_scaled = np.asarray([sigma_alpha0, sigma_beta0, sigma_tau0],
-                           dtype=float)**2 / scale_sigma**2 / scale_v
+    v0_scaled = (
+        np.asarray([sigma_alpha0, sigma_beta0, sigma_tau0], dtype=float) ** 2
+        / scale_sigma**2
+        / scale_v
+    )
     logv0_scaled = np.ma.log(v0_scaled).filled(-np.inf) / scale_logv
     delta0 = (x[:, 0] - mu0) / scale_delta
 

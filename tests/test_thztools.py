@@ -477,9 +477,27 @@ class TestNoiseFit:
     eta = np.zeros(m)
 
     @pytest.mark.parametrize("x", [x, x[:, 0]])
-    @pytest.mark.parametrize("sigma_alpha0", [None, alpha,])
-    @pytest.mark.parametrize("sigma_beta0", [None, beta,])
-    @pytest.mark.parametrize("sigma_tau0", [None, tau,])
+    @pytest.mark.parametrize(
+        "sigma_alpha0",
+        [
+            None,
+            alpha,
+        ],
+    )
+    @pytest.mark.parametrize(
+        "sigma_beta0",
+        [
+            None,
+            beta,
+        ],
+    )
+    @pytest.mark.parametrize(
+        "sigma_tau0",
+        [
+            None,
+            tau,
+        ],
+    )
     @pytest.mark.parametrize("mu0", [None, mu, []])
     @pytest.mark.parametrize("a0", [None, a, []])
     @pytest.mark.parametrize("eta0", [None, eta, []])
@@ -489,9 +507,22 @@ class TestNoiseFit:
     @pytest.mark.parametrize("fix_mu", [True, False])
     @pytest.mark.parametrize("fix_a", [True, False])
     @pytest.mark.parametrize("fix_eta", [True, False])
-    def test_inputs(self, x, sigma_alpha0, sigma_beta0, sigma_tau0, mu0, a0,
-                    eta0, fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau,
-                    fix_mu, fix_a, fix_eta):
+    def test_inputs(
+        self,
+        x,
+        sigma_alpha0,
+        sigma_beta0,
+        sigma_tau0,
+        mu0,
+        a0,
+        eta0,
+        fix_sigma_alpha,
+        fix_sigma_beta,
+        fix_sigma_tau,
+        fix_mu,
+        fix_a,
+        fix_eta,
+    ):
         print(f"{scipy.__version__=}")
         n = self.n
         m = self.m
@@ -501,8 +532,14 @@ class TestNoiseFit:
             or (mu0 is not None and len(mu0) != n)
             or (a0 is not None and len(a0) != m)
             or (eta0 is not None and len(eta0) != m)
-            or (fix_sigma_alpha and fix_sigma_beta and fix_sigma_tau and fix_mu
-                and fix_a and fix_eta)
+            or (
+                fix_sigma_alpha
+                and fix_sigma_beta
+                and fix_sigma_tau
+                and fix_mu
+                and fix_a
+                and fix_eta
+            )
         ):
             with pytest.raises(ValueError):
                 _ = noisefit(

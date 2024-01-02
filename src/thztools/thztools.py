@@ -430,9 +430,9 @@ class NoiseResult:
     err_sigma_alpha, err_sigma_beta, err_sigma_tau : float
         Estimated uncertainty in the noise model parameters. Set equal to 0.0
         when the parameter is fixed.
-    err_delta : ndarray
+    err_mu : ndarray
         Estimated uncertainty in ``mu``.
-    err_alpha : ndarray
+    err_a : ndarray
         Estimated uncertainty in ``a``.
     err_eta : ndarray
         Estimated uncertainty in ``eta``.
@@ -456,8 +456,8 @@ class NoiseResult:
     err_sigma_alpha: float
     err_sigma_beta: float
     err_sigma_tau: float
-    err_delta: np.ndarray
-    err_alpha: np.ndarray
+    err_mu: np.ndarray
+    err_a: np.ndarray
     err_eta: np.ndarray
     diagnostic: OptimizeResult
 
@@ -990,18 +990,18 @@ def _tdnll_scaled(
     logv_beta: float,
     logv_tau: float,
     delta: ArrayLike,
-    alpha: ArrayLike,
+    epsilon: ArrayLike,
     eta_on_dt: ArrayLike,
     *,
     fix_logv_alpha: bool,
     fix_logv_beta: bool,
     fix_logv_tau: bool,
     fix_delta: bool,
-    fix_alpha: bool,
+    fix_epsilon: bool,
     fix_eta: bool,
     scale_logv: ArrayLike,
     scale_delta: ArrayLike,
-    scale_alpha: ArrayLike,
+    scale_epsilon: ArrayLike,
     scale_eta: ArrayLike,
     scale_v: float,
 ) -> tuple[float, np.ndarray]:
@@ -1022,7 +1022,7 @@ def _tdnll_scaled(
         given in units of sampling time.
     delta : array_like
         Signal deviation vector with shape (n,).
-    alpha: array_like
+    epsilon: array_like
         Amplitude deviation vector with shape (m - 1,).
     eta_on_dt : array_like
         Normalized delay deviation vector with shape (m - 1,), equal to
@@ -1032,7 +1032,7 @@ def _tdnll_scaled(
     fix_delta : bool
         Exclude signal deviation vector from gradiate calculation when
         ``True``.
-    fix_alpha : bool
+    fix_epsilon : bool
         Exclude amplitude deviation vector from gradiate calculation when
         ``True``.
     fix_eta : bool
@@ -1041,7 +1041,7 @@ def _tdnll_scaled(
         Array of three scale parameters for ``logv``.
     scale_delta : array_like
         Array of scale parameters for ``delta`` with shape (n,).
-    scale_alpha : array_like
+    scale_epsilon : array_like
         Array of scale parameters for ``alpha`` with shape (m - 1,).
     scale_eta : array_like
         Array of scale parameters for ``eta`` with shape (m - 1,).
@@ -1059,12 +1059,12 @@ def _tdnll_scaled(
     x = np.asarray(x)
     logv = np.asarray([logv_alpha, logv_beta, logv_tau])
     delta = np.asarray(delta)
-    alpha = np.asarray(alpha)
+    epsilon = np.asarray(epsilon)
     eta_on_dt = np.asarray(eta_on_dt)
 
     scale_logv = np.asarray(scale_logv)
     scale_delta = np.asarray(scale_delta)
-    scale_alpha = np.asarray(scale_alpha)
+    scale_epsilon = np.asarray(scale_epsilon)
     scale_eta = np.asarray(scale_eta)
 
     m, n = x.shape
@@ -1072,7 +1072,7 @@ def _tdnll_scaled(
     # Compute scaled variance, mu, a, and eta
     v_scaled = np.exp(logv * scale_logv)
     mu = x[0, :] - delta * scale_delta
-    a = np.insert(1.0 + alpha * scale_alpha, 0, 1.0)
+    a = np.insert(1.0 + epsilon * scale_epsilon, 0, 1.0)
     eta_on_dt = np.insert(eta_on_dt * scale_eta, 0, 0.0)
 
     # Compute frequency vector and Fourier coefficients of mu
@@ -1112,7 +1112,7 @@ def _tdnll_scaled(
         & fix_logv_beta
         & fix_logv_tau
         & fix_delta
-        & fix_alpha
+        & fix_epsilon
         & fix_eta
     ):
         reswt = res / vtot_scaled
@@ -1143,13 +1143,13 @@ def _tdnll_scaled(
                 -np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
                 * scale_delta,
             )
-        if not fix_alpha:
+        if not fix_epsilon:
             # Gradient wrt alpha
             term = (vtot_scaled - valpha) * dvar - reswt * zeta
             dnllda = np.sum(term, axis=1).T / a
             # Exclude first term, which is held fixed
             gradnll_scaled = np.append(
-                gradnll_scaled, dnllda[1:] * scale_alpha
+                gradnll_scaled, dnllda[1:] * scale_epsilon
             )
         if not fix_eta:
             # Gradient wrt eta
@@ -1248,9 +1248,9 @@ def noisefit(
             optimized parameter values.
         err_var : ndarray
             Estimated uncertainty in the noise model variance parameters.
-        err_delta : ndarray
+        err_mu : ndarray
             Estimated uncertainty in ``mu``.
-        err_alpha : ndarray
+        err_a : ndarray
             Estimated uncertainty in ``a``.
         err_eta : ndarray
             Estimated uncertainty in ``eta``.
@@ -1380,7 +1380,7 @@ def noisefit(
     # noinspection PyArgumentList
     noise_model = NoiseModel(sigma_alpha0, sigma_beta0, sigma_tau0, dt=dt)
     scale_delta = 1e0 * noise_model.amplitude(x[:, 0])
-    scale_alpha = 1e-2 * np.ones(m - 1)
+    scale_epsilon = 1e-2 * np.ones(m - 1)
     scale_eta = 1e-3 * np.ones(m - 1) / dt
     scale_v = 1.0e-5
     scale_sigma = np.array([1, 1, dt])
@@ -1402,7 +1402,7 @@ def noisefit(
             msg = "Size of a0 is incompatible with data array x."
             raise ValueError(msg)
 
-    alpha0 = (a0[1:] - 1.0) / (a0[0] * scale_alpha)
+    epsilon0 = (a0[1:] - 1.0) / (a0[0] * scale_epsilon)
 
     if eta0 is None:
         eta0 = np.zeros(m)
@@ -1425,7 +1425,7 @@ def noisefit(
     if not fix_mu:
         x0 = np.concatenate((x0, delta0))
     if not fix_a:
-        x0 = np.concatenate((x0, alpha0))
+        x0 = np.concatenate((x0, epsilon0))
     if not fix_eta:
         x0 = np.concatenate((x0, eta_on_dt0))
 
@@ -1452,9 +1452,9 @@ def noisefit(
             _delta = _p[:n]
             _p = _p[n:]
         if fix_a:
-            _alpha = alpha0
+            _epsilon = epsilon0
         else:
-            _alpha = _p[: m - 1]
+            _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
         if fix_eta:
             _eta_on_dt = eta_on_dt0
@@ -1466,17 +1466,17 @@ def noisefit(
             _logv_beta,
             _logv_tau,
             _delta,
-            _alpha,
+            _epsilon,
             _eta_on_dt,
             fix_logv_alpha=fix_sigma_alpha,
             fix_logv_beta=fix_sigma_beta,
             fix_logv_tau=fix_sigma_tau,
             fix_delta=fix_mu,
-            fix_alpha=fix_a,
+            fix_epsilon=fix_a,
             fix_eta=fix_eta,
             scale_logv=scale_logv,
             scale_delta=scale_delta,
-            scale_alpha=scale_alpha,
+            scale_epsilon=scale_epsilon,
             scale_eta=scale_eta,
             scale_v=scale_v,
         )
@@ -1524,7 +1524,7 @@ def noisefit(
     if fix_a:
         a_out = a0
     else:
-        a_out = np.concatenate(([1.0], 1.0 + x_out[: m - 1] * scale_alpha))
+        a_out = np.concatenate(([1.0], 1.0 + x_out[: m - 1] * scale_epsilon))
         x_out = x_out[m - 1 :]
 
     if fix_eta:
@@ -1548,8 +1548,14 @@ def noisefit(
                     fix_a,
                     fix_eta,
                 ],
-                [[scale_logv[0]], [scale_logv[1]], [scale_logv[2]],
-                 scale_delta, scale_alpha, scale_eta],
+                [
+                    [scale_logv[0]],
+                    [scale_logv[1]],
+                    [scale_logv[2]],
+                    scale_delta,
+                    scale_epsilon,
+                    scale_eta,
+                ],
             )
             if not tf
         ]
@@ -1562,8 +1568,8 @@ def noisefit(
 
     # Determine parameter uncertainty vector from diagonal entries
     err = np.sqrt(np.diag(hess_inv))
-    err_delta = np.array([])
-    err_alpha = np.array([])
+    err_mu = np.array([])
+    err_a = np.array([])
     err_eta = np.array([])
 
     # Parse error vector
@@ -1587,11 +1593,11 @@ def noisefit(
         err_sigma_tau = 0.0
 
     if not fix_mu:
-        err_delta = err[:n]
+        err_mu = err[:n]
         err = err[n:]
 
     if not fix_a:
-        err_alpha = np.concatenate(([0], err[: m - 1]))
+        err_a = np.concatenate(([0], err[: m - 1]))
         err = err[m - 1 :]
 
     if not fix_eta:
@@ -1607,8 +1613,8 @@ def noisefit(
         err_sigma_alpha,
         err_sigma_beta,
         err_sigma_tau,
-        err_delta,
-        err_alpha,
+        err_mu,
+        err_a,
         err_eta,
         diagnostic,
     )

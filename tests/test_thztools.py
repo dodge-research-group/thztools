@@ -360,7 +360,7 @@ class TestTDNLLScaled:
     logv_beta = -np.inf
     logv_tau = -np.inf
     delta = np.zeros(n)
-    alpha = np.zeros(m - 1)
+    epsilon = np.zeros(m - 1)
     eta = np.zeros(m - 1)
     desired_nll = x.size * np.log(2 * pi) / 2
 
@@ -417,7 +417,7 @@ class TestTDNLLScaled:
         ],
     )
     @pytest.mark.parametrize(
-        "fix_alpha, desired_gradnll_alpha",
+        "fix_epsilon, desired_gradnll_epsilon",
         [
             [
                 True,
@@ -448,13 +448,13 @@ class TestTDNLLScaled:
         fix_logv_beta,
         fix_logv_tau,
         fix_delta,
-        fix_alpha,
+        fix_epsilon,
         fix_eta,
         desired_gradnll_logv_alpha,
         desired_gradnll_logv_beta,
         desired_gradnll_logv_tau,
         desired_gradnll_delta,
-        desired_gradnll_alpha,
+        desired_gradnll_epsilon,
         desired_gradnll_eta,
     ):
         n = self.n
@@ -464,7 +464,7 @@ class TestTDNLLScaled:
         logv_beta = self.logv_beta
         logv_tau = self.logv_tau
         delta = self.delta
-        alpha = self.alpha
+        epsilon = self.epsilon
         eta_on_dt = self.eta / self.dt
         desired_gradnll = np.concatenate(
             (
@@ -472,7 +472,7 @@ class TestTDNLLScaled:
                 desired_gradnll_logv_beta,
                 desired_gradnll_logv_tau,
                 desired_gradnll_delta,
-                desired_gradnll_alpha,
+                desired_gradnll_epsilon,
                 desired_gradnll_eta,
             )
         )
@@ -482,17 +482,17 @@ class TestTDNLLScaled:
             logv_beta,
             logv_tau,
             delta,
-            alpha,
+            epsilon,
             eta_on_dt,
             fix_logv_alpha=fix_logv_alpha,
             fix_logv_beta=fix_logv_beta,
             fix_logv_tau=fix_logv_tau,
             fix_delta=fix_delta,
-            fix_alpha=fix_alpha,
+            fix_epsilon=fix_epsilon,
             fix_eta=fix_eta,
             scale_logv=np.ones(3),
             scale_delta=np.ones(n),
-            scale_alpha=np.ones(m - 1),
+            scale_epsilon=np.ones(m - 1),
             scale_eta=np.ones(m - 1),
             scale_v=1.0,
         )

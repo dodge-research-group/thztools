@@ -984,7 +984,7 @@ def _costfuntls(
     return res
 
 
-def _tdnll_scaled(
+def _costfun_noisefit(
     x: ArrayLike,
     logv_alpha: float,
     logv_beta: float,
@@ -1003,15 +1003,13 @@ def _tdnll_scaled(
     scale_delta: ArrayLike,
     scale_epsilon: ArrayLike,
     scale_eta: ArrayLike,
-    scale_v: float,
 ) -> tuple[float, np.ndarray]:
     r"""
-    Compute the scaled negative log-likelihood for the time-domain noise model.
+    Compute the scaled cost function for the time-domain noise model.
 
-    Computes the scaled negative log-likelihood function for obtaining the
+    Computes the scaled maximum-likelihood cost function for obtaining the
     data matrix ``x`` given ``logv``, ``delta``, ``alpha``, ``eta_on_dt``,
-    ``scale_logv``, ``scale_delta``, ``scale_alpha``, ``scale_eta``, and
-    ``scale_v``.
+    ``scale_logv``, ``scale_delta``, ``scale_alpha``, and ``scale_eta``.
 
     Parameters
     ----------
@@ -1045,12 +1043,10 @@ def _tdnll_scaled(
         Array of scale parameters for ``alpha`` with shape (m - 1,).
     scale_eta : array_like
         Array of scale parameters for ``eta`` with shape (m - 1,).
-    scale_v : float
-        Scale parameter for overall variance.
 
     Returns
     -------
-    nll_scaled : float
+    costfun_scaled : float
         Scaled negative log-likelihood.
     gradnll_scaled : array_like
         Gradient of the negative scaled log-likelihood function with respect to
@@ -1096,14 +1092,10 @@ def _tdnll_scaled(
     valpha = v_scaled[0]
     vbeta = v_scaled[1] * zeta**2
     vtau = v_scaled[2] * dzeta**2
-    vtot_scaled = valpha + vbeta + vtau
+    vtot = valpha + vbeta + vtau
 
-    resnormsq_scaled = ressq / vtot_scaled
-    nll_scaled = (
-        scale_v * m * n * (np.log(2 * np.pi) + np.log(scale_v)) / 2
-        + scale_v * np.sum(np.log(vtot_scaled)) / 2
-        + np.sum(resnormsq_scaled) / 2
-    )
+    resnormsq_scaled = ressq / vtot
+    costfun_scaled = np.sum(np.log(vtot)) + np.sum(resnormsq_scaled)
 
     # Compute gradient
     gradnll_scaled = np.array([])
@@ -1115,23 +1107,23 @@ def _tdnll_scaled(
         & fix_epsilon
         & fix_eta
     ):
-        reswt = res / vtot_scaled
-        dvar = (scale_v * vtot_scaled - ressq) / vtot_scaled**2
+        reswt = res / vtot
+        dvar = (vtot - ressq) / vtot**2
         # Gradient wrt logv
         if not fix_logv_alpha:
             gradnll_scaled = np.append(
                 gradnll_scaled,
-                0.5 * np.sum(dvar) * v_scaled[0] * scale_logv[0],
+                np.sum(dvar) * v_scaled[0] * scale_logv[0],
             )
         if not fix_logv_beta:
             gradnll_scaled = np.append(
                 gradnll_scaled,
-                0.5 * np.sum(zeta**2 * dvar) * v_scaled[1] * scale_logv[1],
+                np.sum(zeta**2 * dvar) * v_scaled[1] * scale_logv[1],
             )
         if not fix_logv_tau:
             gradnll_scaled = np.append(
                 gradnll_scaled,
-                0.5 * np.sum(dzeta**2 * dvar) * v_scaled[2] * scale_logv[2],
+                np.sum(dzeta**2 * dvar) * v_scaled[2] * scale_logv[2],
             )
         if not fix_delta:
             # Gradient wrt delta
@@ -1140,16 +1132,17 @@ def _tdnll_scaled(
             ] * w_scaled * rfft(dvar * dzeta)
             gradnll_scaled = np.append(
                 gradnll_scaled,
-                -np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
+                -2
+                * np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
                 * scale_delta,
             )
         if not fix_epsilon:
             # Gradient wrt alpha
-            term = (vtot_scaled - valpha) * dvar - reswt * zeta
+            term = (vtot - valpha) * dvar - reswt * zeta
             dnllda = np.sum(term, axis=1).T / a
             # Exclude first term, which is held fixed
             gradnll_scaled = np.append(
-                gradnll_scaled, dnllda[1:] * scale_epsilon
+                gradnll_scaled, 2 * dnllda[1:] * scale_epsilon
             )
         if not fix_eta:
             # Gradient wrt eta
@@ -1162,10 +1155,10 @@ def _tdnll_scaled(
             )
             # Exclude first term, which is held fixed
             gradnll_scaled = np.append(
-                gradnll_scaled, dnlldeta[1:] * scale_eta
+                gradnll_scaled, 2 * dnlldeta[1:] * scale_eta
             )
 
-    return nll_scaled, gradnll_scaled
+    return costfun_scaled / (m * n), gradnll_scaled / (m * n)
 
 
 def noisefit(
@@ -1184,6 +1177,12 @@ def noisefit(
     fix_mu: bool = False,
     fix_a: bool = False,
     fix_eta: bool = False,
+    scale_sigma_alpha: float | None = None,
+    scale_sigma_beta: float | None = None,
+    scale_sigma_tau: float | None = None,
+    scale_mu: ArrayLike | None = None,
+    scale_a: ArrayLike | None = None,
+    scale_eta: ArrayLike | None = None,
 ) -> NoiseResult:
     r"""
     Estimate noise model from a set of nominally identical waveforms.
@@ -1207,7 +1206,7 @@ def noisefit(
         sampling time for the noise model parameter ``sigma_tau``, the delay
         parameter array ``eta``, and the initial guesses for both quantities.
     sigma_alpha0, sigma_beta0, sigma_tau0 : float, optional
-        Initial guesses for noise parameters. When set to
+        Initial values for noise parameters. When set to
         ``None``, the default, use ``np.sqrt(np.mean(np.var(x, 1)))``.
     mu0 : array_like with shape(n,), optional
         Initial guess, signal vector with shape (n,). Default is first column
@@ -1226,6 +1225,18 @@ def noisefit(
         Fix amplitude vector. Default is False.
     fix_eta : bool, optional
         Fix delay vector. Default is False.
+    scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau : float, optional
+        Scale for varying noise parameters. Default is ``1.0``.
+    scale_mu : float, array_like with shape(n,), optional
+        Scale for varying signal vector. When set to ``None``, the default,
+        use ``NoiseModel(sigma_alpha0, sigma_beta0,
+        sigma_tau0).amplitude(mu0)``.
+    scale_a : float, array_like with shape(n,), optional
+            Scale for varying amplitude vector. Default is ``1.0e-2`` for all
+            entries.
+    scale_eta : float, array_like with shape(n,), optional
+            Scale for varying delay vector. Default is ``1.0e-3 / dt`` for all
+            entries.
 
     Returns
     -------
@@ -1282,7 +1293,7 @@ def noisefit(
         Q_\text{ML}\
         (\sigma_\alpha,\sigma_\beta,\sigma_\tau,\boldsymbol{\mu},\
         \mathbf{A},\boldsymbol{\eta};\mathbf{X})\
-        = \sum_{k=0}^{N-1}\sum_{l=0}^{M-1}& \
+        = \frac{1}{MN}\sum_{k=0}^{N-1}\sum_{l=0}^{M-1}& \
         \left[\ln\sigma_{kl}^2 + \frac{(X_{kl} \
         - Z_{kl})^2}{\sigma_{kl}^2}\right]\
         \end{split}
@@ -1337,8 +1348,8 @@ def noisefit(
     >>> x = z + noise_mod.noise(z, seed=1234)
     >>> noise_res = thz.noisefit(x.T)
     >>> noise_res.noise_model  #doctest: +NORMALIZE_WHITESPACE
-    NoiseModel(sigma_alpha=1.000...e-05, sigma_beta=0.009613...,
-    sigma_tau=0.00092547..., dt=0.05)
+    NoiseModel(sigma_alpha=1.000...e-05, sigma_beta=0.009609...,
+    sigma_tau=0.0009243..., dt=0.05)
     """
     if (
         fix_sigma_alpha
@@ -1376,20 +1387,40 @@ def noisefit(
             msg = "Size of mu0 is incompatible with data array x."
             raise ValueError(msg)
 
-    scale_logv = 1e0 * np.ones(NUM_NOISE_PARAMETERS)
-    # noinspection PyArgumentList
     noise_model = NoiseModel(sigma_alpha0, sigma_beta0, sigma_tau0, dt=dt)
-    scale_delta = 1e0 * noise_model.amplitude(x[:, 0])
+
+    if scale_sigma_alpha is None:
+        scale_sigma_alpha = sigma_alpha0
+
+    if scale_sigma_beta is None:
+        scale_sigma_beta = sigma_beta0
+
+    if scale_sigma_tau is None:
+        scale_sigma_tau = sigma_tau0
+
+    if scale_mu is None:
+        scale_mu = noise_model.amplitude(mu0)
+
+    if scale_a is None:
+        scale_a = 1e-2 * np.ones(m - 1)
+
+    if scale_eta is None:
+        scale_eta = 1e-3 * np.ones(m - 1) / dt
+
+    scale_logv = 1e0 * np.ones(NUM_NOISE_PARAMETERS)
+    # scale_logv = np.array([scale_sigma_alpha,
+    #                        scale_sigma_beta,
+    #                        scale_sigma_tau])
+    # noinspection PyArgumentList
+    scale_delta = 1e0 * noise_model.amplitude(mu0)
     scale_epsilon = 1e-2 * np.ones(m - 1)
     scale_eta = 1e-3 * np.ones(m - 1) / dt
-    scale_v = 1.0e-5
     scale_sigma = np.array([1, 1, dt])
 
     # Replace log(x) with -inf when x <= 0
     v0_scaled = (
         np.asarray([sigma_alpha0, sigma_beta0, sigma_tau0], dtype=float) ** 2
         / scale_sigma**2
-        / scale_v
     )
     logv0_scaled = np.ma.log(v0_scaled).filled(-np.inf) / scale_logv
     delta0 = (x[:, 0] - mu0) / scale_delta
@@ -1437,12 +1468,12 @@ def noisefit(
             _logv_alpha = _p[0]
             _p = _p[1:]
         if fix_sigma_beta:
-            _logv_beta = logv0_scaled[0]
+            _logv_beta = logv0_scaled[1]
         else:
             _logv_beta = _p[0]
             _p = _p[1:]
         if fix_sigma_tau:
-            _logv_tau = logv0_scaled[0]
+            _logv_tau = logv0_scaled[2]
         else:
             _logv_tau = _p[0]
             _p = _p[1:]
@@ -1460,7 +1491,7 @@ def noisefit(
             _eta_on_dt = eta_on_dt0
         else:
             _eta_on_dt = _p[: m - 1]
-        return _tdnll_scaled(
+        return _costfun_noisefit(
             x.T,
             _logv_alpha,
             _logv_beta,
@@ -1478,7 +1509,6 @@ def noisefit(
             scale_delta=scale_delta,
             scale_epsilon=scale_epsilon,
             scale_eta=scale_eta,
-            scale_v=scale_v,
         )
 
     # Minimize cost function with respect to free parameters
@@ -1492,25 +1522,19 @@ def noisefit(
     # Parse output
     x_out = out.x
     if fix_sigma_alpha:
-        alpha = np.sqrt(v0_scaled[0] * scale_sigma[0] ** 2 * scale_v)
+        alpha = np.sqrt(v0_scaled[0] * scale_sigma[0] ** 2)
     else:
-        alpha = np.sqrt(
-            np.exp(x_out[0] * scale_logv[0]) * scale_sigma[0] ** 2 * scale_v
-        )
+        alpha = np.sqrt(np.exp(x_out[0] * scale_logv[0]) * scale_sigma[0] ** 2)
         x_out = x_out[1:]
     if fix_sigma_beta:
-        beta = np.sqrt(v0_scaled[1] * scale_sigma[1] ** 2 * scale_v)
+        beta = np.sqrt(v0_scaled[1] * scale_sigma[1] ** 2)
     else:
-        beta = np.sqrt(
-            np.exp(x_out[0] * scale_logv[1]) * scale_sigma[1] ** 2 * scale_v
-        )
+        beta = np.sqrt(np.exp(x_out[0] * scale_logv[1]) * scale_sigma[1] ** 2)
         x_out = x_out[1:]
     if fix_sigma_tau:
-        tau = np.sqrt(v0_scaled[2] * scale_sigma[2] ** 2 * scale_v)
+        tau = np.sqrt(v0_scaled[2] * scale_sigma[2] ** 2)
     else:
-        tau = np.sqrt(
-            np.exp(x_out[0] * scale_logv[2]) * scale_sigma[2] ** 2 * scale_v
-        )
+        tau = np.sqrt(np.exp(x_out[0] * scale_logv[2]) * scale_sigma[2] ** 2)
         x_out = x_out[1:]
     # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
@@ -1533,7 +1557,7 @@ def noisefit(
         eta_out = np.concatenate(([0.0], x_out[: m - 1] * dt * scale_eta))
 
     diagnostic = out
-    fun = out.fun / scale_v
+    fun = out.fun
 
     # Concatenate scaling vectors for all sets of free parameters
     scale_hess_inv = np.concatenate(
@@ -1562,9 +1586,7 @@ def noisefit(
     )
 
     # Convert inverse Hessian into unscaled parameters
-    hess_inv = scale_v * (
-        np.diag(scale_hess_inv) @ out.hess_inv @ np.diag(scale_hess_inv)
-    )
+    hess_inv = np.diag(scale_hess_inv) @ out.hess_inv @ np.diag(scale_hess_inv)
 
     # Determine parameter uncertainty vector from diagonal entries
     err = np.sqrt(np.diag(hess_inv))

@@ -11,8 +11,8 @@ import thztools
 from thztools.thztools import (
     NoiseModel,
     _assign_sampling_time,
+    _costfun_noisefit,
     _costfuntls,
-    _tdnll_scaled,
     fit,
     noisefit,
     scaleshift,
@@ -373,7 +373,7 @@ class TestTDNLLScaled:
             ],
             [
                 False,
-                [16.0],
+                [1.0],
             ],
         ],
     )
@@ -476,7 +476,7 @@ class TestTDNLLScaled:
                 desired_gradnll_eta,
             )
         )
-        _, gradnll = _tdnll_scaled(
+        _, gradnll = _costfun_noisefit(
             x,
             logv_alpha,
             logv_beta,
@@ -494,7 +494,6 @@ class TestTDNLLScaled:
             scale_delta=np.ones(n),
             scale_epsilon=np.ones(m - 1),
             scale_eta=np.ones(m - 1),
-            scale_v=1.0,
         )
         assert_allclose(
             gradnll, desired_gradnll, atol=10 * np.finfo(float).eps
@@ -508,7 +507,7 @@ class TestNoiseFit:
     dt = 0.05
     t = np.arange(n) * dt
     mu = wave(n, dt=dt, t0=n * dt / 3)
-    alpha, beta, tau = 1e-5, 1e-2, 1e-3
+    alpha, beta, tau = 1e-5, 1e-3, 1e-3
     sigma = np.array([alpha, beta, tau])
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
     noise = noise_model.noise(np.ones((m, 1)) * mu, seed=0)

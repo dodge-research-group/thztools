@@ -359,8 +359,8 @@ class TestTDNLLScaled:
     logv_alpha = 0
     logv_beta = -np.inf
     logv_tau = -np.inf
-    delta = np.zeros(n)
-    epsilon = np.zeros(m - 1)
+    delta_mu = np.zeros(n)
+    delta_a = np.zeros(m - 1)
     eta = np.zeros(m - 1)
     desired_nll = x.size * np.log(2 * pi) / 2
 
@@ -404,7 +404,7 @@ class TestTDNLLScaled:
         ],
     )
     @pytest.mark.parametrize(
-        "fix_delta, desired_gradnll_delta",
+        "fix_delta_mu, desired_gradnll_delta_mu",
         [
             [
                 True,
@@ -417,7 +417,7 @@ class TestTDNLLScaled:
         ],
     )
     @pytest.mark.parametrize(
-        "fix_epsilon, desired_gradnll_epsilon",
+        "fix_delta_a, desired_gradnll_delta_a",
         [
             [
                 True,
@@ -447,14 +447,14 @@ class TestTDNLLScaled:
         fix_logv_alpha,
         fix_logv_beta,
         fix_logv_tau,
-        fix_delta,
-        fix_epsilon,
+        fix_delta_mu,
+        fix_delta_a,
         fix_eta,
         desired_gradnll_logv_alpha,
         desired_gradnll_logv_beta,
         desired_gradnll_logv_tau,
-        desired_gradnll_delta,
-        desired_gradnll_epsilon,
+        desired_gradnll_delta_mu,
+        desired_gradnll_delta_a,
         desired_gradnll_eta,
     ):
         n = self.n
@@ -463,16 +463,16 @@ class TestTDNLLScaled:
         logv_alpha = self.logv_alpha
         logv_beta = self.logv_beta
         logv_tau = self.logv_tau
-        delta = self.delta
-        epsilon = self.epsilon
+        delta_mu = self.delta_mu
+        delta_a = self.delta_a
         eta_on_dt = self.eta / self.dt
         desired_gradnll = np.concatenate(
             (
                 desired_gradnll_logv_alpha,
                 desired_gradnll_logv_beta,
                 desired_gradnll_logv_tau,
-                desired_gradnll_delta,
-                desired_gradnll_epsilon,
+                desired_gradnll_delta_mu,
+                desired_gradnll_delta_a,
                 desired_gradnll_eta,
             )
         )
@@ -481,18 +481,20 @@ class TestTDNLLScaled:
             logv_alpha,
             logv_beta,
             logv_tau,
-            delta,
-            epsilon,
+            delta_mu,
+            delta_a,
             eta_on_dt,
             fix_logv_alpha=fix_logv_alpha,
             fix_logv_beta=fix_logv_beta,
             fix_logv_tau=fix_logv_tau,
-            fix_delta=fix_delta,
-            fix_epsilon=fix_epsilon,
+            fix_delta_mu=fix_delta_mu,
+            fix_delta_a=fix_delta_a,
             fix_eta=fix_eta,
-            scale_logv=np.ones(3),
-            scale_delta=np.ones(n),
-            scale_epsilon=np.ones(m - 1),
+            scale_sigma_alpha=1.0,
+            scale_sigma_beta=1.0,
+            scale_sigma_tau=1.0,
+            scale_delta_mu=np.ones(n),
+            scale_delta_a=np.ones(m - 1),
             scale_eta=np.ones(m - 1),
         )
         assert_allclose(
@@ -511,41 +513,39 @@ class TestNoiseFit:
     sigma = np.array([alpha, beta, tau])
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
     noise = noise_model.noise(np.ones((m, 1)) * mu, seed=0)
+    noise_amp = noise_model.amplitude(mu)
     x = np.array(mu + noise)
     a = np.ones(m)
     eta = np.zeros(m)
+    scale_delta_a = 1e-2 * np.ones(m - 1)
+    scale_eta = 1e-3 * np.ones(m - 1) / dt
 
     @pytest.mark.parametrize("x", [x, x[:, 0]])
     @pytest.mark.parametrize(
-        "sigma_alpha0",
+        "sigma_alpha0, sigma_beta0, sigma_tau0, "
+        "fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau",
         [
-            None,
-            alpha,
-        ],
-    )
-    @pytest.mark.parametrize(
-        "sigma_beta0",
-        [
-            None,
-            beta,
-        ],
-    )
-    @pytest.mark.parametrize(
-        "sigma_tau0",
-        [
-            None,
-            tau,
+            [None, None, None, True, True, True],
+            [0.0, beta, tau, False, False, False],
+            [alpha, 0.0, tau, False, False, False],
+            [alpha, beta, 0.0, False, False, False],
+            [alpha, beta, tau, False, False, False],
         ],
     )
     @pytest.mark.parametrize("mu0", [None, mu, []])
     @pytest.mark.parametrize("a0", [None, a, []])
     @pytest.mark.parametrize("eta0", [None, eta, []])
-    @pytest.mark.parametrize("fix_sigma_alpha", [True, False])
-    @pytest.mark.parametrize("fix_sigma_beta", [True, False])
-    @pytest.mark.parametrize("fix_sigma_tau", [True, False])
     @pytest.mark.parametrize("fix_mu", [True, False])
     @pytest.mark.parametrize("fix_a", [True, False])
     @pytest.mark.parametrize("fix_eta", [True, False])
+    @pytest.mark.parametrize(
+        "scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau, "
+        "scale_delta_mu, scale_delta_a, scale_eta",
+        [
+            [None, None, None, None, None, None],
+            [alpha, beta, tau / dt, noise_amp, scale_delta_a, scale_eta]
+        ]
+    )
     def test_inputs(
         self,
         x,
@@ -561,6 +561,12 @@ class TestNoiseFit:
         fix_mu,
         fix_a,
         fix_eta,
+        scale_sigma_alpha,
+        scale_sigma_beta,
+        scale_sigma_tau,
+        scale_delta_mu,
+        scale_delta_a,
+        scale_eta
     ):
         print(f"{scipy.__version__=}")
         n = self.n
@@ -596,6 +602,12 @@ class TestNoiseFit:
                     fix_mu=fix_mu,
                     fix_a=fix_a,
                     fix_eta=fix_eta,
+                    scale_sigma_alpha=scale_sigma_alpha,
+                    scale_sigma_beta=scale_sigma_beta,
+                    scale_sigma_tau=scale_sigma_tau,
+                    scale_delta_mu=scale_delta_mu,
+                    scale_delta_a=scale_delta_a,
+                    scale_eta=scale_eta
                 )
         else:
             res = noisefit(
@@ -613,6 +625,12 @@ class TestNoiseFit:
                 fix_mu=fix_mu,
                 fix_a=fix_a,
                 fix_eta=fix_eta,
+                scale_sigma_alpha=scale_sigma_alpha,
+                scale_sigma_beta=scale_sigma_beta,
+                scale_sigma_tau=scale_sigma_tau,
+                scale_delta_mu=scale_delta_mu,
+                scale_delta_a=scale_delta_a,
+                scale_eta=scale_eta
             )
             assert res.diagnostic["status"] == 0
 

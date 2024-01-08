@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-import scipy
 from numpy import pi
 from numpy.testing import assert_allclose
 from numpy.typing import ArrayLike
@@ -13,6 +12,8 @@ from thztools.thztools import (
     _assign_sampling_time,
     _costfun_noisefit,
     _costfuntls,
+    _parse_noisefit_input,
+    # _parse_noisefit_output,
     fit,
     noisefit,
     scaleshift,
@@ -520,38 +521,20 @@ class TestNoiseFit:
     scale_delta_a = 1e-2 * np.ones(m - 1)
     scale_eta = 1e-3 * np.ones(m - 1) / dt
 
-    @pytest.mark.parametrize("x", [x, x[:, 0]])
     @pytest.mark.parametrize(
-        "sigma_alpha0, sigma_beta0, sigma_tau0, "
-        "fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau",
+        "x, mu0, a0, eta0, fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, "
+        "fix_mu, fix_a, fix_eta",
         [
-            [None, None, None, True, True, True],
-            [0.0, beta, tau, False, False, False],
-            [alpha, 0.0, tau, False, False, False],
-            [alpha, beta, 0.0, False, False, False],
-            [alpha, beta, tau, False, False, False],
+            [x[:, 0], mu, a, eta, False, False, False, False, False, False],
+            [x, [], a, eta, False, False, False, False, False, False],
+            [x, mu, [], eta, False, False, False, False, False, False],
+            [x, mu, a, [], False, False, False, False, False, False],
+            [x, mu, a, eta, True, True, True, True, True, True],
         ],
     )
-    @pytest.mark.parametrize("mu0", [None, mu, []])
-    @pytest.mark.parametrize("a0", [None, a, []])
-    @pytest.mark.parametrize("eta0", [None, eta, []])
-    @pytest.mark.parametrize("fix_mu", [True, False])
-    @pytest.mark.parametrize("fix_a", [True, False])
-    @pytest.mark.parametrize("fix_eta", [True, False])
-    @pytest.mark.parametrize(
-        "scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau, "
-        "scale_delta_mu, scale_delta_a, scale_eta",
-        [
-            [None, None, None, None, None, None],
-            [alpha, beta, tau / dt, noise_amp, scale_delta_a, scale_eta]
-        ]
-    )
-    def test_inputs(
+    def test_exceptions(
         self,
         x,
-        sigma_alpha0,
-        sigma_beta0,
-        sigma_tau0,
         mu0,
         a0,
         eta0,
@@ -561,56 +544,15 @@ class TestNoiseFit:
         fix_mu,
         fix_a,
         fix_eta,
-        scale_sigma_alpha,
-        scale_sigma_beta,
-        scale_sigma_tau,
-        scale_delta_mu,
-        scale_delta_a,
-        scale_eta
     ):
-        print(f"{scipy.__version__=}")
-        n = self.n
         m = self.m
+        n = self.n
         dt = self.dt
-        if (
-            x.ndim < 2
-            or (mu0 is not None and len(mu0) != n)
-            or (a0 is not None and len(a0) != m)
-            or (eta0 is not None and len(eta0) != m)
-            or (
-                fix_sigma_alpha
-                and fix_sigma_beta
-                and fix_sigma_tau
-                and fix_mu
-                and fix_a
-                and fix_eta
-            )
-        ):
-            with pytest.raises(ValueError):
-                _ = noisefit(
-                    x.T,
-                    dt=dt,
-                    sigma_alpha0=sigma_alpha0,
-                    sigma_beta0=sigma_beta0,
-                    sigma_tau0=sigma_tau0,
-                    mu0=mu0,
-                    a0=a0,
-                    eta0=eta0,
-                    fix_sigma_alpha=fix_sigma_alpha,
-                    fix_sigma_beta=fix_sigma_beta,
-                    fix_sigma_tau=fix_sigma_tau,
-                    fix_mu=fix_mu,
-                    fix_a=fix_a,
-                    fix_eta=fix_eta,
-                    scale_sigma_alpha=scale_sigma_alpha,
-                    scale_sigma_beta=scale_sigma_beta,
-                    scale_sigma_tau=scale_sigma_tau,
-                    scale_delta_mu=scale_delta_mu,
-                    scale_delta_a=scale_delta_a,
-                    scale_eta=scale_eta
-                )
-        else:
-            res = noisefit(
+        sigma_alpha0 = self.alpha
+        sigma_beta0 = self.beta
+        sigma_tau0 = self.tau
+        with pytest.raises(ValueError):
+            _ = _parse_noisefit_input(
                 x.T,
                 dt=dt,
                 sigma_alpha0=sigma_alpha0,
@@ -625,14 +567,101 @@ class TestNoiseFit:
                 fix_mu=fix_mu,
                 fix_a=fix_a,
                 fix_eta=fix_eta,
-                scale_sigma_alpha=scale_sigma_alpha,
-                scale_sigma_beta=scale_sigma_beta,
-                scale_sigma_tau=scale_sigma_tau,
-                scale_delta_mu=scale_delta_mu,
-                scale_delta_a=scale_delta_a,
-                scale_eta=scale_eta
+                scale_sigma_alpha=1.0,
+                scale_sigma_beta=1.0,
+                scale_sigma_tau=1.0,
+                scale_delta_mu=np.ones(n),
+                scale_delta_a=np.ones(m - 1),
+                scale_eta=np.ones(m - 1),
             )
-            assert res.diagnostic["status"] == 0
+
+    @pytest.mark.parametrize("sigma_alpha0", [None, alpha, 0.0])
+    @pytest.mark.parametrize("sigma_beta0", [None, beta, 0.0])
+    @pytest.mark.parametrize("sigma_tau0", [None, tau, 0.0])
+    @pytest.mark.parametrize("mu0", [None, mu])
+    @pytest.mark.parametrize("a0", [None, a])
+    @pytest.mark.parametrize("eta0", [None, eta])
+    @pytest.mark.parametrize(
+        "scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau, "
+        "scale_delta_mu, scale_delta_a, scale_eta",
+        [
+            [None, None, None, None, None, None],
+            [alpha, beta, tau / dt, noise_amp, scale_delta_a, scale_eta],
+        ],
+    )
+    def test_inputs(
+        self,
+        sigma_alpha0,
+        sigma_beta0,
+        sigma_tau0,
+        mu0,
+        a0,
+        eta0,
+        scale_sigma_alpha,
+        scale_sigma_beta,
+        scale_sigma_tau,
+        scale_delta_mu,
+        scale_delta_a,
+        scale_eta,
+    ):
+        x = self.x
+        dt = self.dt
+        _ = _parse_noisefit_input(
+            x.T,
+            dt=dt,
+            sigma_alpha0=sigma_alpha0,
+            sigma_beta0=sigma_beta0,
+            sigma_tau0=sigma_tau0,
+            mu0=mu0,
+            a0=a0,
+            eta0=eta0,
+            fix_sigma_alpha=False,
+            fix_sigma_beta=False,
+            fix_sigma_tau=False,
+            fix_mu=False,
+            fix_a=False,
+            fix_eta=False,
+            scale_sigma_alpha=scale_sigma_alpha,
+            scale_sigma_beta=scale_sigma_beta,
+            scale_sigma_tau=scale_sigma_tau,
+            scale_delta_mu=scale_delta_mu,
+            scale_delta_a=scale_delta_a,
+            scale_eta=scale_eta,
+        )
+
+    @pytest.mark.parametrize(
+        "fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, fix_mu, fix_a, "
+        "fix_eta",
+        [
+            [False, False, False, False, False, False],
+            [True, False, False, False, False, False],
+            [False, True, False, False, False, False],
+            [False, False, True, False, False, False],
+            [False, False, False, True, False, False],
+            [False, False, False, False, True, False],
+            [False, False, False, False, False, True],
+        ],
+    )
+    def test_noisefit(
+        self,
+        fix_sigma_alpha,
+        fix_sigma_beta,
+        fix_sigma_tau,
+        fix_mu,
+        fix_a,
+        fix_eta,
+    ):
+        x = self.x
+        result = noisefit(
+            x.T,
+            fix_sigma_alpha=fix_sigma_alpha,
+            fix_sigma_beta=fix_sigma_beta,
+            fix_sigma_tau=fix_sigma_tau,
+            fix_mu=fix_mu,
+            fix_a=fix_a,
+            fix_eta=fix_eta,
+        )
+        assert result.diagnostic["status"] == 0
 
 
 class TestFit:

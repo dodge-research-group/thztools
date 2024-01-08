@@ -985,13 +985,13 @@ def _costfuntls(
 
 
 def _costfun_noisefit(
-    x: ArrayLike,
+    x: np.ndarray,
     logv_alpha: float,
     logv_beta: float,
     logv_tau: float,
-    delta_mu: ArrayLike,
-    delta_a: ArrayLike,
-    eta: ArrayLike,
+    delta_mu: np.ndarray,
+    delta_a: np.ndarray,
+    eta: np.ndarray,
     *,
     fix_logv_alpha: bool,
     fix_logv_beta: bool,
@@ -1002,9 +1002,9 @@ def _costfun_noisefit(
     scale_sigma_alpha: float,
     scale_sigma_beta: float,
     scale_sigma_tau: float,
-    scale_delta_mu: ArrayLike,
-    scale_delta_a: ArrayLike,
-    scale_eta: ArrayLike,
+    scale_delta_mu: np.ndarray,
+    scale_delta_a: np.ndarray,
+    scale_eta: np.ndarray,
 ) -> tuple[float, np.ndarray]:
     r"""
     Compute the scaled cost function for the time-domain noise model.
@@ -1016,16 +1016,16 @@ def _costfun_noisefit(
 
     Parameters
     ----------
-    x : array_like
+    x : ndarray
         Data matrix with shape (m, n), row-oriented.
     logv_alpha, logv_beta, logv_tau : float
         Logarithm of the associated noise variance parameter, with sigma_tau
         given in units of sampling time.
-    delta_mu : array_like
+    delta_mu : ndarray
         Signal deviation vector with shape (n,).
-    delta_a: array_like
+    delta_a: ndarray
         Amplitude deviation vector with shape (m - 1,).
-    eta : array_like
+    eta : ndarray
         Delay deviation vector with shape (m - 1,), given in units of sampling
         time.
     fix_logv_alpha, fix_logv_beta, fix_logv_tau : bool
@@ -1044,18 +1044,18 @@ def _costfun_noisefit(
         Scale parameter for ``sigma_beta``.
     scale_sigma_tau : float
         Scale parameter for ``sigma_tau``.
-    scale_delta_mu : array_like
+    scale_delta_mu : ndarray
         Array of scale parameters for ``delta`` with shape (n,).
-    scale_delta_a : array_like
+    scale_delta_a : ndarray
         Array of scale parameters for ``alpha`` with shape (m - 1,).
-    scale_eta : array_like
+    scale_eta : ndarray
         Array of scale parameters for ``eta`` with shape (m - 1,).
 
     Returns
     -------
     costfun_scaled : float
         Scaled negative log-likelihood.
-    gradnll_scaled : array_like
+    gradnll_scaled : ndarray
         Gradient of the negative scaled log-likelihood function with respect to
         free parameters.
     """
@@ -1361,6 +1361,74 @@ def noisefit(
     NoiseModel(sigma_alpha=1.000...e-05, sigma_beta=0.009609...,
     sigma_tau=0.0009243..., dt=0.05)
     """
+    x = np.asarray(x)
+    dt = _assign_sampling_time(dt)
+
+    parsed = _parse_noisefit_input(
+        x,
+        dt=dt,
+        sigma_alpha0=sigma_alpha0,
+        sigma_beta0=sigma_beta0,
+        sigma_tau0=sigma_tau0,
+        mu0=mu0,
+        a0=a0,
+        eta0=eta0,
+        fix_sigma_alpha=fix_sigma_alpha,
+        fix_sigma_beta=fix_sigma_beta,
+        fix_sigma_tau=fix_sigma_tau,
+        fix_mu=fix_mu,
+        fix_a=fix_a,
+        fix_eta=fix_eta,
+        scale_sigma_alpha=scale_sigma_alpha,
+        scale_sigma_beta=scale_sigma_beta,
+        scale_sigma_tau=scale_sigma_tau,
+        scale_delta_mu=scale_delta_mu,
+        scale_delta_a=scale_delta_a,
+        scale_eta=scale_eta,
+    )
+
+    objective, x0, input_parsed = parsed
+
+    # Minimize cost function with respect to free parameters
+    out = minimize(
+        objective,
+        x0,
+        method="BFGS",
+        jac=True,
+    )
+    fit_result = _parse_noisefit_output(out, x, dt=dt, **input_parsed)
+    return fit_result
+
+
+def _parse_noisefit_input(
+    x: np.ndarray,
+    dt: float,
+    *,
+    sigma_alpha0: float | None,
+    sigma_beta0: float | None,
+    sigma_tau0: float | None,
+    mu0: ArrayLike | None,
+    a0: ArrayLike | None,
+    eta0: ArrayLike | None,
+    fix_sigma_alpha: bool,
+    fix_sigma_beta: bool,
+    fix_sigma_tau: bool,
+    fix_mu: bool,
+    fix_a: bool,
+    fix_eta: bool,
+    scale_sigma_alpha: float | None,
+    scale_sigma_beta: float | None,
+    scale_sigma_tau: float | None,
+    scale_delta_mu: ArrayLike | None,
+    scale_delta_a: ArrayLike | None,
+    scale_eta: ArrayLike | None,
+) -> tuple[Callable, ArrayLike, dict]:
+    """Parse noisefit optional inputs"""
+    if x.ndim != NUM_NOISE_DATA_DIMENSIONS:
+        msg = "Data array x must be 2D"
+        raise ValueError(msg)
+    n, m = x.shape
+
     if (
         fix_sigma_alpha
         and fix_sigma_beta
@@ -1371,14 +1439,6 @@ def noisefit(
     ):
         msg = "All variables are fixed"
         raise ValueError(msg)
-    # Parse and validate function inputs
-    x = np.asarray(x)
-    if x.ndim != NUM_NOISE_DATA_DIMENSIONS:
-        msg = "Data array x must be 2D"
-        raise ValueError(msg)
-    n, m = x.shape
-
-    dt = _assign_sampling_time(dt)
 
     if sigma_alpha0 is None:
         sigma_alpha0 = np.sqrt(np.mean(np.var(x, 1)))
@@ -1418,24 +1478,31 @@ def noisefit(
             scale_sigma_tau = sigma_tau0 / dt
 
     if scale_delta_mu is None:
-        scale_delta_mu = noise_model.amplitude(mu0)
+        if np.allclose([sigma_alpha0, sigma_beta0, sigma_tau0], 0.0):
+            scale_delta_mu = np.ones(n)
+        else:
+            scale_delta_mu = noise_model.amplitude(mu0)
 
     if scale_delta_a is None:
         scale_delta_a = 1e-2 * np.ones(m - 1)
+    else:
+        scale_delta_a = np.asarray(scale_delta_a)
 
     if scale_eta is None:
         scale_eta = 1e-3 * np.ones(m - 1) / dt
+    else:
+        scale_eta = np.asarray(scale_eta)
 
     scale_sigma = np.array(
         [scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau]
     )
 
-    # Replace log(x) with -1e-3 when x <= 0
+    # Replace log(x) with -1e2 when x <= 0
     v0_scaled = (
         np.asarray([sigma_alpha0, sigma_beta0, sigma_tau0 / dt], dtype=float)
         / scale_sigma
     ) ** 2
-    logv0_scaled = np.ma.log(v0_scaled).filled(-1.0e-3)
+    logv0_scaled = np.ma.log(v0_scaled).filled(-1.0e2)
     delta0 = (x[:, 0] - mu0) / scale_delta_mu
 
     if a0 is None:
@@ -1526,30 +1593,72 @@ def noisefit(
             scale_eta=scale_eta,
         )
 
-    # Minimize cost function with respect to free parameters
-    out = minimize(
-        objective,
-        x0,
-        method="BFGS",
-        jac=True,
-    )
+    input_parsed = {
+        "sigma_alpha0": sigma_alpha0,
+        "sigma_beta0": sigma_beta0,
+        "sigma_tau0": sigma_tau0,
+        "mu0": mu0,
+        "a0": a0,
+        "eta0": eta0,
+        "fix_sigma_alpha": fix_sigma_alpha,
+        "fix_sigma_beta": fix_sigma_beta,
+        "fix_sigma_tau": fix_sigma_tau,
+        "fix_mu": fix_mu,
+        "fix_a": fix_a,
+        "fix_eta": fix_eta,
+        "scale_sigma_alpha": scale_sigma_alpha,
+        "scale_sigma_beta": scale_sigma_beta,
+        "scale_sigma_tau": scale_sigma_tau,
+        "scale_delta_mu": scale_delta_mu,
+        "scale_delta_a": scale_delta_a,
+        "scale_eta": scale_eta,
+    }
+    return objective, x0, input_parsed
 
+
+def _parse_noisefit_output(
+    out: OptimizeResult,
+    x: np.ndarray,
+    dt: float,
+    *,
+    sigma_alpha0: float,
+    sigma_beta0: float,
+    sigma_tau0: float,
+    mu0: np.ndarray,
+    a0: np.ndarray,
+    eta0: np.ndarray,
+    fix_sigma_alpha: bool,
+    fix_sigma_beta: bool,
+    fix_sigma_tau: bool,
+    fix_mu: bool,
+    fix_a: bool,
+    fix_eta: bool,
+    scale_sigma_alpha: float,
+    scale_sigma_beta: float,
+    scale_sigma_tau: float,
+    scale_delta_mu: np.ndarray,
+    scale_delta_a: np.ndarray,
+    scale_eta: np.ndarray,
+) -> NoiseResult:
+    """Parse noisefit output"""
     # Parse output
+    n, m = x.shape
+
     x_out = out.x
     if fix_sigma_alpha:
-        alpha = np.sqrt(v0_scaled[0] * scale_sigma[0] ** 2)
+        alpha = sigma_alpha0
     else:
-        alpha = np.sqrt(np.exp(x_out[0]) * scale_sigma[0] ** 2)
+        alpha = np.exp(x_out[0] / 2) * scale_sigma_alpha
         x_out = x_out[1:]
     if fix_sigma_beta:
-        beta = np.sqrt(v0_scaled[1] * scale_sigma[1] ** 2)
+        beta = sigma_beta0
     else:
-        beta = np.sqrt(np.exp(x_out[0]) * scale_sigma[1] ** 2)
+        beta = np.exp(x_out[0] / 2) * scale_sigma_beta
         x_out = x_out[1:]
     if fix_sigma_tau:
-        tau = np.sqrt(v0_scaled[2] * scale_sigma[2] ** 2 * dt**2)
+        tau = sigma_tau0
     else:
-        tau = np.sqrt(np.exp(x_out[0]) * scale_sigma[2] ** 2 * dt**2)
+        tau = np.exp(x_out[0] / 2) * scale_sigma_tau * dt
         x_out = x_out[1:]
     # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)

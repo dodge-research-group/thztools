@@ -9,7 +9,7 @@ import scipy.linalg as la
 import scipy.optimize as opt
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.random import default_rng
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 from scipy import signal
 from scipy.optimize import OptimizeResult, minimize
 from scipy.optimize import approx_fprime as fprime
@@ -149,7 +149,7 @@ class NoiseModel:
     dt: float | None = None
 
     # noinspection PyShadowingNames
-    def variance(self, x: ArrayLike, *, axis: int = -1) -> np.ndarray:
+    def variance(self, x: ArrayLike, *, axis: int = -1) -> NDArray[np.float64]:
         r"""
         Compute the time-domain noise variance.
 
@@ -220,7 +220,7 @@ class NoiseModel:
         >>> plt.show()
         """
         dt = _assign_sampling_time(self.dt)
-        x = np.asarray(x)
+        x = np.asarray(x, dtype=np.float64)
         axis = int(axis)
         if x.ndim > 1:
             if axis != -1:
@@ -243,7 +243,9 @@ class NoiseModel:
         return var_t
 
     # noinspection PyShadowingNames
-    def amplitude(self, x: ArrayLike, *, axis: int = -1) -> np.ndarray:
+    def amplitude(
+        self, x: ArrayLike, *, axis: int = -1
+    ) -> NDArray[np.float64]:
         r"""
         Compute the time-domain noise amplitude.
 
@@ -321,7 +323,7 @@ class NoiseModel:
         *,
         axis: int = -1,
         seed: int | None = None,
-    ) -> np.ndarray:
+    ) -> NDArray[np.float64]:
         r"""
         Compute a time-domain noise array.
 
@@ -391,7 +393,7 @@ class NoiseModel:
         Text(0.5, 0, 't (ps)')
         >>> plt.show()
         """
-        x = np.asarray(x)
+        x = np.asarray(x, dtype=np.float64)
         axis = int(axis)
         if x.ndim > 1:
             if axis != -1:
@@ -448,17 +450,17 @@ class NoiseResult:
     noisefit : Estimate noise model parameters.
     """
     noise_model: NoiseModel
-    mu: np.ndarray
-    a: np.ndarray
-    eta: np.ndarray
+    mu: NDArray[np.float64]
+    a: NDArray[np.float64]
+    eta: NDArray[np.float64]
     fval: float
-    hess_inv: np.ndarray
+    hess_inv: NDArray[np.float64]
     err_sigma_alpha: float
     err_sigma_beta: float
     err_sigma_tau: float
-    err_mu: np.ndarray
-    err_a: np.ndarray
-    err_eta: np.ndarray
+    err_mu: NDArray[np.float64]
+    err_a: NDArray[np.float64]
+    err_eta: NDArray[np.float64]
     diagnostic: OptimizeResult
 
 
@@ -470,7 +472,7 @@ def transfer(
     dt: float | None = None,
     fft_sign: bool = True,
     args: tuple = (),
-) -> np.ndarray:
+) -> NDArray[np.float64]:
     r"""
     Apply a transfer function to a waveform.
 
@@ -479,7 +481,7 @@ def transfer(
     tfun : callable
         Transfer function.
 
-            ``tfun(omega, *args) -> np.ndarray``
+            ``tfun(omega, *args) -> ndarray``
 
         where ``omega`` is an array of angular frequencies and ``args`` is a
         tuple of the fixed parameters needed to completely specify
@@ -502,7 +504,7 @@ def transfer(
 
     Returns
     -------
-    y : np.ndarray
+    y : ndarray
         Result of applying the transfer function to ``x``.
 
     Warns
@@ -589,7 +591,7 @@ def transfer(
     >>>
     >>> plt.show()
     """
-    x = np.asarray(x)
+    x = np.asarray(x, dtype=np.float64)
     if x.ndim != 1:
         msg = "x must be a one-dimensional array"
         raise ValueError(msg)
@@ -612,7 +614,7 @@ def transfer(
 # noinspection PyShadowingNames
 def timebase(
     n: int, *, dt: float | None = None, t_init: float = 0.0
-) -> np.ndarray:
+) -> NDArray[np.float64]:
     r"""
     Timebase for time-domain waveforms.
 
@@ -682,7 +684,7 @@ def wave(
     taur: float | None = None,
     tauc: float | None = None,
     fwhm: float | None = None,
-) -> np.ndarray:
+) -> NDArray[np.float64]:
     r"""
     Simulate a terahertz waveform.
 
@@ -795,7 +797,7 @@ def scaleshift(
     a: ArrayLike | None = None,
     eta: ArrayLike | None = None,
     axis: int = -1,
-) -> np.ndarray:
+) -> NDArray[np.float64]:
     r"""
     Rescale and shift waveforms.
 
@@ -858,7 +860,7 @@ def scaleshift(
     Text(0, 0.5, '$x_{\\mathrm{adj}, k}$')
     >>> plt.show()
     """
-    x = np.asarray(x)
+    x = np.asarray(x, dtype=np.float64)
     if x.size == 0:
         return np.empty(x.shape)
 
@@ -875,7 +877,7 @@ def scaleshift(
     if a is None:
         a = np.ones(m)
     else:
-        a = np.asarray(a)
+        a = np.asarray(a, dtype=np.float64)
         if a.shape != m:
             msg = (
                 f"Scale correction with shape {a.shape} can not be applied "
@@ -886,7 +888,7 @@ def scaleshift(
     if eta is None:
         eta = np.zeros(m)
     else:
-        eta = np.asarray(eta)
+        eta = np.asarray(eta, dtype=np.float64)
         if eta.shape != m:
             msg = (
                 f"Shift correction with shape {a.shape} can not be applied "
@@ -918,7 +920,7 @@ def _costfuntls(
     sigma_x: ArrayLike,
     sigma_y: ArrayLike,
     dt: float | None = 1.0,
-) -> np.ndarray:
+) -> NDArray[np.float64]:
     r"""Computes the residual vector for the total least squares cost function.
 
     Parameters
@@ -926,7 +928,7 @@ def _costfuntls(
     fun : callable
         Transfer function.
 
-            ``fun(p, w, *args, **kwargs) -> np.ndarray``
+            ``fun(p, w, *args, **kwargs) -> ndarray``
 
         Assumes the :math:`+i\omega t` convention for harmonic time dependence.
     theta : array_like
@@ -952,7 +954,7 @@ def _costfuntls(
 
     Returns
     -------
-    res : array_like
+    res : ndarray
         Residual array.
 
     Warns
@@ -963,12 +965,12 @@ def _costfuntls(
         function will set the sampling time to ``dt`` and raise a
         :class:`UserWarning`.
     """
-    theta = np.asarray(theta)
-    mu = np.asarray(mu)
-    x = np.asarray(x)
-    y = np.asarray(y)
-    sigma_x = np.asarray(sigma_x)
-    sigma_y = np.asarray(sigma_y)
+    theta = np.asarray(theta, dtype=np.float64)
+    mu = np.asarray(mu, dtype=np.float64)
+    x = np.asarray(x, dtype=np.float64)
+    y = np.asarray(y, dtype=np.float64)
+    sigma_x = np.asarray(sigma_x, dtype=np.float64)
+    sigma_y = np.asarray(sigma_y, dtype=np.float64)
 
     dt = _assign_sampling_time(dt)
 
@@ -985,13 +987,13 @@ def _costfuntls(
 
 
 def _costfun_noisefit(
-    x: np.ndarray,
+    x: NDArray[np.float64],
     logv_alpha: float,
     logv_beta: float,
     logv_tau: float,
-    delta_mu: np.ndarray,
-    delta_a: np.ndarray,
-    eta: np.ndarray,
+    delta_mu: NDArray[np.float64],
+    delta_a: NDArray[np.float64],
+    eta: NDArray[np.float64],
     *,
     fix_logv_alpha: bool,
     fix_logv_beta: bool,
@@ -1002,10 +1004,10 @@ def _costfun_noisefit(
     scale_sigma_alpha: float,
     scale_sigma_beta: float,
     scale_sigma_tau: float,
-    scale_delta_mu: np.ndarray,
-    scale_delta_a: np.ndarray,
-    scale_eta: np.ndarray,
-) -> tuple[float, np.ndarray]:
+    scale_delta_mu: NDArray[np.float64],
+    scale_delta_a: NDArray[np.float64],
+    scale_eta: NDArray[np.float64],
+) -> tuple[float, NDArray[np.float64]]:
     r"""
     Compute the scaled cost function for the time-domain noise model.
 
@@ -1059,21 +1061,14 @@ def _costfun_noisefit(
         Gradient of the negative scaled log-likelihood function with respect to
         free parameters.
     """
-    x = np.asarray(x)
-    logv = np.asarray([logv_alpha, logv_beta, logv_tau])
-    delta_mu = np.asarray(delta_mu)
-    delta_a = np.asarray(delta_a)
-    eta = np.asarray(eta)
-
-    scale_delta_mu = np.asarray(scale_delta_mu)
-    scale_delta_a = np.asarray(scale_delta_a)
-    scale_eta = np.asarray(scale_eta)
-
     m, n = x.shape
+
+    logv = np.asarray([logv_alpha, logv_beta, logv_tau], dtype=np.float64)
 
     # Compute scaled variance, mu, a, and eta
     scale_sigma = np.array(
-        [scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau]
+        [scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau],
+        dtype=np.float64,
     )
     scale_v = scale_sigma**2
     v_scaled = np.exp(logv) * scale_v
@@ -1108,7 +1103,7 @@ def _costfun_noisefit(
     costfun_scaled = np.sum(np.log(vtot)) + np.sum(resnormsq_scaled)
 
     # Compute gradient
-    gradnll_scaled = np.array([])
+    gradnll_scaled = np.array([], dtype=np.float64)
     if not (
         fix_logv_alpha
         & fix_logv_beta
@@ -1217,7 +1212,8 @@ def noisefit(
         parameter array ``eta``, and the initial guesses for both quantities.
     sigma_alpha0, sigma_beta0, sigma_tau0 : float, optional
         Initial values for noise parameters. When set to
-        ``None``, the default, use ``np.sqrt(np.mean(np.var(x, 1)))``.
+        ``None``, the default, use a linear least-squares fit of the noise
+        model to ``np.var(x, 1, ddof=1)``.
     mu0 : array_like with shape(n,), optional
         Initial guess, signal vector with shape (n,). Default is first column
         of ``x``.
@@ -1235,18 +1231,6 @@ def noisefit(
         Fix amplitude vector. Default is False.
     fix_eta : bool, optional
         Fix delay vector. Default is False.
-    scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau : float, optional
-        Scale for varying noise parameters. Default is ``1.0``.
-    scale_delta_mu : float, array_like with shape(n,), optional
-        Scale for varying signal vector. When set to ``None``, the default,
-        use ``NoiseModel(sigma_alpha0, sigma_beta0,
-        sigma_tau0).amplitude(mu0)``.
-    scale_delta_a : float, array_like with shape(n,), optional
-            Scale for varying amplitude vector. Default is ``1.0e-2`` for all
-            entries.
-    scale_eta : float, array_like with shape(n,), optional
-            Scale for varying delay vector. Default is ``1.0e-3 / dt`` for all
-            entries.
 
     Returns
     -------
@@ -1280,6 +1264,27 @@ def noisefit(
             :func:`scipy.optimize.minimize`. Note that the attributes ``fun``,
             ``jac``, and ``hess_inv`` represent functions over the internally
             scaled parameters.
+
+    Other Parameters
+    ----------------
+    scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau : float, optional
+        Scale for varying noise parameters. Default is ``1.0``.
+    scale_delta_mu : float, array_like with shape(n,), optional
+        Scale for varying signal vector. When set to ``None``, the default,
+        use ``NoiseModel(sigma_alpha0, sigma_beta0,
+        sigma_tau0).amplitude(mu0)``.
+    scale_delta_a : float, array_like with shape(n,), optional
+            Scale for varying amplitude vector. Default is ``1.0e-2`` for all
+            entries.
+    scale_eta : float, array_like with shape(n,), optional
+            Scale for varying delay vector. Default is ``1.0e-3 / dt`` for all
+            entries.
+
+    Raises
+    ------
+    ValueError
+        If all parameters are held fixed or if the input arrays have
+        incompatible shapes.
 
     Warns
     -----
@@ -1340,28 +1345,42 @@ def noisefit(
 
     Examples
     --------
+    In basic usage, it should be possible to call ``noisefit`` with just
+    the data array. In the code below, we simulate ``m = 50`` noisy waveforms
+    with ``n = 256`` time points each, then verify that the fit results are
+    consistent with the true noise parameters.
+
     >>> import thztools as thz
+    >>> from matplotlib import pyplot as plt
     >>> rng = np.random.default_rng(0)
-    >>> n, dt = 256, 0.05
+    >>> n, m, dt = 256, 50, 0.05
     >>> thz.global_options.sampling_time = dt
     >>> t = thz.timebase(n)
     >>> mu = thz.wave(n)
     >>> alpha, beta, tau = 1e-5, 1e-2, 1e-3
     >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
     ...  sigma_tau=tau)
-    >>> m = 50
     >>> a = 1.0 + 1e-2 * np.concatenate(([0.0],
     ...                                 rng.standard_normal(m - 1)))
     >>> eta = 1e-3 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
     >>> z = thz.scaleshift(np.repeat(np.atleast_2d(mu), m, axis=0),
-    ...                     a=a, eta=eta)
-    >>> x = z + noise_mod.noise(z, seed=1234)
-    >>> noise_res = thz.noisefit(x.T)
+    ...                    a=a, eta=eta).T  # Orient the array columnwise
+    >>> x = z + noise_mod.noise(z, axis=1, seed=1234)
+    >>> noise_res = thz.noisefit(x)
     >>> noise_res.noise_model  #doctest: +NORMALIZE_WHITESPACE
     NoiseModel(sigma_alpha=1.000...e-05, sigma_beta=0.009609...,
     sigma_tau=0.0009243..., dt=0.05)
+    >>> plt.plot(t, np.std(thz.scaleshift(x, a=1 / noise_res.a,
+    ... eta=-noise_res.eta, axis=0), axis=1), "-",
+    ... label="Data")
+    >>> plt.plot(t, noise_res.noise_model.amplitude(noise_res.mu)
+    ...  * np.sqrt(m / (m + 1)), "--", label="Fit")
+    >>> plt.legend()
+    >>> plt.xlabel("t (ps)")
+    >>> plt.ylabel(r"$\sigma(t)$")
+    >>> plt.show()
     """
-    x = np.asarray(x)
+    x = np.asarray(x, dtype=np.float64)
     dt = _assign_sampling_time(dt)
 
     parsed = _parse_noisefit_input(
@@ -1401,7 +1420,7 @@ def noisefit(
 
 
 def _parse_noisefit_input(
-    x: np.ndarray,
+    x: NDArray[np.float64],
     dt: float,
     *,
     sigma_alpha0: float | None,
@@ -1422,7 +1441,7 @@ def _parse_noisefit_input(
     scale_delta_mu: ArrayLike | None,
     scale_delta_a: ArrayLike | None,
     scale_eta: ArrayLike | None,
-) -> tuple[Callable, ArrayLike, dict]:
+) -> tuple[Callable, NDArray[np.float64], dict]:
     """Parse noisefit optional inputs"""
     if x.ndim != NUM_NOISE_DATA_DIMENSIONS:
         msg = "Data array x must be 2D"
@@ -1440,22 +1459,39 @@ def _parse_noisefit_input(
         msg = "All variables are fixed"
         raise ValueError(msg)
 
-    if sigma_alpha0 is None:
-        sigma_alpha0 = np.sqrt(np.mean(np.var(x, 1)))
-
-    if sigma_beta0 is None:
-        sigma_beta0 = np.sqrt(np.mean(np.var(x, 1)))
-
-    if sigma_tau0 is None:
-        sigma_tau0 = np.sqrt(np.mean(np.var(x, 1)))
-
+    # Use the first column of x as a default
     if mu0 is None:
         mu0 = x[:, 0]
     else:
-        mu0 = np.asarray(mu0)
+        mu0 = np.asarray(mu0, dtype=np.float64)
         if mu0.size != n:
             msg = "Size of mu0 is incompatible with data array x."
             raise ValueError(msg)
+
+    # Compute time-dependent variance of signal array and
+    # the minimum value of the time-dependent noise amplitude
+    v_t = np.var(x, 1, ddof=1)
+    sigma_min = np.sqrt(np.min(v_t))
+
+    # If any initial guess for the noise parameters is unspecified,
+    # estimate all noise parameters with a linear least-squares fit
+    # to the time-dependent variance
+    if None in [sigma_alpha0, sigma_beta0, sigma_tau0]:
+        mu0_f = np.fft.rfft(mu0)
+        w = 2 * np.pi * np.fft.rfftfreq(n, dt)
+        dmu0_dt = np.fft.irfft(1j * w * mu0_f, n=n)
+        a_matrix = np.stack([np.ones(n), mu0**2, dmu0_dt**2], axis=1)
+        sol = np.linalg.lstsq(a_matrix, v_t, rcond=None)
+        sigma_est = np.ma.sqrt(sol[0]).filled(sigma_min)
+
+    if sigma_alpha0 is None:
+        sigma_alpha0 = sigma_est[0]
+
+    if sigma_beta0 is None:
+        sigma_beta0 = sigma_est[1]
+
+    if sigma_tau0 is None:
+        sigma_tau0 = sigma_est[2]
 
     noise_model = NoiseModel(sigma_alpha0, sigma_beta0, sigma_tau0, dt=dt)
 
@@ -1478,28 +1514,33 @@ def _parse_noisefit_input(
             scale_sigma_tau = sigma_tau0 / dt
 
     if scale_delta_mu is None:
-        if np.allclose([sigma_alpha0, sigma_beta0, sigma_tau0], 0.0):
-            scale_delta_mu = np.ones(n)
-        else:
-            scale_delta_mu = noise_model.amplitude(mu0)
+        scale_delta_mu = noise_model.amplitude(mu0)
+        scale_delta_mu[np.isclose(scale_delta_mu, 0.0)] = np.sqrt(
+            np.finfo(float).eps
+        )
 
     if scale_delta_a is None:
-        scale_delta_a = 1e-2 * np.ones(m - 1)
-    else:
-        scale_delta_a = np.asarray(scale_delta_a)
+        scale_delta_a_amp = np.max((sigma_min, sigma_beta0))
+        scale_delta_a = scale_delta_a_amp * np.ones(m - 1)
+
+    scale_delta_a = np.asarray(scale_delta_a, dtype=np.float64)
 
     if scale_eta is None:
-        scale_eta = 1e-3 * np.ones(m - 1) / dt
-    else:
-        scale_eta = np.asarray(scale_eta)
+        scale_eta_amp = np.max((sigma_min, sigma_tau0))
+        scale_eta = scale_eta_amp * np.ones(m - 1) / dt
+
+    scale_eta = np.asarray(scale_eta, dtype=np.float64)
 
     scale_sigma = np.array(
-        [scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau]
+        [scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau],
+        dtype=np.float64,
     )
 
     # Replace log(x) with -1e2 when x <= 0
     v0_scaled = (
-        np.asarray([sigma_alpha0, sigma_beta0, sigma_tau0 / dt], dtype=float)
+        np.asarray(
+            [sigma_alpha0, sigma_beta0, sigma_tau0 / dt], dtype=np.float64
+        )
         / scale_sigma
     ) ** 2
     logv0_scaled = np.ma.log(v0_scaled).filled(-1.0e2)
@@ -1508,7 +1549,7 @@ def _parse_noisefit_input(
     if a0 is None:
         a0 = np.ones(m)
     else:
-        a0 = np.asarray(a0)
+        a0 = np.asarray(a0, dtype=np.float64)
         if a0.size != m:
             msg = "Size of a0 is incompatible with data array x."
             raise ValueError(msg)
@@ -1518,7 +1559,7 @@ def _parse_noisefit_input(
     if eta0 is None:
         eta0 = np.zeros(m)
     else:
-        eta0 = np.asarray(eta0)
+        eta0 = np.asarray(eta0, dtype=np.float64)
         if eta0.size != m:
             msg = "Size of eta0 is incompatible with data array x."
             raise ValueError(msg)
@@ -1526,7 +1567,7 @@ def _parse_noisefit_input(
     eta_on_dt0 = eta0[1:] / dt / scale_eta
 
     # Set initial guesses for all free parameters
-    x0 = np.array([])
+    x0 = np.array([], dtype=np.float64)
     if not fix_sigma_alpha:
         x0 = np.append(x0, logv0_scaled[0])
     if not fix_sigma_beta:
@@ -1618,15 +1659,15 @@ def _parse_noisefit_input(
 
 def _parse_noisefit_output(
     out: OptimizeResult,
-    x: np.ndarray,
+    x: NDArray[np.float64],
     dt: float,
     *,
     sigma_alpha0: float,
     sigma_beta0: float,
     sigma_tau0: float,
-    mu0: np.ndarray,
-    a0: np.ndarray,
-    eta0: np.ndarray,
+    mu0: NDArray[np.float64],
+    a0: NDArray[np.float64],
+    eta0: NDArray[np.float64],
     fix_sigma_alpha: bool,
     fix_sigma_beta: bool,
     fix_sigma_tau: bool,
@@ -1636,9 +1677,9 @@ def _parse_noisefit_output(
     scale_sigma_alpha: float,
     scale_sigma_beta: float,
     scale_sigma_tau: float,
-    scale_delta_mu: np.ndarray,
-    scale_delta_a: np.ndarray,
-    scale_eta: np.ndarray,
+    scale_delta_mu: NDArray[np.float64],
+    scale_delta_a: NDArray[np.float64],
+    scale_eta: NDArray[np.float64],
 ) -> NoiseResult:
     """Parse noisefit output"""
     # Parse output
@@ -1792,7 +1833,7 @@ def fit(
     fun : callable
         Transfer function.
 
-            ``fun(p, w, *args, **kwargs) -> np.ndarray``
+            ``fun(p, w, *args, **kwargs) -> ndarray``
 
         Assumes the :math:`+i\omega t` convention for harmonic time dependence.
     p0 : array_like
@@ -1856,10 +1897,10 @@ def fit(
     """
     fit_method = "trf"
 
-    p0 = np.asarray(p0)
-    x = np.asarray(x)
-    y = np.asarray(y)
-    sigma_parms = np.asarray(sigma_parms)
+    p0 = np.asarray(p0, dtype=np.float64)
+    x = np.asarray(x, dtype=np.float64)
+    y = np.asarray(y, dtype=np.float64)
+    sigma_parms = np.asarray(sigma_parms, dtype=np.float64)
 
     dt = _assign_sampling_time(dt)
 
@@ -1870,7 +1911,7 @@ def fit(
         p_bounds = (-np.inf, np.inf)
         fit_method = "lm"
     else:
-        p_bounds = np.asarray(p_bounds)
+        p_bounds = np.asarray(p_bounds, dtype=np.float64)
         if p_bounds.shape[0] == 2:  # noqa: PLR2004
             p_bounds = (
                 np.concatenate((p_bounds[0], np.full((n,), -np.inf))),
@@ -1884,7 +1925,7 @@ def fit(
         kwargs = {}
 
     w = 2 * np.pi * rfftfreq(n, dt)
-    w_bounds = 2 * np.pi * np.asarray(f_bounds)
+    w_bounds = 2 * np.pi * np.asarray(f_bounds, dtype=np.float64)
     w_below_idx = w <= w_bounds[0]
     w_above_idx = w > w_bounds[1]
     w_in_idx = np.invert(w_below_idx) * np.invert(w_above_idx)

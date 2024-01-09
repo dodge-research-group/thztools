@@ -188,7 +188,7 @@ class TestTransferOut:
     def test_error(self, x):
         dt = self.dt
         with pytest.raises(ValueError):
-            _ = transfer(x, tfun1, dt=dt, args=[1.0, 0.0])
+            _ = transfer(tfun1, x, dt=dt, args=[1.0, 0.0])
 
 
 class TestTimebase:

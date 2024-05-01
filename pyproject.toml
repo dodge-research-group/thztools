@@ -14,9 +14,9 @@ authors = [
     { name="Steve Dodge", email="jsdodge@sfu.ca" },
     { name="Santiago Higuera Quintero", email="s.higuera@uniandes.edu.co" },
     { name="Jonathan Posada", email="jonathan.posada1@udea.edu.co" },
-    { name="Randon Hall", email="rph4@sfu.ca"},
-    { name="Alireza Noori", email="alireza_noori@sfu.ca"},
-    { name="Laleh Mohtashemi", email="lalehmo@gmail.com"},
+    { name="Randon Hall", email="rph4@sfu.ca" },
+    { name="Alireza Noori", email="alireza_noori@sfu.ca" },
+    { name="Laleh Mohtashemi", email="lalehmo@gmail.com" },
 ]
 maintainers = [
     { name="Steve Dodge", email="jsdodge@sfu.ca" },

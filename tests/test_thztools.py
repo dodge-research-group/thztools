@@ -128,10 +128,10 @@ class TestNoiseModel:
     ) -> None:
         if dt is None:
             noise_model = NoiseModel(alpha, beta, tau)
-            result = noise_model.amplitude(mu, axis=axis)
+            result = noise_model.sigma_mu(mu, axis=axis)
         else:
             noise_model = NoiseModel(alpha, beta, tau, dt=dt)
-            result = noise_model.amplitude(mu, axis=axis)
+            result = noise_model.sigma_mu(mu, axis=axis)
         assert_allclose(result, expected, atol=atol, rtol=rtol)  # type: ignore
 
     @pytest.mark.parametrize(
@@ -514,7 +514,7 @@ class TestNoiseFit:
     sigma = np.array([alpha, beta, tau])
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
     noise = noise_model.noise(np.ones((m, 1)) * mu, seed=0)
-    noise_amp = noise_model.amplitude(mu)
+    noise_amp = noise_model.sigma_mu(mu)
     x = np.array(mu + noise)
     a = np.ones(m)
     eta = np.zeros(m)
@@ -676,7 +676,7 @@ class TestFit:
     alpha, beta, tau = 1e-5, 0, 0
     sigma = np.array([alpha, beta, tau])
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
-    noise_amp = noise_model.amplitude(mu)
+    noise_amp = noise_model.sigma_mu(mu)
     x = mu + noise_amp * rng.standard_normal(n)
     y = psi + noise_amp * rng.standard_normal(n)
 

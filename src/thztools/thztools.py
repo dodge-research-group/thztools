@@ -243,9 +243,7 @@ class NoiseModel:
         return var_t
 
     # noinspection PyShadowingNames
-    def amplitude(
-        self, x: ArrayLike, *, axis: int = -1
-    ) -> NDArray[np.float64]:
+    def sigma_mu(self, x: ArrayLike, *, axis: int = -1) -> NDArray[np.float64]:
         r"""
         Compute the time-domain noise amplitude.
 
@@ -300,7 +298,7 @@ class NoiseModel:
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
         >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
         ... sigma_tau=tau)
-        >>> sigma_t = noise_mod.amplitude(mu)
+        >>> sigma_t = noise_mod.sigma_mu(mu)
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
         >>> axs[0].plot(t, sigma_t / beta)
         [<matplotlib.lines.Line2D object at 0x...>]
@@ -399,7 +397,7 @@ class NoiseModel:
             if axis != -1:
                 x = np.moveaxis(x, axis, -1)
 
-        amp = self.amplitude(x)
+        amp = self.sigma_mu(x)
         rng = default_rng(seed)
         noise = amp * rng.standard_normal(size=x.shape)
         if x.ndim > 1:
@@ -1373,7 +1371,7 @@ def noisefit(
     >>> plt.plot(t, np.std(thz.scaleshift(x, a=1 / noise_res.a,
     ... eta=-noise_res.eta, axis=0), axis=1), "-",
     ... label="Data")
-    >>> plt.plot(t, noise_res.noise_model.amplitude(noise_res.mu)
+    >>> plt.plot(t, noise_res.noise_model.sigma_mu(noise_res.mu)
     ...  * np.sqrt(m / (m + 1)), "--", label="Fit")
     >>> plt.legend()
     >>> plt.xlabel("t (ps)")
@@ -1514,7 +1512,7 @@ def _parse_noisefit_input(
             scale_sigma_tau = sigma_tau0 / dt
 
     if scale_delta_mu is None:
-        scale_delta_mu = noise_model.amplitude(mu0)
+        scale_delta_mu = noise_model.sigma_mu(mu0)
         scale_delta_mu[np.isclose(scale_delta_mu, 0.0)] = np.sqrt(
             np.finfo(float).eps
         )
@@ -1934,8 +1932,8 @@ def fit(
     alpha, beta, tau = sigma_parms
     # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
-    sigma_x = noise_model.amplitude(x)
-    sigma_y = noise_model.amplitude(y)
+    sigma_x = noise_model.sigma_mu(x)
+    sigma_y = noise_model.sigma_mu(y)
     p0_est = np.concatenate((p0, np.zeros(n)))
 
     def etfe(_x, _y):

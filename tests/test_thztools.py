@@ -155,10 +155,10 @@ class TestNoiseModel:
     ) -> None:
         if dt is None:
             noise_model = NoiseModel(alpha, beta, tau)
-            result = noise_model.noise(mu, axis=axis)
+            result = noise_model.noise_mu(mu, axis=axis)
         else:
             noise_model = NoiseModel(alpha, beta, tau, dt=dt)
-            result = noise_model.noise(mu, axis=axis)
+            result = noise_model.noise_mu(mu, axis=axis)
         assert result.shape == expected
 
 
@@ -513,7 +513,7 @@ class TestNoiseFit:
     alpha, beta, tau = 1e-5, 1e-3, 1e-3
     sigma = np.array([alpha, beta, tau])
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
-    noise = noise_model.noise(np.ones((m, 1)) * mu, seed=0)
+    noise = noise_model.noise_mu(np.ones((m, 1)) * mu, seed=0)
     noise_amp = noise_model.sigma_mu(mu)
     x = np.array(mu + noise)
     a = np.ones(m)

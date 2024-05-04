@@ -1,10 +1,10 @@
 :orphan:
 
-thztools.NoiseModel.noise
+thztools.NoiseModel.v\_mu
 =========================
 
 .. currentmodule:: thztools
 
 method
 
-.. automethod:: thztools.NoiseModel.noise
+.. automethod:: thztools.NoiseModel.v_mu

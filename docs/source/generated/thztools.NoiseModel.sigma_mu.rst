@@ -1,10 +1,10 @@
 :orphan:
 
-thztools.NoiseModel.amplitude
+thztools.NoiseModel.sigma\_mu
 =============================
 
 .. currentmodule:: thztools
 
 method
 
-.. automethod:: thztools.NoiseModel.amplitude
+.. automethod:: thztools.NoiseModel.sigma_mu

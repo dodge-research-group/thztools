@@ -315,7 +315,7 @@ class NoiseModel:
         return np.sqrt(self.v_mu(x, axis=axis))
 
     # noinspection PyShadowingNames
-    def noise(
+    def noise_mu(
         self,
         x: ArrayLike,
         *,
@@ -377,7 +377,7 @@ class NoiseModel:
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
         >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
         ... sigma_tau=tau)
-        >>> noise = noise_mod.noise(mu, seed=1234)
+        >>> noise = noise_mod.noise_mu(mu, seed=1234)
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
         >>> axs[0].plot(t, noise / beta)
         [<matplotlib.lines.Line2D object at 0x...>]
@@ -1363,7 +1363,7 @@ def noisefit(
     >>> eta = 1e-3 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
     >>> z = thz.scaleshift(np.repeat(np.atleast_2d(mu), m, axis=0),
     ...                    a=a, eta=eta).T  # Orient the array columnwise
-    >>> x = z + noise_mod.noise(z, axis=1, seed=1234)
+    >>> x = z + noise_mod.noise_mu(z, axis=1, seed=1234)
     >>> noise_res = thz.noisefit(x)
     >>> noise_res.noise_model  #doctest: +NORMALIZE_WHITESPACE
     NoiseModel(sigma_alpha=1.000...e-05, sigma_beta=0.009609...,

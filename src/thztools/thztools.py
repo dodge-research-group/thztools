@@ -129,7 +129,7 @@ class NoiseModel:
     >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
     >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
     ...  sigma_tau=tau)
-    >>> var_t = noise_mod.variance(mu)
+    >>> var_t = noise_mod.v_mu(mu)
     >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
     >>> axs[0].plot(t, var_t / beta**2)
     [<matplotlib.lines.Line2D object at 0x...>]
@@ -149,7 +149,7 @@ class NoiseModel:
     dt: float | None = None
 
     # noinspection PyShadowingNames
-    def variance(self, x: ArrayLike, *, axis: int = -1) -> NDArray[np.float64]:
+    def v_mu(self, x: ArrayLike, *, axis: int = -1) -> NDArray[np.float64]:
         r"""
         Compute the time-domain noise variance.
 
@@ -204,7 +204,7 @@ class NoiseModel:
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
         >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
         ... sigma_tau=tau)
-        >>> var_t = noise_mod.variance(mu)
+        >>> var_t = noise_mod.v_mu(mu)
 
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
         >>> axs[0].plot(t, var_t / beta**2)
@@ -314,7 +314,7 @@ class NoiseModel:
         Text(0.5, 0, 't (ps)')
         >>> plt.show()
         """
-        return np.sqrt(self.variance(x, axis=axis))
+        return np.sqrt(self.v_mu(x, axis=axis))
 
     # noinspection PyShadowingNames
     def noise(
@@ -1065,7 +1065,7 @@ def _costfun_noisefit(
 
     logv = np.asarray([logv_alpha, logv_beta, logv_tau], dtype=np.float64)
 
-    # Compute scaled variance, mu, a, and eta
+    # Compute scaled noise model parameters, mu, a, and eta
     scale_sigma = np.array(
         [scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau],
         dtype=np.float64,

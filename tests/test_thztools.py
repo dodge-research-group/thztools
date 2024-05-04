@@ -99,10 +99,10 @@ class TestNoiseModel:
     ) -> None:
         if dt is None:
             noise_model = NoiseModel(alpha, beta, tau)
-            result = noise_model.variance(mu, axis=axis)
+            result = noise_model.v_mu(mu, axis=axis)
         else:
             noise_model = NoiseModel(alpha, beta, tau, dt=dt)
-            result = noise_model.variance(mu, axis=axis)
+            result = noise_model.v_mu(mu, axis=axis)
         assert_allclose(result, expected, atol=atol, rtol=rtol)  # type: ignore
 
     @pytest.mark.parametrize(

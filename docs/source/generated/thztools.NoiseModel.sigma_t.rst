@@ -1,10 +1,10 @@
 :orphan:
 
-thztools.NoiseModel.variance
+thztools.NoiseModel.sigma\_t
 ============================
 
 .. currentmodule:: thztools
 
 method
 
-.. automethod:: thztools.NoiseModel.variance
+.. automethod:: thztools.NoiseModel.sigma_t

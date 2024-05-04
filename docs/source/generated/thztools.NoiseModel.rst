@@ -11,9 +11,9 @@
       .. autosummary::
          :toctree:
       
-         NoiseModel.amplitude
-         NoiseModel.noise
-         NoiseModel.variance
+         NoiseModel.noise_sim
+         NoiseModel.sigma_t
+         NoiseModel.var_t
 
 
 

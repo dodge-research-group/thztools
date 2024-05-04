@@ -23,8 +23,6 @@ class GlobalOptions:
     r"""
     Class for global options.
 
-    Currently, this just includes the ``sampling_time`` parameter.
-
     Attributes
     ----------
     sampling_time : float | None, optional
@@ -129,7 +127,7 @@ class NoiseModel:
     >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
     >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
     ...  sigma_tau=tau)
-    >>> var_t = noise_mod.variance(mu)
+    >>> var_t = noise_mod.var_t(mu)
     >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
     >>> axs[0].plot(t, var_t / beta**2)
     [<matplotlib.lines.Line2D object at 0x...>]
@@ -149,7 +147,7 @@ class NoiseModel:
     dt: float | None = None
 
     # noinspection PyShadowingNames
-    def variance(self, x: ArrayLike, *, axis: int = -1) -> NDArray[np.float64]:
+    def var_t(self, x: ArrayLike, *, axis: int = -1) -> NDArray[np.float64]:
         r"""
         Compute the time-domain noise variance.
 
@@ -204,7 +202,7 @@ class NoiseModel:
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
         >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
         ... sigma_tau=tau)
-        >>> var_t = noise_mod.variance(mu)
+        >>> var_t = noise_mod.var_t(mu)
 
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
         >>> axs[0].plot(t, var_t / beta**2)
@@ -243,9 +241,7 @@ class NoiseModel:
         return var_t
 
     # noinspection PyShadowingNames
-    def amplitude(
-        self, x: ArrayLike, *, axis: int = -1
-    ) -> NDArray[np.float64]:
+    def sigma_t(self, x: ArrayLike, *, axis: int = -1) -> NDArray[np.float64]:
         r"""
         Compute the time-domain noise amplitude.
 
@@ -300,7 +296,7 @@ class NoiseModel:
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
         >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
         ... sigma_tau=tau)
-        >>> sigma_t = noise_mod.amplitude(mu)
+        >>> sigma_t = noise_mod.sigma_t(mu)
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
         >>> axs[0].plot(t, sigma_t / beta)
         [<matplotlib.lines.Line2D object at 0x...>]
@@ -314,10 +310,10 @@ class NoiseModel:
         Text(0.5, 0, 't (ps)')
         >>> plt.show()
         """
-        return np.sqrt(self.variance(x, axis=axis))
+        return np.sqrt(self.var_t(x, axis=axis))
 
     # noinspection PyShadowingNames
-    def noise(
+    def noise_sim(
         self,
         x: ArrayLike,
         *,
@@ -325,7 +321,7 @@ class NoiseModel:
         seed: int | None = None,
     ) -> NDArray[np.float64]:
         r"""
-        Compute a time-domain noise array.
+        Simulate time-domain noise.
 
         Parameters
         ----------
@@ -379,7 +375,7 @@ class NoiseModel:
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
         >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
         ... sigma_tau=tau)
-        >>> noise = noise_mod.noise(mu, seed=1234)
+        >>> noise = noise_mod.noise_sim(mu, seed=1234)
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
         >>> axs[0].plot(t, noise / beta)
         [<matplotlib.lines.Line2D object at 0x...>]
@@ -399,7 +395,7 @@ class NoiseModel:
             if axis != -1:
                 x = np.moveaxis(x, axis, -1)
 
-        amp = self.amplitude(x)
+        amp = self.sigma_t(x)
         rng = default_rng(seed)
         noise = amp * rng.standard_normal(size=x.shape)
         if x.ndim > 1:
@@ -413,7 +409,7 @@ class NoiseModel:
 @dataclass
 class NoiseResult:
     r"""
-    Represents the noise parameter estimate output.
+    Dataclass for the output of :func:`noisefit`.
 
     Parameters
     ----------
@@ -422,9 +418,9 @@ class NoiseResult:
     mu : ndarray, shape (n,)
         Signal vector.
     a : ndarray, shape (m,)
-        Amplitude vector.
+        Signal amplitude drift vector.
     eta : ndarray, shape (m,)
-        Delay vector.
+        Signal delay drift vector.
     fval : float
         Value of optimized NLL cost function.
     hess_inv : ndarray
@@ -493,7 +489,7 @@ def transfer(
         Sampling time, normally in picoseconds. Default is None, which sets
         the sampling time to ``thztools.global_options.sampling_time``. If both
         ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
-        sampling time is set to `1.0`. In this case, the angular frequency
+        sampling time is set to ``1.0``. In this case, the angular frequency
         ``omega`` must be given in units of radians per sampling time, and any
         parameters in ``args`` must be expressed with the sampling time as the
         unit of time.
@@ -809,7 +805,7 @@ def scaleshift(
         Sampling time, normally in picoseconds. Default is None, which sets
         the sampling time to ``thztools.global_options.sampling_time``. If both
         ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
-        sampling time is set to `1.0`. In this case, ``eta`` must be given in
+        sampling time is set to ``1.0``. In this case, ``eta`` must be given in
         units of the sampling time.
     a : array_like, optional
         Scale array.
@@ -947,7 +943,7 @@ def _costfuntls(
         Sampling time, normally in picoseconds. Default is None, which sets
         the sampling time to ``thztools.global_options.sampling_time``. If both
         ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
-        sampling time is set to `1.0`. In this case, the angular frequency
+        sampling time is set to ``1.0``. In this case, the angular frequency
         ``omega`` must be given in units of radians per sampling time, and any
         parameters in ``args`` must be expressed with the sampling time as the
         unit of time.
@@ -1036,10 +1032,11 @@ def _costfun_noisefit(
         Exclude signal deviation vector from gradiate calculation when
         ``True``.
     fix_delta_a : bool
-        Exclude amplitude deviation vector from gradiate calculation when
-        ``True``.
+        Exclude signal amplitude deviation vector from gradiate calculation
+        when ``True``.
     fix_eta : bool
-        Exclude delay deviation vector from gradiate calculation when ``True``.
+        Exclude signal delay deviation vector from gradiate calculation when
+        ``True``.
     scale_sigma_alpha : float
         Scale parameter for ``sigma_alpha``.
     scale_sigma_beta : float
@@ -1065,7 +1062,7 @@ def _costfun_noisefit(
 
     logv = np.asarray([logv_alpha, logv_beta, logv_tau], dtype=np.float64)
 
-    # Compute scaled variance, mu, a, and eta
+    # Compute scaled noise model parameters, mu, a, and eta
     scale_sigma = np.array(
         [scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau],
         dtype=np.float64,
@@ -1207,7 +1204,7 @@ def noisefit(
         Sampling time, normally in picoseconds. Default is None, which sets
         the sampling time to ``thztools.global_options.sampling_time``. If both
         ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
-        sampling time is set to `1.0`. In this case, the unit of time is the
+        sampling time is set to ``1.0``. In this case, the unit of time is the
         sampling time for the noise model parameter ``sigma_tau``, the delay
         parameter array ``eta``, and the initial guesses for both quantities.
     sigma_alpha0, sigma_beta0, sigma_tau0 : float, optional
@@ -1218,67 +1215,50 @@ def noisefit(
         Initial guess, signal vector with shape (n,). Default is first column
         of ``x``.
     a0 : array_like with shape(m,), optional
-        Initial guess, amplitude vector with shape (m,). Default is one for all
-        entries.
+        Initial guess, signal amplitude drift vector with shape (m,). Default
+        is ``np.ones(m)``.
     eta0 : array_like with shape(m,), optional
-        Initial guess, delay vector with shape (m,). Default is zero for all
-        entries.
+        Initial guess, signal delay drift vector with shape (m,). Default is
+        ``np.zeros(m)``.
     fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau : bool, optional
         Fix the associated noise parameter. Default is False.
     fix_mu : bool, optional
         Fix signal vector. Default is False.
     fix_a : bool, optional
-        Fix amplitude vector. Default is False.
+        Fix signal amplitude drift vector. Default is False.
     fix_eta : bool, optional
-        Fix delay vector. Default is False.
+        Fix signal delay drift vector. Default is False.
 
     Returns
     -------
     res : NoiseResult
-        Fit result, represented as an object with attributes:
-
-        noise_model : NoiseModel
-            Instance of :class:`NoiseModel` with the estimated noise
-            parameters.
-        mu : ndarray
-            Estimated signal vector.
-        a : ndarray
-            Estimated amplitude vector.
-        eta : ndarray
-            Estimated delay vector.
-        fval : float
-            Value of optimized NLL cost function.
-        hess_inv : ndarray
-            Inverse Hessian matrix of NLL cost function, evaluated at the
-            optimized parameter values.
-        err_var : ndarray
-            Estimated uncertainty in the noise model variance parameters.
-        err_mu : ndarray
-            Estimated uncertainty in ``mu``.
-        err_a : ndarray
-            Estimated uncertainty in ``a``.
-        err_eta : ndarray
-            Estimated uncertainty in ``eta``.
-        diagnostic : scipy.optimize.OptimizeResult
-            Instance of :class:`scipy.optimize.OptimizeResult` returned by
-            :func:`scipy.optimize.minimize`. Note that the attributes ``fun``,
-            ``jac``, and ``hess_inv`` represent functions over the internally
-            scaled parameters.
+        Fit result represented as a ``NoiseResult`` object. Important
+        attributes are: ``noise_model``, an instance of :class:`NoiseModel`
+        with the estimated noise parameters; ``mu``, the estimated signal
+        vector; ``a``, the estimated signal amplitude drift vector; ``eta``,
+        the estimated signal delay drift vector; ``fval``, the value of the
+        optimized NLL cost function; and ``diagnostic``, an instance of
+        :class:`scipy.optimize.OptimizeResult` returned by
+        :func:`scipy.optimize.minimize`. Note that the fit parameters are
+        scaled internally to improve convergence (see `Other Parameters`
+        below), which affects the attributes ``fun``, ``jac``, and ``hess_inv``
+        of ``diagnostic``. See :class:`NoiseResult` for more details and for a
+        description of other attributes.
 
     Other Parameters
     ----------------
     scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau : float, optional
         Scale for varying noise parameters. Default is ``1.0``.
-    scale_delta_mu : float, array_like with shape(n,), optional
+    scale_delta_mu : array_like with shape(n,), optional
         Scale for varying signal vector. When set to ``None``, the default,
         use ``NoiseModel(sigma_alpha0, sigma_beta0,
         sigma_tau0).amplitude(mu0)``.
-    scale_delta_a : float, array_like with shape(n,), optional
-            Scale for varying amplitude vector. Default is ``1.0e-2`` for all
-            entries.
-    scale_eta : float, array_like with shape(n,), optional
-            Scale for varying delay vector. Default is ``1.0e-3 / dt`` for all
-            entries.
+    scale_delta_a : array_like with shape(n,), optional
+            Scale for varying signal amplitude drift vector. Default is
+            ``1.0e-2`` for all entries.
+    scale_eta : array_like with shape(n,), optional
+            Scale for varying signal delay drift vector. Default is
+            ``1.0e-3 / dt`` for all entries.
 
     Raises
     ------
@@ -1333,7 +1313,8 @@ def noisefit(
     measurements. Each waveform comprises :math:`N` samples at the nominal
     times :math:`t_k`, and the drift in the amplitude and the temporal location
     of the :math:`l` waveform are given by :math:`A_l` and :math:`\eta_l`,
-    respectively.
+    respectively, with initial values fixed at :math:`A_0 = 1.0` and
+    :math:`\eta_0 = 0.0` by definition.
 
     References
     ----------
@@ -1365,7 +1346,7 @@ def noisefit(
     >>> eta = 1e-3 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
     >>> z = thz.scaleshift(np.repeat(np.atleast_2d(mu), m, axis=0),
     ...                    a=a, eta=eta).T  # Orient the array columnwise
-    >>> x = z + noise_mod.noise(z, axis=1, seed=1234)
+    >>> x = z + noise_mod.noise_sim(z, axis=1, seed=1234)
     >>> noise_res = thz.noisefit(x)
     >>> noise_res.noise_model  #doctest: +NORMALIZE_WHITESPACE
     NoiseModel(sigma_alpha=1.000...e-05, sigma_beta=0.009609...,
@@ -1373,7 +1354,7 @@ def noisefit(
     >>> plt.plot(t, np.std(thz.scaleshift(x, a=1 / noise_res.a,
     ... eta=-noise_res.eta, axis=0), axis=1), "-",
     ... label="Data")
-    >>> plt.plot(t, noise_res.noise_model.amplitude(noise_res.mu)
+    >>> plt.plot(t, noise_res.noise_model.sigma_t(noise_res.mu)
     ...  * np.sqrt(m / (m + 1)), "--", label="Fit")
     >>> plt.legend()
     >>> plt.xlabel("t (ps)")
@@ -1442,7 +1423,7 @@ def _parse_noisefit_input(
     scale_delta_a: ArrayLike | None,
     scale_eta: ArrayLike | None,
 ) -> tuple[Callable, NDArray[np.float64], dict]:
-    """Parse noisefit optional inputs"""
+    """Parse noisefit inputs"""
     if x.ndim != NUM_NOISE_DATA_DIMENSIONS:
         msg = "Data array x must be 2D"
         raise ValueError(msg)
@@ -1514,7 +1495,7 @@ def _parse_noisefit_input(
             scale_sigma_tau = sigma_tau0 / dt
 
     if scale_delta_mu is None:
-        scale_delta_mu = noise_model.amplitude(mu0)
+        scale_delta_mu = noise_model.sigma_t(mu0)
         scale_delta_mu[np.isclose(scale_delta_mu, 0.0)] = np.sqrt(
             np.finfo(float).eps
         )
@@ -1846,7 +1827,7 @@ def fit(
         Sampling time, normally in picoseconds. Default is None, which sets
         the sampling time to ``thztools.global_options.sampling_time``. If both
         ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
-        sampling time is set to `1.0`. In this case, the angular frequency
+        sampling time is set to ``1.0``. In this case, the angular frequency
         ``omega`` must be given in units of radians per sampling time, and any
         parameters in ``args`` must be expressed with the sampling time as the
         unit of time.
@@ -1934,8 +1915,8 @@ def fit(
     alpha, beta, tau = sigma_parms
     # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
-    sigma_x = noise_model.amplitude(x)
-    sigma_y = noise_model.amplitude(y)
+    sigma_x = noise_model.sigma_t(x)
+    sigma_y = noise_model.sigma_t(y)
     p0_est = np.concatenate((p0, np.zeros(n)))
 
     def etfe(_x, _y):

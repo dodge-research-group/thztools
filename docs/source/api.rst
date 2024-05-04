@@ -3,32 +3,6 @@ THzTools
 
 .. currentmodule:: thztools
 
-Noise model
-^^^^^^^^^^^
-
-.. autosummary::
-    :toctree: generated/
-
-    NoiseModel
-    NoiseResult
-
-Waveform simulation and transformation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autosummary::
-    :toctree: generated/
-
-    scaleshift
-    transfer_out
-    wave
-
-Parameter estimation
-^^^^^^^^^^^^^^^^^^^^
-.. autosummary::
-    :toctree: generated/
-
-    fit
-    tdnoisefit
-
 Global options
 ^^^^^^^^^^^^^^
 
@@ -36,3 +10,29 @@ Global options
     :toctree: generated/
 
     GlobalOptions
+
+Noise model
+^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: generated/
+
+    NoiseModel
+    noisefit
+
+Parameter estimation
+^^^^^^^^^^^^^^^^^^^^
+.. autosummary::
+    :toctree: generated/
+
+    fit
+
+Waveform simulation and transformation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. autosummary::
+    :toctree: generated/
+
+    scaleshift
+    timebase
+    transfer
+    wave

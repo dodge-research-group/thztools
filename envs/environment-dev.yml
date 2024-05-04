@@ -4,19 +4,19 @@ channels:
   - nodefaults
 dependencies:
   - black
-  - mypy
-  - scipy
-  - numdifftools
-  - pandas
+  - coverage
   - jupyter
   - matplotlib
-  - sphinx
-  - pydata-sphinx-theme
+  - mypy
+  - numdifftools
   - numpydoc
-  - tomli
-  - ruff
-  - pytest-cov
-  - coverage
+  - pandas
   - pip
+  - pydata-sphinx-theme
+  - pytest-cov
+  - ruff
+  - scipy
+  - sphinx
+  - tomli
   - pip:
     - -e ../

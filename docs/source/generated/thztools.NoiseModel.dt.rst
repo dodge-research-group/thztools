@@ -5,4 +5,6 @@ thztools.NoiseModel.dt
 
 .. currentmodule:: thztools
 
-.. autoattribute:: NoiseModel.dt
+attribute
+
+.. autoattribute:: thztools.NoiseModel.dt

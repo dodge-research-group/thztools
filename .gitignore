@@ -5,6 +5,10 @@
 # Local .gitignore
 Untitled*.ipynb
 **/correspondence/
+**/doctest/**
+
+# NumPy data files
+**/*.npz
 
 # Python .gitignore:
 #	https://github.com/github/gitignore/blob/main/Python.gitignore

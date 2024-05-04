@@ -14,7 +14,9 @@ authors = [
     { name="Steve Dodge", email="jsdodge@sfu.ca" },
     { name="Santiago Higuera Quintero", email="s.higuera@uniandes.edu.co" },
     { name="Jonathan Posada", email="jonathan.posada1@udea.edu.co" },
-    { name="Alireza Noori", email="alireza_noori@sfu.ca"}
+    { name="Randon Hall", email="rph4@sfu.ca" },
+    { name="Alireza Noori", email="alireza_noori@sfu.ca" },
+    { name="Laleh Mohtashemi", email="lalehmo@gmail.com" },
 ]
 maintainers = [
     { name="Steve Dodge", email="jsdodge@sfu.ca" },
@@ -34,7 +36,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "numpy",
+    "numpy>=1.21",
     "scipy",
     "numdifftools",
 ]
@@ -196,6 +198,7 @@ dependencies = [
 ]
 [tool.hatch.envs.docs.scripts]
 build = "sphinx-build -v -b html docs/source docs/build/html"
+test = "sphinx-build -v -b doctest docs/source docs/doctest"
 
 [tool.mypy]
 plugins = "numpy.typing.mypy_plugin"

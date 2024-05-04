@@ -1,8 +1,10 @@
 :orphan:
 
-thztools.GlobalOptions.sampling_time
-====================================
+thztools.GlobalOptions.sampling\_time
+=====================================
 
 .. currentmodule:: thztools
 
-.. autoattribute:: GlobalOptions.sampling_time
+attribute
+
+.. autoattribute:: thztools.GlobalOptions.sampling_time

@@ -5,4 +5,6 @@ thztools.NoiseModel.variance
 
 .. currentmodule:: thztools
 
-.. automethod:: NoiseModel.variance
+method
+
+.. automethod:: thztools.NoiseModel.variance

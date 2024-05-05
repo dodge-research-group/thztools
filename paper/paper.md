@@ -41,6 +41,8 @@ date: 4 May 2024
 bibliography: paper.bib
 ---
 # Summary
-Example text with citations [@lee2023, @mohtashemi2021, @peretti2019, @tayvah2021]
+Example text with citations [@lee2023; @mohtashemi2021; @peretti2019; @tayvah2021]
+
 # Statement of need
+
 # References

@@ -6,6 +6,13 @@
 Untitled*.ipynb
 **/correspondence/
 
+# Binary files
+**/*.npz
+
+# Doctest
+**/doctest/**
+
+
 # Python .gitignore:
 #	https://github.com/github/gitignore/blob/main/Python.gitignore
 

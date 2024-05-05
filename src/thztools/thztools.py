@@ -125,20 +125,16 @@ class NoiseModel:
     >>> t = thz.timebase(n)
     >>> mu = thz.wave(n)
     >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
-    >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+    >>> noise_model = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
     ...  sigma_tau=tau)
-    >>> var_t = noise_mod.var_t(mu)
+    >>> noise_variance = noise_model.noise_var(mu)
+
     >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
-    >>> axs[0].plot(t, var_t / beta**2)
-    [<matplotlib.lines.Line2D object at 0x...>]
+    >>> axs[0].plot(t, noise_variance / beta**2)
     >>> axs[0].set_ylabel(r"$\sigma^2/(\sigma_\beta\mu_0)^2$")
-    Text(0, 0.5, '$\\sigma^2/(\\sigma_\\beta\\mu_0)^2$')
     >>> axs[1].plot(t, mu)
-    [<matplotlib.lines.Line2D object at 0x...>]
     >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
-    Text(0, 0.5, '$\\mu/\\mu_0$')
     >>> axs[1].set_xlabel("t (ps)")
-    Text(0.5, 0, 't (ps)')
     >>> plt.show()
     """
     sigma_alpha: float
@@ -147,7 +143,7 @@ class NoiseModel:
     dt: float | None = None
 
     # noinspection PyShadowingNames
-    def var_t(self, x: ArrayLike, *, axis: int = -1) -> NDArray[np.float64]:
+    def noise_var(self, x: ArrayLike, *, axis: int = -1) -> NDArray[np.float64]:
         r"""
         Compute the time-domain noise variance.
 
@@ -161,7 +157,7 @@ class NoiseModel:
 
         Returns
         -------
-        var_t : ndarray
+        noise_variance : ndarray
             Time-domain noise variance, in signal units (squared).
 
         Notes
@@ -200,21 +196,16 @@ class NoiseModel:
         >>> t = thz.timebase(n)
         >>> mu = thz.wave(n)
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
-        >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+        >>> noise_model = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
         ... sigma_tau=tau)
-        >>> var_t = noise_mod.var_t(mu)
+        >>> noise_variance = noise_model.noise_var(mu)
 
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
-        >>> axs[0].plot(t, var_t / beta**2)
-        [<matplotlib.lines.Line2D object at 0x...>]
+        >>> axs[0].plot(t, noise_variance / beta**2)
         >>> axs[0].set_ylabel(r"$\sigma^2/(\sigma_\beta\mu_0)^2$")
-        Text(0, 0.5, '$\\sigma^2/(\\sigma_\\beta\\mu_0)^2$')
         >>> axs[1].plot(t, mu)
-        [<matplotlib.lines.Line2D object at 0x...>]
         >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
-        Text(0, 0.5, '$\\mu/\\mu_0$')
         >>> axs[1].set_xlabel("t (ps)")
-        Text(0.5, 0, 't (ps)')
         >>> plt.show()
         """
         dt = _assign_sampling_time(self.dt)
@@ -228,7 +219,7 @@ class NoiseModel:
         w_scaled = 2 * np.pi * rfftfreq(n)
         xdot = irfft(1j * w_scaled * rfft(x), n=n) / dt
 
-        var_t = (
+        noise_variance = (
             self.sigma_alpha**2
             + (self.sigma_beta * x) ** 2
             + (self.sigma_tau * xdot) ** 2
@@ -236,12 +227,12 @@ class NoiseModel:
 
         if x.ndim > 1:
             if axis != -1:
-                var_t = np.moveaxis(var_t, -1, axis)
+                noise_variance = np.moveaxis(noise_variance, -1, axis)
 
-        return var_t
+        return noise_variance
 
     # noinspection PyShadowingNames
-    def sigma_t(self, x: ArrayLike, *, axis: int = -1) -> NDArray[np.float64]:
+    def noise_amp(self, x: ArrayLike, *, axis: int = -1) -> NDArray[np.float64]:
         r"""
         Compute the time-domain noise amplitude.
 
@@ -255,7 +246,7 @@ class NoiseModel:
 
         Returns
         -------
-        sigma_t : ndarray
+        noise_amplitude : ndarray
             Time-domain noise amplitude, in signal units.
 
         Notes
@@ -294,23 +285,19 @@ class NoiseModel:
         >>> t = thz.timebase(n)
         >>> mu = thz.wave(n)
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
-        >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+        >>> noise_model = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
         ... sigma_tau=tau)
-        >>> sigma_t = noise_mod.sigma_t(mu)
+        >>> noise_amplitude = noise_model.noise_amp(mu)
+
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
-        >>> axs[0].plot(t, sigma_t / beta)
-        [<matplotlib.lines.Line2D object at 0x...>]
+        >>> axs[0].plot(t, noise_amplitude / beta)
         >>> axs[0].set_ylabel(r"$\sigma/(\sigma_\beta\mu_0)$")
-        Text(0, 0.5, '$\\sigma/(\\sigma_\\beta\\mu_0)$')
         >>> axs[1].plot(t, mu)
-        [<matplotlib.lines.Line2D object at 0x...>]
         >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
-        Text(0, 0.5, '$\\mu/\\mu_0$')
         >>> axs[1].set_xlabel("t (ps)")
-        Text(0.5, 0, 't (ps)')
         >>> plt.show()
         """
-        return np.sqrt(self.var_t(x, axis=axis))
+        return np.sqrt(self.noise_var(x, axis=axis))
 
     # noinspection PyShadowingNames
     def noise_sim(
@@ -335,8 +322,8 @@ class NoiseModel:
 
         Returns
         -------
-        noise : ndarray
-            Time-domain noise, in signal units.
+        noise_simulation : ndarray
+            Simulated time-domain noise, in signal units.
 
         Notes
         -----
@@ -367,26 +354,21 @@ class NoiseModel:
 
         >>> import thztools as thz
         >>> from matplotlib import pyplot as plt
-        >>> rng = np.random.default_rng(0)
         >>> n, dt = 256, 0.05
         >>> thz.global_options.sampling_time = dt
         >>> t = thz.timebase(n)
         >>> mu = thz.wave(n)
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
-        >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+        >>> noise_model = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
         ... sigma_tau=tau)
-        >>> noise = noise_mod.noise_sim(mu, seed=1234)
+        >>> noise = noise_model.noise_sim(mu, seed=1234)
+
         >>> _, axs = plt.subplots(2, 1, sharex=True, layout="constrained")
         >>> axs[0].plot(t, noise / beta)
-        [<matplotlib.lines.Line2D object at 0x...>]
         >>> axs[0].set_ylabel(r"$\sigma_\mu\epsilon/(\sigma_\beta\mu_0)$")
-        Text(0, 0.5, '$\\sigma_\\mu\\epsilon/(\\sigma_\\beta\\mu_0)$')
         >>> axs[1].plot(t, mu)
-        [<matplotlib.lines.Line2D object at 0x...>]
         >>> axs[1].set_ylabel(r"$\mu/\mu_0$")
-        Text(0, 0.5, '$\\mu/\\mu_0$')
         >>> axs[1].set_xlabel("t (ps)")
-        Text(0.5, 0, 't (ps)')
         >>> plt.show()
         """
         x = np.asarray(x, dtype=np.float64)
@@ -395,7 +377,7 @@ class NoiseModel:
             if axis != -1:
                 x = np.moveaxis(x, axis, -1)
 
-        amp = self.sigma_t(x)
+        amp = self.noise_amp(x)
         rng = default_rng(seed)
         noise = amp * rng.standard_normal(size=x.shape)
         if x.ndim > 1:
@@ -466,7 +448,7 @@ def transfer(
     x: ArrayLike,
     *,
     dt: float | None = None,
-    fft_sign: bool = True,
+    numpy_sign_convention: bool = True,
     args: tuple = (),
 ) -> NDArray[np.float64]:
     r"""
@@ -493,8 +475,12 @@ def transfer(
         ``omega`` must be given in units of radians per sampling time, and any
         parameters in ``args`` must be expressed with the sampling time as the
         unit of time.
-    fft_sign : bool, optional
-        Complex exponential sign convention for harmonic time dependence.
+    numpy_sign_convention : bool, optional
+        Adopt NumPy sign convention for harmonic time dependence, e.g, express
+        a harmonic function with frequency :math:`\omega` as
+        :math:`x(t) = a e^{i\omega t}`. Default is ``True``. Uses the
+        convention more common in physics, :math:`x(t) = a e^{-i\omega t}`,
+        when set to ``False``.
     args : tuple, optional
         Extra arguments passed to the transfer function.
 
@@ -525,18 +511,19 @@ def transfer(
 
     Examples
     --------
-    Apply a transfer function that rescales and shifts the input.
+    Apply a transfer function that rescales the input by :math:`a` and shifts
+    it by :math:`\tau`.
 
-        .. math:: H(\omega) = a\exp(-i\omega\tau).
+    .. math:: H(\omega) = a\exp(-i\omega\tau).
 
     Note that this form assumes the :math:`e^{+i\omega t}` representation
     of harmonic time dependence, which corresponds to the default setting
     ``fft_sign=True``.
 
     If the transfer function is expressed using the :math:`e^{-i\omega t}`
-    representation that is more common in physics,
+    representation, more common in physics,
 
-        .. math:: H(\omega) = a\exp(i\omega\tau),
+    .. math:: H(\omega) = a\exp(i\omega\tau),
 
     set ``fft_sign=False``.
 
@@ -549,41 +536,36 @@ def transfer(
     >>> def shiftscale(_w, _a, _tau):
     ...     return _a * np.exp(-1j * _w * _tau)
     >>>
-    >>> y = thz.transfer(shiftscale, x, fft_sign=True, args=(0.5, 1))
+    >>> y = thz.transfer(shiftscale, x,
+    ...                  numpy_sign_convention=True,
+    ...                  args=(0.5, 1))
+
     >>> _, ax = plt.subplots()
     >>>
     >>> ax.plot(t, x, label='x')
-    [<matplotlib.lines.Line2D object at 0x...>]
     >>> ax.plot(t, y, label='y')
-    [<matplotlib.lines.Line2D object at 0x...>]
     >>>
     >>> ax.legend()
-    <matplotlib.legend.Legend object at 0x...>
     >>> ax.set_xlabel('t (ps)')
-    Text(0.5, 0, 't (ps)')
     >>> ax.set_ylabel('Amplitude (arb. units)')
-    Text(0, 0.5, 'Amplitude (arb. units)')
     >>>
     >>> plt.show()
 
     >>> def shiftscale_phys(_w, _a, _tau):
     ...     return _a * np.exp(1j * _w * _tau)
     >>>
-    >>> y_p = thz.transfer(shiftscale_phys, x, fft_sign=False,
-    ...                        args=(0.5, 1))
+    >>> y_p = thz.transfer(shiftscale_phys, x,
+    ...                    numpy_sign_convention=False,
+    ...                    args=(0.5, 1))
+
     >>> _, ax = plt.subplots()
     >>>
-    >>> ax.plot(t, x, label='x')
-    [<matplotlib.lines.Line2D object at 0x...>]
-    >>> ax.plot(t, y_p, label='y')
-    [<matplotlib.lines.Line2D object at 0x...>]
+    >>> ax.plot(t, x, label='x');
+    >>> ax.plot(t, y_p, label='y');
     >>>
-    >>> ax.legend()
-    <matplotlib.legend.Legend object at 0x...>
-    >>> ax.set_xlabel('t (ps)')
-    Text(0.5, 0, 't (ps)')
-    >>> ax.set_ylabel('Amplitude (arb. units)')
-    Text(0, 0.5, 'Amplitude (arb. units)')
+    >>> ax.legend();
+    >>> ax.set_xlabel('t (ps)');
+    >>> ax.set_ylabel('Amplitude (arb. units)');
     >>>
     >>> plt.show()
     """
@@ -599,7 +581,7 @@ def transfer(
     n = x.size
     w_scaled = 2 * np.pi * rfftfreq(n)
     h = tfun(w_scaled / dt, *args)
-    if not fft_sign:
+    if not numpy_sign_convention:
         h = np.conj(h)
 
     y = np.fft.irfft(np.fft.rfft(x) * h, n=n)
@@ -748,13 +730,11 @@ def wave(
     >>> thz.global_options.sampling_time = dt
     >>> t = thz.timebase(n)
     >>> mu = thz.wave(n)
+
     >>> _, ax = plt.subplots(layout="constrained")
-    >>> ax.plot(t, mu)
-    [<matplotlib.lines.Line2D object at 0x...>]
-    >>> ax.set_xlabel("t (ps)")
-    Text(0.5, 0, 't (ps)')
-    >>> ax.set_ylabel(r"$\mu/\mu_0$")
-    Text(0, 0.5, '$\\mu/\\mu_0$')
+    >>> ax.plot(t, mu);
+    >>> ax.set_xlabel("t (ps)");
+    >>> ax.set_ylabel(r"$\mu/\mu_0$");
     >>> plt.show()
     """
     dt = _assign_sampling_time(dt)
@@ -846,14 +826,11 @@ def scaleshift(
     >>> a = 0.5**np.arange(m)
     >>> eta = np.arange(m)
     >>> x_adj = thz.scaleshift(x, a=a, eta=eta, dt=dt)
-    >>> plt.plot(t, x_adj.T, label=[f"{k=}" for k in range(4)])
-    [<matplotlib.lines.Line2D object at 0x...>, ...]
-    >>> plt.legend()
-    <matplotlib.legend.Legend object at 0x...>
-    >>> plt.xlabel("t (ps)")
-    Text(0.5, 0, 't (ps)')
-    >>> plt.ylabel(r"$x_{\mathrm{adj}, k}$")
-    Text(0, 0.5, '$x_{\\mathrm{adj}, k}$')
+
+    >>> plt.plot(t, x_adj.T, label=[f"{k=}" for k in range(4)]);
+    >>> plt.legend();
+    >>> plt.xlabel("t (ps)");
+    >>> plt.ylabel(r"$x_{\mathrm{adj}, k}$");
     >>> plt.show()
     """
     x = np.asarray(x, dtype=np.float64)
@@ -1339,22 +1316,23 @@ def noisefit(
     >>> t = thz.timebase(n)
     >>> mu = thz.wave(n)
     >>> alpha, beta, tau = 1e-5, 1e-2, 1e-3
-    >>> noise_mod = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+    >>> noise_model = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
     ...  sigma_tau=tau)
     >>> a = 1.0 + 1e-2 * np.concatenate(([0.0],
     ...                                 rng.standard_normal(m - 1)))
     >>> eta = 1e-3 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
     >>> z = thz.scaleshift(np.repeat(np.atleast_2d(mu), m, axis=0),
     ...                    a=a, eta=eta).T  # Orient the array columnwise
-    >>> x = z + noise_mod.noise_sim(z, axis=1, seed=1234)
+    >>> x = z + noise_model.noise_sim(z, axis=1, seed=1234)
     >>> noise_res = thz.noisefit(x)
     >>> noise_res.noise_model  #doctest: +NORMALIZE_WHITESPACE
     NoiseModel(sigma_alpha=1.000...e-05, sigma_beta=0.009609...,
     sigma_tau=0.0009243..., dt=0.05)
+
     >>> plt.plot(t, np.std(thz.scaleshift(x, a=1 / noise_res.a,
     ... eta=-noise_res.eta, axis=0), axis=1), "-",
     ... label="Data")
-    >>> plt.plot(t, noise_res.noise_model.sigma_t(noise_res.mu)
+    >>> plt.plot(t, noise_res.noise_model.noise_amp(noise_res.mu)
     ...  * np.sqrt(m / (m + 1)), "--", label="Fit")
     >>> plt.legend()
     >>> plt.xlabel("t (ps)")
@@ -1495,7 +1473,7 @@ def _parse_noisefit_input(
             scale_sigma_tau = sigma_tau0 / dt
 
     if scale_delta_mu is None:
-        scale_delta_mu = noise_model.sigma_t(mu0)
+        scale_delta_mu = noise_model.noise_amp(mu0)
         scale_delta_mu[np.isclose(scale_delta_mu, 0.0)] = np.sqrt(
             np.finfo(float).eps
         )
@@ -1915,8 +1893,8 @@ def fit(
     alpha, beta, tau = sigma_parms
     # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
-    sigma_x = noise_model.sigma_t(x)
-    sigma_y = noise_model.sigma_t(y)
+    sigma_x = noise_model.noise_amp(x)
+    sigma_y = noise_model.noise_amp(y)
     p0_est = np.concatenate((p0, np.zeros(n)))
 
     def etfe(_x, _y):

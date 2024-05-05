@@ -9,7 +9,7 @@ def plotsignal():
     plt.plot(data["t"], data["y0"], color="black", label=r"Signal ($\mu$)")
     plt.plot(
         data["t"],
-        data["sigma_t"] * 30,
+        data["noise_amp"] * 30,
         color="red",
         linestyle="dashed",
         label=r"noise $(30 \sigma$)",

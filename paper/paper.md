@@ -14,7 +14,7 @@ authors:
     orcid: 0009-0004-4443-6161
     equal-contrib: true
     affiliation: 1
-  - name: Santiago Higuera Quintero
+  - name: Santiago Higuera-Quintero
     orcid: 0000-0001-6905-4662
     equal-contrib: true
     affiliation: 1

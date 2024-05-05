@@ -6,11 +6,6 @@ THzTools
 Global options
 ^^^^^^^^^^^^^^
 
-.. autosummary::
-    :toctree: generated/
-
-    GlobalOptions
-
 Noise model
 ^^^^^^^^^^^
 
@@ -23,6 +18,7 @@ Noise model
 
 Parameter estimation
 ^^^^^^^^^^^^^^^^^^^^
+
 .. autosummary::
     :toctree: generated/
 
@@ -30,6 +26,7 @@ Parameter estimation
 
 Waveform simulation and transformation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 .. autosummary::
     :toctree: generated/
 

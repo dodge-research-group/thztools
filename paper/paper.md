@@ -10,15 +10,16 @@ tags:
   - maximum-likelihood analysis
 
 authors:
-  - name: Santiago Higuera Quintero
-    orcid: 0000-0001-6905-4662
-    equal-contrib: true
-    affiliation: 1
   - name: Jonathan Posada
     orcid: 0009-0004-4443-6161
     equal-contrib: true
     affiliation: 1
+  - name: Santiago Higuera Quintero
+    orcid: 0000-0001-6905-4662
+    equal-contrib: true
+    affiliation: 1
   - name: Alireza Noori
+    orcid: 
     equal-contrib: true
     affiliation: 1
   - name: Laleh Mohtashemi
@@ -26,6 +27,7 @@ authors:
     equal-contrib: true
     affiliation: 1
   - name: Randon Hall
+    orcid: 
     affiliation: 1
   - name: J. Steven Dodge
     orcid: 0000-0003-3219-7314

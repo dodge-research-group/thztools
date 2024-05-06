@@ -10,7 +10,7 @@ tags:
   - maximum-likelihood analysis
 
 authors:
-  - name: Jonathan Posada
+  - name: Jonathan Posada Loaiza
     orcid: 0009-0004-4443-6161
     equal-contrib: true
     affiliation: 1

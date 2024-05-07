@@ -13,7 +13,6 @@ from thztools.thztools import (
     _costfun_noisefit,
     _costfuntls,
     _parse_noisefit_input,
-    # _parse_noisefit_output,
     fit,
     noisefit,
     scaleshift,
@@ -42,17 +41,15 @@ def jac_fun(p, w):
     return np.stack((exp_ipw, 1j * w * p[0] * exp_ipw)).T
 
 
-class TestGlobalOptions:
-    # thztools.global_options.sampling_time = None
-
+class TestOptions:
     def test_sampling_time(self):
-        assert thztools.global_options.sampling_time is None
+        assert thztools.get_option("sampling_time") is None
 
     @pytest.mark.parametrize("global_sampling_time", [None, 0.1])
     @pytest.mark.parametrize("dt", [None, 0.1, 1.0])
     def test_assignment(self, global_sampling_time, dt, monkeypatch):
         monkeypatch.setattr(
-            thztools.global_options, "sampling_time", global_sampling_time
+            thztools.options, "sampling_time", global_sampling_time
         )
         if global_sampling_time is None and dt is None:
             assert np.isclose(_assign_sampling_time(dt), 1.0)
@@ -178,7 +175,6 @@ class TestTransferOut:
     )
     def test_inputs(self, t_fun, x, fft_sign, p, expected):
         ts = self.dt
-        thztools.global_options.sampling_time = None
         assert_allclose(
             transfer(t_fun, x, dt=ts, numpy_sign_convention=fft_sign, args=p),
             expected,
@@ -221,8 +217,6 @@ class TestTimebase:
 
 
 class TestWave:
-    # thztools.global_options.sampling_time = None
-
     @pytest.mark.parametrize(
         "t0",
         [2.4, None],
@@ -261,7 +255,6 @@ class TestWave:
 
 
 class TestScaleShift:
-    thztools.global_options.sampling_time = None
     n = 16
     dt = 1.0 / n
     t = np.arange(n) * dt
@@ -334,7 +327,6 @@ class TestScaleShift:
 
 
 class TestCostFunTLS:
-    thztools.global_options.sampling_time = None
     theta = (1, 0)
     mu = np.arange(8)
     xx = mu
@@ -350,7 +342,6 @@ class TestCostFunTLS:
 
 
 class TestTDNLLScaled:
-    thztools.global_options.sampling_time = None
     m = 2
     n = 16
     dt = 1.0 / n
@@ -665,7 +656,6 @@ class TestNoiseFit:
 
 
 class TestFit:
-    thztools.global_options.sampling_time = None
     rng = np.random.default_rng(0)
     n = 16
     dt = 1.0 / n

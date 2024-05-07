@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass
-from typing import Callable
+from typing import Any, Callable
 
 import numpy as np
 import scipy.linalg as la
@@ -33,27 +33,59 @@ class GlobalOptions:
     sampling_time: float | None
 
 
-global_options = GlobalOptions(
-    sampling_time=None,
-)
-r"""
-An instance of the :class:`GlobalOptions` class for handling global options.
-"""
+options = GlobalOptions
+
+
+def set_option(key: str, value: Any) -> None:
+    r"""
+    Set global option.
+
+    Parameters
+    ----------
+    key : str
+        Option name.
+    value : object
+        Option value.
+
+    Returns
+    -------
+    None
+        No return value.
+    """
+    setattr(options, key, value)
+
+
+def get_option(key: str) -> Any:
+    r"""
+    Get global option.
+
+    Parameters
+    ----------
+    key : str
+        Option name.
+
+    Returns
+    -------
+    val : object
+        Option value.
+    """
+    return getattr(options, key)
 
 
 def _assign_sampling_time(dt: float | None) -> float:
     dt_out = 1.0
-    if dt is None and global_options.sampling_time is not None:
-        dt_out = global_options.sampling_time
-    elif dt is not None and global_options.sampling_time is None:
+    if dt is None and get_option("sampling_time") is not None:
+        dt_out = get_option("sampling_time")
+    elif dt is not None and get_option("sampling_time") is None:
         dt_out = dt
-    elif dt is not None and global_options.sampling_time is not None:
-        if np.isclose(dt, global_options.sampling_time):
+    elif dt is not None and get_option("sampling_time") is not None:
+        if np.isclose(dt, get_option("sampling_time")):
             dt_out = dt
         else:
+            opt_sampling_time = get_option("sampling_time")
             msg = (
                 f"Input sampling time {dt=} conflicts with "
-                f"{global_options.sampling_time=}, using {dt=}"
+                f"{opt_sampling_time=}, using {dt=}"
             )
             warnings.warn(msg, category=UserWarning, stacklevel=2)
             dt_out = dt
@@ -85,14 +117,14 @@ class NoiseModel:
         Timebase noise amplitude.
     dt : float or None, optional
         Sampling time, normally in picoseconds. Default is None, which sets
-        the sampling time to ``thztools.global_options.sampling_time``. If both
-        :attr:`dt` and ``thztools.global_options.sampling_time`` are ``None``,
+        the sampling time to ``thztools.options.sampling_time``. If both
+        :attr:`dt` and ``thztools.get_option("sampling_time")`` are ``None``,
         the :attr:`sigma_tau` parameter is given in units of the sampling time.
 
     Warns
     -----
     UserWarning
-        If ``thztools.global_options.sampling_time`` and the :attr:`dt`
+        If ``thztools.options.sampling_time`` and the :attr:`dt`
         parameter are both not ``None`` and are set to different ``float``
         values, the function will set the sampling time to :attr:`dt` and raise
         a :class:`UserWarning`.
@@ -121,7 +153,7 @@ class NoiseModel:
     >>> import thztools as thz
     >>> from matplotlib import pyplot as plt
     >>> n, dt = 256, 0.05
-    >>> thz.global_options.sampling_time = dt
+    >>> thz.set_option("sampling_time", dt)
     >>> t = thz.timebase(n)
     >>> mu = thz.wave(n)
     >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
@@ -143,7 +175,9 @@ class NoiseModel:
     dt: float | None = None
 
     # noinspection PyShadowingNames
-    def noise_var(self, x: ArrayLike, *, axis: int = -1) -> NDArray[np.float64]:
+    def noise_var(
+        self, x: ArrayLike, *, axis: int = -1
+    ) -> NDArray[np.float64]:
         r"""
         Compute the time-domain noise variance.
 
@@ -192,7 +226,7 @@ class NoiseModel:
         >>> import thztools as thz
         >>> from matplotlib import pyplot as plt
         >>> n, dt = 256, 0.05
-        >>> thz.global_options.sampling_time = dt
+        >>> thz.set_option("sampling_time", dt)
         >>> t = thz.timebase(n)
         >>> mu = thz.wave(n)
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
@@ -232,7 +266,9 @@ class NoiseModel:
         return noise_variance
 
     # noinspection PyShadowingNames
-    def noise_amp(self, x: ArrayLike, *, axis: int = -1) -> NDArray[np.float64]:
+    def noise_amp(
+        self, x: ArrayLike, *, axis: int = -1
+    ) -> NDArray[np.float64]:
         r"""
         Compute the time-domain noise amplitude.
 
@@ -281,7 +317,7 @@ class NoiseModel:
         >>> import thztools as thz
         >>> from matplotlib import pyplot as plt
         >>> n, dt = 256, 0.05
-        >>> thz.global_options.sampling_time = dt
+        >>> thz.set_option("sampling_time", dt)
         >>> t = thz.timebase(n)
         >>> mu = thz.wave(n)
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
@@ -355,7 +391,7 @@ class NoiseModel:
         >>> import thztools as thz
         >>> from matplotlib import pyplot as plt
         >>> n, dt = 256, 0.05
-        >>> thz.global_options.sampling_time = dt
+        >>> thz.set_option("sampling_time", dt)
         >>> t = thz.timebase(n)
         >>> mu = thz.wave(n)
         >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
@@ -469,8 +505,8 @@ def transfer(
         Data array.
     dt : float or None, optional
         Sampling time, normally in picoseconds. Default is None, which sets
-        the sampling time to ``thztools.global_options.sampling_time``. If both
-        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        the sampling time to ``thztools.options.sampling_time``. If both
+        ``dt`` and ``thztools.options.sampling_time`` are ``None``, the
         sampling time is set to ``1.0``. In this case, the angular frequency
         ``omega`` must be given in units of radians per sampling time, and any
         parameters in ``args`` must be expressed with the sampling time as the
@@ -492,7 +528,7 @@ def transfer(
     Warns
     -----
     UserWarning
-        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        If ``thztools.options.sampling_time`` and the ``dt`` parameter
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
         :class:`UserWarning`.
@@ -530,7 +566,7 @@ def transfer(
     >>> import thztools as thz
     >>> from matplotlib import pyplot as plt
     >>> n, dt = 256, 0.05
-    >>> thz.global_options.sampling_time = dt
+    >>> thz.set_option("sampling_time", dt)
     >>> t = thz.timebase(n)
     >>> x = thz.wave(n)
     >>> def shiftscale(_w, _a, _tau):
@@ -602,8 +638,8 @@ def timebase(
         Number of samples.
     dt : float or None, optional
         Sampling time, normally in picoseconds. Default is None, which sets
-        the sampling time to ``thztools.global_options.sampling_time``. If both
-        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        the sampling time to ``thztools.options.sampling_time``. If both
+        ``dt`` and ``thztools.options.sampling_time`` are ``None``, the
         sampling time is set to 1.0.
     t_init : float, optional
         Value of the initial time point. Default is ``0.0``.
@@ -616,7 +652,7 @@ def timebase(
     Warns
     -----
     UserWarning
-        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        If ``thztools.options.sampling_time`` and the ``dt`` parameter
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
         :class:`UserWarning`.
@@ -633,11 +669,10 @@ def timebase(
     assigning the sampling time.
 
     >>> import thztools as thz
-    >>> thz.global_options.sampling_time = None
     >>> n, dt, t_init = 256, 0.05, 2.5
     >>> t_1 = thz.timebase(n)
     >>> t_2 = thz.timebase(n, dt=dt)
-    >>> thz.global_options.sampling_time = dt
+    >>> thz.set_option("sampling_time", dt)
     >>> t_3 = thz.timebase(n)
     >>> t_4 = thz.timebase(n, t_init=t_init)
     >>> print(t_1[:3])
@@ -673,8 +708,8 @@ def wave(
         Number of samples.
     dt : float or None, optional
         Sampling time, normally in picoseconds. Default is None, which sets
-        the sampling time to ``thztools.global_options.sampling_time``. If both
-        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        the sampling time to ``thztools.options.sampling_time``. If both
+        ``dt`` and ``thztools.options.sampling_time`` are ``None``, the
         sampling time is set to 1.0.
     t0 : float or None, optional
         Pulse location, normally in picoseconds. Default is ``0.3 * n * dt``.
@@ -694,7 +729,7 @@ def wave(
     Warns
     -----
     UserWarning
-        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        If ``thztools.options.sampling_time`` and the ``dt`` parameter
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
         :class:`UserWarning`.
@@ -727,7 +762,7 @@ def wave(
     >>> import thztools as thz
     >>> from matplotlib import pyplot as plt
     >>> n, dt = 256, 0.05
-    >>> thz.global_options.sampling_time = dt
+    >>> thz.set_option("sampling_time", dt)
     >>> t = thz.timebase(n)
     >>> mu = thz.wave(n)
 
@@ -783,8 +818,8 @@ def scaleshift(
         Data array.
     dt : float or None, optional
         Sampling time, normally in picoseconds. Default is None, which sets
-        the sampling time to ``thztools.global_options.sampling_time``. If both
-        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        the sampling time to ``thztools.options.sampling_time``. If both
+        ``dt`` and ``thztools.options.sampling_time`` are ``None``, the
         sampling time is set to ``1.0``. In this case, ``eta`` must be given in
         units of the sampling time.
     a : array_like, optional
@@ -803,7 +838,7 @@ def scaleshift(
     Warns
     -----
     UserWarning
-        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        If ``thztools.options.sampling_time`` and the ``dt`` parameter
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
         :class:`UserWarning`.
@@ -818,7 +853,7 @@ def scaleshift(
     >>> import thztools as thz
     >>> from matplotlib import pyplot as plt
     >>> n, dt = 256, 0.05
-    >>> thz.global_options.sampling_time = dt
+    >>> thz.set_option("sampling_time", dt)
     >>> t = thz.timebase(n)
     >>> mu = thz.wave(n)
     >>> m = 4
@@ -918,8 +953,8 @@ def _costfuntls(
         Noise vector of the output signal.
     dt : float or None, optional
         Sampling time, normally in picoseconds. Default is None, which sets
-        the sampling time to ``thztools.global_options.sampling_time``. If both
-        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        the sampling time to ``thztools.options.sampling_time``. If both
+        ``dt`` and ``thztools.options.sampling_time`` are ``None``, the
         sampling time is set to ``1.0``. In this case, the angular frequency
         ``omega`` must be given in units of radians per sampling time, and any
         parameters in ``args`` must be expressed with the sampling time as the
@@ -933,7 +968,7 @@ def _costfuntls(
     Warns
     -----
     UserWarning
-        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        If ``thztools.options.sampling_time`` and the ``dt`` parameter
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
         :class:`UserWarning`.
@@ -1179,8 +1214,8 @@ def noisefit(
         ``n`` points.
     dt : float or None, optional
         Sampling time, normally in picoseconds. Default is None, which sets
-        the sampling time to ``thztools.global_options.sampling_time``. If both
-        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        the sampling time to ``thztools.options.sampling_time``. If both
+        ``dt`` and ``thztools.options.sampling_time`` are ``None``, the
         sampling time is set to ``1.0``. In this case, the unit of time is the
         sampling time for the noise model parameter ``sigma_tau``, the delay
         parameter array ``eta``, and the initial guesses for both quantities.
@@ -1246,7 +1281,7 @@ def noisefit(
     Warns
     -----
     UserWarning
-        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        If ``thztools.options.sampling_time`` and the ``dt`` parameter
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
         :class:`UserWarning`.
@@ -1312,7 +1347,7 @@ def noisefit(
     >>> from matplotlib import pyplot as plt
     >>> rng = np.random.default_rng(0)
     >>> n, m, dt = 256, 50, 0.05
-    >>> thz.global_options.sampling_time = dt
+    >>> thz.set_option("sampling_time", dt)
     >>> t = thz.timebase(n)
     >>> mu = thz.wave(n)
     >>> alpha, beta, tau = 1e-5, 1e-2, 1e-3
@@ -1803,8 +1838,8 @@ def fit(
         Measured output signal.
     dt : float or None, optional
         Sampling time, normally in picoseconds. Default is None, which sets
-        the sampling time to ``thztools.global_options.sampling_time``. If both
-        ``dt`` and ``thztools.global_options.sampling_time`` are ``None``, the
+        the sampling time to ``thztools.options.sampling_time``. If both
+        ``dt`` and ``thztools.options.sampling_time`` are ``None``, the
         sampling time is set to ``1.0``. In this case, the angular frequency
         ``omega`` must be given in units of radians per sampling time, and any
         parameters in ``args`` must be expressed with the sampling time as the
@@ -1849,7 +1884,7 @@ def fit(
     Warns
     -----
     UserWarning
-        If ``thztools.global_options.sampling_time`` and the ``dt`` parameter
+        If ``thztools.options.sampling_time`` and the ``dt`` parameter
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
         :class:`UserWarning`.

@@ -15,5 +15,7 @@ Table of Contents
 .. toctree::
    :maxdepth: 3
 
-   Getting started <gettingstarted>
-   API Reference <api>
+    Getting started <gettingstarted>
+    Examples <examples>
+    API Reference <api>
+    Contributing <contributing>

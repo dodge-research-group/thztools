@@ -5,31 +5,24 @@ Getting Started
    :maxdepth: 2
 
 Installation
-+++++++++++++++++++
+^^^^^^^^^^^^
 
-The instructions below are for developers using the `Conda <https://docs.conda.io/en/latest/>`_
-package and environment manager.
+Using pip: ::
 
-1. Create the environment by typing the following command from the top directory. The first line
-of the ``environment-dev.yml`` file sets the environment name to ``thztools``, and the last line
-uses ``pip`` to install the ``thztools`` package in
-`editable <https://pip.pypa.io/en/stable/cli/pip_install/#install-editable/>`_ mode for
-development. ::
+    pip install thztools
 
-    conda env create -f envs/environment-dev.yml
+The package name is ``thztools``, and the import convention is: ::
 
-2. Activate the ``thztools`` environment. ::
+    import thztools as thz
 
-    conda activate thztools
+Recommended imports
+^^^^^^^^^^^^^^^^^^^
 
-3. Use the following command to run a Jupyter notebook server from within this environment. ::
+The following packages are not required to use ``thztools`` but make it more
+convenient to use.
 
-    jupyter notebook
+- `matplotlib <https://matplotlib.org/>`_
 
-4. Deactivate the environment when you are finished using ``thztools``. ::
+- `numpy <https://numpy.org/>`_
 
-    conda deactivate
-
-More detailed instructions on using Conda to manage environments are available
-`here <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html/>`_.
-
+- `scipy <https://docs.scipy.org/>`_

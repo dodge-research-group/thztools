@@ -193,7 +193,9 @@ addopts = [
 
 [tool.hatch.envs.docs]
 dependencies = [
+    "ipython",
     "matplotlib",
+    "nbsphinx",
     "numpydoc",
     "pydata-sphinx-theme",
     "sphinx",

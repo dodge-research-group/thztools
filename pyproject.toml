@@ -17,7 +17,7 @@ authors = [
     { name="Santiago Higuera-Quintero", email="s.higuera@uniandes.edu.co" },
     { name="Alireza Noori", email="alireza_noori@sfu.ca" },
     { name="Laleh Mohtashemi", email="lalehmo@gmail.com" },
-    { name="Randon P. Hall", email="rph4@sfu.ca" },
+    { name="R. P. Hall", email="rph4@sfu.ca" },
     { name="J. Steven Dodge", email="jsdodge@sfu.ca" },
 ]
 maintainers = [

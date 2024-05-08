@@ -4,8 +4,8 @@
 
 # Local .gitignore
 Untitled*.ipynb
-**/correspondence/
 **/doctest/**
+**/tmp/**
 
 # NumPy data files
 **/*.npz

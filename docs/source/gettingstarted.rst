@@ -5,7 +5,7 @@ Getting Started
    :maxdepth: 2
 
 Installation
-^^^^^^^^^^^^
+------------
 
 Using pip: ::
 
@@ -16,7 +16,7 @@ The package name is ``thztools``, and the import convention is: ::
     import thztools as thz
 
 Recommended imports
-^^^^^^^^^^^^^^^^^^^
+-------------------
 
 The following packages are not required to use ``thztools`` but make it more
 convenient to use.

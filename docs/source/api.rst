@@ -4,7 +4,7 @@ THzTools
 .. currentmodule:: thztools
 
 Global options
-^^^^^^^^^^^^^^
+--------------
 
 .. autosummary::
     :toctree: generated/
@@ -14,7 +14,7 @@ Global options
     set_option
 
 Noise model
-^^^^^^^^^^^
+-----------
 
 .. autosummary::
     :toctree: generated/
@@ -25,7 +25,7 @@ Noise model
     noisefit
 
 Parameter estimation
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
 .. autosummary::
     :toctree: generated/
@@ -34,7 +34,7 @@ Parameter estimation
     fit
 
 Waveform utilities
-^^^^^^^^^^^^^^^^^^
+------------------
 
 .. autosummary::
     :toctree: generated/

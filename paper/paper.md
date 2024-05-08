@@ -26,8 +26,8 @@ authors:
     orcid: 0000-0002-2706-857X
     equal-contrib: true
     affiliation: 1
-  - name: Randon Hall
-    orcid: 
+  - name: R. P. Hall
+    orcid: 0009-0004-1137-3651
     affiliation: 1
   - name: J. Steven Dodge
     orcid: 0000-0003-3219-7314

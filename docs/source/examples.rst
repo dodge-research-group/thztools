@@ -4,4 +4,8 @@ Examples
 .. toctree::
    :maxdepth: 1
 
-   examples/simulation-example
+.. nbgallery::
+    :name: example-gallery
+    :glob:
+
+    examples/simulate-waveform

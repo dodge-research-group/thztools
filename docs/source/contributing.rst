@@ -16,6 +16,10 @@ Here are some ways you can contribute:
   `pull request <https://github.com/dodge-research-group/thztools/pulls>`_.
   Please review the following section for details about the development process.
 
+Please review our `code of conduct <https://github.com/dodge-research-group/thztools/CODE_OF_CONDUCT>`_
+and follow the guidelines described there to help us maintain clear and
+respectful communication.
+
 Development Process
 -------------------
 

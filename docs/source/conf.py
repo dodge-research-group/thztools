@@ -17,6 +17,7 @@
 # The runpy package is used to import the version number from
 # __about__.py using OPTION 1 below. Not needed for OPTION 2.
 import math
+import os
 import runpy
 import sys
 from pathlib import Path
@@ -57,6 +58,8 @@ extensions = [
     "sphinx.ext.autodoc",
     "nbsphinx",
     "numpydoc",
+    "sphinx_design",
+    "sphinx_gallery.load_style",
     "sphinx.ext.intersphinx",
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
@@ -95,6 +98,16 @@ import numpy as np
 import thztools as thz
 rng = np.random.default_rng(0)
 """
+
+# -----------------------------------------------------------------------------
+# nbsphinx configuration
+# -----------------------------------------------------------------------------
+
+nbsphinx_allow_errors = True
+
+# Set PYTHONPATH to local src directory (otherwise installs from PyPI)
+src = os.path.abspath('../../src')
+os.environ["PYTHONPATH"] = str(src)
 
 # -----------------------------------------------------------------------------
 # NumPy extensions

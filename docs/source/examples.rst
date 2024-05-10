@@ -8,4 +8,4 @@ Examples
     :name: example-gallery
     :glob:
 
-    examples/simulate-waveform
+    examples/*

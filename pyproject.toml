@@ -18,6 +18,7 @@ authors = [
     { name="Alireza Noori", email="alireza_noori@sfu.ca" },
     { name="Laleh Mohtashemi", email="lalehmo@gmail.com" },
     { name="R. P. Hall", email="rph4@sfu.ca" },
+    { name="Naod Ayalew Yimam", email="nayimam@gmail.com"},
     { name="J. Steven Dodge", email="jsdodge@sfu.ca" },
 ]
 maintainers = [

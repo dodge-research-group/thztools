@@ -2,7 +2,7 @@ import time
 
 import numpy as np
 
-from src.thztools import airscancorrect, shiftmtx, tdnoisefit, tdtf
+from src.thztools import airscancorrect, noisefit, shiftmtx, tdtf
 
 
 def calcnoise(t, x):
@@ -35,9 +35,7 @@ def calcnoise(t, x):
 
     mu0 = np.mean(x, axis=1)
     param["delay"] = {"v0": v0, "mu0": mu0, "ts": ts}
-    eta0 = tdnoisefit(x, param["delay"], fix["delay"], ignore["delay"])[0][
-        "eta"
-    ]
+    eta0 = noisefit(x, param["delay"], fix["delay"], ignore["delay"])[0]["eta"]
 
     print("Elapsed time is", time.time() - start_time)
 
@@ -49,7 +47,7 @@ def calcnoise(t, x):
     fix["amp"] = {"logv": True, "mu": True, "a": False, "eta": True}
     ignore["amp"] = {"a": False, "eta": True}
     param["amp"] = {"v0": v0, "mu0": mu0, "eta0": eta0, "ts": ts}
-    a0 = tdnoisefit(x, param["amp"], fix["amp"], ignore["amp"])[0]["a"]
+    a0 = noisefit(x, param["amp"], fix["amp"], ignore["amp"])[0]["a"]
 
     print("Elapsed time is", time.time() - start_time)
 
@@ -69,7 +67,7 @@ def calcnoise(t, x):
     fix["var"] = {"logv": False, "mu": True, "a": True, "eta": True}
     ignore["var"] = {"a": False, "eta": False}
     param["var"] = {"v0": v0, "mu0": mu0, "a0": a0, "eta": eta0, "ts": ts}
-    v0 = tdnoisefit(x, param["var"], fix["var"], ignore["var"])[0]["var"]
+    v0 = noisefit(x, param["var"], fix["var"], ignore["var"])[0]["var"]
 
     print("Elapsed time is", time.time() - start_time)
 
@@ -80,7 +78,7 @@ def calcnoise(t, x):
     fix["all"] = {"logv": False, "mu": False, "a": False, "eta": False}
     ignore["all"] = {"a": False, "eta": False}
     param["all"] = {"v0": v0, "mu0": mu0, "a": a0, "eta": eta0, "ts": ts}
-    all_fit = tdnoisefit(x, param["all"], fix["all"], ignore["all"])
+    all_fit = noisefit(x, param["all"], fix["all"], ignore["all"])
 
     # Return results through Output Structure
     output["x"] = x

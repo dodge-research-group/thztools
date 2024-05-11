@@ -5,16 +5,21 @@ build-backend = "hatchling.build"
 [project]
 name = "thztools"
 dynamic = ["version"]
-description = "Tools for terahertz time-domain spectroscopy (THz-TDS)"
+description = """
+Data analysis software tools for terahertz time-domain spectroscopy (THz-TDS)
+"""
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
 keywords = ["terahertz", "THz", "time-domain spectroscopy", "data analysis"]
 authors = [
-    { name="Steve Dodge", email="jsdodge@sfu.ca" },
-    { name="Santiago Higuera Quintero", email="s.higuera@uniandes.edu.co" },
-    { name="Jonathan Posada", email="jonathan.posada1@udea.edu.co" },
-    { name="Alireza Noori", email="alireza_noori@sfu.ca"}
+    { name="Jonathan Posada Loaiza", email="jonathan.posada1@udea.edu.co" },
+    { name="Santiago Higuera-Quintero", email="s.higuera@uniandes.edu.co" },
+    { name="Alireza Noori", email="alireza_noori@sfu.ca" },
+    { name="Laleh Mohtashemi", email="lalehmo@gmail.com" },
+    { name="R. P. Hall", email="rph4@sfu.ca" },
+    { name="Naod Ayalew Yimam", email="nayimam@gmail.com"},
+    { name="J. Steven Dodge", email="jsdodge@sfu.ca" },
 ]
 maintainers = [
     { name="Steve Dodge", email="jsdodge@sfu.ca" },
@@ -34,14 +39,14 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "numpy",
+    "numpy>=1.21",
     "scipy",
-    "numdifftools",
 ]
 
 [project.urls]
 Documentation = "https://dodge-research-group.github.io/thztools/"
 Issues = "https://github.com/dodge-research-group/thztools/issues"
+Discussion = "https://github.com/dodge-research-group/thztools/discussions"
 Source = "https://github.com/dodge-research-group/thztools"
 
 [tool.hatch.version]
@@ -52,6 +57,7 @@ dependencies = [
     "coverage[toml]>=6.5",
     "jupyter",
     "matplotlib",
+    "numdifftools",
     "pytest",
 ]
 [tool.hatch.envs.default.scripts]
@@ -69,7 +75,7 @@ cov = [
 make-logo = ["python logo/make_logo.py; mv thztools_logo.svg docs/source/_static/;mv thztools_logo_dark.svg docs/source/_static/"]
 
 [[tool.hatch.envs.all.matrix]]
-python = ["3.8", "3.9", "3.10", "3.11"]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12",]
 
 [tool.hatch.envs.lint]
 detached = true
@@ -188,14 +194,20 @@ addopts = [
 
 [tool.hatch.envs.docs]
 dependencies = [
+    "ipykernel",
+    "IPython",
     "matplotlib",
+    "nbsphinx",
     "numpydoc",
     "pydata-sphinx-theme",
     "sphinx",
+    "sphinx-design",
+    "sphinx-gallery",
     "tomli",
 ]
 [tool.hatch.envs.docs.scripts]
 build = "sphinx-build -v -b html docs/source docs/build/html"
+test = "sphinx-build -v -b doctest docs/source docs/doctest"
 
 [tool.mypy]
 plugins = "numpy.typing.mypy_plugin"

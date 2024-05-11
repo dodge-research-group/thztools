@@ -1,10 +1,10 @@
 :orphan:
 
-thztools.NoiseResult.diagnostic
+thztools.NoiseModel.sigma\_beta
 ===============================
 
 .. currentmodule:: thztools
 
 attribute
 
-.. autoattribute:: thztools.NoiseResult.diagnostic
+.. autoattribute:: thztools.NoiseModel.sigma_beta

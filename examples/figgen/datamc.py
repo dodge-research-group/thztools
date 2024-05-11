@@ -65,7 +65,7 @@ def datamc(**kwargs):
         "Vi": vi,
         "V": v,
         "Nf": nf,
-        "sigma_t": sigma_t,
+        "noise_amp": sigma_t,
     }
 
     return data

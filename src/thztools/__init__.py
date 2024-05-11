@@ -4,22 +4,30 @@ from thztools.thztools import (
     NoiseModel,
     NoiseResult,
     fit,
-    global_options,
+    get_option,
+    noisefit,
+    options,
     scaleshift,
-    tdnoisefit,
-    transfer_out,
+    set_option,
+    timebase,
+    transfer,
     wave,
 )
+
+set_option("sampling_time", None)
 
 __all__ = [
     "GlobalOptions",
     "NoiseModel",
     "NoiseResult",
     "fit",
-    "global_options",
+    "get_option",
+    "noisefit",
+    "options",
     "scaleshift",
-    "tdnoisefit",
-    "transfer_out",
+    "set_option",
+    "timebase",
+    "transfer",
     "wave",
     "__version__",
 ]

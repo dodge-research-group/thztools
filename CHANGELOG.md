@@ -2,8 +2,62 @@
 
 [![Common Changelog](https://common-changelog.org/badge.svg)](https://common-changelog.org)
 
-Please follow the guidelines at [Common Changelog](https://common-changelog.org) for maintaining
-this file.
+Please follow the guidelines at [Common Changelog](https://common-changelog.org)
+for maintaining this file.
+
+## [0.4.0] - 2024-05-09
+
+### Changed
+
+- Rename module constant `global_options` as `options`
+- Rename `tdnoisefit` as `noisefit`
+- Rename `NoiseModel` attributes `alpha`, `beta` and `tau` as `sigma_alpha`,
+  `sigma_beta` and `sigma_tau`, respectively
+- Rename `NoiseModel` methods `amplitude`, `noise`, and `variance` as
+  `noise_amp`, `noise_sim`, and `noise_var`, respectively
+- Revise `noisefit` and associated functions to treat each of the 3 noise
+  parameters separately instead of as a 3-component array, so that each may
+  fixed independently in the optimization process
+- Adjust internal scaling in `noisefit`
+- Reorganize `NoiseResult` class as output for `noisefit`
+- Revise `NoiseResult` docstring
+- Rename `transfer_out` as `transfer`
+- Rename `fft_sign` parameter as `numpy_sign_convention` in `transfer`
+- Make `dt` and `t0` keyword-only arguments in `wave` and set defaults
+- Change position of `dt` in `scaleshift`, `tdnoisefit`, `transfer` docstrings
+  and change defaults
+- Revise defaults for `wave`
+- Change default value for `dt` in `fit`
+- Improve type annotations
+- Update tests
+- Update dependencies in `environment-dev.yml` and `pyproject.toml`
+- Revise *Getting Started* page
+- Revise documentation, including Sphinx format and project-specific layout
+
+### Added
+
+- Add R. P. Hall, Laleh Mohtashemi and Naod Yimam to the author list
+- Add missing ORCID IDs
+- Add `get_option` and `set_option` functions to handle global options
+- Add attributes to `NoiseResult` class
+- Add `timebase` function
+- Add `seed` parameter in `NoiseModel.noise_sim`
+- Add `NoiseResult` class to documentation
+- Add doctests
+- Add warnings
+- Add `paper` directory with bib-file and stub for JOSS paper
+- Add `draft-pdf.yml` GitHub Action to autogenerate JOSS paper; update
+  deprecated `upload-artifact` Action in workflow
+- Add Contributing and Examples pages to documentation
+- Add Code of Conduct
+- Add gallery of Jupyter notebook examples to documentation using `nbsphinx`
+
+### Removed
+
+### Fixed
+
+- Fix error in units of `NoiseModel.sigma_tau` in `noisefit`
+- Fix bug related to `eta` scaling in `noisefit`
 
 ## [0.3.6] - 2023-11-12
 
@@ -22,8 +76,8 @@ this file.
 
 ### Added
 
-- `GlobalOptions` class
-- `global_options` module constant
+- Add `GlobalOptions` class
+- Add `global_options` module constant
 
 ## [0.3.4] - 2023-11-10
 
@@ -41,7 +95,8 @@ this file.
 ### Changed
 
 - Prune and update notebooks
-- Fix error in `noiseamp` docstring example (now `amplitude` method of `NoiseModel` class)
+- Fix error in `noiseamp` docstring example (now `amplitude` method of
+  `NoiseModel` class)
 - Darken text color for logo in dark mode
 - Move make-logo script into default hatch environment
 - Rename sampling time variable from `ts` to `dt`
@@ -81,14 +136,16 @@ _Changelog introduced._
 
 - Add changelog (Steve)
 - Add frequency bounds to fit function (#27) (Alireza)
-- Add Notes, References, and Examples docstring sections to `noisevar`, `noiseamp`, and `thzgen` (Steve)
+- Add Notes, References, and Examples docstring sections to `noisevar`,
+  `noiseamp`, and `thzgen` (Steve)
 - Add scaling parameters to `tdnll` (now `_tdnll_scaled`) (Steve)
 - Add logo (Steve)
 
 ### Removed
 
 - Remove `costfunlsq`
-- Remove `costfuntls`, `tdnll` from public functions (rename as `_costfuntls` and `_tdnll_scaled`)
+- Remove `costfuntls`, `tdnll` from public functions (rename as `_costfuntls`
+  and `_tdnll_scaled`)
 
 ## [0.3.0] - 2023-09-07
 
@@ -101,6 +158,7 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.4.0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.4.0
 [0.3.6]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.6
 [0.3.5]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.5
 [0.3.4]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.4

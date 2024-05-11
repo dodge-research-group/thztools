@@ -1,8 +1,9 @@
 :orphan:
 
-{{ fullname }}
-{{ underline }}
+{{ fullname | escape | underline}}
 
 .. currentmodule:: {{ module }}
 
-.. autoattribute:: {{ objname }}
+attribute
+
+.. auto{{ objtype }}:: {{ fullname }}

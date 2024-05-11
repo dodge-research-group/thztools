@@ -15,7 +15,7 @@ jobs:
       id-token: write
     steps:
     - name: Install pandoc
-      uses: pandoc/actions/setup@{main}
+      uses: pandoc/actions/setup
       with:
         version: 2.14
     - id: deployment

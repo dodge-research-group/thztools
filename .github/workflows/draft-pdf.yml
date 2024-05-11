@@ -1,4 +1,5 @@
-on: [push]
+name: Typeset and upload paper
+on: [push, workflow_dispatch]
 
 jobs:
   paper:

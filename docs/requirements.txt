@@ -1,5 +1,11 @@
 # Use the PyData theme
+ipykernel
+IPython
 matplotlib
+nbsphinx
 numpydoc
 pydata-sphinx-theme
+sphinx
+sphinx-design
+sphinx-gallery
 tomli

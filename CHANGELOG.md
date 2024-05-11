@@ -5,7 +5,7 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org)
 for maintaining this file.
 
-## [0.4.0] - 2024-05-09
+## [0.4.0] - 2024-05-10
 
 ### Changed
 
@@ -51,8 +51,6 @@ for maintaining this file.
 - Add Contributing and Examples pages to documentation
 - Add Code of Conduct
 - Add gallery of Jupyter notebook examples to documentation using `nbsphinx`
-
-### Removed
 
 ### Fixed
 

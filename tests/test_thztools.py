@@ -690,7 +690,7 @@ class TestFit:
             jac=jac,
             kwargs=kwargs,
         )
-        assert_allclose(p["p_opt"], p0, atol=1e-6)
+        assert_allclose(p.p_opt, p0, atol=1e-6)
 
     def test_errors(self):
         p0 = self.p0

@@ -31,6 +31,7 @@ Parameter estimation
     :toctree: generated/
     :caption: Parameter estimation
 
+    FitResult
     fit
 
 Waveform utilities

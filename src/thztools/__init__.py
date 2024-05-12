@@ -4,6 +4,7 @@ spectroscopy (THz-TDS).
 """
 from thztools.__about__ import __version__
 from thztools.thztools import (
+    FitResult,
     GlobalOptions,
     NoiseModel,
     NoiseResult,
@@ -19,6 +20,7 @@ from thztools.thztools import (
 )
 
 __all__ = [
+    "FitResult",
     "GlobalOptions",
     "NoiseModel",
     "NoiseResult",

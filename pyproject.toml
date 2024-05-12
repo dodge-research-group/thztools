@@ -55,6 +55,7 @@ path = "src/thztools/__about__.py"
 [tool.hatch.envs.default]
 dependencies = [
     "coverage[toml]>=6.5",
+    "grayskull",
     "jupyter",
     "matplotlib",
     "numdifftools",
@@ -203,6 +204,7 @@ dependencies = [
     "sphinx",
     "sphinx-design",
     "sphinx-gallery",
+    "sphinx-tabs",
     "tomli",
 ]
 [tool.hatch.envs.docs.scripts]

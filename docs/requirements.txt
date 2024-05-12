@@ -8,4 +8,5 @@ pydata-sphinx-theme
 sphinx
 sphinx-design
 sphinx-gallery
+sphinx-tabs
 tomli

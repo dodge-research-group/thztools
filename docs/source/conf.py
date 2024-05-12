@@ -60,6 +60,7 @@ extensions = [
     "numpydoc",
     "sphinx_design",
     "sphinx_gallery.load_style",
+    "sphinx_tabs.tabs",
     "sphinx.ext.intersphinx",
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
@@ -106,7 +107,7 @@ rng = np.random.default_rng(0)
 nbsphinx_allow_errors = True
 
 # Set PYTHONPATH to local src directory (otherwise installs from PyPI)
-src = os.path.abspath('../../src')
+src = os.path.abspath("../../src")
 os.environ["PYTHONPATH"] = str(src)
 
 # -----------------------------------------------------------------------------

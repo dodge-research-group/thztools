@@ -42,6 +42,12 @@ def jac_fun(p, w):
     return np.stack((exp_ipw, 1j * w * p[0] * exp_ipw)).T
 
 
+# Reset options before each test
+@pytest.fixture(autouse=True)
+def reset_options():
+    set_option("sampling_time", None)
+
+
 class TestOptions:
     def test_sampling_time(self):
         assert thztools.get_option("sampling_time") is None
@@ -49,9 +55,6 @@ class TestOptions:
     @pytest.mark.parametrize("global_sampling_time", [None, 0.1])
     @pytest.mark.parametrize("dt", [None, 0.1, 1.0])
     def test_assignment(self, global_sampling_time, dt):
-        # monkeypatch.setattr(
-        #     thztools.options, "sampling_time", global_sampling_time
-        # )
         set_option("sampling_time", global_sampling_time)
         if global_sampling_time is None and dt is None:
             assert np.isclose(_assign_sampling_time(dt), 1.0)
@@ -96,7 +99,6 @@ class TestNoiseModel:
         axis: int,
         expected: ArrayLike,
     ) -> None:
-        set_option("sampling_time", None)
         if dt is None:
             noise_model = NoiseModel(alpha, beta, tau)
             result = noise_model.noise_var(mu, axis=axis)
@@ -126,7 +128,6 @@ class TestNoiseModel:
         axis: int,
         expected: ArrayLike,
     ) -> None:
-        set_option("sampling_time", None)
         if dt is None:
             noise_model = NoiseModel(alpha, beta, tau)
             result = noise_model.noise_amp(mu, axis=axis)

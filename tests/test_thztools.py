@@ -676,10 +676,12 @@ class TestFit:
     y = psi + noise_amp * rng.standard_normal(n)
 
     @pytest.mark.parametrize("noise_parms", [(1, 0, 0), sigma**2])
+    @pytest.mark.parametrize("f_bounds", [None, (0.0, np.inf)])
     @pytest.mark.parametrize("p_bounds", [None, ((0, -1), (2, 1))])
     @pytest.mark.parametrize("jac", [None, jac_fun])
+    @pytest.mark.parametrize("args", [None, ()])
     @pytest.mark.parametrize("kwargs", [None, {}])
-    def test_inputs(self, noise_parms, p_bounds, jac, kwargs):
+    def test_inputs(self, noise_parms, f_bounds, p_bounds, jac, args, kwargs):
         p0 = self.p0
         x = self.x
         y = self.y
@@ -690,9 +692,11 @@ class TestFit:
             x,
             y,
             dt=dt,
-            sigma_parms=noise_parms,
+            noise_parms=noise_parms,
+            f_bounds=f_bounds,
             p_bounds=p_bounds,
             jac=jac,
+            args=args,
             kwargs=kwargs,
         )
         assert_allclose(p.p_opt, p0, atol=1e-6)
@@ -707,4 +711,4 @@ class TestFit:
             _ = fit(tfun, p0, x, y, dt=dt, p_bounds=())
 
         with pytest.raises(ValueError):
-            _ = fit(tfun, p0, x, y, dt=dt, sigma_parms=(0, 0))
+            _ = fit(tfun, p0, x, y, dt=dt, noise_parms=(0, 0))

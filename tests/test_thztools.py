@@ -16,6 +16,7 @@ from thztools.thztools import (
     fit,
     noisefit,
     scaleshift,
+    set_option,
     transfer,
     wave,
 )
@@ -47,10 +48,11 @@ class TestOptions:
 
     @pytest.mark.parametrize("global_sampling_time", [None, 0.1])
     @pytest.mark.parametrize("dt", [None, 0.1, 1.0])
-    def test_assignment(self, global_sampling_time, dt, monkeypatch):
-        monkeypatch.setattr(
-            thztools.options, "sampling_time", global_sampling_time
-        )
+    def test_assignment(self, global_sampling_time, dt):
+        # monkeypatch.setattr(
+        #     thztools.options, "sampling_time", global_sampling_time
+        # )
+        set_option("sampling_time", global_sampling_time)
         if global_sampling_time is None and dt is None:
             assert np.isclose(_assign_sampling_time(dt), 1.0)
         elif global_sampling_time is None and dt is not None:
@@ -94,6 +96,7 @@ class TestNoiseModel:
         axis: int,
         expected: ArrayLike,
     ) -> None:
+        set_option("sampling_time", None)
         if dt is None:
             noise_model = NoiseModel(alpha, beta, tau)
             result = noise_model.noise_var(mu, axis=axis)
@@ -123,6 +126,7 @@ class TestNoiseModel:
         axis: int,
         expected: ArrayLike,
     ) -> None:
+        set_option("sampling_time", None)
         if dt is None:
             noise_model = NoiseModel(alpha, beta, tau)
             result = noise_model.noise_amp(mu, axis=axis)
@@ -697,5 +701,9 @@ class TestFit:
         x = self.x
         y = self.y
         dt = self.dt
+
         with pytest.raises(ValueError):
             _ = fit(tfun, p0, x, y, dt=dt, p_bounds=())
+
+        with pytest.raises(ValueError):
+            _ = fit(tfun, p0, x, y, dt=dt, sigma_parms=(0, 0))

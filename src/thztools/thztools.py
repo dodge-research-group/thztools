@@ -528,9 +528,9 @@ def transfer(
     numpy_sign_convention : bool, optional
         Adopt NumPy sign convention for harmonic time dependence, e.g, express
         a harmonic function with frequency :math:`\omega` as
-        :math:`x(t) = a e^{i\omega t}`. Default is ``True``. Uses the
-        convention more common in physics, :math:`x(t) = a e^{-i\omega t}`,
-        when set to ``False``.
+        :math:`x(t) = a e^{i\omega t}`. Default is ``True``. When set to
+        ``False``, uses the convention more common in physics,
+        :math:`x(t) = a e^{-i\omega t}`.
     args : tuple, optional
         Extra arguments passed to the transfer function.
 
@@ -1857,6 +1857,7 @@ def fit(
     *,
     dt: float | None = None,
     noise_parms: ArrayLike | None = None,
+    numpy_sign_convention: bool = True,
     f_bounds: ArrayLike | None = None,
     p_bounds: ArrayLike | None = None,
     jac: Callable | None = None,
@@ -1875,7 +1876,8 @@ def fit(
     fun : callable
         Transfer function with signature ``fun(p, w, *args, **kwargs)`` that
         returns an ``ndarray``. Assumes the :math:`+i\omega t` convention for
-        harmonic time dependence.
+        harmonic time dependence when ``numpy_sign_convention`` is ``True``,
+        the default.
     p0 : array_like
         Initial guess for ``p``.
     x : array_like
@@ -1893,6 +1895,12 @@ def fit(
         Noise parameters ``(sigma_alpha, sigma_beta, sigma_tau)`` used to
         define the :class:``NoiseModel`` for the fit. Default is ``None``,
         which sets ``sigma_parms`` to ``(1.0, 0.0, 0.0)``.
+    numpy_sign_convention : bool, optional
+        Adopt NumPy sign convention for harmonic time dependence, e.g, express
+        a harmonic function with frequency :math:`\omega` as
+        :math:`x(t) = a e^{i\omega t}`. Default is ``True``. When set to
+        ``False``, uses the convention more common in physics,
+        :math:`x(t) = a e^{-i\omega t}`.
     f_bounds : array_like, optional
         Frequency bounds. Default is ``None``, which sets ``f_bounds`` to
         ``(0.0, np.inf)``.
@@ -1984,16 +1992,24 @@ def fit(
     p0_est = np.concatenate((p0, np.zeros(n)))
 
     def etfe(_x, _y):
-        return rfft(_y) / rfft(_x)
+        h = rfft(_y) / rfft(_x)
+        if numpy_sign_convention:
+            h = np.conj(h)
+        return h
 
     def function(_theta, _w):
         _h = etfe(x, y)
         _w_in = _w[w_in_idx]
+        h_lo = _h[w_below_idx]
+        h_in = fun(_theta, _w_in, *args, **kwargs)
+        h_hi = _h[w_above_idx]
+        if not numpy_sign_convention:
+            h_in = np.conj(h_in)
         return np.concatenate(
             (
-                _h[w_below_idx],
-                fun(_theta, _w_in, *args, **kwargs),
-                _h[w_above_idx],
+                h_lo,
+                h_in,
+                h_hi,
             )
         )
 
@@ -2002,7 +2018,10 @@ def fit(
         return np.concatenate((np.real(_tf), np.imag(_tf)))
 
     def td_fun(_p, _x):
-        _h = irfft(rfft(_x) * function(_p, w), n=n)
+        if numpy_sign_convention:
+            _h = irfft(rfft(_x) * function(_p, w), n=n)
+        else:
+            _h = irfft(rfft(_x) * np.conj(function(_p, w)), n=n)
         return _h
 
     def jacobian(_p):

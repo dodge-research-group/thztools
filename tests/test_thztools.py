@@ -666,11 +666,12 @@ class TestFit:
     t = np.arange(n) * dt
     x = np.cos(2 * pi * t)
     p0 = (0.5, dt)
+
     y_numpy_sign_true = transfer(
-        tfun2, x, args=p0, dt=dt, numpy_sign_convention=True
+        tfun2, x, dt=dt, args=p0, numpy_sign_convention=True
     )
     y_numpy_sign_false = transfer(
-        tfun2, x, args=p0, dt=dt, numpy_sign_convention=False
+        tfun2, x, dt=dt, args=p0, numpy_sign_convention=False
     )
     alpha, beta, tau = 1e-5, 0, 0
     sigma = np.array([alpha, beta, tau])

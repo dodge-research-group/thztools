@@ -27,5 +27,6 @@
          FitResult.resnorm
          FitResult.delta
          FitResult.epsilon
+         FitResult.r_tls
          FitResult.success
 

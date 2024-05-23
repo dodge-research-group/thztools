@@ -11,6 +11,7 @@ from numpy.fft import irfft, rfft, rfftfreq
 from numpy.random import default_rng
 from numpy.typing import ArrayLike, NDArray
 from scipy import signal
+from scipy.linalg import sqrtm
 from scipy.optimize import OptimizeResult, approx_fprime, minimize
 
 NUM_NOISE_PARAMETERS = 3
@@ -993,13 +994,10 @@ def _costfuntls(
 
     dt = _assign_sampling_time(dt)
 
-    n = x.shape[-1]
+    psi = transfer(lambda omega: fun(theta, omega), mu, dt=dt)
+
     delta_norm = (x - mu) / sigma_x
-    w = 2 * np.pi * rfftfreq(n) / dt
-    h_f = fun(theta, w)
-
-    eps_norm = (y - irfft(rfft(mu) * h_f, n=n)) / sigma_y
-
+    eps_norm = (y - psi) / sigma_y
     res = np.concatenate((delta_norm, eps_norm))
 
     return res
@@ -1829,9 +1827,14 @@ class FitResult:
     resnorm : float
         The value of chi-squared.
     delta : array_like
-        Residuals of the input waveform ``x``.
+        Residuals of the input waveform ``x``, defined as ``x - mu_opt``.
     epsilon : array_like
-        Resiuals of the output waveform ``y``.
+        Residuals of the output waveform ``y``, defined as ``y - psi_opt``,
+        where ``psi_opt = thztools.transfer(tfun_opt, mu, dt=dt)`` and
+        ``tfun_opt`` is the parameterized transfer function evaluated at
+        ``p_opt``.
+    r_tls : array_like
+        Total least-squares residuals.
     success : bool
         True if one of the convergence criteria is satisfied.
 
@@ -1846,6 +1849,7 @@ class FitResult:
     resnorm: float
     delta: NDArray[np.float64]
     epsilon: NDArray[np.float64]
+    r_tls: NDArray[np.float64]
     success: bool
 
 
@@ -1874,10 +1878,10 @@ def fit(
     Parameters
     ----------
     fun : callable
-        Transfer function with signature ``fun(p, w, *args, **kwargs)`` that
-        returns an ``ndarray``. Assumes the :math:`+i\omega t` convention for
-        harmonic time dependence when ``numpy_sign_convention`` is ``True``,
-        the default.
+        Transfer function with signature ``fun(p, omega, *args, **kwargs)``
+        that returns an ``ndarray``. Assumes the :math:`+i\omega t` convention
+        for harmonic time dependence when ``numpy_sign_convention`` is
+        ``True``, the default.
     p0 : array_like
         Initial guess for ``p``.
     x : array_like
@@ -1894,7 +1898,7 @@ def fit(
     noise_parms : array_like or None, optional
         Noise parameters ``(sigma_alpha, sigma_beta, sigma_tau)`` used to
         define the :class:``NoiseModel`` for the fit. Default is ``None``,
-        which sets ``sigma_parms`` to ``(1.0, 0.0, 0.0)``.
+        which sets ``noise_parms`` to ``(1.0, 0.0, 0.0)``.
     numpy_sign_convention : bool, optional
         Adopt NumPy sign convention for harmonic time dependence, e.g, express
         a harmonic function with frequency :math:`\omega` as
@@ -1927,6 +1931,11 @@ def fit(
         :class:`FitResult` for more details and for a description of other
         attributes.
 
+    Raises
+    ------
+    ValueError
+        If ``noise_parms`` does not have 3 elements.
+
     Warns
     -----
     UserWarning
@@ -1934,6 +1943,73 @@ def fit(
         are both not ``None`` and are set to different ``float`` values, the
         function will set the sampling time to ``dt`` and raise a
         :class:`UserWarning`.
+
+    See Also
+    --------
+    NoiseModel : Noise model class.
+
+    Notes
+    -----
+    This function computes the maximum-likelihood estimate for the parameters
+    :math:`\boldsymbol{\theta}` in the transfer function model
+    :math:`H(\omega; \boldsymbol{\theta})` by minimizing
+    the total least-squares cost function
+
+    .. math:: Q_\text{TLS}(\boldsymbol{\theta}) \
+        = \sum_{k=0}^{N-1}\left[ \
+        \frac{(x_k - \mu_k)^2}{\sigma_{\mathbf{x},k}^2} \
+        + \frac{(y_k - \psi_k)^2}{\sigma_{\mathbf{y},k}^2} \
+        \right],
+
+    where :math:`\mathbf{x}` is the input signal array, :math:`\mathbf{y}`
+    is the output signal array, and :math:`\boldsymbol{\sigma}_{\mathbf{y}}`,
+    :math:`\boldsymbol{\sigma}_{\mathbf{y}}` are their associated noise
+    amplitudes. The arrays :math:`\boldsymbol{\mu}` and
+    :math:`\boldsymbol{\psi}` are the ideal input and output signal arrays,
+    respectively, which are related by the constraint
+
+    .. math:: (\mathcal{F}\boldsymbol{\psi})_k = \
+        [H(\omega_k; \boldsymbol{\theta})] \
+        [\mathcal{F}\boldsymbol{\mu}]_k
+
+    at all discrete Fourier transform frequencies :math:`\omega_k` within
+    the frequency bounds.
+
+    References
+    ----------
+    .. [1] Laleh Mohtashemi, Paul Westlund, Derek G. Sahota, Graham B. Lea,
+        Ian Bushfield, Payam Mousavi, and J. Steven Dodge, "Maximum-
+        likelihood parameter estimation in terahertz time-domain
+        spectroscopy," Opt. Express **29**, 4912-4926 (2021),
+        `<https://doi.org/10.1364/OE.417724>`_.
+
+    Examples
+    --------
+    >>> import thztools as thz
+    >>> from matplotlib import pyplot as plt
+    >>> n, dt = 256, 0.05
+    >>> t = thz.timebase(n, dt=dt)
+    >>> mu = thz.wave(n, dt=dt)
+    >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
+    >>> noise_model = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
+    ...  sigma_tau=tau, dt=dt)
+
+    >>> def tfun(p, w):
+    >>>    return p[0] * np.exp(1j * p[1] * w)
+    >>>
+    >>> p0 = (0.5, 1.0)
+    >>> psi = thz.transfer(lambda omega: tfun(p0, omega), mu, dt=dt)
+    >>> x = mu + noise_model.noise_sim(mu, seed=0)
+    >>> y = psi + noise_model.noise_sim(psi)
+    >>> result = thz.fit(tfun, p0, x, y, noise_parms=(alpha, beta, tau), dt=dt)
+    >>> result.p_opt
+    array([0.49930935, 1.0000936 ])
+
+    >>> _, ax = plt.subplots()
+    >>> ax.plot(t, result.r_tls, '.')
+    >>> ax.set_xlabel("t (ps)")
+    >>> ax.set_ylabel(r"$r_\mathrm{TLS}$")
+    >>> plt.show()
     """
     fit_method = "trf"
 
@@ -2072,11 +2148,18 @@ def fit(
 
     p_opt = result.x[:n_p]
     p_var = np.diag(np.dot(vt.T / s**2, vt))[n_p:]
-    mu_opt = x - result.x[n_p:]
+    delta = result.x[n_p:]
+    mu_opt = x - delta
     mu_var = np.diag(np.dot(vt.T / s**2, vt))[n_p:]
     resnorm = 2 * result.cost
-    delta = result.x[n_p:]
-    epsilon = y - irfft(rfft(mu_opt) * function(p_opt, w), n=n)
+    psi_opt = transfer(lambda _w: function(p_opt, _w), mu_opt, dt=dt)
+    epsilon = y - psi_opt
+
+    v_y = np.diag(sigma_y**2)
+    h_sigma_x = transfer(lambda _w: function(p_opt, _w), sigma_x, dt=dt)
+    u_x = h_sigma_x[:, np.newaxis] @ h_sigma_x[np.newaxis, :]
+    h_delta = transfer(lambda _w: function(p_opt, _w), delta, dt=dt)
+    r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (epsilon - h_delta)
 
     res = FitResult(
         p_opt=p_opt,
@@ -2086,6 +2169,7 @@ def fit(
         resnorm=resnorm,
         delta=delta,
         epsilon=epsilon,
+        r_tls=r_tls,
         success=result.success,
     )
     return res

@@ -140,6 +140,7 @@ plot_html_show_formats = False
 plot_html_show_source_link = False
 plot_pre_code = """
 import numpy as np
+import thztools as thz
 """
 plot_apply_rcparams = True
 

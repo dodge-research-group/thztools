@@ -685,8 +685,6 @@ class TestFit:
     @pytest.mark.parametrize("f_bounds", [None, (0.0, np.inf)])
     @pytest.mark.parametrize("p_bounds", [None, ((0, -1), (2, 1))])
     @pytest.mark.parametrize("jac", [None, jac_fun])
-    @pytest.mark.parametrize("args", [None, ()])
-    @pytest.mark.parametrize("kwargs", [None, {}])
     def test_inputs(
         self,
         y,
@@ -695,25 +693,21 @@ class TestFit:
         f_bounds,
         p_bounds,
         jac,
-        args,
-        kwargs,
     ):
         p0 = self.p0
         x = self.x
         dt = self.dt
         p = fit(
             tfun,
-            p0,
             x,
             y,
+            p0,
+            noise_parms,
             dt=dt,
-            noise_parms=noise_parms,
             numpy_sign_convention=numpy_sign_convention,
             f_bounds=f_bounds,
             p_bounds=p_bounds,
             jac=jac,
-            args=args,
-            kwargs=kwargs,
         )
         assert_allclose(p.p_opt, p0)
 
@@ -724,7 +718,7 @@ class TestFit:
         y = self.y_numpy_sign_true
 
         with pytest.raises(ValueError):
-            _ = fit(tfun, p0, x, y, dt=dt, p_bounds=())
+            _ = fit(tfun, x, y, p0, dt=dt, p_bounds=())
 
         with pytest.raises(ValueError):
-            _ = fit(tfun, p0, x, y, dt=dt, noise_parms=(0, 0))
+            _ = fit(tfun, x, y, p0, (0, 0), dt=dt)

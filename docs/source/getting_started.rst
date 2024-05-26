@@ -7,11 +7,24 @@ Getting Started
 Installation
 ------------
 
-Using pip: ::
+The tabs below show the commands to install THzTools with ``pip`` or ``conda``.
 
-    pip install thztools
+.. tabs::
+    .. tab:: pip
 
-The package name is ``thztools``, and the import convention is: ::
+        ::
+
+            pip install thztools
+
+    .. tab:: conda
+
+        ::
+
+            conda install -c conda-forge thztools
+
+Once installed, the package name is ``thztools``, and the import convention is:
+
+::
 
     import thztools as thz
 
@@ -21,8 +34,8 @@ Recommended imports
 The following packages are not required to use ``thztools`` but make it more
 convenient to use.
 
-- `matplotlib <https://matplotlib.org/>`_
+- `Matplotlib <https://matplotlib.org/>`_
 
-- `numpy <https://numpy.org/>`_
+- `NumPy <https://numpy.org/>`_
 
-- `scipy <https://docs.scipy.org/>`_
+- `SciPy <https://docs.scipy.org/>`_

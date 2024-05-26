@@ -5,7 +5,34 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org)
 for maintaining this file.
 
-## [0.4.0] - 2024-05-09
+## [0.4.1] - 2024-05-25
+
+### Changed
+
+- Refactor `options`
+- Use explicit `dt` keyword option instead of global option in examples
+- Change hatch doctest script from Sphinx to PyTest
+- Change signature of `fit`
+- Revise documentation for `fit`, `FitResult`, `get_option`, `set_option`,
+  `transfer`
+- Refactor `_costfuntls`
+
+### Added
+
+- Add version badges for pip and Anaconda
+- Add conda installation instructions
+- Add `FitResult` dataclass and use it to return `fit` output
+- Add `autouse` fixture to reset `sampling_time` option to default before each
+  test
+- Add Python 3.12 to testing workflow
+- Add global doctest imports explicitly to docstrings
+- Add `numpy_sign_convention` parameter to `fit`
+
+### Fixed
+
+- Fix scaling error in `_parse_noisefit_output`
+
+## [0.4.0] - 2024-05-10
 
 ### Changed
 
@@ -51,8 +78,6 @@ for maintaining this file.
 - Add Contributing and Examples pages to documentation
 - Add Code of Conduct
 - Add gallery of Jupyter notebook examples to documentation using `nbsphinx`
-
-### Removed
 
 ### Fixed
 
@@ -158,6 +183,7 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.4.1]: https://github.com/dodge-research-group/thztools/releases/tag/v0.4.1
 [0.4.0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.4.0
 [0.3.6]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.6
 [0.3.5]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.5

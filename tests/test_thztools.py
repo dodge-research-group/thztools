@@ -16,6 +16,7 @@ from thztools.thztools import (
     fit,
     noisefit,
     scaleshift,
+    set_option,
     transfer,
     wave,
 )
@@ -41,16 +42,20 @@ def jac_fun(p, w):
     return np.stack((exp_ipw, 1j * w * p[0] * exp_ipw)).T
 
 
+# Reset options before each test
+@pytest.fixture(autouse=True)
+def reset_options():
+    set_option("sampling_time", None)
+
+
 class TestOptions:
     def test_sampling_time(self):
         assert thztools.get_option("sampling_time") is None
 
     @pytest.mark.parametrize("global_sampling_time", [None, 0.1])
     @pytest.mark.parametrize("dt", [None, 0.1, 1.0])
-    def test_assignment(self, global_sampling_time, dt, monkeypatch):
-        monkeypatch.setattr(
-            thztools.options, "sampling_time", global_sampling_time
-        )
+    def test_assignment(self, global_sampling_time, dt):
+        set_option("sampling_time", global_sampling_time)
         if global_sampling_time is None and dt is None:
             assert np.isclose(_assign_sampling_time(dt), 1.0)
         elif global_sampling_time is None and dt is not None:
@@ -656,46 +661,64 @@ class TestNoiseFit:
 
 
 class TestFit:
-    rng = np.random.default_rng(0)
     n = 16
     dt = 1.0 / n
     t = np.arange(n) * dt
-    mu = np.cos(2 * pi * t)
-    p0 = (1, 0)
-    psi = mu
+    x = np.cos(2 * pi * t)
+    p0 = (0.5, dt)
+
+    y_numpy_sign_true = transfer(
+        tfun2, x, dt=dt, args=p0, numpy_sign_convention=True
+    )
+    y_numpy_sign_false = transfer(
+        tfun2, x, dt=dt, args=p0, numpy_sign_convention=False
+    )
     alpha, beta, tau = 1e-5, 0, 0
     sigma = np.array([alpha, beta, tau])
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
-    noise_amp = noise_model.noise_amp(mu)
-    x = mu + noise_amp * rng.standard_normal(n)
-    y = psi + noise_amp * rng.standard_normal(n)
 
     @pytest.mark.parametrize("noise_parms", [(1, 0, 0), sigma**2])
+    @pytest.mark.parametrize(
+        "y, numpy_sign_convention",
+        [[y_numpy_sign_true, True], [y_numpy_sign_false, False]],
+    )
+    @pytest.mark.parametrize("f_bounds", [None, (0.0, np.inf)])
     @pytest.mark.parametrize("p_bounds", [None, ((0, -1), (2, 1))])
     @pytest.mark.parametrize("jac", [None, jac_fun])
-    @pytest.mark.parametrize("kwargs", [None, {}])
-    def test_inputs(self, noise_parms, p_bounds, jac, kwargs):
+    def test_inputs(
+        self,
+        y,
+        noise_parms,
+        numpy_sign_convention,
+        f_bounds,
+        p_bounds,
+        jac,
+    ):
         p0 = self.p0
         x = self.x
-        y = self.y
         dt = self.dt
         p = fit(
             tfun,
-            p0,
             x,
             y,
+            p0,
+            noise_parms,
             dt=dt,
-            sigma_parms=noise_parms,
+            numpy_sign_convention=numpy_sign_convention,
+            f_bounds=f_bounds,
             p_bounds=p_bounds,
             jac=jac,
-            kwargs=kwargs,
         )
-        assert_allclose(p["p_opt"], p0, atol=1e-6)
+        assert_allclose(p.p_opt, p0)
 
     def test_errors(self):
         p0 = self.p0
         x = self.x
-        y = self.y
         dt = self.dt
+        y = self.y_numpy_sign_true
+
         with pytest.raises(ValueError):
-            _ = fit(tfun, p0, x, y, dt=dt, p_bounds=())
+            _ = fit(tfun, x, y, p0, dt=dt, p_bounds=())
+
+        with pytest.raises(ValueError):
+            _ = fit(tfun, x, y, p0, (0, 0), dt=dt)

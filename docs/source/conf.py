@@ -60,6 +60,7 @@ extensions = [
     "numpydoc",
     "sphinx_design",
     "sphinx_gallery.load_style",
+    "sphinx_tabs.tabs",
     "sphinx.ext.intersphinx",
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
@@ -106,7 +107,7 @@ rng = np.random.default_rng(0)
 nbsphinx_allow_errors = True
 
 # Set PYTHONPATH to local src directory (otherwise installs from PyPI)
-src = os.path.abspath('../../src')
+src = os.path.abspath("../../src")
 os.environ["PYTHONPATH"] = str(src)
 
 # -----------------------------------------------------------------------------
@@ -139,6 +140,7 @@ plot_html_show_formats = False
 plot_html_show_source_link = False
 plot_pre_code = """
 import numpy as np
+import thztools as thz
 """
 plot_apply_rcparams = True
 

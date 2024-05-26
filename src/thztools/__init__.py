@@ -1,5 +1,10 @@
+"""
+THzTools provides data analysis software tools for terahertz time-domain
+spectroscopy (THz-TDS).
+"""
 from thztools.__about__ import __version__
 from thztools.thztools import (
+    FitResult,
     GlobalOptions,
     NoiseModel,
     NoiseResult,
@@ -14,9 +19,8 @@ from thztools.thztools import (
     wave,
 )
 
-set_option("sampling_time", None)
-
 __all__ = [
+    "FitResult",
     "GlobalOptions",
     "NoiseModel",
     "NoiseResult",

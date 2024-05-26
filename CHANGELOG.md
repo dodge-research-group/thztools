@@ -26,7 +26,6 @@ for maintaining this file.
   test
 - Add Python 3.12 to testing workflow
 - Add global doctest imports explicitly to docstrings
-- Add `r_tls` to `FitResult` class
 - Add `numpy_sign_convention` parameter to `fit`
 
 ### Fixed

@@ -60,6 +60,8 @@ dependencies = [
     "matplotlib",
     "numdifftools",
     "pytest",
+    "pytest-cov",
+    "scipy-doctest",
 ]
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
@@ -209,7 +211,7 @@ dependencies = [
 ]
 [tool.hatch.envs.docs.scripts]
 build = "sphinx-build -v -b html docs/source docs/build/html"
-test = "sphinx-build -v -b doctest docs/source docs/doctest"
+test = "pytest -v src/thztools --doctest-modules"
 
 [tool.mypy]
 plugins = "numpy.typing.mypy_plugin"

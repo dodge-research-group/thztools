@@ -11,6 +11,7 @@ Global options
     :caption: Global options
 
     get_option
+    reset_option
     set_option
 
 Noise model

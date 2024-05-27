@@ -173,6 +173,7 @@ branch = true
 parallel = true
 omit = [
     "src/thztools/__about__.py",
+    "src/thztools/conftest.py"
 ]
 
 [tool.coverage.paths]

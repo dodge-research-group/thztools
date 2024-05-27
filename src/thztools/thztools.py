@@ -64,12 +64,17 @@ def set_option(key: str, value: Any) -> None:
 
     Examples
     --------
+    The global `sampling_time` option is initialized to ``None`` at startup.
+
     >>> import thztools as thz
+    >>> thz.get_option("sampling_time")
+
+    Use the :func:`set_option` function to set the global sampling time to the
+    preferred value.
+
     >>> thz.set_option("sampling_time", 0.05)
     >>> thz.get_option("sampling_time")
     0.05
-    >>> thz.set_option("sampling_time", None)
-    >>> thz.get_option("sampling_time")
     """
     setattr(options, key, value)
 
@@ -99,14 +104,69 @@ def get_option(key: str) -> Any:
 
     Examples
     --------
+    The global `sampling_time` option is initialized to ``None`` at startup.
+
     >>> import thztools as thz
+    >>> thz.get_option("sampling_time")
+
+    Set the global sampling time to a preferred value.
+
     >>> thz.set_option("sampling_time", 0.05)
     >>> thz.get_option("sampling_time")
     0.05
-    >>> thz.set_option("sampling_time", None)
-    >>> thz.get_option("sampling_time")
     """
     return getattr(options, key)
+
+
+def reset_option(key: str | None = None) -> None:
+    r"""
+    Reset one or more global options to default values.
+
+    Parameters
+    ----------
+    key : str, optional
+        Option name. When ``None``, the default, resets all options.
+
+    Returns
+    -------
+    None
+        No return value.
+
+    Notes
+    -----
+    Available options, with descriptions:
+
+    sampling_time : float | None
+        Global sampling time, normally in picoseconds. When set to None, the
+        default, times and frequencies are treated as dimensionless quantities
+        that are scaled by the (undetermined) sampling time.
+
+    Examples
+    --------
+    The global `sampling_time` option is initialized to ``None`` at startup.
+
+    >>> import thztools as thz
+    >>> thz.get_option("sampling_time")
+
+    Use the :func:`set_option` function to change the value from the default.
+
+    >>> thz.set_option("sampling_time", 0.05)
+    >>> thz.get_option("sampling_time")
+    0.05
+
+    Reset all options to default values.
+
+    >>> thz.reset_option()
+    >>> thz.get_option("sampling_time")
+    """
+    default_options = GlobalOptions()
+    if key is not None:
+        val = getattr(default_options, key)
+        set_option(key, val)
+    else:
+        for key in GlobalOptions.__dataclass_fields__.keys():
+            val = getattr(default_options, key)
+            set_option(key, val)
 
 
 def _assign_sampling_time(dt: float | None) -> float:
@@ -587,14 +647,7 @@ def transfer(
 
     Note that this form assumes the :math:`e^{+i\omega t}` representation
     of harmonic time dependence, which corresponds to the default setting
-    ``fft_sign=True``.
-
-    If the transfer function is expressed using the :math:`e^{-i\omega t}`
-    representation, more common in physics,
-
-    .. math:: H(\omega) = a\exp(i\omega\tau),
-
-    set ``fft_sign=False``.
+    ``numpy_sign_convention=True``.
 
     >>> import numpy as np
     >>> import thztools as thz
@@ -618,10 +671,17 @@ def transfer(
     >>> ax.set_ylabel('Amplitude (arb. units)')
     >>> plt.show()
 
+    If the transfer function is expressed using the :math:`e^{-i\omega t}`
+    representation, more common in physics,
+
+    .. math:: H(\omega) = a\exp(i\omega\tau),
+
+    set ``numpy_sign_convention=False``.
+
     >>> def shiftscale_phys(_w, _a, _tau):
     ...     return _a * np.exp(1j * _w * _tau)
     >>>
-    >>> y_p = thz.transfer(shiftscale_phys, x,
+    >>> y_p = thz.transfer(shiftscale_phys, x, dt=dt,
     ...                    numpy_sign_convention=False,
     ...                    args=(0.5, 1))
 
@@ -700,7 +760,6 @@ def timebase(
     assigning the sampling time.
 
     >>> import thztools as thz
-    >>> thz.set_option("sampling_time", None)
     >>> n, dt, t_init = 256, 0.05, 2.5
     >>> t_1 = thz.timebase(n)
     >>> t_2 = thz.timebase(n, dt=dt)
@@ -1389,7 +1448,7 @@ def noisefit(
     >>> x = z + noise_model.noise_sim(z, axis=1, seed=1234)
     >>> noise_res = thz.noisefit(x, sigma_alpha0=alpha, sigma_beta0=beta,
     ...  sigma_tau0=tau, dt=dt)
-    >>> noise_res.noise_model  #doctest: +NORMALIZE_WHITESPACE
+    >>> noise_res.noise_model
     NoiseModel(sigma_alpha=9.9...e-05, sigma_beta=0.0096...,
     sigma_tau=4.27...e-06, dt=0.05)
 

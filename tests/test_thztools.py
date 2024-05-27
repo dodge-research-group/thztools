@@ -14,7 +14,9 @@ from thztools.thztools import (
     _costfuntls,
     _parse_noisefit_input,
     fit,
+    get_option,
     noisefit,
+    reset_option,
     scaleshift,
     set_option,
     transfer,
@@ -44,13 +46,17 @@ def jac_fun(p, w):
 
 # Reset options before each test
 @pytest.fixture(autouse=True)
-def reset_options():
-    set_option("sampling_time", None)
+def global_reset():
+    reset_option()
 
 
 class TestOptions:
-    def test_sampling_time(self):
-        assert thztools.get_option("sampling_time") is None
+    def test_get_set_reset(self):
+        assert get_option("sampling_time") is None
+        set_option("sampling_time", 1.0)
+        assert np.isclose(get_option("sampling_time"), 1.0)
+        reset_option("sampling_time")
+        assert get_option("sampling_time") is None
 
     @pytest.mark.parametrize("global_sampling_time", [None, 0.1])
     @pytest.mark.parametrize("dt", [None, 0.1, 1.0])

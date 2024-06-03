@@ -681,10 +681,13 @@ class TestNoiseFit:
 
         m = self.m
         sigma = self.sigma
-        sigma_est = (np.asarray([result.noise_model.sigma_alpha,
-                                 result.noise_model.sigma_beta,
-                                 result.noise_model.sigma_tau])
-                     * np.sqrt(m / (m - 1)))
+        sigma_est = np.asarray(
+            [
+                result.noise_model.sigma_alpha,
+                result.noise_model.sigma_beta,
+                result.noise_model.sigma_tau,
+            ]
+        ) * np.sqrt(m / (m - 1))
         assert_allclose(sigma_est / sigma, np.ones(3), atol=1e-1, rtol=1e-1)
 
 

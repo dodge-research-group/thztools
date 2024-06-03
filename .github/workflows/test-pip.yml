@@ -39,4 +39,4 @@ jobs:
       run: hatch run cov
 
     - name: Run doctests
-      run: hatch run docs:test
+      run: hatch run doctest

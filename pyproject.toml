@@ -59,8 +59,11 @@ dependencies = [
     "jupyter",
     "matplotlib",
     "numdifftools",
+    "numpy",
     "pytest",
     "pytest-cov",
+    "scipy",
+    "scipy-doctest",
     "scipy-doctest",
 ]
 [tool.hatch.envs.default.scripts]
@@ -75,6 +78,7 @@ cov = [
     "test-cov",
     "cov-report",
 ]
+doctest = "pytest -v --doctest-modules {args:src/thztools}"
 make-logo = ["python logo/make_logo.py; mv thztools_logo.svg docs/source/_static/;mv thztools_logo_dark.svg docs/source/_static/"]
 
 [[tool.hatch.envs.all.matrix]]
@@ -202,13 +206,8 @@ dependencies = [
     "IPython",
     "matplotlib",
     "nbsphinx",
-    "numpy",
     "numpydoc",
     "pydata-sphinx-theme",
-    "pytest",
-    "pytest-cov",
-    "scipy",
-    "scipy-doctest",
     "sphinx",
     "sphinx-design",
     "sphinx-gallery",
@@ -217,7 +216,6 @@ dependencies = [
 ]
 [tool.hatch.envs.docs.scripts]
 build = "sphinx-build -v -b html docs/source docs/build/html"
-test = "pytest -v src/thztools --doctest-modules"
 
 [tool.mypy]
 plugins = "numpy.typing.mypy_plugin"

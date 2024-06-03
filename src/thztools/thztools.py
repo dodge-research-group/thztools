@@ -280,10 +280,9 @@ class NoiseModel:
         Parameters
         ----------
         x :  array_like
-            Time-domain signal.
+            Time-domain signal array.
         axis : int, optional
-            Axis over which to apply the correction. If not given, applies over
-            the last axis in ``x``.
+            Signal axis. Default is the last axis in ``x``.
 
         Returns
         -------
@@ -370,10 +369,9 @@ class NoiseModel:
         Parameters
         ----------
         x :  array_like
-            Time-domain signal.
+            Time-domain signal array.
         axis : int, optional
-            Axis over which to apply the correction. If not given, applies over
-            the last axis in ``x``.
+            Signal axis. Default is the last axis in ``x``.
 
         Returns
         -------
@@ -443,10 +441,9 @@ class NoiseModel:
         Parameters
         ----------
         x :  array_like
-            Time-domain signal.
+            Time-domain signal array.
         axis : int, optional
-            Axis over which to apply the correction. If not given, applies over
-            the last axis in ``x``.
+            Signal axis. Default is the last axis in ``x``.
         seed : int or None, optional
             Random number generator seed.
 
@@ -1781,7 +1778,7 @@ def _parse_noisefit_output(
     if fix_sigma_tau:
         tau = sigma_tau0
     else:
-        tau = np.exp(x_out[0] / 2) * scale_sigma_tau
+        tau = np.exp(x_out[0] / 2) * scale_sigma_tau * dt
         x_out = x_out[1:]
     # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)

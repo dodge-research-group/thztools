@@ -654,8 +654,22 @@ class TestNoiseFit:
         fix_eta,
     ):
         x = self.x
+        dt = self.dt
+        sigma_alpha0 = self.alpha
+        sigma_beta0 = self.beta
+        sigma_tau0 = self.tau
+        mu0 = self.mu
+        a0 = self.a
+        eta0 = self.eta
         result = noisefit(
             x.T,
+            dt=dt,
+            sigma_alpha0=sigma_alpha0,
+            sigma_beta0=sigma_beta0,
+            sigma_tau0=sigma_tau0,
+            mu0=mu0,
+            a0=a0,
+            eta0=eta0,
             fix_sigma_alpha=fix_sigma_alpha,
             fix_sigma_beta=fix_sigma_beta,
             fix_sigma_tau=fix_sigma_tau,
@@ -664,6 +678,14 @@ class TestNoiseFit:
             fix_eta=fix_eta,
         )
         assert result.diagnostic["status"] == 0
+
+        m = self.m
+        sigma = self.sigma
+        sigma_est = (np.asarray([result.noise_model.sigma_alpha,
+                                 result.noise_model.sigma_beta,
+                                 result.noise_model.sigma_tau])
+                     * np.sqrt(m / (m - 1)))
+        assert_allclose(sigma_est / sigma, np.ones(3), atol=1e-1, rtol=1e-1)
 
 
 class TestFit:

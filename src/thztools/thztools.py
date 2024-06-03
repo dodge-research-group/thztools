@@ -1348,7 +1348,7 @@ def noisefit(
     scale_delta_mu : array_like with shape(n,), optional
         Scale for varying signal vector. When set to ``None``, the default,
         use ``NoiseModel(sigma_alpha0, sigma_beta0,
-        sigma_tau0).amplitude(mu0)``.
+        sigma_tau0).noise_amp(mu0)``.
     scale_delta_a : array_like with shape(n,), optional
             Scale for varying signal amplitude drift vector. Default is
             ``1.0e-2`` for all entries.

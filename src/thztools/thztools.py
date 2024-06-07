@@ -1101,7 +1101,7 @@ def _costfun_noisefit(
     scale_eta: NDArray[np.float64],
 ) -> tuple[float, NDArray[np.float64]]:
     r"""
-    Compute the scaled cost function for the time-domain noise model.
+    Compute the cost function for the time-domain noise model.
 
     Computes the scaled maximum-likelihood cost function for obtaining the
     data matrix ``x`` given ``logv_alpha``, ``logv_beta``, ``logv_tau``,
@@ -1146,11 +1146,12 @@ def _costfun_noisefit(
 
     Returns
     -------
-    costfun_scaled : float
-        Scaled negative log-likelihood.
+    nll : float
+        Negative log-likelihood, with constant offset :math:`(MN/2)\ln(2\pi)`
+        subtracted.
     gradnll_scaled : ndarray
-        Gradient of the negative scaled log-likelihood function with respect to
-        free parameters.
+        Gradient of the negative log-likelihood function with respect to
+        the free parameters.
     """
     m, n = x.shape
 
@@ -1190,7 +1191,7 @@ def _costfun_noisefit(
     vtot = valpha + vbeta + vtau
 
     resnormsq_scaled = ressq / vtot
-    costfun_scaled = np.sum(np.log(vtot)) + np.sum(resnormsq_scaled)
+    nll = 0.5 * (np.sum(np.log(vtot)) + np.sum(resnormsq_scaled))
 
     # Compute gradient
     gradnll_scaled = np.array([], dtype=np.float64)
@@ -1208,17 +1209,17 @@ def _costfun_noisefit(
         if not fix_logv_alpha:
             gradnll_scaled = np.append(
                 gradnll_scaled,
-                np.sum(dvar) * var_parms[0],
+                0.5 * np.sum(dvar) * var_parms[0],
             )
         if not fix_logv_beta:
             gradnll_scaled = np.append(
                 gradnll_scaled,
-                np.sum(zeta**2 * dvar) * var_parms[1],
+                0.5 * np.sum(zeta**2 * dvar) * var_parms[1],
             )
         if not fix_logv_tau:
             gradnll_scaled = np.append(
                 gradnll_scaled,
-                np.sum(dzeta**2 * dvar) * var_parms[2],
+                0.5 * np.sum(dzeta**2 * dvar) * var_parms[2],
             )
         if not fix_delta_mu:
             # Gradient wrt delta
@@ -1227,8 +1228,7 @@ def _costfun_noisefit(
             ] * w * rfft(dvar * dzeta)
             gradnll_scaled = np.append(
                 gradnll_scaled,
-                -2
-                * np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
+                -np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
                 * scale_delta_mu,
             )
         if not fix_delta_a:
@@ -1237,7 +1237,7 @@ def _costfun_noisefit(
             dnllda = np.sum(term, axis=1).T / a
             # Exclude first term, which is held fixed
             gradnll_scaled = np.append(
-                gradnll_scaled, 2 * dnllda[1:] * scale_delta_a
+                gradnll_scaled, dnllda[1:] * scale_delta_a
             )
         if not fix_eta:
             # Gradient wrt eta
@@ -1250,10 +1250,10 @@ def _costfun_noisefit(
             )
             # Exclude first term, which is held fixed
             gradnll_scaled = np.append(
-                gradnll_scaled, 2 * dnlldeta[1:] * scale_eta
+                gradnll_scaled, dnlldeta[1:] * scale_eta
             )
 
-    return costfun_scaled / (m * n), gradnll_scaled / (m * n)
+    return nll, gradnll_scaled
 
 
 def noisefit(
@@ -1383,7 +1383,7 @@ def noisefit(
         Q_\text{ML}\
         (\sigma_\alpha,\sigma_\beta,\sigma_\tau,\boldsymbol{\mu},\
         \mathbf{A},\boldsymbol{\eta};\mathbf{X})\
-        = \frac{1}{MN}\sum_{k=0}^{N-1}\sum_{l=0}^{M-1}& \
+        = \frac{1}{2}\sum_{k=0}^{N-1}\sum_{l=0}^{M-1}& \
         \left[\ln\sigma_{kl}^2 + \frac{(X_{kl} \
         - Z_{kl})^2}{\sigma_{kl}^2}\right]\
         \end{split}
@@ -1487,12 +1487,7 @@ def noisefit(
     objective, x0, input_parsed = parsed
 
     # Minimize cost function with respect to free parameters
-    out = minimize(
-        objective,
-        x0,
-        method="BFGS",
-        jac=True,
-    )
+    out = minimize(objective, x0, method="BFGS", jac=True, tol=1e-5 * x.size)
     fit_result = _parse_noisefit_output(out, x, dt=dt, **input_parsed)
     return fit_result
 
@@ -1814,9 +1809,9 @@ def _parse_noisefit_output(
                     fix_eta,
                 ],
                 [
-                    [scale_sigma_alpha],
-                    [scale_sigma_beta],
-                    [scale_sigma_tau],
+                    [alpha / 2],
+                    [beta / 2],
+                    [tau / 2],
                     scale_delta_mu,
                     scale_delta_a,
                     scale_eta,
@@ -1838,19 +1833,19 @@ def _parse_noisefit_output(
     # Parse error vector
     # Propagate error from log(V) to sigma
     if not fix_sigma_alpha:
-        err_sigma_alpha = np.sqrt(0.5 * alpha * err[0])
+        err_sigma_alpha = err[0]
         err = err[1:]
     else:
         err_sigma_alpha = 0.0
 
     if not fix_sigma_beta:
-        err_sigma_beta = np.sqrt(0.5 * beta * err[0])
+        err_sigma_beta = err[0]
         err = err[1:]
     else:
         err_sigma_beta = 0.0
 
     if not fix_sigma_tau:
-        err_sigma_tau = np.sqrt(0.5 * tau * err[0])
+        err_sigma_tau = err[0]
         err = err[1:]
     else:
         err_sigma_tau = 0.0

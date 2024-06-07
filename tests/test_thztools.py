@@ -376,7 +376,7 @@ class TestTDNLLScaled:
             ],
             [
                 False,
-                [1.0],
+                [m * n / 2],
             ],
         ],
     )

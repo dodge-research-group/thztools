@@ -1103,7 +1103,7 @@ def _costfun_noisefit(
     r"""
     Compute the cost function for the time-domain noise model.
 
-    Computes the scaled maximum-likelihood cost function for obtaining the
+    Computes the maximum-likelihood cost function for obtaining the
     data matrix ``x`` given ``logv_alpha``, ``logv_beta``, ``logv_tau``,
     ``delta_mu``, ``delta_a``, ``eta``, ``scale_sigma_alpha``,
     ``scale_sigma_beta``, ``scale_sigma_tau``, ``scale_delta_mu``,
@@ -1222,7 +1222,7 @@ def _costfun_noisefit(
                 0.5 * np.sum(dzeta**2 * dvar) * var_parms[2],
             )
         if not fix_delta_mu:
-            # Gradient wrt delta
+            # Gradient wrt delta_mu
             p = rfft(var_parms[1] * dvar * zeta - reswt) - 1j * var_parms[
                 2
             ] * w * rfft(dvar * dzeta)
@@ -1232,7 +1232,7 @@ def _costfun_noisefit(
                 * scale_delta_mu,
             )
         if not fix_delta_a:
-            # Gradient wrt alpha
+            # Gradient wrt delta_a
             term = (vtot - valpha) * dvar - reswt * zeta
             dnllda = np.sum(term, axis=1).T / a
             # Exclude first term, which is held fixed

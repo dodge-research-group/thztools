@@ -1080,12 +1080,12 @@ def _costfuntls(
 
 def _costfun_noisefit(
     x: NDArray[np.float64],
-    logv_alpha: float,
-    logv_beta: float,
-    logv_tau: float,
-    delta_mu: NDArray[np.float64],
-    delta_a: NDArray[np.float64],
-    eta: NDArray[np.float64],
+    logv_alpha_scaled: float,
+    logv_beta_scaled: float,
+    logv_tau_scaled: float,
+    delta_mu_scaled: NDArray[np.float64],
+    delta_a_scaled: NDArray[np.float64],
+    eta_scaled: NDArray[np.float64],
     *,
     fix_logv_alpha: bool,
     fix_logv_beta: bool,
@@ -1095,34 +1095,33 @@ def _costfun_noisefit(
     fix_eta: bool,
     scale_sigma_alpha: float,
     scale_sigma_beta: float,
-    scale_sigma_tau: float,
+    scale_sigma_tau_on_dt: float,
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
-    scale_eta: NDArray[np.float64],
+    scale_eta_on_dt: NDArray[np.float64],
 ) -> tuple[float, NDArray[np.float64]]:
     r"""
     Compute the cost function for the time-domain noise model.
 
     Computes the maximum-likelihood cost function for obtaining the
-    data matrix ``x`` given ``logv_alpha``, ``logv_beta``, ``logv_tau``,
-    ``delta_mu``, ``delta_a``, ``eta``, ``scale_sigma_alpha``,
-    ``scale_sigma_beta``, ``scale_sigma_tau``, ``scale_delta_mu``,
-    ``scale_delta_a``, and ``scale_eta``.
+    data matrix ``x`` given ``logv_alpha_scaled``, ``logv_beta_scaled``,
+    ``logv_tau_scaled``, ``delta_mu_scaled``, ``delta_a_scaled``,
+    ``eta_scaled``, ``scale_sigma_alpha``, ``scale_sigma_beta``,
+    ``scale_sigma_tau_on_dt``, ``scale_delta_mu``, ``scale_delta_a``, and
+    ``scale_eta_on_dt``.
 
     Parameters
     ----------
     x : ndarray
         Data matrix with shape (m, n), row-oriented.
-    logv_alpha, logv_beta, logv_tau : float
-        Logarithm of the associated noise variance parameter, with sigma_tau
-        given in units of the sampling time.
-    delta_mu : ndarray
-        Signal deviation vector with shape (n,).
-    delta_a: ndarray
-        Amplitude deviation vector with shape (m - 1,).
-    eta : ndarray
-        Delay deviation vector with shape (m - 1,), given in units of the
-        sampling time.
+    logv_alpha_scaled, logv_beta_scaled, logv_tau_scaled : float
+        Logarithm of the associated scaled noise variance parameter.
+    delta_mu_scaled : ndarray
+        Scaled signal deviation vector with shape (n,).
+    delta_a_scaled: ndarray
+        Scaled amplitude deviation vector with shape (m - 1,).
+    eta_scaled : ndarray
+        Scaled delay deviation vector with shape (m - 1,).
     fix_logv_alpha, fix_logv_beta, fix_logv_tau : bool
         Exclude noise parameter from gradiate calculation when ``True``.
     fix_delta_mu : bool
@@ -1134,15 +1133,23 @@ def _costfun_noisefit(
     fix_eta : bool
         Exclude signal delay deviation vector from gradiate calculation when
         ``True``.
-    scale_sigma_alpha, scale_sigma_beta,  scale_sigma_tau: float
+    scale_sigma_alpha, scale_sigma_beta,  scale_sigma_tau_on_dt: float
         Scale parameters for ``sigma_alpha``, ``sigma_beta``, and
-        ``sigma_tau``.
+        ``sigma_tau``. The scale parameter for ``sigma_tau`` should be
+        expressed in terms of the sampling time, i.e.,
+        ``scale_sigma_tau_on_dt = scale_sigma_tau / dt``, where ``dt`` is the
+        sampling time and ``scale_sigma_tau`` is the scale factor used in
+        ``logv_tau_scaled = np.log((sigma_tau / scale_sigma_tau)**2)``.
     scale_delta_mu : ndarray
         Array of scale parameters for ``delta`` with shape (n,).
     scale_delta_a : ndarray
         Array of scale parameters for ``alpha`` with shape (m - 1,).
-    scale_eta : ndarray
-        Array of scale parameters for ``eta`` with shape (m - 1,).
+    scale_eta_on_dt : ndarray
+        Array of scale parameters for ``eta`` with shape (m - 1,). Should be
+        expressed in terms of the sampling time, i.e.,
+        ``scale_sigma_tau_on_dt = scale_sigma_tau / dt``, where ``dt`` is the
+        sampling time and ``scale_eta`` is the scale factor used in
+        ``eta_scaled = eta / scale_eta``.
 
     Returns
     -------
@@ -1155,24 +1162,27 @@ def _costfun_noisefit(
     """
     m, n = x.shape
 
-    logv = np.asarray([logv_alpha, logv_beta, logv_tau], dtype=np.float64)
+    logv = np.asarray(
+        [logv_alpha_scaled, logv_beta_scaled, logv_tau_scaled],
+        dtype=np.float64,
+    )
 
     # Compute noise model parameters, mu, a, and eta.
     scale_sigma = np.array(
-        [scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau],
+        [scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau_on_dt],
         dtype=np.float64,
     )
     var_parms = np.exp(logv) * scale_sigma**2
-    mu = x[0, :] - delta_mu * scale_delta_mu
-    a = np.insert(1.0 + delta_a * scale_delta_a, 0, 1.0)
-    eta = np.insert(eta * scale_eta, 0, 0.0)
+    mu = x[0, :] - delta_mu_scaled * scale_delta_mu
+    a = np.insert(1.0 + delta_a_scaled * scale_delta_a, 0, 1.0)
+    eta_scaled = np.insert(eta_scaled * scale_eta_on_dt, 0, 0.0)
 
     # Compute frequency vector and Fourier coefficients of mu
     f = rfftfreq(n)
     w = 2 * np.pi * f
     mu_f = rfft(mu)
 
-    exp_iweta = np.exp(1j * np.outer(eta, w))
+    exp_iweta = np.exp(1j * np.outer(eta_scaled, w))
     zeta_f = ((np.conj(exp_iweta) * mu_f).T * a).T
     zeta = irfft(zeta_f, n=n)
 
@@ -1250,7 +1260,7 @@ def _costfun_noisefit(
             )
             # Exclude first term, which is held fixed
             gradnll_scaled = np.append(
-                gradnll_scaled, dnlldeta[1:] * scale_eta
+                gradnll_scaled, dnlldeta[1:] * scale_eta_on_dt
             )
 
     return nll, gradnll_scaled
@@ -1699,10 +1709,10 @@ def _parse_noisefit_input(
             fix_eta=fix_eta,
             scale_sigma_alpha=scale_sigma_alpha,
             scale_sigma_beta=scale_sigma_beta,
-            scale_sigma_tau=scale_sigma_tau / dt,  # Scale in units of dt
+            scale_sigma_tau_on_dt=scale_sigma_tau / dt,  # Scale in units of dt
             scale_delta_mu=scale_delta_mu,
             scale_delta_a=scale_delta_a,
-            scale_eta=scale_eta / dt,  # Scale in units of dt
+            scale_eta_on_dt=scale_eta / dt,  # Scale in units of dt
         )
 
     input_parsed = {

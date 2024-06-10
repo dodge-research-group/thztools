@@ -495,10 +495,10 @@ class TestTDNLLScaled:
             fix_eta=fix_eta,
             scale_sigma_alpha=1.0,
             scale_sigma_beta=1.0,
-            scale_sigma_tau=1.0,
+            scale_sigma_tau_on_dt=1.0,
             scale_delta_mu=np.ones(n),
             scale_delta_a=np.ones(m - 1),
-            scale_eta=np.ones(m - 1),
+            scale_eta_on_dt=np.ones(m - 1),
         )
         assert_allclose(
             gradnll, desired_gradnll, atol=10 * np.finfo(float).eps

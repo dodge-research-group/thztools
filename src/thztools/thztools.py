@@ -1093,9 +1093,9 @@ def _costfun_noisefit(
     fix_delta_mu: bool,
     fix_delta_a: bool,
     fix_eta: bool,
-    scale_sigma_alpha: float,
-    scale_sigma_beta: float,
-    scale_sigma_tau_on_dt: float,
+    scale_logv_alpha: float,
+    scale_logv_beta: float,
+    scale_logv_tau: float,
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
     scale_eta_on_dt: NDArray[np.float64],
@@ -1133,13 +1133,8 @@ def _costfun_noisefit(
     fix_eta : bool
         Exclude signal delay deviation vector from gradiate calculation when
         ``True``.
-    scale_sigma_alpha, scale_sigma_beta,  scale_sigma_tau_on_dt: float
-        Scale parameters for ``sigma_alpha``, ``sigma_beta``, and
-        ``sigma_tau``. The scale parameter for ``sigma_tau`` should be
-        expressed in terms of the sampling time, i.e.,
-        ``scale_sigma_tau_on_dt = scale_sigma_tau / dt``, where ``dt`` is the
-        sampling time and ``scale_sigma_tau`` is the scale factor used in
-        ``logv_tau_scaled = np.log((sigma_tau / scale_sigma_tau)**2)``.
+    scale_logv_alpha, scale_logv_beta,  scale_logv_tau: float
+        Scale parameters for log variance parameters.
     scale_delta_mu : ndarray
         Array of scale parameters for ``delta`` with shape (n,).
     scale_delta_a : ndarray
@@ -1168,11 +1163,11 @@ def _costfun_noisefit(
     )
 
     # Compute noise model parameters, mu, a, and eta.
-    scale_sigma = np.array(
-        [scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau_on_dt],
+    scale_logv = np.array(
+        [scale_logv_alpha, scale_logv_beta, scale_logv_tau],
         dtype=np.float64,
     )
-    var_parms = np.exp(logv) * scale_sigma**2
+    var_parms = np.exp(logv * scale_logv)
     mu = x[0, :] - delta_mu_scaled * scale_delta_mu
     a = np.insert(1.0 + delta_a_scaled * scale_delta_a, 0, 1.0)
     eta_scaled = np.insert(eta_scaled * scale_eta_on_dt, 0, 0.0)
@@ -1219,17 +1214,23 @@ def _costfun_noisefit(
         if not fix_logv_alpha:
             gradnll_scaled = np.append(
                 gradnll_scaled,
-                0.5 * np.sum(dvar) * var_parms[0],
+                0.5 * np.sum(dvar) * var_parms[0] * scale_logv_alpha,
             )
         if not fix_logv_beta:
             gradnll_scaled = np.append(
                 gradnll_scaled,
-                0.5 * np.sum(zeta**2 * dvar) * var_parms[1],
+                0.5
+                * np.sum(zeta**2 * dvar)
+                * var_parms[1]
+                * scale_logv_beta,
             )
         if not fix_logv_tau:
             gradnll_scaled = np.append(
                 gradnll_scaled,
-                0.5 * np.sum(dzeta**2 * dvar) * var_parms[2],
+                0.5
+                * np.sum(dzeta**2 * dvar)
+                * var_parms[2]
+                * scale_logv_tau,
             )
         if not fix_delta_mu:
             # Gradient wrt delta_mu
@@ -1282,9 +1283,9 @@ def noisefit(
     fix_mu: bool = False,
     fix_a: bool = False,
     fix_eta: bool = False,
-    scale_sigma_alpha: float | None = None,
-    scale_sigma_beta: float | None = None,
-    scale_sigma_tau: float | None = None,
+    scale_logv_alpha: float | None = None,
+    scale_logv_beta: float | None = None,
+    scale_logv_tau: float | None = None,
     scale_delta_mu: ArrayLike | None = None,
     scale_delta_a: ArrayLike | None = None,
     scale_eta: ArrayLike | None = None,
@@ -1350,8 +1351,8 @@ def noisefit(
 
     Other Parameters
     ----------------
-    scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau : float, optional
-        Scale for varying noise parameters. Default is ``1.0``.
+    scale_logv_alpha, scale_logv_beta, scale_logv_tau : float, optional
+        Scale for varying the log of the variance parameters.
     scale_delta_mu : array_like with shape(n,), optional
         Scale for varying signal vector. When set to ``None``, the default,
         use ``NoiseModel(sigma_alpha0, sigma_beta0,
@@ -1486,9 +1487,9 @@ def noisefit(
         fix_mu=fix_mu,
         fix_a=fix_a,
         fix_eta=fix_eta,
-        scale_sigma_alpha=scale_sigma_alpha,
-        scale_sigma_beta=scale_sigma_beta,
-        scale_sigma_tau=scale_sigma_tau,
+        scale_logv_alpha=scale_logv_alpha,
+        scale_logv_beta=scale_logv_beta,
+        scale_logv_tau=scale_logv_tau,
         scale_delta_mu=scale_delta_mu,
         scale_delta_a=scale_delta_a,
         scale_eta=scale_eta,
@@ -1518,9 +1519,9 @@ def _parse_noisefit_input(
     fix_mu: bool,
     fix_a: bool,
     fix_eta: bool,
-    scale_sigma_alpha: float | None,
-    scale_sigma_beta: float | None,
-    scale_sigma_tau: float | None,
+    scale_logv_alpha: float | None,
+    scale_logv_beta: float | None,
+    scale_logv_tau: float | None,
     scale_delta_mu: ArrayLike | None,
     scale_delta_a: ArrayLike | None,
     scale_eta: ArrayLike | None,
@@ -1578,24 +1579,6 @@ def _parse_noisefit_input(
 
     noise_model = NoiseModel(sigma_alpha0, sigma_beta0, sigma_tau0, dt=dt)
 
-    if scale_sigma_alpha is None:
-        if np.isclose(sigma_alpha0, 0.0):
-            scale_sigma_alpha = 1.0
-        else:
-            scale_sigma_alpha = sigma_alpha0
-
-    if scale_sigma_beta is None:
-        if np.isclose(sigma_beta0, 0.0):
-            scale_sigma_beta = 1.0
-        else:
-            scale_sigma_beta = sigma_beta0
-
-    if scale_sigma_tau is None:
-        if np.isclose(sigma_tau0, 0.0):
-            scale_sigma_tau = 1.0
-        else:
-            scale_sigma_tau = sigma_tau0
-
     if scale_delta_mu is None:
         scale_delta_mu = noise_model.noise_amp(mu0)
         scale_delta_mu[np.isclose(scale_delta_mu, 0.0)] = np.sqrt(
@@ -1614,17 +1597,27 @@ def _parse_noisefit_input(
 
     scale_eta = np.asarray(scale_eta, dtype=np.float64)
 
-    scale_sigma = np.array(
-        [scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau],
+    if scale_logv_alpha is None:
+        scale_logv_alpha = 1 / m
+
+    if scale_logv_beta is None:
+        scale_logv_beta = 1 / m
+
+    if scale_logv_tau is None:
+        scale_logv_tau = 1 / m
+
+    scale_logv = np.array(
+        [scale_logv_alpha, scale_logv_beta, scale_logv_tau],
         dtype=np.float64,
     )
 
     # Replace log(x) with -1e2 when x <= 0
-    v0_scaled = (
-        np.asarray([sigma_alpha0, sigma_beta0, sigma_tau0], dtype=np.float64)
-        / scale_sigma
+    v0 = (
+        np.asarray(
+            [sigma_alpha0, sigma_beta0, sigma_tau0 / dt], dtype=np.float64
+        )
     ) ** 2
-    logv0_scaled = np.ma.log(v0_scaled).filled(-1.0e2)
+    logv0_scaled = np.ma.log(v0).filled(-1.0e2) / scale_logv
     delta0 = (x[:, 0] - mu0) / scale_delta_mu
 
     if a0 is None:
@@ -1707,9 +1700,9 @@ def _parse_noisefit_input(
             fix_delta_mu=fix_mu,
             fix_delta_a=fix_a,
             fix_eta=fix_eta,
-            scale_sigma_alpha=scale_sigma_alpha,
-            scale_sigma_beta=scale_sigma_beta,
-            scale_sigma_tau_on_dt=scale_sigma_tau / dt,  # Scale in units of dt
+            scale_logv_alpha=scale_logv_alpha,
+            scale_logv_beta=scale_logv_beta,
+            scale_logv_tau=scale_logv_tau,
             scale_delta_mu=scale_delta_mu,
             scale_delta_a=scale_delta_a,
             scale_eta_on_dt=scale_eta / dt,  # Scale in units of dt
@@ -1728,9 +1721,9 @@ def _parse_noisefit_input(
         "fix_mu": fix_mu,
         "fix_a": fix_a,
         "fix_eta": fix_eta,
-        "scale_sigma_alpha": scale_sigma_alpha,
-        "scale_sigma_beta": scale_sigma_beta,
-        "scale_sigma_tau": scale_sigma_tau,
+        "scale_logv_alpha": scale_logv_alpha,
+        "scale_logv_beta": scale_logv_beta,
+        "scale_logv_tau": scale_logv_tau,
         "scale_delta_mu": scale_delta_mu,
         "scale_delta_a": scale_delta_a,
         "scale_eta": scale_eta,
@@ -1755,9 +1748,9 @@ def _parse_noisefit_output(
     fix_mu: bool,
     fix_a: bool,
     fix_eta: bool,
-    scale_sigma_alpha: float,
-    scale_sigma_beta: float,
-    scale_sigma_tau: float,
+    scale_logv_alpha: float,
+    scale_logv_beta: float,
+    scale_logv_tau: float,
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
     scale_eta: NDArray[np.float64],
@@ -1770,17 +1763,17 @@ def _parse_noisefit_output(
     if fix_sigma_alpha:
         alpha = sigma_alpha0
     else:
-        alpha = np.exp(x_out[0] / 2) * scale_sigma_alpha
+        alpha = np.exp(x_out[0] * scale_logv_alpha / 2)
         x_out = x_out[1:]
     if fix_sigma_beta:
         beta = sigma_beta0
     else:
-        beta = np.exp(x_out[0] / 2) * scale_sigma_beta
+        beta = np.exp(x_out[0] * scale_logv_beta / 2)
         x_out = x_out[1:]
     if fix_sigma_tau:
         tau = sigma_tau0
     else:
-        tau = np.exp(x_out[0] / 2) * scale_sigma_tau
+        tau = np.exp(x_out[0] * scale_logv_tau / 2) * dt
         x_out = x_out[1:]
     # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
@@ -1819,9 +1812,9 @@ def _parse_noisefit_output(
                     fix_eta,
                 ],
                 [
-                    [alpha / 2],
-                    [beta / 2],
-                    [tau / 2],
+                    [scale_logv_alpha * alpha / 2],
+                    [scale_logv_beta * beta / 2],
+                    [scale_logv_tau * tau / 2],
                     scale_delta_mu,
                     scale_delta_a,
                     scale_eta,

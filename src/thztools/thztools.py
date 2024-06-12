@@ -1452,12 +1452,12 @@ def noisefit(
     >>> eta = 1e-3 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
     >>> z = thz.scaleshift(np.repeat(np.atleast_2d(mu), m, axis=0), dt=dt,
     ...                    a=a, eta=eta).T  # Orient the array columnwise
-    >>> x = z + noise_model.noise_sim(z, axis=0, seed=1234)
+    >>> x = z + noise_model.noise_sim(z, axis=0, seed=12345)
     >>> noise_res = thz.noisefit(x, sigma_alpha0=alpha, sigma_beta0=beta,
     ...  sigma_tau0=tau, dt=dt)
     >>> noise_res.noise_model
-    NoiseModel(sigma_alpha=9.961...e-05, sigma_beta=0.009655...,
-    sigma_tau=0.0009199..., dt=0.05)
+    NoiseModel(sigma_alpha=9.971...e-05, sigma_beta=0.00975...,
+    sigma_tau=0.000885..., dt=0.05)
 
     >>> plt.plot(t, np.std(thz.scaleshift(x, a=1 / noise_res.a,
     ... eta=-noise_res.eta, axis=0), axis=1), "-",

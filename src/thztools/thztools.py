@@ -1078,7 +1078,97 @@ def _costfuntls(
     return res
 
 
-def _costfun_noisefit(
+def _nll_noisefit(
+    x: NDArray[np.float64],
+    logv_alpha_scaled: float,
+    logv_beta_scaled: float,
+    logv_tau_scaled: float,
+    delta_mu_scaled: NDArray[np.float64],
+    delta_a_scaled: NDArray[np.float64],
+    eta_scaled: NDArray[np.float64],
+    *,
+    scale_logv_alpha: float,
+    scale_logv_beta: float,
+    scale_logv_tau: float,
+    scale_delta_mu: NDArray[np.float64],
+    scale_delta_a: NDArray[np.float64],
+    scale_eta_on_dt: NDArray[np.float64],
+) -> tuple[float, NDArray[np.float64]]:
+    r"""
+    Compute the cost function for the time-domain noise model.
+
+    Computes the maximum-likelihood cost function for obtaining the
+    data matrix ``x`` given ``logv_alpha_scaled``, ``logv_beta_scaled``,
+    ``logv_tau_scaled``, ``delta_mu_scaled``, ``delta_a_scaled``,
+    ``eta_scaled``, ``scale_sigma_alpha``, ``scale_sigma_beta``,
+    ``scale_sigma_tau_on_dt``, ``scale_delta_mu``, ``scale_delta_a``, and
+    ``scale_eta_on_dt``.
+
+    Parameters
+    ----------
+    x : ndarray
+        Data matrix with shape (m, n), row-oriented.
+    logv_alpha_scaled, logv_beta_scaled, logv_tau_scaled : float
+        Logarithm of the associated scaled noise variance parameter.
+    delta_mu_scaled : ndarray
+        Scaled signal deviation vector with shape (n,).
+    delta_a_scaled: ndarray
+        Scaled amplitude deviation vector with shape (m - 1,).
+    eta_scaled : ndarray
+        Scaled delay deviation vector with shape (m - 1,).
+    scale_logv_alpha, scale_logv_beta,  scale_logv_tau: float
+        Scale parameters for log variance parameters.
+    scale_delta_mu : ndarray
+        Array of scale parameters for ``delta`` with shape (n,).
+    scale_delta_a : ndarray
+        Array of scale parameters for ``alpha`` with shape (m - 1,).
+    scale_eta_on_dt : ndarray
+        Array of scale parameters for ``eta`` with shape (m - 1,). Should be
+        expressed in terms of the sampling time, i.e.,
+        ``scale_sigma_tau_on_dt = scale_sigma_tau / dt``, where ``dt`` is the
+        sampling time and ``scale_eta`` is the scale factor used in
+        ``eta_scaled = eta / scale_eta``.
+
+    Returns
+    -------
+    nll : float
+        Negative log-likelihood, with constant offset :math:`(MN/2)\ln(2\pi)`
+        subtracted.
+    """
+    m, n = x.shape
+
+    valpha = np.exp(logv_alpha_scaled * scale_logv_alpha)
+    vbeta = np.exp(logv_beta_scaled * scale_logv_beta)
+    vtau = np.exp(logv_tau_scaled * scale_logv_tau)
+
+    mu = x[0, :] - delta_mu_scaled * scale_delta_mu
+    a = np.insert(1.0 + delta_a_scaled * scale_delta_a, 0, 1.0)
+    eta_scaled = np.insert(eta_scaled * scale_eta_on_dt, 0, 0.0)
+
+    # Compute frequency vector and Fourier coefficients of mu
+    f = rfftfreq(n)
+    w = 2 * np.pi * f
+    mu_f = rfft(mu)
+
+    exp_iweta = np.exp(1j * np.outer(eta_scaled, w))
+    zeta_f = ((np.conj(exp_iweta) * mu_f).T * a).T
+    zeta = irfft(zeta_f, n=n)
+    dzeta = irfft(1j * w * zeta_f, n=n)
+
+    # Compute negative - log likelihood and gradient
+
+    # Compute residuals and their squares for subsequent computations
+    res = x - zeta
+    ressq = res**2
+    vtot = valpha + vbeta * zeta**2 + vtau * dzeta**2
+
+    resnormsq_scaled = ressq / vtot
+    nll = 0.5 * (np.sum(np.log(vtot)) + np.sum(resnormsq_scaled))
+
+    return nll
+
+
+def _jac_noisefit(
     x: NDArray[np.float64],
     logv_alpha_scaled: float,
     logv_beta_scaled: float,
@@ -1099,16 +1189,9 @@ def _costfun_noisefit(
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
     scale_eta_on_dt: NDArray[np.float64],
-) -> tuple[float, NDArray[np.float64]]:
+) -> NDArray[np.float64]:
     r"""
-    Compute the cost function for the time-domain noise model.
-
-    Computes the maximum-likelihood cost function for obtaining the
-    data matrix ``x`` given ``logv_alpha_scaled``, ``logv_beta_scaled``,
-    ``logv_tau_scaled``, ``delta_mu_scaled``, ``delta_a_scaled``,
-    ``eta_scaled``, ``scale_sigma_alpha``, ``scale_sigma_beta``,
-    ``scale_sigma_tau_on_dt``, ``scale_delta_mu``, ``scale_delta_a``, and
-    ``scale_eta_on_dt``.
+    Compute the Jacobian of ``_nll_noisefit`` w.r.t. the free parameters.
 
     Parameters
     ----------
@@ -1148,9 +1231,6 @@ def _costfun_noisefit(
 
     Returns
     -------
-    nll : float
-        Negative log-likelihood, with constant offset :math:`(MN/2)\ln(2\pi)`
-        subtracted.
     gradnll_scaled : ndarray
         Gradient of the negative log-likelihood function with respect to
         the free parameters.
@@ -1195,10 +1275,6 @@ def _costfun_noisefit(
     vtau = var_parms[2] * dzeta**2
     vtot = valpha + vbeta + vtau
 
-    resnormsq_scaled = ressq / vtot
-    nll = 0.5 * (np.sum(np.log(vtot)) + np.sum(resnormsq_scaled))
-
-    # Compute gradient
     gradnll_scaled = np.array([], dtype=np.float64)
     if not (
         fix_logv_alpha
@@ -1244,7 +1320,7 @@ def _costfun_noisefit(
             )
         if not fix_delta_a:
             # Gradient wrt delta_a
-            term = (vtot - valpha) * dvar - reswt * zeta
+            term = (vtot - var_parms[0]) * dvar - reswt * zeta
             dnllda = np.sum(term, axis=1).T / a
             # Exclude first term, which is held fixed
             gradnll_scaled = np.append(
@@ -1264,7 +1340,7 @@ def _costfun_noisefit(
                 gradnll_scaled, dnlldeta[1:] * scale_eta_on_dt
             )
 
-    return nll, gradnll_scaled
+    return gradnll_scaled
 
 
 def noisefit(
@@ -1495,10 +1571,10 @@ def noisefit(
         scale_eta=scale_eta,
     )
 
-    objective, x0, input_parsed = parsed
+    objective, jac, x0, input_parsed = parsed
 
     # Minimize cost function with respect to free parameters
-    out = minimize(objective, x0, method="BFGS", jac=True, tol=1e-5 * x.size)
+    out = minimize(objective, x0, method="BFGS", jac=jac, tol=1e-5 * x.size)
     fit_result = _parse_noisefit_output(out, x, dt=dt, **input_parsed)
     return fit_result
 
@@ -1525,7 +1601,7 @@ def _parse_noisefit_input(
     scale_delta_mu: ArrayLike | None,
     scale_delta_a: ArrayLike | None,
     scale_eta: ArrayLike | None,
-) -> tuple[Callable, NDArray[np.float64], dict]:
+) -> tuple[Callable, Callable, NDArray[np.float64], dict]:
     """Parse noisefit inputs"""
     if x.ndim != NUM_NOISE_DATA_DIMENSIONS:
         msg = "Data array x must be 2D"
@@ -1686,7 +1762,54 @@ def _parse_noisefit_input(
             _eta = eta_scaled0
         else:
             _eta = _p[: m - 1]
-        return _costfun_noisefit(
+        return _nll_noisefit(
+            x.T,
+            _logv_alpha,
+            _logv_beta,
+            _logv_tau,
+            _delta,
+            _epsilon,
+            _eta,
+            scale_logv_alpha=scale_logv_alpha,
+            scale_logv_beta=scale_logv_beta,
+            scale_logv_tau=scale_logv_tau,
+            scale_delta_mu=scale_delta_mu,
+            scale_delta_a=scale_delta_a,
+            scale_eta_on_dt=scale_eta / dt,  # Scale in units of dt
+        )
+
+    # Bundle free parameters together into objective function
+    def jac(_p):
+        if fix_sigma_alpha:
+            _logv_alpha = logv0_scaled[0]
+        else:
+            _logv_alpha = _p[0]
+            _p = _p[1:]
+        if fix_sigma_beta:
+            _logv_beta = logv0_scaled[1]
+        else:
+            _logv_beta = _p[0]
+            _p = _p[1:]
+        if fix_sigma_tau:
+            _logv_tau = logv0_scaled[2]
+        else:
+            _logv_tau = _p[0]
+            _p = _p[1:]
+        if fix_mu:
+            _delta = delta0
+        else:
+            _delta = _p[:n]
+            _p = _p[n:]
+        if fix_a:
+            _epsilon = epsilon0
+        else:
+            _epsilon = _p[: m - 1]
+            _p = _p[m - 1 :]
+        if fix_eta:
+            _eta = eta_scaled0
+        else:
+            _eta = _p[: m - 1]
+        return _jac_noisefit(
             x.T,
             _logv_alpha,
             _logv_beta,
@@ -1728,7 +1851,7 @@ def _parse_noisefit_input(
         "scale_delta_a": scale_delta_a,
         "scale_eta": scale_eta,
     }
-    return objective, x0, input_parsed
+    return objective, jac, x0, input_parsed
 
 
 def _parse_noisefit_output(

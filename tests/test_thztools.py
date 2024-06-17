@@ -10,8 +10,8 @@ import thztools
 from thztools.thztools import (
     NoiseModel,
     _assign_sampling_time,
-    _costfun_noisefit,
     _costfuntls,
+    _jac_noisefit,
     _parse_noisefit_input,
     fit,
     get_option,
@@ -479,7 +479,7 @@ class TestTDNLLScaled:
                 desired_gradnll_eta,
             )
         )
-        _, gradnll = _costfun_noisefit(
+        gradnll = _jac_noisefit(
             x,
             logv_alpha,
             logv_beta,

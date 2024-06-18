@@ -1315,42 +1315,48 @@ def _jac_noisefit(
     reswt = res / vtot
     dvar = (vtot - ressq) / vtot**2
 
-    gradnll_scaled = np.array([], dtype=np.float64)
+    # Construct Jacobian subarrays
+    if fix_logv_alpha:
+        jac_logv_alpha = []
+    else:
+        jac_logv_alpha = [0.5 * np.sum(dvar) * valpha * scale_logv_alpha]
 
-    # Gradient wrt logv
-    if not fix_logv_alpha:
-        gradnll_scaled = np.append(
-            gradnll_scaled,
-            0.5 * np.sum(dvar) * valpha * scale_logv_alpha,
-        )
-    if not fix_logv_beta:
-        gradnll_scaled = np.append(
-            gradnll_scaled,
-            0.5 * np.sum(zeta**2 * dvar) * vbeta * scale_logv_beta,
-        )
-    if not fix_logv_tau:
-        gradnll_scaled = np.append(
-            gradnll_scaled,
-            0.5 * np.sum(dzeta**2 * dvar) * vbeta * scale_logv_tau,
-        )
-    if not fix_delta_mu:
-        # Gradient wrt delta_mu
+    if fix_logv_beta:
+        jac_logv_beta = []
+    else:
+        jac_logv_beta = [
+            0.5 * np.sum(zeta**2 * dvar) * vbeta * scale_logv_beta
+        ]
+
+    if fix_logv_tau:
+        jac_logv_tau = []
+    else:
+        jac_logv_tau = [
+            0.5 * np.sum(dzeta**2 * dvar) * vbeta * scale_logv_tau
+        ]
+
+    if fix_delta_mu:
+        jac_delta_mu = []
+    else:
         p = rfft(vbeta * dvar * zeta - reswt) - 1j * vtau * w * rfft(
             dvar * dzeta
         )
-        gradnll_scaled = np.append(
-            gradnll_scaled,
+        jac_delta_mu = (
             -np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
-            * scale_delta_mu,
+            * scale_delta_mu
         )
-    if not fix_delta_a:
-        # Gradient wrt delta_a
+
+    if fix_delta_a:
+        jac_delta_a = []
+    else:
         term = (vtot - valpha) * dvar - reswt * zeta
         dnllda = np.sum(term, axis=1).T / a
         # Exclude first term, which is held fixed
-        gradnll_scaled = np.append(gradnll_scaled, dnllda[1:] * scale_delta_a)
-    if not fix_eta:
-        # Gradient wrt eta
+        jac_delta_a = dnllda[1:] * scale_delta_a
+
+    if fix_eta:
+        jac_eta = []
+    else:
         ddzeta = irfft(-(w**2) * zeta_f, n=n)
         dnlldeta = -np.sum(
             dvar * (zeta * dzeta * valpha + dzeta * ddzeta * vtau)
@@ -1358,10 +1364,20 @@ def _jac_noisefit(
             axis=1,
         )
         # Exclude first term, which is held fixed
-        gradnll_scaled = np.append(
-            gradnll_scaled, dnlldeta[1:] * scale_eta_on_dt
+        jac_eta = dnlldeta[1:] * scale_eta_on_dt
+
+    # Concatenate subarrays to produce full Jacobian wrt free parameters
+    jac_scaled = np.concatenate(
+        (
+            jac_logv_alpha,
+            jac_logv_beta,
+            jac_logv_tau,
+            jac_delta_mu,
+            jac_delta_a,
+            jac_eta,
         )
-    return gradnll_scaled
+    )
+    return jac_scaled
 
 
 def noisefit(

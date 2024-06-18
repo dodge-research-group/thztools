@@ -1596,6 +1596,10 @@ def _hess_noisefit(
     else:
         h_vt_mu = np.zeros((1, n))
 
+    # Boolean array used to compose full Hessian from multiple blocks
+    fix = np.array([fix_logv_alpha, fix_logv_beta, fix_logv_tau, fix_delta_mu])
+
+    # Arrange blocks in an object array to enable boolean indexing
     hess_block = np.array(
         [
             [h_va_va, h_va_vb, h_va_vt, h_va_mu],
@@ -1606,10 +1610,14 @@ def _hess_noisefit(
         dtype=object,
     )
 
-    fix = np.array([fix_logv_alpha, fix_logv_beta, fix_logv_tau, fix_delta_mu])
+    # Create an index array to select blocks
     idx = np.ix_(~fix, ~fix)
+
+    # Compose the full Jacobian from the selected blocks
     h = np.block(hess_block[idx].tolist())
 
+    # Arrange scale arrays in an object array, then use the fix array to select
+    # which arrays to include
     scale_block = np.array(
         [
             [scale_logv_alpha],
@@ -1621,6 +1629,7 @@ def _hess_noisefit(
     )
     scale = np.concatenate(scale_block[~fix].tolist())
 
+    # Compute Hessian in scaled internal variables
     h_scaled = np.diag(scale) @ h @ np.diag(scale)
     return h_scaled
 

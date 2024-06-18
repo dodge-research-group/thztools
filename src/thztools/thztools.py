@@ -1078,6 +1078,59 @@ def _costfuntls(
     return res
 
 
+def _nll_common(
+    x: NDArray[np.float64],
+    logv_alpha_scaled: float,
+    logv_beta_scaled: float,
+    logv_tau_scaled: float,
+    delta_mu_scaled: NDArray[np.float64],
+    delta_a_scaled: NDArray[np.float64],
+    eta_on_dt_scaled: NDArray[np.float64],
+    *,
+    scale_logv_alpha: float,
+    scale_logv_beta: float,
+    scale_logv_tau: float,
+    scale_delta_mu: NDArray[np.float64],
+    scale_delta_a: NDArray[np.float64],
+    scale_eta_on_dt: NDArray[np.float64],
+) -> dict:
+    _, n = x.shape
+
+    valpha = np.exp(logv_alpha_scaled * scale_logv_alpha)
+    vbeta = np.exp(logv_beta_scaled * scale_logv_beta)
+    vtau = np.exp(logv_tau_scaled * scale_logv_tau)
+
+    mu = x[0, :] - delta_mu_scaled * scale_delta_mu
+    a = 1.0 + np.insert(delta_a_scaled * scale_delta_a, 0, 0.0)
+    eta_on_dt = np.insert(eta_on_dt_scaled * scale_eta_on_dt, 0, 0.0)
+
+    # Compute frequency vector and Fourier coefficients of mu
+    f = rfftfreq(n)
+    w = 2 * np.pi * f
+    mu_f = rfft(mu)
+
+    exp_iweta = np.exp(1j * np.outer(eta_on_dt, w))
+    zeta_f = ((np.conj(exp_iweta) * mu_f).T * a).T
+
+    zeta = irfft(zeta_f, n=n)
+    dzeta = irfft(1j * w * zeta_f, n=n)
+
+    res = x - zeta
+    ressq = res**2
+    vtot = valpha + vbeta * zeta**2 + vtau * dzeta**2
+
+    out = {
+        "ressq": ressq,
+        "vtot": vtot,
+        "zeta": zeta,
+        "dzeta": dzeta,
+        "zeta_f": zeta_f,
+        "a": a,
+        "exp_iweta": exp_iweta,
+    }
+    return out
+
+
 def _nll_noisefit(
     x: NDArray[np.float64],
     logv_alpha_scaled: float,
@@ -1085,7 +1138,7 @@ def _nll_noisefit(
     logv_tau_scaled: float,
     delta_mu_scaled: NDArray[np.float64],
     delta_a_scaled: NDArray[np.float64],
-    eta_scaled: NDArray[np.float64],
+    eta_on_dt_scaled: NDArray[np.float64],
     *,
     scale_logv_alpha: float,
     scale_logv_beta: float,
@@ -1100,8 +1153,8 @@ def _nll_noisefit(
     Computes the maximum-likelihood cost function for obtaining the
     data matrix ``x`` given ``logv_alpha_scaled``, ``logv_beta_scaled``,
     ``logv_tau_scaled``, ``delta_mu_scaled``, ``delta_a_scaled``,
-    ``eta_scaled``, ``scale_sigma_alpha``, ``scale_sigma_beta``,
-    ``scale_sigma_tau_on_dt``, ``scale_delta_mu``, ``scale_delta_a``, and
+    ``eta_on_dt_scaled``, ``scale_logv_alpha``, ``scale_logv_beta``,
+    ``scale_logv_tau``, ``scale_delta_mu``, ``scale_delta_a``, and
     ``scale_eta_on_dt``.
 
     Parameters
@@ -1114,7 +1167,7 @@ def _nll_noisefit(
         Scaled signal deviation vector with shape (n,).
     delta_a_scaled: ndarray
         Scaled amplitude deviation vector with shape (m - 1,).
-    eta_scaled : ndarray
+    eta_on_dt_scaled : ndarray
         Scaled delay deviation vector with shape (m - 1,).
     scale_logv_alpha, scale_logv_beta,  scale_logv_tau: float
         Scale parameters for log variance parameters.
@@ -1135,33 +1188,23 @@ def _nll_noisefit(
         Negative log-likelihood, with constant offset :math:`(MN/2)\ln(2\pi)`
         subtracted.
     """
-    m, n = x.shape
-
-    valpha = np.exp(logv_alpha_scaled * scale_logv_alpha)
-    vbeta = np.exp(logv_beta_scaled * scale_logv_beta)
-    vtau = np.exp(logv_tau_scaled * scale_logv_tau)
-
-    mu = x[0, :] - delta_mu_scaled * scale_delta_mu
-    a = np.insert(1.0 + delta_a_scaled * scale_delta_a, 0, 1.0)
-    eta_scaled = np.insert(eta_scaled * scale_eta_on_dt, 0, 0.0)
-
-    # Compute frequency vector and Fourier coefficients of mu
-    f = rfftfreq(n)
-    w = 2 * np.pi * f
-    mu_f = rfft(mu)
-
-    exp_iweta = np.exp(1j * np.outer(eta_scaled, w))
-    zeta_f = ((np.conj(exp_iweta) * mu_f).T * a).T
-    zeta = irfft(zeta_f, n=n)
-    dzeta = irfft(1j * w * zeta_f, n=n)
-
-    # Compute negative - log likelihood and gradient
-
-    # Compute residuals and their squares for subsequent computations
-    res = x - zeta
-    ressq = res**2
-    vtot = valpha + vbeta * zeta**2 + vtau * dzeta**2
-
+    common = _nll_common(
+        x=x,
+        logv_alpha_scaled=logv_alpha_scaled,
+        logv_beta_scaled=logv_beta_scaled,
+        logv_tau_scaled=logv_tau_scaled,
+        delta_mu_scaled=delta_mu_scaled,
+        delta_a_scaled=delta_a_scaled,
+        eta_on_dt_scaled=eta_on_dt_scaled,
+        scale_logv_alpha=scale_logv_alpha,
+        scale_logv_beta=scale_logv_beta,
+        scale_logv_tau=scale_logv_tau,
+        scale_delta_mu=scale_delta_mu,
+        scale_delta_a=scale_delta_a,
+        scale_eta_on_dt=scale_eta_on_dt,
+    )
+    ressq = common["ressq"]
+    vtot = common["vtot"]
     resnormsq_scaled = ressq / vtot
     nll = 0.5 * (np.sum(np.log(vtot)) + np.sum(resnormsq_scaled))
 
@@ -1175,7 +1218,7 @@ def _jac_noisefit(
     logv_tau_scaled: float,
     delta_mu_scaled: NDArray[np.float64],
     delta_a_scaled: NDArray[np.float64],
-    eta_scaled: NDArray[np.float64],
+    eta_on_dt_scaled: NDArray[np.float64],
     *,
     fix_logv_alpha: bool,
     fix_logv_beta: bool,
@@ -1203,7 +1246,7 @@ def _jac_noisefit(
         Scaled signal deviation vector with shape (n,).
     delta_a_scaled: ndarray
         Scaled amplitude deviation vector with shape (m - 1,).
-    eta_scaled : ndarray
+    eta_on_dt_scaled : ndarray
         Scaled delay deviation vector with shape (m - 1,).
     fix_logv_alpha, fix_logv_beta, fix_logv_tau : bool
         Exclude noise parameter from gradiate calculation when ``True``.
@@ -1237,109 +1280,87 @@ def _jac_noisefit(
     """
     m, n = x.shape
 
-    logv = np.asarray(
-        [logv_alpha_scaled, logv_beta_scaled, logv_tau_scaled],
-        dtype=np.float64,
-    )
+    valpha = np.exp(logv_alpha_scaled * scale_logv_alpha)
+    vbeta = np.exp(logv_beta_scaled * scale_logv_beta)
+    vtau = np.exp(logv_tau_scaled * scale_logv_tau)
 
-    # Compute noise model parameters, mu, a, and eta.
-    scale_logv = np.array(
-        [scale_logv_alpha, scale_logv_beta, scale_logv_tau],
-        dtype=np.float64,
-    )
-    var_parms = np.exp(logv * scale_logv)
-    mu = x[0, :] - delta_mu_scaled * scale_delta_mu
-    a = np.insert(1.0 + delta_a_scaled * scale_delta_a, 0, 1.0)
-    eta_scaled = np.insert(eta_scaled * scale_eta_on_dt, 0, 0.0)
-
-    # Compute frequency vector and Fourier coefficients of mu
     f = rfftfreq(n)
     w = 2 * np.pi * f
-    mu_f = rfft(mu)
 
-    exp_iweta = np.exp(1j * np.outer(eta_scaled, w))
-    zeta_f = ((np.conj(exp_iweta) * mu_f).T * a).T
-    zeta = irfft(zeta_f, n=n)
-
-    # Compute negative - log likelihood and gradient
+    common = _nll_common(
+        x=x,
+        logv_alpha_scaled=logv_alpha_scaled,
+        logv_beta_scaled=logv_beta_scaled,
+        logv_tau_scaled=logv_tau_scaled,
+        delta_mu_scaled=delta_mu_scaled,
+        delta_a_scaled=delta_a_scaled,
+        eta_on_dt_scaled=eta_on_dt_scaled,
+        scale_logv_alpha=scale_logv_alpha,
+        scale_logv_beta=scale_logv_beta,
+        scale_logv_tau=scale_logv_tau,
+        scale_delta_mu=scale_delta_mu,
+        scale_delta_a=scale_delta_a,
+        scale_eta_on_dt=scale_eta_on_dt,
+    )
+    ressq = common["ressq"]
+    vtot = common["vtot"]
+    zeta = common["zeta"]
+    dzeta = common["dzeta"]
+    zeta_f = common["zeta_f"]
+    a = common["a"]
+    exp_iweta = common["exp_iweta"]
 
     # Compute residuals and their squares for subsequent computations
     res = x - zeta
-    ressq = res**2
-
-    # Alternative case: A, eta, or both are not set to defaults
-    dzeta = irfft(1j * w * zeta_f, n=n)
-
-    valpha = var_parms[0]
-    vbeta = var_parms[1] * zeta**2
-    vtau = var_parms[2] * dzeta**2
-    vtot = valpha + vbeta + vtau
+    reswt = res / vtot
+    dvar = (vtot - ressq) / vtot**2
 
     gradnll_scaled = np.array([], dtype=np.float64)
-    if not (
-        fix_logv_alpha
-        & fix_logv_beta
-        & fix_logv_tau
-        & fix_delta_mu
-        & fix_delta_a
-        & fix_eta
-    ):
-        reswt = res / vtot
-        dvar = (vtot - ressq) / vtot**2
-        # Gradient wrt logv
-        if not fix_logv_alpha:
-            gradnll_scaled = np.append(
-                gradnll_scaled,
-                0.5 * np.sum(dvar) * var_parms[0] * scale_logv_alpha,
-            )
-        if not fix_logv_beta:
-            gradnll_scaled = np.append(
-                gradnll_scaled,
-                0.5
-                * np.sum(zeta**2 * dvar)
-                * var_parms[1]
-                * scale_logv_beta,
-            )
-        if not fix_logv_tau:
-            gradnll_scaled = np.append(
-                gradnll_scaled,
-                0.5
-                * np.sum(dzeta**2 * dvar)
-                * var_parms[2]
-                * scale_logv_tau,
-            )
-        if not fix_delta_mu:
-            # Gradient wrt delta_mu
-            p = rfft(var_parms[1] * dvar * zeta - reswt) - 1j * var_parms[
-                2
-            ] * w * rfft(dvar * dzeta)
-            gradnll_scaled = np.append(
-                gradnll_scaled,
-                -np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
-                * scale_delta_mu,
-            )
-        if not fix_delta_a:
-            # Gradient wrt delta_a
-            term = (vtot - var_parms[0]) * dvar - reswt * zeta
-            dnllda = np.sum(term, axis=1).T / a
-            # Exclude first term, which is held fixed
-            gradnll_scaled = np.append(
-                gradnll_scaled, dnllda[1:] * scale_delta_a
-            )
-        if not fix_eta:
-            # Gradient wrt eta
-            ddzeta = irfft(-(w**2) * zeta_f, n=n)
-            dnlldeta = -np.sum(
-                dvar
-                * (zeta * dzeta * var_parms[1] + dzeta * ddzeta * var_parms[2])
-                - reswt * dzeta,
-                axis=1,
-            )
-            # Exclude first term, which is held fixed
-            gradnll_scaled = np.append(
-                gradnll_scaled, dnlldeta[1:] * scale_eta_on_dt
-            )
 
+    # Gradient wrt logv
+    if not fix_logv_alpha:
+        gradnll_scaled = np.append(
+            gradnll_scaled,
+            0.5 * np.sum(dvar) * valpha * scale_logv_alpha,
+        )
+    if not fix_logv_beta:
+        gradnll_scaled = np.append(
+            gradnll_scaled,
+            0.5 * np.sum(zeta**2 * dvar) * vbeta * scale_logv_beta,
+        )
+    if not fix_logv_tau:
+        gradnll_scaled = np.append(
+            gradnll_scaled,
+            0.5 * np.sum(dzeta**2 * dvar) * vbeta * scale_logv_tau,
+        )
+    if not fix_delta_mu:
+        # Gradient wrt delta_mu
+        p = rfft(vbeta * dvar * zeta - reswt) - 1j * vtau * w * rfft(
+            dvar * dzeta
+        )
+        gradnll_scaled = np.append(
+            gradnll_scaled,
+            -np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
+            * scale_delta_mu,
+        )
+    if not fix_delta_a:
+        # Gradient wrt delta_a
+        term = (vtot - valpha) * dvar - reswt * zeta
+        dnllda = np.sum(term, axis=1).T / a
+        # Exclude first term, which is held fixed
+        gradnll_scaled = np.append(gradnll_scaled, dnllda[1:] * scale_delta_a)
+    if not fix_eta:
+        # Gradient wrt eta
+        ddzeta = irfft(-(w**2) * zeta_f, n=n)
+        dnlldeta = -np.sum(
+            dvar * (zeta * dzeta * valpha + dzeta * ddzeta * vtau)
+            - reswt * dzeta,
+            axis=1,
+        )
+        # Exclude first term, which is held fixed
+        gradnll_scaled = np.append(
+            gradnll_scaled, dnlldeta[1:] * scale_eta_on_dt
+        )
     return gradnll_scaled
 
 
@@ -1806,9 +1827,9 @@ def _parse_noisefit_input(
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
         if fix_eta:
-            _eta = eta_scaled0
+            _eta_on_dt = eta_scaled0 / dt
         else:
-            _eta = _p[: m - 1]
+            _eta_on_dt = _p[: m - 1]
         return _jac_noisefit(
             x.T,
             _logv_alpha,
@@ -1816,7 +1837,7 @@ def _parse_noisefit_input(
             _logv_tau,
             _delta,
             _epsilon,
-            _eta,
+            _eta_on_dt,
             fix_logv_alpha=fix_sigma_alpha,
             fix_logv_beta=fix_sigma_beta,
             fix_logv_tau=fix_sigma_tau,

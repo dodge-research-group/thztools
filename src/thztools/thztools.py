@@ -1380,6 +1380,225 @@ def _jac_noisefit(
     return jac_scaled
 
 
+def _hess_noisefit(
+    x: NDArray[np.float64],
+    logv_alpha_scaled: float,
+    logv_beta_scaled: float,
+    logv_tau_scaled: float,
+    delta_mu_scaled: NDArray[np.float64],
+    delta_a_scaled: NDArray[np.float64],
+    eta_on_dt_scaled: NDArray[np.float64],
+    *,
+    fix_logv_alpha: bool,
+    fix_logv_beta: bool,
+    fix_logv_tau: bool,
+    fix_delta_mu: bool,
+    fix_delta_a: bool,
+    fix_eta: bool,
+    scale_logv_alpha: float,
+    scale_logv_beta: float,
+    scale_logv_tau: float,
+    scale_delta_mu: NDArray[np.float64],
+    scale_delta_a: NDArray[np.float64],
+    scale_eta_on_dt: NDArray[np.float64],
+) -> NDArray[np.float64]:
+    r"""
+    Compute the Hessian of ``_nll_noisefit`` w.r.t. the free parameters.
+
+    Parameters
+    ----------
+    x : ndarray
+        Data matrix with shape (m, n), row-oriented.
+    logv_alpha_scaled, logv_beta_scaled, logv_tau_scaled : float
+        Logarithm of the associated scaled noise variance parameter.
+    delta_mu_scaled : ndarray
+        Scaled signal deviation vector with shape (n,).
+    delta_a_scaled: ndarray
+        Scaled amplitude deviation vector with shape (m - 1,).
+    eta_on_dt_scaled : ndarray
+        Scaled delay deviation vector with shape (m - 1,).
+    fix_logv_alpha, fix_logv_beta, fix_logv_tau : bool
+        Exclude noise parameter from gradiate calculation when ``True``.
+    fix_delta_mu : bool
+        Exclude signal deviation vector from gradiate calculation when
+        ``True``.
+    fix_delta_a : bool
+        Exclude signal amplitude deviation vector from gradiate calculation
+        when ``True``.
+    fix_eta : bool
+        Exclude signal delay deviation vector from gradiate calculation when
+        ``True``.
+    scale_logv_alpha, scale_logv_beta,  scale_logv_tau: float
+        Scale parameters for log variance parameters.
+    scale_delta_mu : ndarray
+        Array of scale parameters for ``delta`` with shape (n,).
+    scale_delta_a : ndarray
+        Array of scale parameters for ``alpha`` with shape (m - 1,).
+    scale_eta_on_dt : ndarray
+        Array of scale parameters for ``eta`` with shape (m - 1,). Should be
+        expressed in terms of the sampling time, i.e.,
+        ``scale_sigma_tau_on_dt = scale_sigma_tau / dt``, where ``dt`` is the
+        sampling time and ``scale_eta`` is the scale factor used in
+        ``eta_scaled = eta / scale_eta``.
+
+    Returns
+    -------
+    gradnll_scaled : ndarray
+        Gradient of the negative log-likelihood function with respect to
+        the free parameters.
+    """
+    m, n = x.shape
+
+    valpha = np.exp(logv_alpha_scaled * scale_logv_alpha)
+    vbeta = np.exp(logv_beta_scaled * scale_logv_beta)
+    vtau = np.exp(logv_tau_scaled * scale_logv_tau)
+
+    f = rfftfreq(n)
+    w = 2 * np.pi * f
+
+    common = _nll_common(
+        x=x,
+        logv_alpha_scaled=logv_alpha_scaled,
+        logv_beta_scaled=logv_beta_scaled,
+        logv_tau_scaled=logv_tau_scaled,
+        delta_mu_scaled=delta_mu_scaled,
+        delta_a_scaled=delta_a_scaled,
+        eta_on_dt_scaled=eta_on_dt_scaled,
+        scale_logv_alpha=scale_logv_alpha,
+        scale_logv_beta=scale_logv_beta,
+        scale_logv_tau=scale_logv_tau,
+        scale_delta_mu=scale_delta_mu,
+        scale_delta_a=scale_delta_a,
+        scale_eta_on_dt=scale_eta_on_dt,
+    )
+    # Compute residuals and their squares for subsequent computations
+    ressq = common["ressq"]
+    vtot = common["vtot"]
+    zeta = common["zeta"]
+    dzeta = common["dzeta"]
+    a = common["a"]
+    exp_iweta = common["exp_iweta"]
+
+    res = x - zeta
+    dvar = (vtot - ressq) / vtot**2
+    ddvar = (2 * ressq - vtot) / vtot ** 3
+
+    if fix_logv_alpha:
+        h_va_va = np.array([])
+    else:
+        h_va_va = [0.5 * valpha * np.sum(dvar)
+                   + 0.5 * valpha**2 * np.sum(ddvar)]
+
+    if fix_logv_alpha or fix_logv_beta:
+        h_va_vb = np.array([])
+    else:
+        h_va_vb = [0.5 * valpha * vbeta * np.sum(ddvar * zeta**2)]
+
+    if fix_logv_alpha or fix_logv_tau:
+        h_va_vt = np.array([])
+    else:
+        h_va_vt = [0.5 * valpha * vtau * np.sum(ddvar * dzeta**2)]
+
+    if fix_logv_beta:
+        h_vb_vb = np.array([])
+    else:
+        h_vb_vb = [0.5 * vbeta * np.sum(dvar * zeta**2)
+                   + 0.5 * vbeta**2 * np.sum(ddvar * zeta**4)]
+
+    if fix_logv_beta or fix_logv_tau:
+        h_vb_vt = np.array([])
+    else:
+        h_vb_vt = [0.5 * vbeta * vtau * np.sum(ddvar * zeta**2 * dzeta**2)]
+
+    if fix_logv_tau:
+        h_vt_vt = np.array([])
+    else:
+        h_vt_vt = [0.5 * vtau * np.sum(dvar * dzeta**2)
+                   + 0.5 * vtau**2 * np.sum(ddvar * dzeta**4)]
+
+    if fix_delta_mu:
+        h_mu_mu = np.array([], ndmin=2)
+    else:
+        dzeta_dmu = irfft(
+            a[:, np.newaxis, np.newaxis]
+            * np.conj(exp_iweta)[:, np.newaxis, :]
+            * rfft(np.eye(n))[np.newaxis, :, :],
+            n=n,
+        )
+        ddzeta_dmu = irfft(
+            a[:, np.newaxis, np.newaxis]
+            * 1j
+            * w
+            * np.conj(exp_iweta)[:, np.newaxis, :]
+            * rfft(np.eye(n))[np.newaxis, :, :],
+            n=n,
+        )
+
+        a_array = (
+                1 / vtot
+                + 4 * vbeta * zeta * res / vtot ** 2
+                + vbeta * dvar
+                + 2 * vbeta ** 2 * zeta ** 2 * ddvar
+        )
+
+        b_array = (
+                2 * vtau * dzeta * res / vtot ** 2
+                + 2 * vbeta * vtau * zeta * dzeta * ddvar
+        )
+
+        c_array = vtau * dvar + 2 * vtau ** 2 * dzeta ** 2 * ddvar
+
+        h_mu_mu = (
+                np.einsum("jpk, jk, jqk", dzeta_dmu, a_array, dzeta_dmu)
+                + np.einsum("jpk, jk, jqk", dzeta_dmu, b_array, ddzeta_dmu)
+                + np.einsum("jpk, jk, jqk", ddzeta_dmu, b_array, dzeta_dmu)
+                + np.einsum("jpk, jk, jqk", ddzeta_dmu, c_array, ddzeta_dmu)
+        )
+
+    if fix_logv_alpha or fix_delta_mu:
+        h_va_mu = np.array([])
+    else:
+        h_va_mu = np.zeros((1, n))
+
+    if fix_logv_beta or fix_delta_mu:
+        h_vb_mu = np.array([])
+    else:
+        h_vb_mu = np.zeros((1, n))
+
+    if fix_logv_tau or fix_delta_mu:
+        h_vt_mu = np.array([])
+    else:
+        h_vt_mu = np.zeros((1, n))
+
+    hess_block = np.array(
+        [
+            [h_va_va, h_va_vb, h_va_vt, h_va_mu],
+            [h_va_vb, h_vb_vb, h_vb_vt, h_vb_mu],
+            [h_va_vt.T, h_vb_vt.T, h_vt_vt, h_vt_mu],
+            [h_va_mu.T, h_vb_mu.T, h_vt_mu.T, h_mu_mu],
+        ],
+        dtype=object
+    )
+
+    fix = np.array([fix_logv_alpha, fix_logv_beta, fix_logv_tau, fix_delta_mu])
+    idx = np.ix_(~fix, ~fix)
+    h = np.block(hess_block[idx].tolist())
+
+    scale_block = np.array(
+        [
+            [scale_logv_alpha],
+            [scale_logv_beta],
+            [scale_logv_tau],
+            scale_delta_mu
+        ],
+        dtype=object
+    )
+    scale = np.concatenate(scale_block[~fix].tolist())
+
+    h_scaled = np.diag(scale) @ h @ np.diag(scale)
+    return h_scaled
+
+
 def noisefit(
     x: ArrayLike,
     *,

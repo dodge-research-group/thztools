@@ -1078,6 +1078,17 @@ def _costfuntls(
     return res
 
 
+@dataclass
+class CommonNLL:
+    ressq: NDArray[np.float64]
+    vtot: NDArray[np.float64]
+    zeta: NDArray[np.float64]
+    dzeta: NDArray[np.float64]
+    a: NDArray[np.float64]
+    zeta_f: NDArray[np.complex128]
+    exp_iweta: NDArray[np.complex128]
+
+
 def _nll_common(
     x: NDArray[np.float64],
     logv_alpha_scaled: float,
@@ -1093,7 +1104,7 @@ def _nll_common(
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
     scale_eta_on_dt: NDArray[np.float64],
-) -> dict:
+) -> CommonNLL:
     _, n = x.shape
 
     valpha = np.exp(logv_alpha_scaled * scale_logv_alpha)
@@ -1119,15 +1130,15 @@ def _nll_common(
     ressq = res**2
     vtot = valpha + vbeta * zeta**2 + vtau * dzeta**2
 
-    out = {
-        "ressq": ressq,
-        "vtot": vtot,
-        "zeta": zeta,
-        "dzeta": dzeta,
-        "zeta_f": zeta_f,
-        "a": a,
-        "exp_iweta": exp_iweta,
-    }
+    out = CommonNLL(
+        ressq=ressq,
+        vtot=vtot,
+        zeta=zeta,
+        dzeta=dzeta,
+        a=a,
+        zeta_f=zeta_f,
+        exp_iweta=exp_iweta,
+    )
     return out
 
 
@@ -1203,8 +1214,8 @@ def _nll_noisefit(
         scale_delta_a=scale_delta_a,
         scale_eta_on_dt=scale_eta_on_dt,
     )
-    ressq = common["ressq"]
-    vtot = common["vtot"]
+    ressq = common.ressq
+    vtot = common.vtot
     resnormsq_scaled = ressq / vtot
     nll = 0.5 * (np.sum(np.log(vtot)) + np.sum(resnormsq_scaled))
 
@@ -1302,13 +1313,13 @@ def _jac_noisefit(
         scale_delta_a=scale_delta_a,
         scale_eta_on_dt=scale_eta_on_dt,
     )
-    ressq = common["ressq"]
-    vtot = common["vtot"]
-    zeta = common["zeta"]
-    dzeta = common["dzeta"]
-    zeta_f = common["zeta_f"]
-    a = common["a"]
-    exp_iweta = common["exp_iweta"]
+    ressq = common.ressq
+    vtot = common.vtot
+    zeta = common.zeta
+    dzeta = common.dzeta
+    zeta_f = common.zeta_f
+    a = common.a
+    exp_iweta = common.exp_iweta
 
     # Compute residuals and their squares for subsequent computations
     res = x - zeta
@@ -1393,8 +1404,8 @@ def _hess_noisefit(
     fix_logv_beta: bool,
     fix_logv_tau: bool,
     fix_delta_mu: bool,
-    fix_delta_a: bool,
-    fix_eta: bool,
+    # fix_delta_a: bool,
+    # fix_eta: bool,
     scale_logv_alpha: float,
     scale_logv_beta: float,
     scale_logv_tau: float,
@@ -1472,49 +1483,64 @@ def _hess_noisefit(
         scale_eta_on_dt=scale_eta_on_dt,
     )
     # Compute residuals and their squares for subsequent computations
-    ressq = common["ressq"]
-    vtot = common["vtot"]
-    zeta = common["zeta"]
-    dzeta = common["dzeta"]
-    a = common["a"]
-    exp_iweta = common["exp_iweta"]
+    ressq = common.ressq
+    vtot = common.vtot
+    zeta = common.zeta
+    dzeta = common.dzeta
+    a = common.a
+    exp_iweta = common.exp_iweta
 
     res = x - zeta
     dvar = (vtot - ressq) / vtot**2
-    ddvar = (2 * ressq - vtot) / vtot ** 3
+    ddvar = (2 * ressq - vtot) / vtot**3
 
     if fix_logv_alpha:
         h_va_va = np.array([])
     else:
-        h_va_va = [0.5 * valpha * np.sum(dvar)
-                   + 0.5 * valpha**2 * np.sum(ddvar)]
+        h_va_va = np.asarray(
+            [0.5 * valpha * np.sum(dvar) + 0.5 * valpha**2 * np.sum(ddvar)]
+        )
 
     if fix_logv_alpha or fix_logv_beta:
         h_va_vb = np.array([])
     else:
-        h_va_vb = [0.5 * valpha * vbeta * np.sum(ddvar * zeta**2)]
+        h_va_vb = np.asarray(
+            [0.5 * valpha * vbeta * np.sum(ddvar * zeta**2)]
+        )
 
     if fix_logv_alpha or fix_logv_tau:
         h_va_vt = np.array([])
     else:
-        h_va_vt = [0.5 * valpha * vtau * np.sum(ddvar * dzeta**2)]
+        h_va_vt = np.asarray(
+            [0.5 * valpha * vtau * np.sum(ddvar * dzeta**2)]
+        )
 
     if fix_logv_beta:
         h_vb_vb = np.array([])
     else:
-        h_vb_vb = [0.5 * vbeta * np.sum(dvar * zeta**2)
-                   + 0.5 * vbeta**2 * np.sum(ddvar * zeta**4)]
+        h_vb_vb = np.asarray(
+            [
+                0.5 * vbeta * np.sum(dvar * zeta**2)
+                + 0.5 * vbeta**2 * np.sum(ddvar * zeta**4)
+            ]
+        )
 
     if fix_logv_beta or fix_logv_tau:
         h_vb_vt = np.array([])
     else:
-        h_vb_vt = [0.5 * vbeta * vtau * np.sum(ddvar * zeta**2 * dzeta**2)]
+        h_vb_vt = np.asarray(
+            [0.5 * vbeta * vtau * np.sum(ddvar * zeta**2 * dzeta**2)]
+        )
 
     if fix_logv_tau:
         h_vt_vt = np.array([])
     else:
-        h_vt_vt = [0.5 * vtau * np.sum(dvar * dzeta**2)
-                   + 0.5 * vtau**2 * np.sum(ddvar * dzeta**4)]
+        h_vt_vt = np.asarray(
+            [
+                0.5 * vtau * np.sum(dvar * dzeta**2)
+                + 0.5 * vtau**2 * np.sum(ddvar * dzeta**4)
+            ]
+        )
 
     if fix_delta_mu:
         h_mu_mu = np.array([], ndmin=2)
@@ -1535,24 +1561,24 @@ def _hess_noisefit(
         )
 
         a_array = (
-                1 / vtot
-                + 4 * vbeta * zeta * res / vtot ** 2
-                + vbeta * dvar
-                + 2 * vbeta ** 2 * zeta ** 2 * ddvar
+            1 / vtot
+            + 4 * vbeta * zeta * res / vtot**2
+            + vbeta * dvar
+            + 2 * vbeta**2 * zeta**2 * ddvar
         )
 
         b_array = (
-                2 * vtau * dzeta * res / vtot ** 2
-                + 2 * vbeta * vtau * zeta * dzeta * ddvar
+            2 * vtau * dzeta * res / vtot**2
+            + 2 * vbeta * vtau * zeta * dzeta * ddvar
         )
 
-        c_array = vtau * dvar + 2 * vtau ** 2 * dzeta ** 2 * ddvar
+        c_array = vtau * dvar + 2 * vtau**2 * dzeta**2 * ddvar
 
         h_mu_mu = (
-                np.einsum("jpk, jk, jqk", dzeta_dmu, a_array, dzeta_dmu)
-                + np.einsum("jpk, jk, jqk", dzeta_dmu, b_array, ddzeta_dmu)
-                + np.einsum("jpk, jk, jqk", ddzeta_dmu, b_array, dzeta_dmu)
-                + np.einsum("jpk, jk, jqk", ddzeta_dmu, c_array, ddzeta_dmu)
+            np.einsum("jpk, jk, jqk", dzeta_dmu, a_array, dzeta_dmu)
+            + np.einsum("jpk, jk, jqk", dzeta_dmu, b_array, ddzeta_dmu)
+            + np.einsum("jpk, jk, jqk", ddzeta_dmu, b_array, dzeta_dmu)
+            + np.einsum("jpk, jk, jqk", ddzeta_dmu, c_array, ddzeta_dmu)
         )
 
     if fix_logv_alpha or fix_delta_mu:
@@ -1577,7 +1603,7 @@ def _hess_noisefit(
             [h_va_vt.T, h_vb_vt.T, h_vt_vt, h_vt_mu],
             [h_va_mu.T, h_vb_mu.T, h_vt_mu.T, h_mu_mu],
         ],
-        dtype=object
+        dtype=object,
     )
 
     fix = np.array([fix_logv_alpha, fix_logv_beta, fix_logv_tau, fix_delta_mu])
@@ -1589,9 +1615,9 @@ def _hess_noisefit(
             [scale_logv_alpha],
             [scale_logv_beta],
             [scale_logv_tau],
-            scale_delta_mu
+            scale_delta_mu,
         ],
-        dtype=object
+        dtype=object,
     )
     scale = np.concatenate(scale_block[~fix].tolist())
 

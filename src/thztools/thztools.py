@@ -2624,12 +2624,13 @@ def fit(
     threshold = np.finfo(float).eps * max(result.jac.shape) * s[0]
     s = s[s > threshold]
     vt = vt[: s.size]
+    all_var = np.diag(np.dot(vt.T / s**2, vt))
 
     p_opt = result.x[:n_p]
-    p_var = np.diag(np.dot(vt.T / s**2, vt))[:n_p]
+    p_var = all_var[:n_p]
     delta = result.x[n_p:]
     mu_opt = xdata - delta
-    mu_var = np.diag(np.dot(vt.T / s**2, vt))[n_p:]
+    mu_var = all_var[n_p:]
     resnorm = 2 * result.cost
     psi_opt = transfer(lambda _w: function(p_opt, _w), mu_opt, dt=dt)
     epsilon = ydata - psi_opt

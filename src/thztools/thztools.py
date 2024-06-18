@@ -2626,7 +2626,7 @@ def fit(
     vt = vt[: s.size]
 
     p_opt = result.x[:n_p]
-    p_var = np.diag(np.dot(vt.T / s**2, vt))[n_p:]
+    p_var = np.diag(np.dot(vt.T / s**2, vt))[:n_p]
     delta = result.x[n_p:]
     mu_opt = xdata - delta
     mu_var = np.diag(np.dot(vt.T / s**2, vt))[n_p:]

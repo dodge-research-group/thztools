@@ -1404,8 +1404,8 @@ def _hess_noisefit(
     fix_logv_beta: bool,
     fix_logv_tau: bool,
     fix_delta_mu: bool,
-    # fix_delta_a: bool,
-    # fix_eta: bool,
+    fix_delta_a: bool,
+    fix_eta: bool,
     scale_logv_alpha: float,
     scale_logv_beta: float,
     scale_logv_tau: float,
@@ -1494,31 +1494,32 @@ def _hess_noisefit(
     dvar = (vtot - ressq) / vtot**2
     ddvar = (2 * ressq - vtot) / vtot**3
 
+    # Hessian block for (logv, logv)
     if fix_logv_alpha:
-        h_va_va = np.array([])
+        h_va_va = np.atleast_2d([])
     else:
-        h_va_va = np.asarray(
+        h_va_va = np.atleast_2d(
             [0.5 * valpha * np.sum(dvar) + 0.5 * valpha**2 * np.sum(ddvar)]
         )
 
     if fix_logv_alpha or fix_logv_beta:
-        h_va_vb = np.array([])
+        h_va_vb = np.atleast_2d([])
     else:
-        h_va_vb = np.asarray(
+        h_va_vb = np.atleast_2d(
             [0.5 * valpha * vbeta * np.sum(ddvar * zeta**2)]
         )
 
     if fix_logv_alpha or fix_logv_tau:
-        h_va_vt = np.array([])
+        h_va_vt = np.atleast_2d([])
     else:
-        h_va_vt = np.asarray(
+        h_va_vt = np.atleast_2d(
             [0.5 * valpha * vtau * np.sum(ddvar * dzeta**2)]
         )
 
     if fix_logv_beta:
-        h_vb_vb = np.array([])
+        h_vb_vb = np.atleast_2d([])
     else:
-        h_vb_vb = np.asarray(
+        h_vb_vb = np.atleast_2d(
             [
                 0.5 * vbeta * np.sum(dvar * zeta**2)
                 + 0.5 * vbeta**2 * np.sum(ddvar * zeta**4)
@@ -1526,24 +1527,25 @@ def _hess_noisefit(
         )
 
     if fix_logv_beta or fix_logv_tau:
-        h_vb_vt = np.array([])
+        h_vb_vt = np.atleast_2d([])
     else:
-        h_vb_vt = np.asarray(
+        h_vb_vt = np.atleast_2d(
             [0.5 * vbeta * vtau * np.sum(ddvar * zeta**2 * dzeta**2)]
         )
 
     if fix_logv_tau:
-        h_vt_vt = np.array([])
+        h_vt_vt = np.atleast_2d([])
     else:
-        h_vt_vt = np.asarray(
+        h_vt_vt = np.atleast_2d(
             [
                 0.5 * vtau * np.sum(dvar * dzeta**2)
                 + 0.5 * vtau**2 * np.sum(ddvar * dzeta**4)
             ]
         )
 
+    # Hessian block for (delta_mu, delta_mu)
     if fix_delta_mu:
-        h_mu_mu = np.array([], ndmin=2)
+        h_mu_mu = np.atleast_2d([])
     else:
         dzeta_dmu = irfft(
             a[:, np.newaxis, np.newaxis]
@@ -1574,27 +1576,58 @@ def _hess_noisefit(
 
         c_array = vtau * dvar + 2 * vtau**2 * dzeta**2 * ddvar
 
-        h_mu_mu = (
+        h_mu_mu = np.atleast_2d(
             np.einsum("jpk, jk, jqk", dzeta_dmu, a_array, dzeta_dmu)
             + np.einsum("jpk, jk, jqk", dzeta_dmu, b_array, ddzeta_dmu)
             + np.einsum("jpk, jk, jqk", ddzeta_dmu, b_array, dzeta_dmu)
             + np.einsum("jpk, jk, jqk", ddzeta_dmu, c_array, ddzeta_dmu)
         )
 
+    # Hessian block for (logv, delta_mu)
     if fix_logv_alpha or fix_delta_mu:
-        h_va_mu = np.array([])
+        h_va_mu = np.atleast_2d([])
     else:
-        h_va_mu = np.zeros((1, n))
+        h_va_mu = np.atleast_2d(
+            np.einsum(
+                "jk, jpk",
+                ddvar * valpha * vbeta * zeta + res * valpha / vtot**2,
+                dzeta_dmu,
+            )
+            + np.einsum("jk, jpk", ddvar * valpha * vtau * dzeta, ddzeta_dmu)
+        )
 
     if fix_logv_beta or fix_delta_mu:
-        h_vb_mu = np.array([])
+        h_vb_mu = np.atleast_2d([])
     else:
-        h_vb_mu = np.zeros((1, n))
+        h_vb_mu = np.atleast_2d(
+            np.einsum(
+                "jk, jpk",
+                dvar * vbeta * zeta
+                + ddvar * vbeta**2 * zeta**3
+                + res * vbeta * zeta**2 / vtot**2,
+                dzeta_dmu,
+            )
+            + np.einsum(
+                "jk, jpk", ddvar * vbeta * vtau * zeta**2 * dzeta, ddzeta_dmu
+            )
+        )
 
     if fix_logv_tau or fix_delta_mu:
-        h_vt_mu = np.array([])
+        h_vt_mu = np.atleast_2d([])
     else:
-        h_vt_mu = np.zeros((1, n))
+        h_vt_mu = np.atleast_2d(
+            np.einsum(
+                "jk, jpk",
+                ddvar * vbeta * vtau * zeta * dzeta**2
+                + res * vtau * dzeta**2 / vtot**2,
+                dzeta_dmu,
+            )
+            + np.einsum(
+                "jk, jpk",
+                dvar * vtau * dzeta + ddvar * vtau**2 * dzeta**3,
+                ddzeta_dmu,
+            )
+        )
 
     # Boolean array used to compose full Hessian from multiple blocks
     fix = np.array([fix_logv_alpha, fix_logv_beta, fix_logv_tau, fix_delta_mu])
@@ -1623,7 +1656,7 @@ def _hess_noisefit(
             [scale_logv_alpha],
             [scale_logv_beta],
             [scale_logv_tau],
-            scale_delta_mu,
+            -scale_delta_mu,
         ],
         dtype=object,
     )
@@ -1866,6 +1899,7 @@ def noisefit(
 
     # Minimize cost function with respect to free parameters
     out = minimize(objective, x0, method="BFGS", jac=jac, tol=1e-5 * x.size)
+
     fit_result = _parse_noisefit_output(out, x, dt=dt, **input_parsed)
     return fit_result
 
@@ -2122,6 +2156,58 @@ def _parse_noisefit_input(
             scale_eta_on_dt=scale_eta / dt,  # Scale in units of dt
         )
 
+    def hess(_p):
+        if fix_sigma_alpha:
+            _logv_alpha = logv0_scaled[0]
+        else:
+            _logv_alpha = _p[0]
+            _p = _p[1:]
+        if fix_sigma_beta:
+            _logv_beta = logv0_scaled[1]
+        else:
+            _logv_beta = _p[0]
+            _p = _p[1:]
+        if fix_sigma_tau:
+            _logv_tau = logv0_scaled[2]
+        else:
+            _logv_tau = _p[0]
+            _p = _p[1:]
+        if fix_mu:
+            _delta = delta0
+        else:
+            _delta = _p[:n]
+            _p = _p[n:]
+        if fix_a:
+            _epsilon = epsilon0
+        else:
+            _epsilon = _p[: m - 1]
+            _p = _p[m - 1 :]
+        if fix_eta:
+            _eta_on_dt = eta_scaled0 / dt
+        else:
+            _eta_on_dt = _p[: m - 1]
+        return _hess_noisefit(
+            x.T,
+            _logv_alpha,
+            _logv_beta,
+            _logv_tau,
+            _delta,
+            _epsilon,
+            _eta_on_dt,
+            fix_logv_alpha=fix_sigma_alpha,
+            fix_logv_beta=fix_sigma_beta,
+            fix_logv_tau=fix_sigma_tau,
+            fix_delta_mu=fix_mu,
+            fix_delta_a=fix_a,
+            fix_eta=fix_eta,
+            scale_logv_alpha=scale_logv_alpha,
+            scale_logv_beta=scale_logv_beta,
+            scale_logv_tau=scale_logv_tau,
+            scale_delta_mu=scale_delta_mu,
+            scale_delta_a=scale_delta_a,
+            scale_eta_on_dt=scale_eta / dt,  # Scale in units of dt
+        )
+
     input_parsed = {
         "sigma_alpha0": sigma_alpha0,
         "sigma_beta0": sigma_beta0,
@@ -2141,6 +2227,7 @@ def _parse_noisefit_input(
         "scale_delta_mu": scale_delta_mu,
         "scale_delta_a": scale_delta_a,
         "scale_eta": scale_eta,
+        "hess": hess,
     }
     return objective, jac, x0, input_parsed
 
@@ -2168,6 +2255,7 @@ def _parse_noisefit_output(
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
     scale_eta: NDArray[np.float64],
+    hess: Callable[[NDArray[np.float64]], NDArray[np.float64]],
 ) -> NoiseResult:
     """Parse noisefit output"""
     # Parse output
@@ -2238,8 +2326,13 @@ def _parse_noisefit_output(
         ]
     )
 
+    # Get or compute the inverse hessian
+    hess_inv_scaled = np.linalg.inv(hess(out.x))
+
     # Convert inverse Hessian into unscaled parameters
-    hess_inv = np.diag(scale_hess_inv) @ out.hess_inv @ np.diag(scale_hess_inv)
+    hess_inv = (
+        np.diag(scale_hess_inv) @ hess_inv_scaled @ np.diag(scale_hess_inv)
+    )
 
     # Determine parameter uncertainty vector from diagonal entries
     err = np.sqrt(np.diag(hess_inv))

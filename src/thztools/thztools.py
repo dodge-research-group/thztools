@@ -1361,7 +1361,7 @@ def _jac_noisefit(
         jac_delta_a = []
     else:
         term = (vtot - valpha) * dvar - reswt * zeta
-        dnllda = np.sum(term, axis=1).T / a
+        dnllda = np.sum(term, axis=1) / a
         # Exclude first term, which is held fixed
         jac_delta_a = dnllda[1:] * scale_delta_a
 
@@ -1494,6 +1494,22 @@ def _hess_noisefit(
     dvar = (vtot - ressq) / vtot**2
     ddvar = (2 * ressq - vtot) / vtot**3
 
+    dzeta_dmu = irfft(
+        a[:, np.newaxis, np.newaxis]
+        * np.conj(exp_iweta)[:, np.newaxis, :]
+        * rfft(np.eye(n))[np.newaxis, :, :],
+        n=n,
+    )
+
+    ddzeta_dmu = irfft(
+        a[:, np.newaxis, np.newaxis]
+        * 1j
+        * w
+        * np.conj(exp_iweta)[:, np.newaxis, :]
+        * rfft(np.eye(n))[np.newaxis, :, :],
+        n=n,
+    )
+
     # Hessian block for (logv, logv)
     if fix_logv_alpha:
         h_va_va = np.atleast_2d([])
@@ -1543,46 +1559,6 @@ def _hess_noisefit(
             ]
         )
 
-    # Hessian block for (delta_mu, delta_mu)
-    if fix_delta_mu:
-        h_mu_mu = np.atleast_2d([])
-    else:
-        dzeta_dmu = irfft(
-            a[:, np.newaxis, np.newaxis]
-            * np.conj(exp_iweta)[:, np.newaxis, :]
-            * rfft(np.eye(n))[np.newaxis, :, :],
-            n=n,
-        )
-        ddzeta_dmu = irfft(
-            a[:, np.newaxis, np.newaxis]
-            * 1j
-            * w
-            * np.conj(exp_iweta)[:, np.newaxis, :]
-            * rfft(np.eye(n))[np.newaxis, :, :],
-            n=n,
-        )
-
-        a_array = (
-            1 / vtot
-            + 4 * vbeta * zeta * res / vtot**2
-            + vbeta * dvar
-            + 2 * vbeta**2 * zeta**2 * ddvar
-        )
-
-        b_array = (
-            2 * vtau * dzeta * res / vtot**2
-            + 2 * vbeta * vtau * zeta * dzeta * ddvar
-        )
-
-        c_array = vtau * dvar + 2 * vtau**2 * dzeta**2 * ddvar
-
-        h_mu_mu = np.atleast_2d(
-            np.einsum("jpk, jk, jqk", dzeta_dmu, a_array, dzeta_dmu)
-            + np.einsum("jpk, jk, jqk", dzeta_dmu, b_array, ddzeta_dmu)
-            + np.einsum("jpk, jk, jqk", ddzeta_dmu, b_array, dzeta_dmu)
-            + np.einsum("jpk, jk, jqk", ddzeta_dmu, c_array, ddzeta_dmu)
-        )
-
     # Hessian block for (logv, delta_mu)
     if fix_logv_alpha or fix_delta_mu:
         h_va_mu = np.atleast_2d([])
@@ -1629,16 +1605,198 @@ def _hess_noisefit(
             )
         )
 
+    # Hessian block for (log_v, delta_a)
+    if fix_logv_alpha or fix_delta_a:
+        h_va_a = np.atleast_2d([])
+    else:
+        h_va_a = np.atleast_2d(
+            np.sum(
+                (
+                    ddvar * valpha * (vbeta * zeta**2 + vtau * dzeta**2)
+                    + res * valpha * zeta / vtot**2
+                )[1:, :],
+                axis=1,
+            )
+            / a[1:]
+        )
+
+    if fix_logv_beta or fix_delta_a:
+        h_vb_a = np.atleast_2d([])
+    else:
+        h_vb_a = np.atleast_2d(
+            np.sum(
+                (
+                    dvar * vbeta * zeta**2
+                    + ddvar
+                    * vbeta
+                    * zeta**2
+                    * (vbeta * zeta**2 + vtau * dzeta**2)
+                    + res * vbeta * zeta**3 / vtot**2
+                )[1:, :],
+                axis=1,
+            )
+            / a[1:]
+        )
+
+    if fix_logv_tau or fix_delta_a:
+        h_vt_a = np.atleast_2d([])
+    else:
+        h_vt_a = np.atleast_2d(
+            np.sum(
+                (
+                    dvar * vtau * dzeta**2
+                    + ddvar
+                    * vtau
+                    * dzeta**2
+                    * (vbeta * zeta**2 + vtau * dzeta**2)
+                    + res * vtau * zeta * dzeta**2 / vtot**2
+                )[1:, :],
+                axis=1,
+            )
+            / a[1:]
+        )
+
+    # Hessian block for (log_v, eta)
+    if fix_logv_alpha or fix_eta:
+        h_va_eta = np.atleast_2d([])
+    else:
+        h_va_eta = np.zeros((1, m - 1))
+
+    if fix_logv_beta or fix_delta_a:
+        h_vb_eta = np.atleast_2d([])
+    else:
+        h_vb_eta = np.zeros((1, m - 1))
+
+    if fix_logv_tau or fix_delta_a:
+        h_vt_eta = np.atleast_2d([])
+    else:
+        h_vt_eta = np.zeros((1, m - 1))
+
+    # Hessian block for (delta_mu, delta_mu)
+    if fix_delta_mu:
+        h_mu_mu = np.atleast_2d([])
+    else:
+        a_array = (
+            1 / vtot
+            + 4 * vbeta * zeta * res / vtot**2
+            + vbeta * dvar
+            + 2 * vbeta**2 * zeta**2 * ddvar
+        )
+
+        b_array = (
+            2 * vtau * dzeta * res / vtot**2
+            + 2 * vbeta * vtau * zeta * dzeta * ddvar
+        )
+
+        c_array = vtau * dvar + 2 * vtau**2 * dzeta**2 * ddvar
+
+        h_mu_mu = np.atleast_2d(
+            np.einsum("jpk, jk, jqk", dzeta_dmu, a_array, dzeta_dmu)
+            + np.einsum("jpk, jk, jqk", dzeta_dmu, b_array, ddzeta_dmu)
+            + np.einsum("jpk, jk, jqk", ddzeta_dmu, b_array, dzeta_dmu)
+            + np.einsum("jpk, jk, jqk", ddzeta_dmu, c_array, ddzeta_dmu)
+        )
+
+    # Hessian block for (delta_mu, delta_a)
+    if fix_delta_mu or fix_delta_a:
+        h_mu_a = np.atleast_2d([])
+    else:
+        a_array = (
+            2 * dvar * vbeta * zeta
+            + 2
+            * ddvar
+            * vbeta
+            * zeta
+            * (vbeta * zeta**2 + vtau * dzeta**2)
+            + 2 * res * (vbeta * zeta**2 + vtau * dzeta**2) / vtot**2
+            + (zeta - res) / vtot
+            + 2 * res * vbeta * zeta**2 / vtot**2
+        )[1:, :]
+
+        b_array = (
+            2
+            * vtau
+            * dzeta
+            * (
+                dvar
+                + ddvar * (vbeta * zeta**2 + vtau * dzeta**2)
+                + res * zeta / vtot**2
+            )
+        )[1:, :]
+
+        h_mu_a = (
+            np.einsum("qj, qpj -> pq", a_array, dzeta_dmu[1:, :, :])
+            + np.einsum("qj, qpj -> pq", b_array, ddzeta_dmu[1:, :, :])
+        ) / a[np.newaxis, 1:]
+
+    # Hessian block for (delta_mu, eta)
+    if fix_delta_mu or fix_eta:
+        h_mu_eta = np.atleast_2d([])
+    else:
+        h_mu_eta = np.zeros((n, m - 1))
+
+    # Hessian block for (delta_a, delta_a)
+    if fix_delta_a:
+        h_a_a = np.atleast_2d([])
+    else:
+        h_a_a = np.diag(
+            np.sum(
+                2
+                * ddvar[1:, :]
+                * (vbeta * zeta[1:, :] ** 2 + vtau * dzeta[1:, :] ** 2) ** 2
+                + dvar[1:, :]
+                * (vbeta * zeta[1:, :] ** 2 + vtau * dzeta[1:, :] ** 2)
+                + 4
+                * res[1:, :]
+                * zeta[1:, :]
+                * (vbeta * zeta[1:, :] ** 2 + vtau * dzeta[1:, :] ** 2)
+                / vtot[1:, :] ** 2
+                + zeta[1:, :] ** 2 / vtot[1:, :],
+                axis=1,
+            )
+            / a[1:] ** 2
+        )
+
+    # Hessian block for (delta_a, eta)
+    if fix_delta_a or fix_eta:
+        h_a_eta = np.atleast_2d([])
+    else:
+        h_a_eta = np.zeros((m - 1, m - 1))
+
+    # Hessian block for (eta, eta)
+    if fix_eta:
+        h_eta_eta = np.atleast_2d([])
+    else:
+        h_eta_eta = np.zeros((m - 1, m - 1))
+
     # Boolean array used to compose full Hessian from multiple blocks
-    fix = np.array([fix_logv_alpha, fix_logv_beta, fix_logv_tau, fix_delta_mu])
+    fix = np.array(
+        [
+            fix_logv_alpha,
+            fix_logv_beta,
+            fix_logv_tau,
+            fix_delta_mu,
+            fix_delta_a,
+            fix_eta,
+        ]
+    )
 
     # Arrange blocks in an object array to enable boolean indexing
     hess_block = np.array(
         [
-            [h_va_va, h_va_vb, h_va_vt, h_va_mu],
-            [h_va_vb, h_vb_vb, h_vb_vt, h_vb_mu],
-            [h_va_vt.T, h_vb_vt.T, h_vt_vt, h_vt_mu],
-            [h_va_mu.T, h_vb_mu.T, h_vt_mu.T, h_mu_mu],
+            [h_va_va, h_va_vb, h_va_vt, h_va_mu, h_va_a, h_va_eta],
+            [h_va_vb, h_vb_vb, h_vb_vt, h_vb_mu, h_vb_a, h_vb_eta],
+            [h_va_vt.T, h_vb_vt.T, h_vt_vt, h_vt_mu, h_vt_a, h_vt_eta],
+            [h_va_mu.T, h_vb_mu.T, h_vt_mu.T, h_mu_mu, h_mu_a, h_mu_eta],
+            [h_va_a.T, h_vb_a.T, h_vt_a.T, h_mu_a.T, h_a_a, h_a_eta],
+            [
+                h_va_eta.T,
+                h_vb_eta.T,
+                h_vt_eta.T,
+                h_mu_eta.T,
+                h_a_eta.T,
+                h_eta_eta,
+            ],
         ],
         dtype=object,
     )
@@ -1657,6 +1815,8 @@ def _hess_noisefit(
             [scale_logv_beta],
             [scale_logv_tau],
             -scale_delta_mu,
+            scale_delta_a,
+            scale_eta_on_dt,
         ],
         dtype=object,
     )

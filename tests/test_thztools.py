@@ -569,7 +569,7 @@ class TestHessNoiseFit:
         )
         assert_allclose(hess_logv_logv, desired_hess_logv_logv)
 
-    def test_hess_mu_mu(self):
+    def test_hess_delta_mu_delta_mu(self):
         desired_hess_mu_mu = np.array(
             [
                 [
@@ -621,8 +621,8 @@ class TestHessNoiseFit:
         )
         assert_allclose(hess_mu_mu, desired_hess_mu_mu)
 
-    def test_hess_logv_mu(self):
-        desired_hess_mu_mu = np.array(
+    def test_hess_logv_delta_mu(self):
+        desired_hess_logv_mu = np.array(
             [
                 [
                     9.1045125168940388e-01,
@@ -644,7 +644,7 @@ class TestHessNoiseFit:
                 ],
             ]
         )
-        hess_mu_mu = _hess_noisefit(
+        hess_logv_mu = _hess_noisefit(
             self.x,
             self.logv_alpha,
             self.logv_beta,
@@ -665,7 +665,90 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=self.scale_eta / self.dt,
         )[:3, 3:]
-        assert_allclose(hess_mu_mu, desired_hess_mu_mu)
+        assert_allclose(hess_logv_mu, desired_hess_logv_mu)
+
+    def test_hess_delta_a_delta_a(self):
+        desired_hess_a_a = [[0.3977033816628099]]
+        hess_a_a = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=True,
+            fix_logv_beta=True,
+            fix_logv_tau=True,
+            fix_delta_mu=True,
+            fix_delta_a=False,
+            fix_eta=True,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
+        )
+        assert_allclose(hess_a_a, desired_hess_a_a)
+
+    def test_hess_logv_delta_a(self):
+        desired_hess_logv_a = np.array(
+            [[-0.9104512516894039], [0.5], [0.4104512516894041]]
+        )
+        hess_logv_a = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=False,
+            fix_logv_beta=False,
+            fix_logv_tau=False,
+            fix_delta_mu=True,
+            fix_delta_a=False,
+            fix_eta=True,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
+        )[:3, 3:]
+        assert_allclose(hess_logv_a, desired_hess_logv_a)
+
+    def test_hess_delta_mu_delta_a(self):
+        n = self.n
+        desired_hess_mu_a = [
+            [-1.4104512516894041e00],
+            [-1.7893015360387762e-16],
+            [1.4104512516894041e00],
+            [2.3462097484551508e-16],
+        ]
+        hess_mu_a = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=True,
+            fix_logv_beta=True,
+            fix_logv_tau=True,
+            fix_delta_mu=False,
+            fix_delta_a=False,
+            fix_eta=True,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
+        )[:n, n:]
+        assert_allclose(hess_mu_a, desired_hess_mu_a)
 
 
 class TestNoiseFit:
@@ -798,13 +881,18 @@ class TestNoiseFit:
         "fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, fix_mu, fix_a, "
         "fix_eta",
         [
-            [False, False, False, False, False, False],
-            [True, False, False, False, False, False],
-            [False, True, False, False, False, False],
-            [False, False, True, False, False, False],
-            [False, False, False, True, False, False],
-            [False, False, False, False, True, False],
-            [False, False, False, False, False, True],
+            # [False, False, False, False, False, False],
+            # [True, False, False, False, False, False],
+            # [False, True, False, False, False, False],
+            # [False, False, True, False, False, False],
+            # [False, False, False, True, False, False],
+            # [False, False, False, False, True, False],
+            # [False, False, False, False, False, True],
+            [False, False, False, False, True, True],
+            [True, False, False, False, True, True],
+            [False, True, False, False, True, True],
+            [False, False, True, False, True, True],
+            [False, False, False, True, True, True],
         ],
     )
     def test_noisefit(

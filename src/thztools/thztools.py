@@ -1487,8 +1487,11 @@ def _hess_noisefit(
     vtot = common.vtot
     zeta = common.zeta
     dzeta = common.dzeta
+    zeta_f = common.zeta_f
     a = common.a
     exp_iweta = common.exp_iweta
+
+    ddzeta = irfft(-(w**2) * zeta_f, n=n)
 
     res = x - zeta
     dvar = (vtot - ressq) / vtot**2
@@ -1505,6 +1508,14 @@ def _hess_noisefit(
         a[:, np.newaxis, np.newaxis]
         * 1j
         * w
+        * np.conj(exp_iweta)[:, np.newaxis, :]
+        * rfft(np.eye(n))[np.newaxis, :, :],
+        n=n,
+    )
+
+    dddzeta_dmu = irfft(
+        a[:, np.newaxis, np.newaxis]
+        * -(w**2)
         * np.conj(exp_iweta)[:, np.newaxis, :]
         * rfft(np.eye(n))[np.newaxis, :, :],
         n=n,
@@ -1660,17 +1671,42 @@ def _hess_noisefit(
     if fix_logv_alpha or fix_eta:
         h_va_eta = np.atleast_2d([])
     else:
-        h_va_eta = np.zeros((1, m - 1))
+        h_va_eta = -np.atleast_2d(
+            np.sum(
+                ddvar * valpha * (vbeta * zeta * dzeta + vtau * dzeta * ddzeta)
+                + res * valpha * dzeta / vtot**2,
+                axis=1,
+            )[1:]
+        )
 
-    if fix_logv_beta or fix_delta_a:
+    if fix_logv_beta or fix_eta:
         h_vb_eta = np.atleast_2d([])
     else:
-        h_vb_eta = np.zeros((1, m - 1))
-
-    if fix_logv_tau or fix_delta_a:
+        h_vb_eta = -np.atleast_2d(
+            np.sum(
+                dvar * vbeta * zeta * dzeta
+                + ddvar
+                * vbeta
+                * zeta**2
+                * (vbeta * zeta * dzeta + vtau * dzeta * ddzeta)
+                + res * vbeta * zeta**2 * dzeta / vtot**2,
+                axis=1,
+            )[1:]
+        )
+    if fix_logv_tau or fix_eta:
         h_vt_eta = np.atleast_2d([])
     else:
-        h_vt_eta = np.zeros((1, m - 1))
+        h_vt_eta = -np.atleast_2d(
+            np.sum(
+                dvar * vtau * dzeta * ddzeta
+                + ddvar
+                * vtau
+                * dzeta**2
+                * (vbeta * zeta * dzeta + vtau * dzeta * ddzeta)
+                + res * vtau * dzeta**3 / vtot**2,
+                axis=1,
+            )[1:]
+        )
 
     # Hessian block for (delta_mu, delta_mu)
     if fix_delta_mu:
@@ -1733,7 +1769,39 @@ def _hess_noisefit(
     if fix_delta_mu or fix_eta:
         h_mu_eta = np.atleast_2d([])
     else:
-        h_mu_eta = np.zeros((n, m - 1))
+        a_array = (
+            dvar * vbeta * dzeta
+            + 2
+            * ddvar
+            * vbeta
+            * zeta
+            * (vbeta * zeta * dzeta + vtau * dzeta * ddzeta)
+            + 2
+            * res
+            * (vbeta * zeta * dzeta + vtau * dzeta * ddzeta)
+            / vtot**2
+            + dzeta / vtot
+            + 2 * vbeta * res * zeta * dzeta / vtot**2
+        )[1:, :]
+
+        b_array = (
+            dvar * (vbeta * zeta + vtau * ddzeta)
+            + 2
+            * ddvar
+            * vtau
+            * dzeta
+            * (vbeta * zeta * dzeta + vtau * dzeta * ddzeta)
+            - res / vtot
+            + 2 * vtau * res * dzeta**2 / vtot**2
+        )[1:, :]
+
+        c_array = (dvar * vtau * dzeta)[1:, :]
+
+        h_mu_eta = -(
+            np.einsum("qj, qpj -> pq", a_array, dzeta_dmu[1:, :, :])
+            + np.einsum("qj, qpj -> pq", b_array, ddzeta_dmu[1:, :, :])
+            + np.einsum("qj, qpj -> pq", c_array, dddzeta_dmu[1:, :, :])
+        )
 
     # Hessian block for (delta_a, delta_a)
     if fix_delta_a:

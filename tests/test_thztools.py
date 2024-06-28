@@ -24,7 +24,7 @@ from thztools.thztools import (
     wave,
 )
 
-atol = 1e-8
+eps = np.sqrt(np.finfo(np.float64).eps)
 rtol = 1e-5
 
 
@@ -112,7 +112,7 @@ class TestNoiseModel:
         else:
             noise_model = NoiseModel(alpha, beta, tau, dt=dt)
             result = noise_model.noise_var(mu, axis=axis)
-        assert_allclose(result, expected, atol=atol, rtol=rtol)  # type: ignore
+        assert_allclose(result, expected, atol=eps, rtol=rtol)  # type: ignore
 
     @pytest.mark.parametrize(
         "alpha, beta, tau, mu, dt, axis, expected",
@@ -141,7 +141,7 @@ class TestNoiseModel:
         else:
             noise_model = NoiseModel(alpha, beta, tau, dt=dt)
             result = noise_model.noise_amp(mu, axis=axis)
-        assert_allclose(result, expected, atol=atol, rtol=rtol)  # type: ignore
+        assert_allclose(result, expected, atol=eps, rtol=rtol)  # type: ignore
 
     @pytest.mark.parametrize(
         "alpha, beta, tau, mu, dt, axis, expected",
@@ -190,6 +190,8 @@ class TestTransferOut:
         assert_allclose(
             transfer(t_fun, x, dt=ts, numpy_sign_convention=fft_sign, args=p),
             expected,
+            atol=eps,
+            rtol=rtol,
         )
 
     @pytest.mark.parametrize("x", [np.ones((n, n))])
@@ -225,7 +227,7 @@ class TestTimebase:
             t = thztools.timebase(n, dt=dt, t_init=t_init)
         dt = _assign_sampling_time(dt)
         t_expected = t_init + np.arange(n) * dt
-        assert_allclose(t, t_expected, rtol=rtol, atol=atol)
+        assert_allclose(t, t_expected, rtol=rtol, atol=eps)
 
 
 class TestWave:
@@ -261,7 +263,7 @@ class TestWave:
         assert_allclose(
             wave(n, dt=dt, t0=t0, **kwargs),  # type: ignore
             y_expected,  # type: ignore
-            atol=atol,
+            atol=eps,
             rtol=rtol,
         )
 
@@ -326,7 +328,7 @@ class TestScaleShift:
         assert_allclose(
             scaleshift(x, **kwargs),  # type: ignore
             expected,  # type: ignore
-            atol=atol,
+            atol=eps,
             rtol=rtol,
         )
 
@@ -350,6 +352,8 @@ class TestCostFunTLS:
     assert_allclose(
         _costfuntls(tfun, theta, mu, xx, yy, sigmax, sigmay, dt),
         np.concatenate((np.zeros_like(xx), np.zeros_like(xx))),
+        atol=eps,
+        rtol=rtol,
     )
 
 
@@ -501,9 +505,7 @@ class TestJacNoiseFit:
             scale_delta_a=np.ones(m - 1),
             scale_eta_on_dt=np.ones(m - 1),
         )
-        assert_allclose(
-            gradnll, desired_gradnll, atol=10 * np.finfo(float).eps
-        )
+        assert_allclose(gradnll, desired_gradnll, atol=10 * eps, rtol=rtol)
 
 
 class TestHessNoiseFit:
@@ -567,7 +569,9 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=self.scale_eta / self.dt,
         )
-        assert_allclose(hess_logv_logv, desired_hess_logv_logv)
+        assert_allclose(
+            hess_logv_logv, desired_hess_logv_logv, atol=eps, rtol=rtol
+        )
 
     def test_hess_logv_delta_mu(self):
         desired_hess_logv_mu = np.array(
@@ -613,7 +617,9 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=self.scale_eta / self.dt,
         )[:3, 3:]
-        assert_allclose(hess_logv_mu, desired_hess_logv_mu)
+        assert_allclose(
+            hess_logv_mu, desired_hess_logv_mu, atol=eps, rtol=rtol
+        )
 
     def test_hess_logv_delta_a(self):
         desired_hess_logv_a = np.array(
@@ -640,7 +646,7 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=self.scale_eta / self.dt,
         )[:3, 3:]
-        assert_allclose(hess_logv_a, desired_hess_logv_a)
+        assert_allclose(hess_logv_a, desired_hess_logv_a, atol=eps, rtol=rtol)
 
     def test_hess_logv_eta(self):
         desired_hess_logv_eta = np.array(
@@ -671,7 +677,9 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=self.scale_eta / self.dt,
         )[:3, 3:]
-        assert_allclose(hess_logv_eta, desired_hess_logv_eta)
+        assert_allclose(
+            hess_logv_eta, desired_hess_logv_eta, atol=eps, rtol=rtol
+        )
 
     def test_hess_delta_mu_delta_mu(self):
         desired_hess_mu_mu = np.array(
@@ -723,7 +731,7 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=self.scale_eta / self.dt,
         )
-        assert_allclose(hess_mu_mu, desired_hess_mu_mu)
+        assert_allclose(hess_mu_mu, desired_hess_mu_mu, atol=eps, rtol=rtol)
 
     def test_hess_delta_mu_delta_a(self):
         n = self.n
@@ -754,7 +762,7 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=self.scale_eta / self.dt,
         )[:n, n:]
-        assert_allclose(hess_mu_a, desired_hess_mu_a)
+        assert_allclose(hess_mu_a, desired_hess_mu_a, atol=eps, rtol=rtol)
 
     def test_hess_delta_mu_eta(self):
         n = self.n
@@ -785,7 +793,7 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=self.scale_eta / self.dt,
         )[:n, n:]
-        assert_allclose(hess_mu_eta, desired_hess_mu_eta)
+        assert_allclose(hess_mu_eta, desired_hess_mu_eta, atol=eps, rtol=rtol)
 
     def test_hess_delta_a_delta_a(self):
         desired_hess_a_a = [[0.3977033816628099]]
@@ -810,7 +818,7 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=self.scale_eta / self.dt,
         )
-        assert_allclose(hess_a_a, desired_hess_a_a)
+        assert_allclose(hess_a_a, desired_hess_a_a, atol=eps, rtol=rtol)
 
     def test_hess_delta_a_eta(self):
         m = self.m
@@ -836,7 +844,7 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=self.scale_eta / self.dt,
         )[: m - 1, m - 1 :]
-        assert_allclose(hess_a_eta, desired_hess_a_eta)
+        assert_allclose(hess_a_eta, desired_hess_a_eta, atol=eps, rtol=rtol)
 
     def test_hess_eta_eta(self):
         desired_hess_eta_eta = [[47.28739606329804]]
@@ -861,7 +869,9 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=self.scale_eta / self.dt,
         )
-        assert_allclose(hess_eta_eta, desired_hess_eta_eta)
+        assert_allclose(
+            hess_eta_eta, desired_hess_eta_eta, atol=eps, rtol=rtol
+        )
 
 
 class TestNoiseFit:

@@ -994,18 +994,13 @@ class TestNoiseFit:
         "fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, fix_mu, fix_a, "
         "fix_eta",
         [
-            # [False, False, False, False, False, False],
-            # [True, False, False, False, False, False],
-            # [False, True, False, False, False, False],
-            # [False, False, True, False, False, False],
-            # [False, False, False, True, False, False],
-            # [False, False, False, False, True, False],
-            # [False, False, False, False, False, True],
-            [False, False, False, False, True, True],
-            [True, False, False, False, True, True],
-            [False, True, False, False, True, True],
-            [False, False, True, False, True, True],
-            [False, False, False, True, True, True],
+            [False, False, False, False, False, False],
+            [True, False, False, False, False, False],
+            [False, True, False, False, False, False],
+            [False, False, True, False, False, False],
+            [False, False, False, True, False, False],
+            [False, False, False, False, True, False],
+            [False, False, False, False, False, True],
         ],
     )
     def test_noisefit(

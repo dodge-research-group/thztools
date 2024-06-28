@@ -2125,7 +2125,7 @@ def noisefit(
     ...  sigma_tau0=tau, dt=dt)
     >>> noise_res.noise_model
     NoiseModel(sigma_alpha=9.971...e-05, sigma_beta=0.00975...,
-    sigma_tau=0.000885..., dt=0.05)
+    sigma_tau=0.000890..., dt=0.05)
 
     >>> plt.plot(t, np.std(thz.scaleshift(x, a=1 / noise_res.a,
     ... eta=-noise_res.eta, axis=0), axis=1), "-",

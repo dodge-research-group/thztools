@@ -1492,6 +1492,7 @@ def _hess_noisefit(
     exp_iweta = common.exp_iweta
 
     ddzeta = irfft(-(w**2) * zeta_f, n=n)
+    dddzeta = irfft(-1j * (w**3) * zeta_f, n=n)
 
     res = x - zeta
     dvar = (vtot - ressq) / vtot**2
@@ -1829,13 +1830,52 @@ def _hess_noisefit(
     if fix_delta_a or fix_eta:
         h_a_eta = np.atleast_2d([])
     else:
-        h_a_eta = np.zeros((m - 1, m - 1))
+        h_a_eta = -np.diag(
+            np.sum(
+                2 * dvar * (vbeta * zeta * dzeta + vtau * dzeta * ddzeta)
+                + 2
+                * ddvar
+                * (vbeta * zeta * dzeta + vtau * dzeta * ddzeta)
+                * (vbeta * zeta**2 + vtau * dzeta**2)
+                + 2
+                * res
+                * zeta
+                * (vbeta * zeta * dzeta + vtau * dzeta * ddzeta)
+                / vtot**2
+                + (zeta - res) * dzeta / vtot
+                + 2
+                * res
+                * dzeta
+                * (vbeta * zeta**2 + vtau * dzeta**2)
+                / vtot**2,
+                axis=1,
+            )[1:]
+            / a[1:]
+        )
 
     # Hessian block for (eta, eta)
     if fix_eta:
         h_eta_eta = np.atleast_2d([])
     else:
-        h_eta_eta = np.zeros((m - 1, m - 1))
+        h_eta_eta = np.diag(
+            np.sum(
+                dvar
+                * (
+                    vbeta * (dzeta**2 + zeta * ddzeta)
+                    + vtau * (ddzeta**2 + dzeta * dddzeta)
+                )
+                + 2
+                * ddvar
+                * (vbeta * zeta * dzeta + vtau * dzeta * ddzeta) ** 2
+                + 4
+                * res
+                * dzeta
+                * (vbeta * zeta * dzeta + vtau * dzeta * ddzeta)
+                / vtot**2
+                + (dzeta**2 - res * ddzeta) / vtot,
+                axis=1,
+            )[1:]
+        )
 
     # Boolean array used to compose full Hessian from multiple blocks
     fix = np.array(

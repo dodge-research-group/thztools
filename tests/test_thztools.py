@@ -812,6 +812,57 @@ class TestHessNoiseFit:
         )
         assert_allclose(hess_a_a, desired_hess_a_a)
 
+    def test_hess_delta_a_eta(self):
+        m = self.m
+        desired_hess_a_eta = [[4.278233838022636e-16]]
+        hess_a_eta = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=True,
+            fix_logv_beta=True,
+            fix_logv_tau=True,
+            fix_delta_mu=True,
+            fix_delta_a=False,
+            fix_eta=False,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
+        )[: m - 1, m - 1 :]
+        assert_allclose(hess_a_eta, desired_hess_a_eta)
+
+    def test_hess_eta_eta(self):
+        desired_hess_eta_eta = [[47.28739606329804]]
+        hess_eta_eta = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=True,
+            fix_logv_beta=True,
+            fix_logv_tau=True,
+            fix_delta_mu=True,
+            fix_delta_a=True,
+            fix_eta=False,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
+        )
+        assert_allclose(hess_eta_eta, desired_hess_eta_eta)
+
 
 class TestNoiseFit:
     rng = np.random.default_rng(0)

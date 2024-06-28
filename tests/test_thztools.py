@@ -24,6 +24,7 @@ from thztools.thztools import (
     wave,
 )
 
+print(f"{np.__version__=}")
 eps = np.sqrt(np.finfo(np.float64).eps)
 rtol = 1e-5
 

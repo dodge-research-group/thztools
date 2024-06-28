@@ -2128,7 +2128,7 @@ def noisefit(
     sigma_tau=0.000890..., dt=0.05)
 
     >>> print(f"{np.__version__=}")
-    ...
+    
     >>> plt.plot(t, np.std(thz.scaleshift(x, a=1 / noise_res.a,
     ... eta=-noise_res.eta, axis=0), axis=1), "-",
     ... label="Data")

@@ -2123,9 +2123,6 @@ def noisefit(
     >>> x = z + noise_model.noise_sim(z, axis=0, seed=12345)
     >>> noise_res = thz.noisefit(x, sigma_alpha0=alpha, sigma_beta0=beta,
     ...  sigma_tau0=tau, dt=dt)
-    >>> print(f"{np.__version__=}")
-    np.__version__='0.0.0'
-
     >>> noise_res.noise_model
     NoiseModel(sigma_alpha=9.971...e-05, sigma_beta=0.00975...,
     sigma_tau=0.000890..., dt=0.05)

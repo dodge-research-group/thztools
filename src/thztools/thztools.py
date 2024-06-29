@@ -164,9 +164,9 @@ def reset_option(key: str | None = None) -> None:
         val = getattr(default_options, key)
         set_option(key, val)
     else:
-        for key in GlobalOptions.__dataclass_fields__.keys():
-            val = getattr(default_options, key)
-            set_option(key, val)
+        for local_key in GlobalOptions.__dataclass_fields__.keys():
+            local_val = getattr(default_options, local_key)
+            set_option(local_key, local_val)
 
 
 def _assign_sampling_time(dt: float | None) -> float:

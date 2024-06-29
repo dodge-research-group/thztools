@@ -2238,13 +2238,13 @@ def _parse_noisefit_input(
         sigma_est = np.ma.sqrt(sol[0]).filled(sigma_min)
 
     if sigma_alpha0 is None:
-        sigma_alpha0 = sigma_est[0]
+        sigma_alpha0 = float(sigma_est[0])
 
     if sigma_beta0 is None:
-        sigma_beta0 = sigma_est[1]
+        sigma_beta0 = float(sigma_est[1])
 
     if sigma_tau0 is None:
-        sigma_tau0 = sigma_est[2]
+        sigma_tau0 = float(sigma_est[2])
 
     noise_model = NoiseModel(sigma_alpha0, sigma_beta0, sigma_tau0, dt=dt)
 
@@ -2531,19 +2531,19 @@ def _parse_noisefit_output(
 
     x_out = out.x
     if fix_sigma_alpha:
-        alpha = sigma_alpha0
+        alpha = float(sigma_alpha0)
     else:
-        alpha = np.exp(x_out[0] * scale_logv_alpha / 2)
+        alpha = float(np.exp(x_out[0] * scale_logv_alpha / 2))
         x_out = x_out[1:]
     if fix_sigma_beta:
-        beta = sigma_beta0
+        beta = float(sigma_beta0)
     else:
-        beta = np.exp(x_out[0] * scale_logv_beta / 2)
+        beta = float(np.exp(x_out[0] * scale_logv_beta / 2))
         x_out = x_out[1:]
     if fix_sigma_tau:
-        tau = sigma_tau0
+        tau = float(sigma_tau0)
     else:
-        tau = np.exp(x_out[0] * scale_logv_tau / 2) * dt
+        tau = float(np.exp(x_out[0] * scale_logv_tau / 2) * dt)
         x_out = x_out[1:]
     # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
@@ -2566,7 +2566,7 @@ def _parse_noisefit_output(
         eta_out = np.concatenate(([0.0], x_out[: m - 1] * scale_eta))
 
     diagnostic = out
-    fun = out.fun
+    fun = float(out.fun)
 
     # Concatenate scaling vectors for all sets of free parameters
     scale_hess_inv = np.concatenate(
@@ -2877,7 +2877,7 @@ def fit(
         msg = f"sigma_parms must be a tuple of length {NUM_NOISE_PARAMETERS:d}"
         raise ValueError(msg)
 
-    dt = _assign_sampling_time(dt)
+    dt = float(_assign_sampling_time(dt))
 
     n = ydata.shape[-1]
     n_p = len(p0)
@@ -2906,7 +2906,7 @@ def fit(
     w_in_idx = np.invert(w_below_idx) * np.invert(w_above_idx)
     n_f = len(w)
 
-    alpha, beta, tau = noise_parms
+    alpha, beta, tau = noise_parms.tolist()
     # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
     sigma_x = noise_model.noise_amp(xdata)
@@ -3007,7 +3007,7 @@ def fit(
         p_var=p_var,
         mu_opt=mu_opt,
         mu_var=mu_var,
-        resnorm=resnorm,
+        resnorm=float(resnorm),
         delta=delta,
         epsilon=epsilon,
         r_tls=r_tls,

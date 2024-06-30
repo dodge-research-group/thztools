@@ -9,7 +9,7 @@ description = """
 Data analysis software tools for terahertz time-domain spectroscopy (THz-TDS)
 """
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 license = "MIT"
 keywords = ["terahertz", "THz", "time-domain spectroscopy", "data analysis"]
 authors = [
@@ -32,6 +32,7 @@ classifiers = [
   	"Programming Language :: Python :: 3.9",
   	"Programming Language :: Python :: 3.10",
   	"Programming Language :: Python :: 3.11",
+  	"Programming Language :: Python :: 3.12",
   	"Programming Language :: Python :: Implementation :: CPython",
   	"Programming Language :: Python :: Implementation :: PyPy",
     "License :: OSI Approved :: MIT License",
@@ -82,7 +83,7 @@ doctest = "pytest -v --doctest-modules {args:src/thztools}"
 make-logo = ["python logo/make_logo.py; mv thztools_logo.svg docs/source/_static/;mv thztools_logo_dark.svg docs/source/_static/"]
 
 [[tool.hatch.envs.all.matrix]]
-python = ["3.9", "3.10", "3.11", "3.12",]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12",]
 
 [tool.hatch.envs.lint]
 detached = true
@@ -110,12 +111,12 @@ all = [
 ]
 
 [tool.black]
-target-version = ["py39"]
+target-version = ["py38"]
 line-length = 79
 skip-string-normalization = true
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py38"
 line-length = 79
 [tool.ruff.lint]
 select = [

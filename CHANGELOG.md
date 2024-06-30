@@ -30,10 +30,6 @@ for maintaining this file.
 - Add test to verify noise parameter estimates in `TestNoiseFit`
 - Add `_nll_noisefit`, `_jac_noisefit`, and `_hess_noisefit`
 
-### Removed
-
-- Remove support for Python 3.8
-
 ### Fixed
 
 - Fix error in `wave` docstring example

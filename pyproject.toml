@@ -40,7 +40,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "numpy~=2.0",
+    "numpy",
     "scipy",
 ]
 
@@ -60,7 +60,7 @@ dependencies = [
     "jupyter",
     "matplotlib",
     "numdifftools",
-    "numpy~=2.0",
+    "numpy",
     "pytest",
     "pytest-cov",
     "scipy",
@@ -91,7 +91,7 @@ dependencies = [
     "black>=23.1.0",
     "black[jupyter]",
     "mypy>=1.0.0",
-    "numpy~=2.0",
+    "numpy",
     "ruff>=0.4.8",
 ]
 [tool.hatch.envs.lint.scripts]

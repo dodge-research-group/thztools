@@ -18,7 +18,6 @@ for maintaining this file.
   with `scale_logv_*` parameters
 - Refactor `noisefit` to encapsulate cost function computations in separate
   functions, `_nll_noisefit`, `_jac_noisefit`, and `_hess_noisefit`
-- Changed NumPy dependency to `numpy~=2.0`
 
 ### Added
 

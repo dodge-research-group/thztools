@@ -32,6 +32,7 @@ classifiers = [
   	"Programming Language :: Python :: 3.9",
   	"Programming Language :: Python :: 3.10",
   	"Programming Language :: Python :: 3.11",
+  	"Programming Language :: Python :: 3.12",
   	"Programming Language :: Python :: Implementation :: CPython",
   	"Programming Language :: Python :: Implementation :: PyPy",
     "License :: OSI Approved :: MIT License",
@@ -39,7 +40,7 @@ classifiers = [
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "numpy>=1.21",
+    "numpy",
     "scipy",
 ]
 
@@ -59,8 +60,11 @@ dependencies = [
     "jupyter",
     "matplotlib",
     "numdifftools",
+    "numpy",
     "pytest",
     "pytest-cov",
+    "scipy",
+    "scipy-doctest",
     "scipy-doctest",
 ]
 [tool.hatch.envs.default.scripts]
@@ -75,6 +79,7 @@ cov = [
     "test-cov",
     "cov-report",
 ]
+doctest = "pytest -v --doctest-modules {args:src/thztools}"
 make-logo = ["python logo/make_logo.py; mv thztools_logo.svg docs/source/_static/;mv thztools_logo_dark.svg docs/source/_static/"]
 
 [[tool.hatch.envs.all.matrix]]
@@ -86,18 +91,18 @@ dependencies = [
     "black>=23.1.0",
     "black[jupyter]",
     "mypy>=1.0.0",
-    "numpy>=1.21",
-    "ruff>=0.0.243",
+    "numpy",
+    "ruff>=0.4.8",
 ]
 [tool.hatch.envs.lint.scripts]
 typing = "mypy --install-types --non-interactive {args:src/thztools tests}"
 style = [
-    "ruff {args:.}",
+    "ruff check {args:.}",
     "black --check --diff {args:.}",
 ]
 fmt = [
     "black {args:.}",
-    "ruff --fix {args:.}",
+    "ruff check --fix {args:.}",
     "style",
 ]
 all = [
@@ -113,6 +118,7 @@ skip-string-normalization = true
 [tool.ruff]
 target-version = "py38"
 line-length = 79
+[tool.ruff.lint]
 select = [
     "A",
     "ARG",
@@ -127,6 +133,7 @@ select = [
     "ICN",
     "ISC",
     "N",
+    "NPY201",
     "PLC",
     "PLE",
     "PLR",
@@ -157,13 +164,13 @@ unfixable = [
     "F401",
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["thztools"]
 
-[tool.ruff.flake8-tidy-imports]
+[tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 # Tests can use magic values, assertions, and relative imports
 "tests/**/*" = ["PLR2004", "S101", "TID252"]
 
@@ -173,6 +180,7 @@ branch = true
 parallel = true
 omit = [
     "src/thztools/__about__.py",
+    "src/thztools/conftest.py"
 ]
 
 [tool.coverage.paths]
@@ -211,7 +219,6 @@ dependencies = [
 ]
 [tool.hatch.envs.docs.scripts]
 build = "sphinx-build -v -b html docs/source docs/build/html"
-test = "pytest -v src/thztools --doctest-modules"
 
 [tool.mypy]
 plugins = "numpy.typing.mypy_plugin"

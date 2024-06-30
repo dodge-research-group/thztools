@@ -37,3 +37,6 @@ jobs:
 
     - name: Run tests
       run: hatch run cov
+
+    - name: Run doctests
+      run: hatch run doctest

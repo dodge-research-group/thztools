@@ -2238,15 +2238,20 @@ def _parse_noisefit_input(
         sigma_est = np.ma.sqrt(sol[0]).filled(sigma_min)
 
     if sigma_alpha0 is None:
-        sigma_alpha0 = float(sigma_est[0])
+        sigma_alpha0 = sigma_est[0]
 
     if sigma_beta0 is None:
-        sigma_beta0 = float(sigma_est[1])
+        sigma_beta0 = sigma_est[1]
 
     if sigma_tau0 is None:
-        sigma_tau0 = float(sigma_est[2])
+        sigma_tau0 = sigma_est[2]
 
-    noise_model = NoiseModel(sigma_alpha0, sigma_beta0, sigma_tau0, dt=dt)
+    noise_model = NoiseModel(
+        float(sigma_alpha0),
+        float(sigma_beta0),
+        float(sigma_tau0),
+        dt=float(dt),
+    )
 
     if scale_delta_mu is None:
         scale_delta_mu = noise_model.noise_amp(mu0)
@@ -2531,22 +2536,24 @@ def _parse_noisefit_output(
 
     x_out = out.x
     if fix_sigma_alpha:
-        alpha = float(sigma_alpha0)
+        alpha = sigma_alpha0
     else:
-        alpha = float(np.exp(x_out[0] * scale_logv_alpha / 2))
+        alpha = np.exp(x_out[0] * scale_logv_alpha / 2)
         x_out = x_out[1:]
     if fix_sigma_beta:
-        beta = float(sigma_beta0)
+        beta = sigma_beta0
     else:
-        beta = float(np.exp(x_out[0] * scale_logv_beta / 2))
+        beta = np.exp(x_out[0] * scale_logv_beta / 2)
         x_out = x_out[1:]
     if fix_sigma_tau:
-        tau = float(sigma_tau0)
+        tau = sigma_tau0
     else:
         tau = float(np.exp(x_out[0] * scale_logv_tau / 2) * dt)
         x_out = x_out[1:]
-    # noinspection PyArgumentList
-    noise_model = NoiseModel(alpha, beta, tau, dt=dt)
+
+    noise_model = NoiseModel(
+        float(alpha), float(beta), float(tau), dt=float(dt)
+    )
 
     if fix_mu:
         mu_out = mu0
@@ -2566,7 +2573,7 @@ def _parse_noisefit_output(
         eta_out = np.concatenate(([0.0], x_out[: m - 1] * scale_eta))
 
     diagnostic = out
-    fun = float(out.fun)
+    fun = out.fun
 
     # Concatenate scaling vectors for all sets of free parameters
     scale_hess_inv = np.concatenate(
@@ -2639,12 +2646,13 @@ def _parse_noisefit_output(
     if not fix_eta:
         err_eta = np.concatenate(([0], err[: m - 1]))
 
+    # Cast fun as a Python float in case it is a NumPy constant
     return NoiseResult(
         noise_model,
         mu_out,
         a_out,
         eta_out,
-        fun,
+        float(fun),
         hess_inv,
         err_sigma_alpha,
         err_sigma_beta,
@@ -2852,6 +2860,8 @@ def fit(
     >>> xdata = mu + noise_model.noise_sim(mu, seed=0)
     >>> ydata = psi + noise_model.noise_sim(psi, seed=1)
     >>> result = thz.fit(tfun, xdata, ydata, p0, (alpha, beta, tau), dt=dt)
+    >>> result.success
+    True
     >>> result.p_opt
     array([0.499..., 1.000...])
     >>> result.resnorm
@@ -3002,6 +3012,8 @@ def fit(
     h_delta = transfer(lambda _w: function(p_opt, _w), delta, dt=dt)
     r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (epsilon - h_delta)
 
+    # Cast resnorm as a Python float and success as a Python bool, in case
+    # either is a NumPy constant
     res = FitResult(
         p_opt=p_opt,
         p_var=p_var,
@@ -3011,6 +3023,6 @@ def fit(
         delta=delta,
         epsilon=epsilon,
         r_tls=r_tls,
-        success=result.success,
+        success=bool(result.success),
     )
     return res

@@ -101,7 +101,7 @@ style = [
 ]
 fmt = [
     "black {args:.}",
-    "ruff --fix check {args:.}",
+    "ruff check --fix {args:.}",
     "style",
 ]
 all = [
@@ -115,7 +115,7 @@ line-length = 79
 skip-string-normalization = true
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py39"
 line-length = 79
 [tool.ruff.lint]
 select = [

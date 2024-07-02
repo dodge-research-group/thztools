@@ -1,6 +1,6 @@
-﻿thztools.noisevar
+﻿thztools.timebase
 =================
 
 .. currentmodule:: thztools
 
-.. autofunction:: noisevar
+.. autofunction:: timebase

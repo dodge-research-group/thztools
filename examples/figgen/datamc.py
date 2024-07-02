@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.thztools import fftfreq, noiseamp, thzgen
+from src.thztools import fftfreq, noiseamp, wave
 
 
 def datamc(**kwargs):
@@ -36,8 +36,8 @@ def datamc(**kwargs):
     # Run simulation
     np.random.seed(seed)
 
-    # y, t = thzgen(n, t, t0, 'taur', 0.4)
-    y, t = thzgen(n, ts, t0)
+    # y, t = wave(n, t, t0, 'taur', 0.4)
+    y, t = wave(n, ts, t0)
     sigma_t = noiseamp(sigma_vec, y, ts)
 
     ym = np.tile(y, (500, 1)).T + (
@@ -65,7 +65,7 @@ def datamc(**kwargs):
         "Vi": vi,
         "V": v,
         "Nf": nf,
-        "sigma_t": sigma_t,
+        "noise_amp": sigma_t,
     }
 
     return data

@@ -16,6 +16,8 @@
 
 # The runpy package is used to import the version number from
 # __about__.py using OPTION 1 below. Not needed for OPTION 2.
+import math
+import os
 import runpy
 import sys
 from pathlib import Path
@@ -45,59 +47,29 @@ version = runpy.run_path(
 # version = importlib.metadata.version(project)
 # release = version
 
-# -- General configuration ---------------------------------------------------
+# -----------------------------------------------------------------------------
+# General configuration
+# -----------------------------------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "matplotlib.sphinxext.plot_directive",
-    "numpydoc",
-    "sphinx.ext.autosummary",
     "sphinx.ext.autodoc",
-    "sphinx.ext.doctest",
-    "sphinx.ext.mathjax",
-    "sphinx.ext.todo",
-    "sphinx.ext.viewcode",
-    "sphinx.ext.napoleon",
+    "nbsphinx",
+    "numpydoc",
+    "sphinx_design",
+    "sphinx_gallery.load_style",
+    "sphinx_tabs.tabs",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.coverage",
+    "sphinx.ext.doctest",
+    "sphinx.ext.autosummary",
+    "matplotlib.sphinxext.plot_directive",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.viewcode",
     "sphinx.ext.extlinks",
-    "sphinx.ext.ifconfig",
 ]
-
-plot_rcparams = {"font.size": 14}
-
-# autodoc_typehints = "signature"
-autodoc_type_aliases = {
-    "ArrayLike": "ArrayLike",
-    "Boolean": "bool",
-    "BooleanOrArrayLike": "BooleanOrArrayLike",
-    "BooleanOrNDArray": "BooleanOrNDArray",
-    "DType": "DType",
-    "DTypeBoolean": "DTypeBoolean",
-    "DTypeComplex": "DTypeComplex",
-    "DTypeFloating": "DTypeFloating",
-    "DTypeInteger": "DTypeInteger",
-    "DTypeNumber": "DTypeNumber",
-    "Floating": "float",
-    "FloatingOrArrayLike": "FloatingOrArrayLike",
-    "FloatingOrNDArray": "FloatingOrNDArray",
-    "Integer": "int",
-    "IntegerOrArrayLike": "IntegerOrArrayLike",
-    "IntegerOrNDArray": "IntegerOrNDArray",
-    "NestedSequence": "NestedSequence",
-    "Number": "Number",
-    "NumberOrArrayLike": "NumberOrArrayLike",
-    "NumberOrNDArray": "NumberOrNDArray",
-    "StrOrArrayLike": "StrOrArrayLike",
-    "StrOrNDArray": "StrOrNDArray",
-}
-
-autosummary_generate = True
-autodoc_typehints = "none"
-napoleon_google_docstring = False
-napoleon_use_param = False
-napoleon_use_ivar = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -108,28 +80,122 @@ templates_path = ["_templates"]
 # source_suffix = ['.rst', '.md']
 source_suffix = ".rst"
 
-# The master toctree document.
-master_doc = "index"
-
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    "**.ipynb_checkpoints",
+]
 
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = "default"
+# Show successful tests
+doctest_show_successes = True
 
-mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+# Setup code for doctests
+doctest_global_setup = """
+import numpy as np
+import thztools as thz
+rng = np.random.default_rng(0)
+"""
 
-# numpydoc
+# -----------------------------------------------------------------------------
+# nbsphinx configuration
+# -----------------------------------------------------------------------------
+
+nbsphinx_allow_errors = True
+
+# Set PYTHONPATH to local src directory (otherwise installs from PyPI)
+src = os.path.abspath("../../src")
+os.environ["PYTHONPATH"] = str(src)
+
+# -----------------------------------------------------------------------------
+# NumPy extensions
+# -----------------------------------------------------------------------------
+
+# Make numpydoc to generate plots for example sections
+numpydoc_use_plots = True
+
+numpydoc_class_members_toctree = True
 numpydoc_attributes_as_param_list = False
+
+# Cross-reference parameter types when True
+numpydoc_xref_param_type = False
+
+# Report warnings for all validation checks
+numpydoc_validation_checks = {"all", "SA01", "ES01", "RT02", "EX01", "PR01"}
+
+# Ensure all our internal links work
+nitpicky = True
+
+# -----------------------------------------------------------------------------
+# Matplotlib plot_directive options (adapted from SciPy docs)
+# -----------------------------------------------------------------------------
+
+# Display source code for Matplotlib plot directives
+plot_include_source = True
+plot_formats = [("png", 100), "pdf"]
+plot_html_show_formats = False
+plot_html_show_source_link = False
+plot_pre_code = """
+import numpy as np
+import thztools as thz
+"""
+plot_apply_rcparams = True
+
+phi = (math.sqrt(5) + 1) / 2
+
+font_size = 13 * 72 / 96.0  # 13 px
+
+plot_rcparams = {
+    "font.size": font_size,
+    "axes.titlesize": font_size,
+    "axes.labelsize": font_size,
+    "xtick.labelsize": font_size,
+    "ytick.labelsize": font_size,
+    "legend.fontsize": font_size,
+    "figure.figsize": (3 * phi, 3),
+    "figure.subplot.bottom": 0.2,
+    "figure.subplot.left": 0.2,
+    "figure.subplot.right": 0.9,
+    "figure.subplot.top": 0.85,
+    "figure.subplot.wspace": 0.4,
+    "text.usetex": False,
+}
+
+# -----------------------------------------------------------------------------
+# Autodoc
+# -----------------------------------------------------------------------------
+
+autodoc_typehints = "none"
+
+# If true, '()' will be appended to :func: etc. cross-reference text.
+add_function_parentheses = False
+
+
+# -----------------------------------------------------------------------------
+# Autosummary
+# -----------------------------------------------------------------------------
+
+autosummary_generate = True
+
+# -----------------------------------------------------------------------------
+# Intersphinx configuration
+# -----------------------------------------------------------------------------
+
+intersphinx_mapping = {
+    "numpy": ("https://numpy.org/devdocs", None),
+    "python": ("https://docs.python.org/3", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy", None),
+    "matplotlib": ("https://matplotlib.org/stable", None),
+}
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-# html_theme = 'sphinx_rtd_theme'
 html_theme = "pydata_sphinx_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -157,12 +223,20 @@ html_theme_options = {
     ],
 }
 
+mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = "default"
+
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = "thztoolsdoc"
 
 # -- Options for LaTeX output ------------------------------------------------
+
+# The master toctree document.
+master_doc = "index"
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').

@@ -1,6 +1,6 @@
-﻿thztools.noiseamp
+﻿thztools.noisefit
 =================
 
 .. currentmodule:: thztools
 
-.. autofunction:: noiseamp
+.. autofunction:: noisefit

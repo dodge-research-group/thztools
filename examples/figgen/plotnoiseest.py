@@ -12,7 +12,7 @@ path = "./../data/2017-03-20/Air Scans/Normal"
 # using DataPulse class get the amplitude
 air_scans = []
 for file in os.listdir(path):
-    obj = DataPulse(path + "/" + file).amplitude
+    obj = DataPulse(path + "/" + file).noise_amp
     air_scans.append(obj)
 
 # get the time array

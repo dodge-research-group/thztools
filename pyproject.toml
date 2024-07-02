@@ -5,16 +5,21 @@ build-backend = "hatchling.build"
 [project]
 name = "thztools"
 dynamic = ["version"]
-description = "Tools for terahertz time-domain spectroscopy (THz-TDS)"
+description = """
+Data analysis software tools for terahertz time-domain spectroscopy (THz-TDS)
+"""
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
 keywords = ["terahertz", "THz", "time-domain spectroscopy", "data analysis"]
 authors = [
-    { name="Steve Dodge", email="jsdodge@sfu.ca" },
-    { name="Santiago Higuera Quintero", email="s.higuera@uniandes.edu.co" },
-    { name="Jonathan Posada", email="jonathan.posada1@udea.edu.co" },
-    { name="Alireza Noori", email="alireza_noori@sfu.ca"}
+    { name="Jonathan Posada Loaiza", email="jonathan.posada1@udea.edu.co" },
+    { name="Santiago Higuera-Quintero", email="s.higuera@uniandes.edu.co" },
+    { name="Alireza Noori", email="alireza_noori@sfu.ca" },
+    { name="Laleh Mohtashemi", email="lalehmo@gmail.com" },
+    { name="R. P. Hall", email="rph4@sfu.ca" },
+    { name="Naod Ayalew Yimam", email="nayimam@gmail.com"},
+    { name="J. Steven Dodge", email="jsdodge@sfu.ca" },
 ]
 maintainers = [
     { name="Steve Dodge", email="jsdodge@sfu.ca" },
@@ -27,6 +32,7 @@ classifiers = [
   	"Programming Language :: Python :: 3.9",
   	"Programming Language :: Python :: 3.10",
   	"Programming Language :: Python :: 3.11",
+  	"Programming Language :: Python :: 3.12",
   	"Programming Language :: Python :: Implementation :: CPython",
   	"Programming Language :: Python :: Implementation :: PyPy",
     "License :: OSI Approved :: MIT License",
@@ -36,12 +42,12 @@ classifiers = [
 dependencies = [
     "numpy",
     "scipy",
-    "numdifftools",
 ]
 
 [project.urls]
 Documentation = "https://dodge-research-group.github.io/thztools/"
 Issues = "https://github.com/dodge-research-group/thztools/issues"
+Discussion = "https://github.com/dodge-research-group/thztools/discussions"
 Source = "https://github.com/dodge-research-group/thztools"
 
 [tool.hatch.version]
@@ -50,9 +56,16 @@ path = "src/thztools/__about__.py"
 [tool.hatch.envs.default]
 dependencies = [
     "coverage[toml]>=6.5",
+    "grayskull",
     "jupyter",
     "matplotlib",
+    "numdifftools",
+    "numpy",
     "pytest",
+    "pytest-cov",
+    "scipy",
+    "scipy-doctest",
+    "scipy-doctest",
 ]
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
@@ -66,17 +79,11 @@ cov = [
     "test-cov",
     "cov-report",
 ]
+doctest = "pytest -v --doctest-modules {args:src/thztools}"
+make-logo = ["python logo/make_logo.py; mv thztools_logo.svg docs/source/_static/;mv thztools_logo_dark.svg docs/source/_static/"]
 
 [[tool.hatch.envs.all.matrix]]
-python = ["3.8", "3.9", "3.10", "3.11"]
-
-[tool.hatch.envs.logo]
-dependencies = [
-    "matplotlib",
-    "numpy",
-]
-[tool.hatch.envs.logo.scripts]
-make-logo = ["python logo/make_logo.py; mv thztools_logo.svg docs/source/_static/;mv thztools_logo_dark.svg docs/source/_static/"]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12",]
 
 [tool.hatch.envs.lint]
 detached = true
@@ -84,18 +91,18 @@ dependencies = [
     "black>=23.1.0",
     "black[jupyter]",
     "mypy>=1.0.0",
-    "numpy>=1.21",
-    "ruff>=0.0.243",
+    "numpy",
+    "ruff>=0.4.8",
 ]
 [tool.hatch.envs.lint.scripts]
 typing = "mypy --install-types --non-interactive {args:src/thztools tests}"
 style = [
-    "ruff {args:.}",
+    "ruff check {args:.}",
     "black --check --diff {args:.}",
 ]
 fmt = [
     "black {args:.}",
-    "ruff --fix {args:.}",
+    "ruff check --fix {args:.}",
     "style",
 ]
 all = [
@@ -111,6 +118,7 @@ skip-string-normalization = true
 [tool.ruff]
 target-version = "py38"
 line-length = 79
+[tool.ruff.lint]
 select = [
     "A",
     "ARG",
@@ -125,6 +133,7 @@ select = [
     "ICN",
     "ISC",
     "N",
+    "NPY201",
     "PLC",
     "PLE",
     "PLR",
@@ -155,13 +164,13 @@ unfixable = [
     "F401",
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["thztools"]
 
-[tool.ruff.flake8-tidy-imports]
+[tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 # Tests can use magic values, assertions, and relative imports
 "tests/**/*" = ["PLR2004", "S101", "TID252"]
 
@@ -171,6 +180,7 @@ branch = true
 parallel = true
 omit = [
     "src/thztools/__about__.py",
+    "src/thztools/conftest.py"
 ]
 
 [tool.coverage.paths]
@@ -195,14 +205,20 @@ addopts = [
 
 [tool.hatch.envs.docs]
 dependencies = [
+    "ipykernel",
+    "IPython",
     "matplotlib",
+    "nbsphinx",
     "numpydoc",
     "pydata-sphinx-theme",
     "sphinx",
+    "sphinx-design",
+    "sphinx-gallery",
+    "sphinx-tabs",
     "tomli",
 ]
 [tool.hatch.envs.docs.scripts]
-build = "sphinx-build -b html docs/source docs/build/html"
+build = "sphinx-build -v -b html docs/source docs/build/html"
 
 [tool.mypy]
 plugins = "numpy.typing.mypy_plugin"

@@ -5,7 +5,65 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org)
 for maintaining this file.
 
-## [0.4.0] - 2024-05-09
+## [0.4.2] - 2024-06-30
+
+### Changed
+
+- Revise docstrings for `NoiseModel` methods
+- Refactor `noisefit` code to improve readability
+- Set tolerance parameter in `minimize` function used in `noisefit`
+- Change `fft_sign` options to `numpy_sign_convention`
+- Restore factor of `0.5` in cost function computation and gradient
+- Replace `scale_sigma_*` parameters (which simply adds a constant to the log) 
+  with `scale_logv_*` parameters
+- Refactor `noisefit` to encapsulate cost function computations in separate
+  functions, `_nll_noisefit`, `_jac_noisefit`, and `_hess_noisefit`
+
+### Added
+
+- Add `reset_option`, `set_option`
+- Rename `simulate-ideal-waveform` example to `simulate-waveform`
+- Add `conftest.py` file to ensure that global options are reset with each test
+- Add `doctest` to `test-pip` action
+- Add `doctest` script and dependencies to `pyproject.toml`
+- Add test to verify noise parameter estimates in `TestNoiseFit`
+- Add `_nll_noisefit`, `_jac_noisefit`, and `_hess_noisefit`
+
+### Fixed
+
+- Fix error in `wave` docstring example
+- Fix scaling error in `noisefit` estimate for `sigma_tau`
+- Fix `noisefit` docstring example
+- Fix error in `fit` covariance estimate output
+
+## [0.4.1] - 2024-05-25
+
+### Changed
+
+- Refactor `options`
+- Use explicit `dt` keyword option instead of global option in examples
+- Change hatch doctest script from Sphinx to PyTest
+- Change signature of `fit`
+- Revise documentation for `fit`, `FitResult`, `get_option`, `set_option`,
+  `transfer`
+- Refactor `_costfuntls`
+
+### Added
+
+- Add version badges for pip and Anaconda
+- Add conda installation instructions
+- Add `FitResult` dataclass and use it to return `fit` output
+- Add `autouse` fixture to reset `sampling_time` option to default before each
+  test
+- Add Python 3.12 to testing workflow
+- Add global doctest imports explicitly to docstrings
+- Add `numpy_sign_convention` parameter to `fit`
+
+### Fixed
+
+- Fix scaling error in `_parse_noisefit_output`
+
+## [0.4.0] - 2024-05-10
 
 ### Changed
 
@@ -51,8 +109,6 @@ for maintaining this file.
 - Add Contributing and Examples pages to documentation
 - Add Code of Conduct
 - Add gallery of Jupyter notebook examples to documentation using `nbsphinx`
-
-### Removed
 
 ### Fixed
 
@@ -158,6 +214,8 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.4.2]: https://github.com/dodge-research-group/thztools/releases/tag/v0.4.2
+[0.4.1]: https://github.com/dodge-research-group/thztools/releases/tag/v0.4.1
 [0.4.0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.4.0
 [0.3.6]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.6
 [0.3.5]: https://github.com/dodge-research-group/thztools/releases/tag/v0.3.5

@@ -11,6 +11,7 @@ Global options
     :caption: Global options
 
     get_option
+    reset_option
     set_option
 
 Noise model
@@ -31,6 +32,7 @@ Parameter estimation
     :toctree: generated/
     :caption: Parameter estimation
 
+    FitResult
     fit
 
 Waveform utilities

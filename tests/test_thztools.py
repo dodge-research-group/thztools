@@ -10,17 +10,22 @@ import thztools
 from thztools.thztools import (
     NoiseModel,
     _assign_sampling_time,
-    _costfun_noisefit,
     _costfuntls,
+    _hess_noisefit,
+    _jac_noisefit,
     _parse_noisefit_input,
     fit,
+    get_option,
     noisefit,
+    reset_option,
     scaleshift,
+    set_option,
     transfer,
     wave,
 )
 
-atol = 1e-8
+print(f"{np.__version__=}")
+eps = np.sqrt(np.finfo(np.float64).eps)
 rtol = 1e-5
 
 
@@ -41,16 +46,24 @@ def jac_fun(p, w):
     return np.stack((exp_ipw, 1j * w * p[0] * exp_ipw)).T
 
 
+# Reset options before each test
+@pytest.fixture(autouse=True)
+def global_reset():
+    reset_option()
+
+
 class TestOptions:
-    def test_sampling_time(self):
-        assert thztools.get_option("sampling_time") is None
+    def test_get_set_reset(self):
+        assert get_option("sampling_time") is None
+        set_option("sampling_time", 1.0)
+        assert np.isclose(get_option("sampling_time"), 1.0)
+        reset_option("sampling_time")
+        assert get_option("sampling_time") is None
 
     @pytest.mark.parametrize("global_sampling_time", [None, 0.1])
     @pytest.mark.parametrize("dt", [None, 0.1, 1.0])
-    def test_assignment(self, global_sampling_time, dt, monkeypatch):
-        monkeypatch.setattr(
-            thztools.options, "sampling_time", global_sampling_time
-        )
+    def test_assignment(self, global_sampling_time, dt):
+        set_option("sampling_time", global_sampling_time)
         if global_sampling_time is None and dt is None:
             assert np.isclose(_assign_sampling_time(dt), 1.0)
         elif global_sampling_time is None and dt is not None:
@@ -100,7 +113,7 @@ class TestNoiseModel:
         else:
             noise_model = NoiseModel(alpha, beta, tau, dt=dt)
             result = noise_model.noise_var(mu, axis=axis)
-        assert_allclose(result, expected, atol=atol, rtol=rtol)  # type: ignore
+        assert_allclose(result, expected, atol=eps, rtol=rtol)  # type: ignore
 
     @pytest.mark.parametrize(
         "alpha, beta, tau, mu, dt, axis, expected",
@@ -129,7 +142,7 @@ class TestNoiseModel:
         else:
             noise_model = NoiseModel(alpha, beta, tau, dt=dt)
             result = noise_model.noise_amp(mu, axis=axis)
-        assert_allclose(result, expected, atol=atol, rtol=rtol)  # type: ignore
+        assert_allclose(result, expected, atol=eps, rtol=rtol)  # type: ignore
 
     @pytest.mark.parametrize(
         "alpha, beta, tau, mu, dt, axis, expected",
@@ -178,6 +191,8 @@ class TestTransferOut:
         assert_allclose(
             transfer(t_fun, x, dt=ts, numpy_sign_convention=fft_sign, args=p),
             expected,
+            atol=eps,
+            rtol=rtol,
         )
 
     @pytest.mark.parametrize("x", [np.ones((n, n))])
@@ -213,7 +228,7 @@ class TestTimebase:
             t = thztools.timebase(n, dt=dt, t_init=t_init)
         dt = _assign_sampling_time(dt)
         t_expected = t_init + np.arange(n) * dt
-        assert_allclose(t, t_expected, rtol=rtol, atol=atol)
+        assert_allclose(t, t_expected, rtol=rtol, atol=eps)
 
 
 class TestWave:
@@ -249,7 +264,7 @@ class TestWave:
         assert_allclose(
             wave(n, dt=dt, t0=t0, **kwargs),  # type: ignore
             y_expected,  # type: ignore
-            atol=atol,
+            atol=eps,
             rtol=rtol,
         )
 
@@ -314,7 +329,7 @@ class TestScaleShift:
         assert_allclose(
             scaleshift(x, **kwargs),  # type: ignore
             expected,  # type: ignore
-            atol=atol,
+            atol=eps,
             rtol=rtol,
         )
 
@@ -338,10 +353,12 @@ class TestCostFunTLS:
     assert_allclose(
         _costfuntls(tfun, theta, mu, xx, yy, sigmax, sigmay, dt),
         np.concatenate((np.zeros_like(xx), np.zeros_like(xx))),
+        atol=eps,
+        rtol=rtol,
     )
 
 
-class TestTDNLLScaled:
+class TestJacNoiseFit:
     m = 2
     n = 16
     dt = 1.0 / n
@@ -365,7 +382,7 @@ class TestTDNLLScaled:
             ],
             [
                 False,
-                [1.0],
+                [m * n / 2],
             ],
         ],
     )
@@ -468,7 +485,7 @@ class TestTDNLLScaled:
                 desired_gradnll_eta,
             )
         )
-        _, gradnll = _costfun_noisefit(
+        gradnll = _jac_noisefit(
             x,
             logv_alpha,
             logv_beta,
@@ -482,15 +499,379 @@ class TestTDNLLScaled:
             fix_delta_mu=fix_delta_mu,
             fix_delta_a=fix_delta_a,
             fix_eta=fix_eta,
-            scale_sigma_alpha=1.0,
-            scale_sigma_beta=1.0,
-            scale_sigma_tau=1.0,
+            scale_logv_alpha=1.0,
+            scale_logv_beta=1.0,
+            scale_logv_tau=1.0,
             scale_delta_mu=np.ones(n),
             scale_delta_a=np.ones(m - 1),
-            scale_eta=np.ones(m - 1),
+            scale_eta_on_dt=np.ones(m - 1),
+        )
+        assert_allclose(gradnll, desired_gradnll, atol=10 * eps, rtol=rtol)
+
+
+class TestHessNoiseFit:
+    m = 2
+    n = 4
+    dt = 1.0 / n
+    t = np.arange(n) * dt
+    mu = np.cos(2 * pi * t)
+    x = np.tile(mu, [m, 1])
+    logv_alpha = 0
+    logv_beta = 0
+    logv_tau = 0
+    delta_mu = np.zeros(n)
+    delta_a = np.zeros(m - 1)
+    eta = np.zeros(m - 1)
+    scale_logv_alpha = 1.0
+    scale_logv_beta = 1.0
+    scale_logv_tau = 1.0
+    scale_delta_mu = np.ones_like(delta_mu)
+    scale_delta_a = np.ones_like(delta_a)
+    scale_eta = np.ones_like(eta)
+
+    def test_hess_logv_logv(self):
+        desired_hess_logv_logv = np.array(
+            [
+                [
+                    9.1045125168940400e-01,
+                    -5.0000000000000000e-01,
+                    -4.1045125168940388e-01,
+                ],
+                [
+                    -5.0000000000000000e-01,
+                    5.0000000000000000e-01,
+                    -2.6197273189757708e-32,
+                ],
+                [
+                    -4.1045125168940388e-01,
+                    -2.6197273189757708e-32,
+                    4.1045125168940433e-01,
+                ],
+            ]
+        )
+        hess_logv_logv = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=False,
+            fix_logv_beta=False,
+            fix_logv_tau=False,
+            fix_delta_mu=True,
+            fix_delta_a=True,
+            fix_eta=True,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
         )
         assert_allclose(
-            gradnll, desired_gradnll, atol=10 * np.finfo(float).eps
+            hess_logv_logv, desired_hess_logv_logv, atol=eps, rtol=rtol
+        )
+
+    def test_hess_logv_delta_mu(self):
+        desired_hess_logv_mu = np.array(
+            [
+                [
+                    9.1045125168940388e-01,
+                    1.6127071987048048e-16,
+                    -9.1045125168940388e-01,
+                    -1.8164267364532367e-16,
+                ],
+                [
+                    -5.0000000000000000e-01,
+                    1.1576587551626463e-16,
+                    5.0000000000000000e-01,
+                    -4.5128140582676141e-17,
+                ],
+                [
+                    -4.1045125168940416e-01,
+                    -2.7703659538674511e-16,
+                    4.1045125168940416e-01,
+                    2.2677081422799980e-16,
+                ],
+            ]
+        )
+        hess_logv_mu = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=False,
+            fix_logv_beta=False,
+            fix_logv_tau=False,
+            fix_delta_mu=False,
+            fix_delta_a=True,
+            fix_eta=True,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
+        )[:3, 3:]
+        assert_allclose(
+            hess_logv_mu, desired_hess_logv_mu, atol=eps, rtol=rtol
+        )
+
+    def test_hess_logv_delta_a(self):
+        desired_hess_logv_a = np.array(
+            [[-0.9104512516894039], [0.5], [0.4104512516894041]]
+        )
+        hess_logv_a = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=False,
+            fix_logv_beta=False,
+            fix_logv_tau=False,
+            fix_delta_mu=True,
+            fix_delta_a=False,
+            fix_eta=True,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
+        )[:3, 3:]
+        assert_allclose(hess_logv_a, desired_hess_logv_a, atol=eps, rtol=rtol)
+
+    def test_hess_logv_eta(self):
+        desired_hess_logv_eta = np.array(
+            [
+                [-3.767308415119052e-16],
+                [-8.901975977273483e-16],
+                [1.266928439239253e-15],
+            ]
+        )
+        hess_logv_eta = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=False,
+            fix_logv_beta=False,
+            fix_logv_tau=False,
+            fix_delta_mu=True,
+            fix_delta_a=True,
+            fix_eta=False,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
+        )[:3, 3:]
+        assert_allclose(
+            hess_logv_eta, desired_hess_logv_eta, atol=eps, rtol=rtol
+        )
+
+    def test_hess_delta_mu_delta_mu(self):
+        desired_hess_mu_mu = np.array(
+            [
+                [
+                    6.9885169083140497e-01,
+                    -1.7621763356243157e-16,
+                    3.0114830916859503e-01,
+                    2.2648341472117688e-16,
+                ],
+                [
+                    -1.7621763356243157e-16,
+                    2.3873023067041736e00,
+                    1.7621763356243157e-16,
+                    -1.2337005501361697e00,
+                ],
+                [
+                    3.0114830916859503e-01,
+                    1.7621763356243157e-16,
+                    6.9885169083140497e-01,
+                    -2.2648341472117688e-16,
+                ],
+                [
+                    2.2648341472117688e-16,
+                    -1.2337005501361697e00,
+                    -2.2648341472117688e-16,
+                    2.3873023067041736e00,
+                ],
+            ]
+        )
+        hess_mu_mu = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=True,
+            fix_logv_beta=True,
+            fix_logv_tau=True,
+            fix_delta_mu=False,
+            fix_delta_a=True,
+            fix_eta=True,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
+        )
+        assert_allclose(hess_mu_mu, desired_hess_mu_mu, atol=eps, rtol=rtol)
+
+    def test_hess_delta_mu_delta_a(self):
+        n = self.n
+        desired_hess_mu_a = [
+            [-1.4104512516894041e00],
+            [-1.7893015360387762e-16],
+            [1.4104512516894041e00],
+            [2.3462097484551508e-16],
+        ]
+        hess_mu_a = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=True,
+            fix_logv_beta=True,
+            fix_logv_tau=True,
+            fix_delta_mu=False,
+            fix_delta_a=False,
+            fix_eta=True,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
+        )[:n, n:]
+        assert_allclose(hess_mu_a, desired_hess_mu_a, atol=eps, rtol=rtol)
+
+    def test_hess_delta_mu_eta(self):
+        n = self.n
+        desired_hess_mu_eta = [
+            [1.0890338318440097e-16],
+            [-3.7630114147090579e00],
+            [-3.8494520984901552e-16],
+            [3.7630114147090579e00],
+        ]
+        hess_mu_eta = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=True,
+            fix_logv_beta=True,
+            fix_logv_tau=True,
+            fix_delta_mu=False,
+            fix_delta_a=True,
+            fix_eta=False,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
+        )[:n, n:]
+        assert_allclose(hess_mu_eta, desired_hess_mu_eta, atol=eps, rtol=rtol)
+
+    def test_hess_delta_a_delta_a(self):
+        desired_hess_a_a = [[0.3977033816628099]]
+        hess_a_a = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=True,
+            fix_logv_beta=True,
+            fix_logv_tau=True,
+            fix_delta_mu=True,
+            fix_delta_a=False,
+            fix_eta=True,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
+        )
+        assert_allclose(hess_a_a, desired_hess_a_a, atol=eps, rtol=rtol)
+
+    def test_hess_delta_a_eta(self):
+        m = self.m
+        desired_hess_a_eta = [[4.278233838022636e-16]]
+        hess_a_eta = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=True,
+            fix_logv_beta=True,
+            fix_logv_tau=True,
+            fix_delta_mu=True,
+            fix_delta_a=False,
+            fix_eta=False,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
+        )[: m - 1, m - 1 :]
+        assert_allclose(hess_a_eta, desired_hess_a_eta, atol=eps, rtol=rtol)
+
+    def test_hess_eta_eta(self):
+        desired_hess_eta_eta = [[47.28739606329804]]
+        hess_eta_eta = _hess_noisefit(
+            self.x,
+            self.logv_alpha,
+            self.logv_beta,
+            self.logv_tau,
+            self.delta_mu / self.scale_delta_mu,
+            self.delta_a / self.scale_delta_a,
+            self.eta / self.scale_eta,
+            fix_logv_alpha=True,
+            fix_logv_beta=True,
+            fix_logv_tau=True,
+            fix_delta_mu=True,
+            fix_delta_a=True,
+            fix_eta=False,
+            scale_logv_alpha=self.scale_logv_alpha,
+            scale_logv_beta=self.scale_logv_beta,
+            scale_logv_tau=self.scale_logv_tau,
+            scale_delta_mu=self.scale_delta_mu,
+            scale_delta_a=self.scale_delta_a,
+            scale_eta_on_dt=self.scale_eta / self.dt,
+        )
+        assert_allclose(
+            hess_eta_eta, desired_hess_eta_eta, atol=eps, rtol=rtol
         )
 
 
@@ -558,9 +939,9 @@ class TestNoiseFit:
                 fix_mu=fix_mu,
                 fix_a=fix_a,
                 fix_eta=fix_eta,
-                scale_sigma_alpha=1.0,
-                scale_sigma_beta=1.0,
-                scale_sigma_tau=1.0,
+                scale_logv_alpha=1.0,
+                scale_logv_beta=1.0,
+                scale_logv_tau=1.0,
                 scale_delta_mu=np.ones(n),
                 scale_delta_a=np.ones(m - 1),
                 scale_eta=np.ones(m - 1),
@@ -612,9 +993,9 @@ class TestNoiseFit:
             fix_mu=False,
             fix_a=False,
             fix_eta=False,
-            scale_sigma_alpha=scale_sigma_alpha,
-            scale_sigma_beta=scale_sigma_beta,
-            scale_sigma_tau=scale_sigma_tau,
+            scale_logv_alpha=scale_sigma_alpha,
+            scale_logv_beta=scale_sigma_beta,
+            scale_logv_tau=scale_sigma_tau,
             scale_delta_mu=scale_delta_mu,
             scale_delta_a=scale_delta_a,
             scale_eta=scale_eta,
@@ -643,8 +1024,22 @@ class TestNoiseFit:
         fix_eta,
     ):
         x = self.x
+        dt = self.dt
+        sigma_alpha0 = self.alpha
+        sigma_beta0 = self.beta
+        sigma_tau0 = self.tau
+        mu0 = self.mu
+        a0 = self.a
+        eta0 = self.eta
         result = noisefit(
             x.T,
+            dt=dt,
+            sigma_alpha0=sigma_alpha0,
+            sigma_beta0=sigma_beta0,
+            sigma_tau0=sigma_tau0,
+            mu0=mu0,
+            a0=a0,
+            eta0=eta0,
             fix_sigma_alpha=fix_sigma_alpha,
             fix_sigma_beta=fix_sigma_beta,
             fix_sigma_tau=fix_sigma_tau,
@@ -654,48 +1049,77 @@ class TestNoiseFit:
         )
         assert result.diagnostic["status"] == 0
 
+        m = self.m
+        sigma = self.sigma
+        sigma_est = np.asarray(
+            [
+                result.noise_model.sigma_alpha,
+                result.noise_model.sigma_beta,
+                result.noise_model.sigma_tau,
+            ]
+        ) * np.sqrt(m / (m - 1))
+        assert_allclose(sigma_est / sigma, np.ones(3), atol=1e-1, rtol=1e-1)
+
 
 class TestFit:
-    rng = np.random.default_rng(0)
     n = 16
     dt = 1.0 / n
     t = np.arange(n) * dt
-    mu = np.cos(2 * pi * t)
-    p0 = (1, 0)
-    psi = mu
+    x = np.cos(2 * pi * t)
+    p0 = (0.5, dt)
+
+    y_numpy_sign_true = transfer(
+        tfun2, x, dt=dt, args=p0, numpy_sign_convention=True
+    )
+    y_numpy_sign_false = transfer(
+        tfun2, x, dt=dt, args=p0, numpy_sign_convention=False
+    )
     alpha, beta, tau = 1e-5, 0, 0
     sigma = np.array([alpha, beta, tau])
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
-    noise_amp = noise_model.noise_amp(mu)
-    x = mu + noise_amp * rng.standard_normal(n)
-    y = psi + noise_amp * rng.standard_normal(n)
 
     @pytest.mark.parametrize("noise_parms", [(1, 0, 0), sigma**2])
+    @pytest.mark.parametrize(
+        "y, numpy_sign_convention",
+        [[y_numpy_sign_true, True], [y_numpy_sign_false, False]],
+    )
+    @pytest.mark.parametrize("f_bounds", [None, (0.0, np.inf)])
     @pytest.mark.parametrize("p_bounds", [None, ((0, -1), (2, 1))])
     @pytest.mark.parametrize("jac", [None, jac_fun])
-    @pytest.mark.parametrize("kwargs", [None, {}])
-    def test_inputs(self, noise_parms, p_bounds, jac, kwargs):
+    def test_inputs(
+        self,
+        y,
+        noise_parms,
+        numpy_sign_convention,
+        f_bounds,
+        p_bounds,
+        jac,
+    ):
         p0 = self.p0
         x = self.x
-        y = self.y
         dt = self.dt
         p = fit(
             tfun,
-            p0,
             x,
             y,
+            p0,
+            noise_parms,
             dt=dt,
-            sigma_parms=noise_parms,
+            numpy_sign_convention=numpy_sign_convention,
+            f_bounds=f_bounds,
             p_bounds=p_bounds,
             jac=jac,
-            kwargs=kwargs,
         )
-        assert_allclose(p["p_opt"], p0, atol=1e-6)
+        assert_allclose(p.p_opt, p0)
 
     def test_errors(self):
         p0 = self.p0
         x = self.x
-        y = self.y
         dt = self.dt
+        y = self.y_numpy_sign_true
+
         with pytest.raises(ValueError):
-            _ = fit(tfun, p0, x, y, dt=dt, p_bounds=())
+            _ = fit(tfun, x, y, p0, dt=dt, p_bounds=())
+
+        with pytest.raises(ValueError):
+            _ = fit(tfun, x, y, p0, (0, 0), dt=dt)

@@ -3007,7 +3007,9 @@ def fit(
     epsilon = ydata - psi_opt
 
     sig_x = np.diag(sigma_x)
-    h_circ = la.circulant(transfer(lambda _w: function(p_opt, _w), signal.unit_impulse(n), dt=dt)).T
+    h_circ = la.circulant(
+        transfer(lambda _w: function(p_opt, _w), signal.unit_impulse(n), dt=dt)
+    ).T
     h_sigma_x = sig_x @ h_circ
     v_y = np.diag(sigma_y**2)
     u_x = h_sigma_x.T @ h_sigma_x

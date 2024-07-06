@@ -3006,11 +3006,13 @@ def fit(
     psi_opt = transfer(lambda _w: function(p_opt, _w), mu_opt, dt=dt)
     epsilon = ydata - psi_opt
 
+    sig_x = np.diag(sigma_x)
+    h_circ = la.circulant(transfer(lambda _w: function(p_opt, _w), signal.unit_impulse(n), dt=dt)).T
+    h_sigma_x = sig_x @ h_circ
     v_y = np.diag(sigma_y**2)
-    h_sigma_x = transfer(lambda _w: function(p_opt, _w), sigma_x, dt=dt)
-    u_x = h_sigma_x[:, np.newaxis] @ h_sigma_x[np.newaxis, :]
-    h_delta = transfer(lambda _w: function(p_opt, _w), delta, dt=dt)
-    r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (epsilon - h_delta)
+    u_x = h_sigma_x.T @ h_sigma_x
+    h_x = transfer(lambda _w: function(p_opt, _w), xdata, dt=dt)
+    r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (ydata - h_x)
 
     # Cast resnorm as a Python float and success as a Python bool, in case
     # either is a NumPy constant

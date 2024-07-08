@@ -2921,6 +2921,8 @@ def fit(
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
     sigma_x = noise_model.noise_amp(xdata)
     sigma_y = noise_model.noise_amp(ydata)
+    v_x = np.diag(sigma_x**2)
+    v_y = np.diag(sigma_y**2)
     p0_est = np.concatenate((p0, np.zeros(n)))
 
     def etfe(_x, _y):
@@ -3006,14 +3008,11 @@ def fit(
     psi_opt = transfer(lambda _w: function(p_opt, _w), mu_opt, dt=dt)
     epsilon = ydata - psi_opt
 
-    sig_x = np.diag(sigma_x)
     h_circ = la.circulant(
         transfer(lambda _w: function(p_opt, _w), signal.unit_impulse(n), dt=dt)
-    ).T
-    h_sigma_x = sig_x @ h_circ
-    v_y = np.diag(sigma_y**2)
-    u_x = h_sigma_x.T @ h_sigma_x
+    )
     h_x = transfer(lambda _w: function(p_opt, _w), xdata, dt=dt)
+    u_x = h_circ @ v_x @ h_circ.T
     r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (ydata - h_x)
 
     # Cast resnorm as a Python float and success as a Python bool, in case

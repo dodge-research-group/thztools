@@ -1006,78 +1006,6 @@ def scaleshift(
     return x_adjusted
 
 
-def _costfuntls(
-    fun: Callable,
-    theta: ArrayLike,
-    mu: ArrayLike,
-    x: ArrayLike,
-    y: ArrayLike,
-    sigma_x: ArrayLike,
-    sigma_y: ArrayLike,
-    dt: float | None = 1.0,
-) -> NDArray[np.float64]:
-    r"""Computes the residual vector for the total least squares cost function.
-
-    Parameters
-    ----------
-    fun : callable
-        Transfer function.
-
-            ``fun(p, w, *args, **kwargs) -> ndarray``
-
-        Assumes the :math:`+i\omega t` convention for harmonic time dependence.
-    theta : array_like
-        Input parameters for the function.
-    mu : array_like
-        Estimated input signal.
-    x : array_like
-        Measured input signal.
-    y : array_like
-        Measured output signal.
-    sigma_x : array_like
-        Noise vector of the input signal.
-    sigma_y : array_like
-        Noise vector of the output signal.
-    dt : float or None, optional
-        Sampling time, normally in picoseconds. Default is None, which sets
-        the sampling time to ``thztools.options.sampling_time``. If both
-        ``dt`` and ``thztools.options.sampling_time`` are ``None``, the
-        sampling time is set to ``1.0``. In this case, the angular frequency
-        ``omega`` must be given in units of radians per sampling time, and any
-        parameters in ``args`` must be expressed with the sampling time as the
-        unit of time.
-
-    Returns
-    -------
-    res : ndarray
-        Residual array.
-
-    Warns
-    -----
-    UserWarning
-        If ``thztools.options.sampling_time`` and the ``dt`` parameter
-        are both not ``None`` and are set to different ``float`` values, the
-        function will set the sampling time to ``dt`` and raise a
-        :class:`UserWarning`.
-    """
-    theta = np.asarray(theta, dtype=np.float64)
-    mu = np.asarray(mu, dtype=np.float64)
-    x = np.asarray(x, dtype=np.float64)
-    y = np.asarray(y, dtype=np.float64)
-    sigma_x = np.asarray(sigma_x, dtype=np.float64)
-    sigma_y = np.asarray(sigma_y, dtype=np.float64)
-
-    dt = _assign_sampling_time(dt)
-
-    psi = transfer(lambda omega: fun(theta, omega), mu, dt=dt)
-
-    delta_norm = (x - mu) / sigma_x
-    eps_norm = (y - psi) / sigma_y
-    res = np.concatenate((delta_norm, eps_norm))
-
-    return res
-
-
 @dataclass
 class CommonNLL:
     ressq: NDArray[np.float64]
@@ -2355,7 +2283,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
         if fix_eta:
             _eta = eta_scaled0
         else:
@@ -2402,7 +2330,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
         if fix_eta:
             _eta_on_dt = eta_scaled0 / dt
         else:
@@ -2454,7 +2382,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
         if fix_eta:
             _eta_on_dt = eta_scaled0 / dt
         else:
@@ -2565,7 +2493,7 @@ def _parse_noisefit_output(
         a_out = a0
     else:
         a_out = np.concatenate(([1.0], 1.0 + x_out[: m - 1] * scale_delta_a))
-        x_out = x_out[m - 1 :]
+        x_out = x_out[m - 1:]
 
     if fix_eta:
         eta_out = eta0
@@ -2641,7 +2569,7 @@ def _parse_noisefit_output(
 
     if not fix_a:
         err_a = np.concatenate(([0], err[: m - 1]))
-        err = err[m - 1 :]
+        err = err[m - 1:]
 
     if not fix_eta:
         err_eta = np.concatenate(([0], err[: m - 1]))
@@ -2706,6 +2634,89 @@ class FitResult:
     epsilon: NDArray[np.float64]
     r_tls: NDArray[np.float64]
     success: bool
+
+
+def _costfuntls(
+    fun: Callable,
+    theta: ArrayLike,
+    fft_mu: ArrayLike,
+    fft_x: ArrayLike,
+    fft_y: ArrayLike,
+    sigma_x: ArrayLike,
+    sigma_y: ArrayLike,
+    w_below_idx: ArrayLike,
+    w_in_idx: ArrayLike,
+    w_above_idx: ArrayLike,
+    dt: float | None = 1.0,
+) -> NDArray[np.float64]:
+    r"""Computes the residual vector for the total least squares cost function.
+
+    Parameters
+    ----------
+    fun : callable
+        Transfer function.
+
+            ``fun(p, w, *args, **kwargs) -> ndarray``
+
+        Assumes the :math:`+i\omega t` convention for harmonic time dependence.
+    theta : array_like
+        Input parameters for the function.
+    mu : array_like
+        Estimated input signal.
+    x : array_like
+        Measured input signal.
+    y : array_like
+        Measured output signal.
+    sigma_x : array_like
+        Noise vector of the input signal.
+    sigma_y : array_like
+        Noise vector of the output signal.
+    dt : float or None, optional
+        Sampling time, normally in picoseconds. Default is None, which sets
+        the sampling time to ``thztools.options.sampling_time``. If both
+        ``dt`` and ``thztools.options.sampling_time`` are ``None``, the
+        sampling time is set to ``1.0``. In this case, the angular frequency
+        ``omega`` must be given in units of radians per sampling time, and any
+        parameters in ``args`` must be expressed with the sampling time as the
+        unit of time.
+
+    Returns
+    -------
+    res : ndarray
+        Residual array.
+
+    Warns
+    -----
+    UserWarning
+        If ``thztools.options.sampling_time`` and the ``dt`` parameter
+        are both not ``None`` and are set to different ``float`` values, the
+        function will set the sampling time to ``dt`` and raise a
+        :class:`UserWarning`.
+    """
+    theta = np.asarray(theta, dtype=np.float64)
+    fft_mu = np.asarray(fft_mu, dtype=np.complex128)
+    fft_x = np.asarray(fft_x, dtype=np.complex128)
+    fft_y = np.asarray(fft_y, dtype=np.complex128)
+    sigma_x = np.asarray(sigma_x, dtype=np.float64)
+    sigma_y = np.asarray(sigma_y, dtype=np.float64)
+    w_below_idx = np.asarray(w_below_idx, dtype=np.bool_)
+    w_in_idx = np.asarray(w_in_idx, dtype=np.bool_)
+    w_above_idx = np.asarray(w_above_idx, dtype=np.bool_)
+
+    dt = _assign_sampling_time(dt)
+    n = sigma_x.shape[-1]
+
+    x = irfft(fft_x, n=n)
+    y = irfft(fft_y, n=n)
+    mu = irfft(np.concatenate(
+        (fft_x[w_below_idx], fft_mu[w_in_idx], fft_x[w_above_idx])), n=n)
+    psi = transfer(lambda omega: fun(theta, omega), mu, dt=dt)
+
+    delta_norm = (x - mu) / sigma_x
+    eps_norm = (y - psi) / sigma_y
+    res = np.concatenate((delta_norm, eps_norm))
+
+    return res
 
 
 def fit(
@@ -2878,6 +2889,12 @@ def fit(
     p0 = np.asarray(p0, dtype=np.float64)
     xdata = np.asarray(xdata, dtype=np.float64)
     ydata = np.asarray(ydata, dtype=np.float64)
+    fft_x = rfft(xdata)
+    fft_y = rfft(ydata)
+    etfe = fft_y/fft_x
+    if not numpy_sign_convention:
+        etfe = np.conj(etfe)
+
     if noise_parms is None:
         noise_parms = np.asarray((1.0, 0.0, 0.0), dtype=np.float64)
     else:
@@ -2914,7 +2931,11 @@ def fit(
     w_below_idx = w <= w_bounds[0]
     w_above_idx = w > w_bounds[1]
     w_in_idx = np.invert(w_below_idx) * np.invert(w_above_idx)
-    n_f = len(w)
+    w_in = w[w_in_idx]
+
+    n_below = np.sum(w_below_idx)
+    n_in = np.sum(w_in_idx)
+    n_above = np.sum(w_above_idx)
 
     alpha, beta, tau = noise_parms.tolist()
     # noinspection PyArgumentList
@@ -2925,37 +2946,33 @@ def fit(
     v_y = np.diag(sigma_y**2)
     p0_est = np.concatenate((p0, np.zeros(n)))
 
-    def etfe(_x, _y):
-        h = rfft(_y) / rfft(_x)
-        if numpy_sign_convention:
-            h = np.conj(h)
-        return h
-
     def function(_theta, _w):
-        _h = etfe(xdata, ydata)
-        _w_in = _w[w_in_idx]
-        h_lo = _h[w_below_idx]
-        h_in = fun(_theta, _w_in)
-        h_hi = _h[w_above_idx]
+        h_lo = etfe[w_below_idx]
+        h_in = fun(_theta, w_in)
+        h_hi = etfe[w_above_idx]
         if not numpy_sign_convention:
             h_in = np.conj(h_in)
         return np.concatenate((h_lo, h_in, h_hi))
 
-    def function_flat(_x):
-        _tf = function(_x, w)
-        return np.concatenate((np.real(_tf), np.imag(_tf)))
-
     def td_fun(_p, _x):
+        _h = np.concatenate(
+            (np.zeros(n_below), fun(_p, w_in), np.zeros(n_above)))
         if numpy_sign_convention:
-            _h = irfft(rfft(_x) * function(_p, w), n=n)
+            _h = irfft(rfft(_x) * _h, n=n)
         else:
-            _h = irfft(rfft(_x) * np.conj(function(_p, w)), n=n)
+            _h = irfft(rfft(_x) * np.conj(_h), n=n)
         return _h
 
-    def jacobian(_p):
+    def function_flat(_x):
+        _tf = fun(_x, w_in)
+        return np.concatenate((np.real(_tf), np.imag(_tf)))
+
+    def jacobian(_p, _x):
         if jac is None:
             _tf_prime = approx_fprime(_p, function_flat)
-            return _tf_prime[0:n_f] + 1j * _tf_prime[n_f:]
+            _tf_prime_complex = _tf_prime[0:n_in] + 1j * _tf_prime[n_in:]
+            _fft_jac = rfft(_x)[w_in_idx] * np.atleast_2d(_tf_prime_complex).T
+            return _fft_jac
         else:
             return jac(_p, w)
 
@@ -2964,8 +2981,10 @@ def fit(
         mu_est = xdata[:] - _x[n_p:]
         jac_tl = np.zeros((n, n_p))
         jac_tr = np.diag(1 / sigma_x)
+        fft_jac_bl = np.concatenate((np.zeros((n_p, n_below)), jacobian(
+            p_est, mu_est), np.zeros((n_p, n_above))), axis=-1)
         jac_bl = -(
-            irfft(rfft(mu_est) * np.atleast_2d(jacobian(p_est)).T, n=n)
+            irfft(fft_jac_bl, n=n)
             / sigma_y
         ).T
         jac_br = (
@@ -2978,11 +2997,14 @@ def fit(
         lambda _p: _costfuntls(
             function,
             _p[:n_p],
-            xdata[:] - _p[n_p:],
-            xdata[:],
-            ydata[:],
-            sigma_x,
-            sigma_y,
+            rfft(xdata[:] - _p[n_p:])[:],
+            fft_x[:],
+            fft_y[:],
+            sigma_x[:],
+            sigma_y[:],
+            w_below_idx[:],
+            w_in_idx[:],
+            w_above_idx[:],
             dt,
         ),
         p0_est,
@@ -3001,19 +3023,22 @@ def fit(
 
     p_opt = result.x[:n_p]
     p_var = all_var[:n_p]
-    delta = result.x[n_p:]
-    mu_opt = xdata - delta
-    mu_var = all_var[n_p:]
-    resnorm = 2 * result.cost
+    _delta = result.x[n_p:]
+    _fft_mu = rfft(xdata - _delta)
+    mu_opt = irfft(np.concatenate(
+        (fft_x[w_below_idx], _fft_mu[w_in_idx], fft_x[w_above_idx])), n=n)
+    mu_var = all_var[n_p:]  # I'm not sure about this!
     psi_opt = transfer(lambda _w: function(p_opt, _w), mu_opt, dt=dt)
+    delta = xdata - mu_opt
     epsilon = ydata - psi_opt
+    resnorm = 2 * result.cost
 
     h_circ = la.circulant(
         transfer(lambda _w: function(p_opt, _w), signal.unit_impulse(n), dt=dt)
     )
-    h_x = transfer(lambda _w: function(p_opt, _w), xdata, dt=dt)
+    h_delta = transfer(lambda _w: function(p_opt, _w), delta, dt=dt)
     u_x = h_circ @ v_x @ h_circ.T
-    r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (ydata - h_x)
+    r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (epsilon - h_delta)
 
     # Cast resnorm as a Python float and success as a Python bool, in case
     # either is a NumPy constant
@@ -3028,4 +3053,5 @@ def fit(
         r_tls=r_tls,
         success=bool(result.success),
     )
+
     return res

@@ -2,17 +2,19 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 import numpy as np
 import scipy.linalg as la
 import scipy.optimize as opt
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.random import default_rng
-from numpy.typing import ArrayLike, NDArray
 from scipy import signal
 from scipy.linalg import sqrtm
 from scipy.optimize import OptimizeResult, approx_fprime, minimize
+
+if TYPE_CHECKING:
+    from numpy.typing import ArrayLike, NDArray
 
 NUM_NOISE_PARAMETERS = 3
 NUM_NOISE_DATA_DIMENSIONS = 2
@@ -30,6 +32,7 @@ class GlobalOptions:
         default, times and frequencies are treated as dimensionless quantities
         that are scaled by the (undetermined) sampling time.
     """
+
     sampling_time: float | None = None
 
 
@@ -164,7 +167,7 @@ def reset_option(key: str | None = None) -> None:
         val = getattr(default_options, key)
         set_option(key, val)
     else:
-        for local_key in GlobalOptions.__dataclass_fields__.keys():
+        for local_key in GlobalOptions.__dataclass_fields__:
             local_val = getattr(default_options, local_key)
             set_option(local_key, local_val)
 
@@ -265,6 +268,7 @@ class NoiseModel:
     >>> axs[1].set_xlabel("t (ps)")
     >>> plt.show()
     """
+
     sigma_alpha: float
     sigma_beta: float
     sigma_tau: float
@@ -339,9 +343,8 @@ class NoiseModel:
         dt = _assign_sampling_time(self.dt)
         x = np.asarray(x, dtype=np.float64)
         axis = int(axis)
-        if x.ndim > 1:
-            if axis != -1:
-                x = np.moveaxis(x, axis, -1)
+        if x.ndim > 1 and axis != -1:
+            x = np.moveaxis(x, axis, -1)
 
         n = x.shape[-1]
         w_scaled = 2 * np.pi * rfftfreq(n)
@@ -353,9 +356,8 @@ class NoiseModel:
             + (self.sigma_tau * xdot) ** 2
         )
 
-        if x.ndim > 1:
-            if axis != -1:
-                noise_variance = np.moveaxis(noise_variance, -1, axis)
+        if x.ndim > 1 and axis != -1:
+            noise_variance = np.moveaxis(noise_variance, -1, axis)
 
         return noise_variance
 
@@ -499,16 +501,14 @@ class NoiseModel:
         """
         x = np.asarray(x, dtype=np.float64)
         axis = int(axis)
-        if x.ndim > 1:
-            if axis != -1:
-                x = np.moveaxis(x, axis, -1)
+        if x.ndim > 1 and axis != -1:
+            x = np.moveaxis(x, axis, -1)
 
         amp = self.noise_amp(x)
         rng = default_rng(seed)
         noise = amp * rng.standard_normal(size=x.shape)
-        if x.ndim > 1:
-            if axis != -1:
-                noise = np.moveaxis(noise, -1, axis)
+        if x.ndim > 1 and axis != -1:
+            noise = np.moveaxis(noise, -1, axis)
 
         return noise
 
@@ -553,6 +553,7 @@ class NoiseResult:
     NoiseModel : Noise model class.
     noisefit : Estimate noise model parameters.
     """
+
     noise_model: NoiseModel
     mu: NDArray[np.float64]
     a: NDArray[np.float64]
@@ -655,17 +656,17 @@ def transfer(
     >>> def shiftscale(_w, _a, _tau):
     ...     return _a * np.exp(-1j * _w * _tau)
     >>>
-    >>> y = thz.transfer(shiftscale, x, dt=dt,
-    ...                  numpy_sign_convention=True,
-    ...                  args=(0.5, 1))
+    >>> y = thz.transfer(
+    ...     shiftscale, x, dt=dt, numpy_sign_convention=True, args=(0.5, 1)
+    ... )
 
     >>> _, ax = plt.subplots()
     >>>
-    >>> ax.plot(t, x, label='x')
-    >>> ax.plot(t, y, label='y')
+    >>> ax.plot(t, x, label="x")
+    >>> ax.plot(t, y, label="y")
     >>> ax.legend()
-    >>> ax.set_xlabel('t (ps)')
-    >>> ax.set_ylabel('Amplitude (arb. units)')
+    >>> ax.set_xlabel("t (ps)")
+    >>> ax.set_ylabel("Amplitude (arb. units)")
     >>> plt.show()
 
     If the transfer function is expressed using the :math:`e^{-i\omega t}`
@@ -678,18 +679,18 @@ def transfer(
     >>> def shiftscale_phys(_w, _a, _tau):
     ...     return _a * np.exp(1j * _w * _tau)
     >>>
-    >>> y_p = thz.transfer(shiftscale_phys, x, dt=dt,
-    ...                    numpy_sign_convention=False,
-    ...                    args=(0.5, 1))
+    >>> y_p = thz.transfer(
+    ...     shiftscale_phys, x, dt=dt, numpy_sign_convention=False, args=(0.5, 1)
+    ... )
 
     >>> _, ax = plt.subplots()
     >>>
-    >>> ax.plot(t, x, label='x')
-    >>> ax.plot(t, y_p, label='y')
+    >>> ax.plot(t, x, label="x")
+    >>> ax.plot(t, y_p, label="y")
     >>>
     >>> ax.legend()
-    >>> ax.set_xlabel('t (ps)')
-    >>> ax.set_ylabel('Amplitude (arb. units)')
+    >>> ax.set_xlabel("t (ps)")
+    >>> ax.set_ylabel("Amplitude (arb. units)")
     >>>
     >>> plt.show()
     """
@@ -945,7 +946,7 @@ def scaleshift(
     >>> mu = thz.wave(n, dt=dt)
     >>> m = 4
     >>> x = np.repeat(np.atleast_2d(mu), m, axis=0)
-    >>> a = 0.5**np.arange(m)
+    >>> a = 0.5 ** np.arange(m)
     >>> eta = np.arange(m)
     >>> x_adj = thz.scaleshift(x, a=a, eta=eta, dt=dt)
 
@@ -1270,9 +1271,7 @@ def _jac_noisefit(
     if fix_logv_tau:
         jac_logv_tau = []
     else:
-        jac_logv_tau = [
-            0.5 * np.sum(dzeta**2 * dvar) * vbeta * scale_logv_tau
-        ]
+        jac_logv_tau = [0.5 * np.sum(dzeta**2 * dvar) * vbeta * scale_logv_tau]
 
     if fix_delta_mu:
         jac_delta_mu = []
@@ -1668,11 +1667,7 @@ def _hess_noisefit(
     else:
         a_array = (
             2 * dvar * vbeta * zeta
-            + 2
-            * ddvar
-            * vbeta
-            * zeta
-            * (vbeta * zeta**2 + vtau * dzeta**2)
+            + 2 * ddvar * vbeta * zeta * (vbeta * zeta**2 + vtau * dzeta**2)
             + 2 * res * (vbeta * zeta**2 + vtau * dzeta**2) / vtot**2
             + (zeta - res) / vtot
             + 2 * res * vbeta * zeta**2 / vtot**2
@@ -2283,7 +2278,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1:]
+            _p = _p[m - 1 :]
         if fix_eta:
             _eta = eta_scaled0
         else:
@@ -2330,7 +2325,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1:]
+            _p = _p[m - 1 :]
         if fix_eta:
             _eta_on_dt = eta_scaled0 / dt
         else:
@@ -2382,7 +2377,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1:]
+            _p = _p[m - 1 :]
         if fix_eta:
             _eta_on_dt = eta_scaled0 / dt
         else:
@@ -2493,7 +2488,7 @@ def _parse_noisefit_output(
         a_out = a0
     else:
         a_out = np.concatenate(([1.0], 1.0 + x_out[: m - 1] * scale_delta_a))
-        x_out = x_out[m - 1:]
+        x_out = x_out[m - 1 :]
 
     if fix_eta:
         eta_out = eta0
@@ -2569,7 +2564,7 @@ def _parse_noisefit_output(
 
     if not fix_a:
         err_a = np.concatenate(([0], err[: m - 1]))
-        err = err[m - 1:]
+        err = err[m - 1 :]
 
     if not fix_eta:
         err_eta = np.concatenate(([0], err[: m - 1]))
@@ -2625,6 +2620,7 @@ class FitResult:
     --------
     fit : Fit a transfer function to time-domain data.
     """
+
     p_opt: NDArray[np.float64]
     p_var: NDArray[np.float64]
     mu_opt: NDArray[np.float64]
@@ -2708,8 +2704,12 @@ def _costfuntls(
 
     x = irfft(fft_x, n=n)
     y = irfft(fft_y, n=n)
-    mu = irfft(np.concatenate(
-        (fft_x[w_below_idx], fft_mu[w_in_idx], fft_x[w_above_idx])), n=n)
+    mu = irfft(
+        np.concatenate(
+            (fft_x[w_below_idx], fft_mu[w_in_idx], fft_x[w_above_idx])
+        ),
+        n=n,
+    )
     psi = transfer(lambda omega: fun(theta, omega), mu, dt=dt)
 
     delta_norm = (x - mu) / sigma_x
@@ -2891,7 +2891,7 @@ def fit(
     ydata = np.asarray(ydata, dtype=np.float64)
     fft_x = rfft(xdata)
     fft_y = rfft(ydata)
-    etfe = fft_y/fft_x
+    etfe = fft_y / fft_x
     if not numpy_sign_convention:
         etfe = np.conj(etfe)
 
@@ -2956,7 +2956,8 @@ def fit(
 
     def td_fun(_p, _x):
         _h = np.concatenate(
-            (np.zeros(n_below), fun(_p, w_in), np.zeros(n_above)))
+            (np.zeros(n_below), fun(_p, w_in), np.zeros(n_above))
+        )
         if numpy_sign_convention:
             _h = irfft(rfft(_x) * _h, n=n)
         else:
@@ -2974,19 +2975,22 @@ def fit(
             _fft_jac = rfft(_x)[w_in_idx] * np.atleast_2d(_tf_prime_complex).T
             return _fft_jac
         else:
-            return jac(_p, w)
+            return np.atleast_2d(jac(_p, w_in)).T
 
     def jac_fun(_x):
         p_est = _x[:n_p]
         mu_est = xdata[:] - _x[n_p:]
         jac_tl = np.zeros((n, n_p))
         jac_tr = np.diag(1 / sigma_x)
-        fft_jac_bl = np.concatenate((np.zeros((n_p, n_below)), jacobian(
-            p_est, mu_est), np.zeros((n_p, n_above))), axis=-1)
-        jac_bl = -(
-            irfft(fft_jac_bl, n=n)
-            / sigma_y
-        ).T
+        fft_jac_bl = np.concatenate(
+            (
+                np.zeros((n_p, n_below)),
+                jacobian(p_est, mu_est),
+                np.zeros((n_p, n_above)),
+            ),
+            axis=-1,
+        )
+        jac_bl = -(irfft(fft_jac_bl, n=n) / sigma_y).T
         jac_br = (
             la.circulant(td_fun(p_est, signal.unit_impulse(n))).T / sigma_y
         ).T
@@ -3025,8 +3029,12 @@ def fit(
     p_var = all_var[:n_p]
     _delta = result.x[n_p:]
     _fft_mu = rfft(xdata - _delta)
-    mu_opt = irfft(np.concatenate(
-        (fft_x[w_below_idx], _fft_mu[w_in_idx], fft_x[w_above_idx])), n=n)
+    mu_opt = irfft(
+        np.concatenate(
+            (fft_x[w_below_idx], _fft_mu[w_in_idx], fft_x[w_above_idx])
+        ),
+        n=n,
+    )
     mu_var = all_var[n_p:]  # I'm not sure about this!
     psi_opt = transfer(lambda _w: function(p_opt, _w), mu_opt, dt=dt)
     delta = xdata - mu_opt

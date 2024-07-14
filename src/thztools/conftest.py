@@ -1,6 +1,7 @@
 """
 Configuration file for doctests with PyTest.
 """
+
 import pytest
 
 from thztools import reset_option

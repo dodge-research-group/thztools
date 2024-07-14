@@ -68,9 +68,7 @@ class TestOptions:
             assert np.isclose(_assign_sampling_time(dt), 1.0)
         elif global_sampling_time is None and dt is not None:
             assert np.isclose(_assign_sampling_time(dt), dt)
-        elif global_sampling_time is not None and dt is None:
-            assert np.isclose(_assign_sampling_time(dt), global_sampling_time)
-        elif global_sampling_time is not None and np.isclose(
+        elif global_sampling_time is not None and dt is None or global_sampling_time is not None and np.isclose(
             dt, global_sampling_time
         ):
             assert np.isclose(_assign_sampling_time(dt), global_sampling_time)
@@ -348,10 +346,25 @@ class TestCostFunTLS:
     yy = xx
     sigmax = np.ones_like(xx)
     sigmay = sigmax
+    w_below_idx = np.zeros(mu.size, dtype=bool)
+    w_in_idx = np.ones(mu.size, dtype=bool)
+    w_above_idx = np.zeros(mu.size, dtype=bool)
     dt = 1.0
 
     assert_allclose(
-        _costfuntls(tfun, theta, mu, xx, yy, sigmax, sigmay, dt),
+        _costfuntls(
+            tfun,
+            theta,
+            mu,
+            xx,
+            yy,
+            sigmax,
+            sigmay,
+            w_below_idx,
+            w_in_idx,
+            w_above_idx,
+            dt,
+        ),
         np.concatenate((np.zeros_like(xx), np.zeros_like(xx))),
         atol=eps,
         rtol=rtol,

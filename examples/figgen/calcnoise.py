@@ -113,7 +113,7 @@ def calcnoise(t, x):
     output["zeta"] = zeta
     s = np.zeros((n, n, m))
 
-    for i in range(0, m):
+    for i in range(m):
         s[:, :, i] = shiftmtx(etaest[i], n, ts)
         zeta[:, i] = aest[i] * s[:, :, i] @ muest
 

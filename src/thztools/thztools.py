@@ -709,9 +709,7 @@ def transfer(
     if not numpy_sign_convention:
         h = np.conj(h)
 
-    y = np.fft.irfft(np.fft.rfft(x) * h, n=n)
-
-    return y
+    return np.fft.irfft(np.fft.rfft(x) * h, n=n)
 
 
 # noinspection PyShadowingNames
@@ -882,10 +880,9 @@ def wave(
     r = 1 / (1 / taur - 1j * w) - 1 / (1 / taur + 1 / tauc - 1j * w)
     s = -1j * w * (ell * r) ** 2 * np.exp(1j * w * t0)
 
-    x = irfft(np.conj(s), n=n)
-    x = a * x / np.max(x)
+    x_unscaled = irfft(np.conj(s), n=n)
 
-    return x
+    return a * x_unscaled / np.max(x_unscaled)
 
 
 # noinspection PyShadowingNames
@@ -963,9 +960,8 @@ def scaleshift(
     dt = _assign_sampling_time(dt)
 
     axis = int(axis)
-    if x.ndim > 1:
-        if axis != -1:
-            x = np.moveaxis(x, axis, -1)
+    if x.ndim > 1 and axis != -1:
+        x = np.moveaxis(x, axis, -1)
 
     n = x.shape[-1]
     m = x.shape[:-1]
@@ -1000,9 +996,8 @@ def scaleshift(
         np.fft.rfft(x) * np.exp(-1j * phase), n=n
     ) * np.expand_dims(a, axis=a.ndim)
 
-    if x.ndim > 1:
-        if axis != -1:
-            x_adjusted = np.moveaxis(x_adjusted, -1, axis)
+    if x.ndim > 1 and axis != -1:
+        x_adjusted = np.moveaxis(x_adjusted, -1, axis)
 
     return x_adjusted
 
@@ -1059,7 +1054,7 @@ def _nll_common(
     ressq = res**2
     vtot = valpha + vbeta * zeta**2 + vtau * dzeta**2
 
-    out = CommonNLL(
+    return CommonNLL(
         ressq=ressq,
         vtot=vtot,
         zeta=zeta,
@@ -1068,7 +1063,6 @@ def _nll_common(
         zeta_f=zeta_f,
         exp_iweta=exp_iweta,
     )
-    return out
 
 
 def _nll_noisefit(
@@ -1146,9 +1140,8 @@ def _nll_noisefit(
     ressq = common.ressq
     vtot = common.vtot
     resnormsq_scaled = ressq / vtot
-    nll = 0.5 * (np.sum(np.log(vtot)) + np.sum(resnormsq_scaled))
 
-    return nll
+    return 0.5 * (np.sum(np.log(vtot)) + np.sum(resnormsq_scaled))
 
 
 def _jac_noisefit(
@@ -1305,7 +1298,7 @@ def _jac_noisefit(
         jac_eta = dnlldeta[1:] * scale_eta_on_dt
 
     # Concatenate subarrays to produce full Jacobian wrt free parameters
-    jac_scaled = np.concatenate(
+    return np.concatenate(
         (
             jac_logv_alpha,
             jac_logv_beta,
@@ -1315,7 +1308,6 @@ def _jac_noisefit(
             jac_eta,
         )
     )
-    return jac_scaled
 
 
 def _hess_noisefit(
@@ -1853,9 +1845,8 @@ def _hess_noisefit(
     )
     scale = np.concatenate(scale_block[~fix].tolist())
 
-    # Compute Hessian in scaled internal variables
-    h_scaled = np.diag(scale) @ h @ np.diag(scale)
-    return h_scaled
+    # Return Hessian in scaled internal variables
+    return np.diag(scale) @ h @ np.diag(scale)
 
 
 def noisefit(
@@ -2091,8 +2082,7 @@ def noisefit(
     # Minimize cost function with respect to free parameters
     out = minimize(objective, x0, method="BFGS", jac=jac, tol=1e-5 * x.size)
 
-    fit_result = _parse_noisefit_output(out, x, dt=dt, **input_parsed)
-    return fit_result
+    return _parse_noisefit_output(out, x, dt=dt, **input_parsed)
 
 
 def _parse_noisefit_input(
@@ -2279,10 +2269,9 @@ def _parse_noisefit_input(
         else:
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
-        if fix_eta:
-            _eta = eta_scaled0
-        else:
-            _eta = _p[: m - 1]
+
+        _eta = eta_scaled0 if fix_eta else _p[:m - 1]
+
         return _nll_noisefit(
             x.T,
             _logv_alpha,
@@ -2326,10 +2315,9 @@ def _parse_noisefit_input(
         else:
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
-        if fix_eta:
-            _eta_on_dt = eta_scaled0 / dt
-        else:
-            _eta_on_dt = _p[: m - 1]
+
+        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[:m - 1]
+
         return _jac_noisefit(
             x.T,
             _logv_alpha,
@@ -2714,9 +2702,8 @@ def _costfuntls(
 
     delta_norm = (x - mu) / sigma_x
     eps_norm = (y - psi) / sigma_y
-    res = np.concatenate((delta_norm, eps_norm))
 
-    return res
+    return np.concatenate((delta_norm, eps_norm))
 
 
 def fit(
@@ -2969,13 +2956,14 @@ def fit(
         return np.concatenate((np.real(_tf), np.imag(_tf)))
 
     def jacobian(_p, _x):
+        # Return Jacobian at included frequencies if provided, otherwise
+        # return Jacobian obtained with numerical differentiation
         if jac is None:
             _tf_prime = approx_fprime(_p, function_flat)
             _tf_prime_complex = _tf_prime[0:n_in] + 1j * _tf_prime[n_in:]
-            _fft_jac = rfft(_x)[w_in_idx] * np.atleast_2d(_tf_prime_complex).T
-            return _fft_jac
-        else:
-            return np.atleast_2d(jac(_p, w_in)).T
+            return rfft(_x)[w_in_idx] * np.atleast_2d(_tf_prime_complex).T
+
+        return np.atleast_2d(jac(_p, w_in)).T
 
     def jac_fun(_x):
         p_est = _x[:n_p]
@@ -2994,8 +2982,8 @@ def fit(
         jac_br = (
             la.circulant(td_fun(p_est, signal.unit_impulse(n))).T / sigma_y
         ).T
-        jac_tot = np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
-        return jac_tot
+
+        return np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
 
     result = opt.least_squares(
         lambda _p: _costfuntls(
@@ -3050,7 +3038,7 @@ def fit(
 
     # Cast resnorm as a Python float and success as a Python bool, in case
     # either is a NumPy constant
-    res = FitResult(
+    return FitResult(
         p_opt=p_opt,
         p_var=p_var,
         mu_opt=mu_opt,
@@ -3061,5 +3049,3 @@ def fit(
         r_tls=r_tls,
         success=bool(result.success),
     )
-
-    return res

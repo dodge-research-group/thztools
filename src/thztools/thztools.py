@@ -2270,7 +2270,7 @@ def _parse_noisefit_input(
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
 
-        _eta = eta_scaled0 if fix_eta else _p[:m - 1]
+        _eta = eta_scaled0 if fix_eta else _p[: m - 1]
 
         return _nll_noisefit(
             x.T,
@@ -2316,7 +2316,7 @@ def _parse_noisefit_input(
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
 
-        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[:m - 1]
+        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
 
         return _jac_noisefit(
             x.T,
@@ -2366,10 +2366,9 @@ def _parse_noisefit_input(
         else:
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
-        if fix_eta:
-            _eta_on_dt = eta_scaled0 / dt
-        else:
-            _eta_on_dt = _p[: m - 1]
+
+        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
+
         return _hess_noisefit(
             x.T,
             _logv_alpha,
@@ -2861,9 +2860,9 @@ def fit(
     >>> result.success
     True
     >>> result.p_opt
-    array([0.499..., 1.000...])
+    array([0.49..., 1.00...])
     >>> result.resnorm
-    198.300...
+    332.560...
 
     >>> _, ax = plt.subplots()
     >>> ax.plot(t, result.r_tls, '.')

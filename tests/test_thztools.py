@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 from numpy import pi
 from numpy.testing import assert_allclose
-from numpy.typing import ArrayLike
+
+if TYPE_CHECKING:
+    from numpy.typing import ArrayLike
 
 import thztools
 from thztools.thztools import (
@@ -24,7 +28,6 @@ from thztools.thztools import (
     wave,
 )
 
-print(f"{np.__version__=}")
 eps = np.sqrt(np.finfo(np.float64).eps)
 rtol = 1e-5
 
@@ -68,8 +71,11 @@ class TestOptions:
             assert np.isclose(_assign_sampling_time(dt), 1.0)
         elif global_sampling_time is None and dt is not None:
             assert np.isclose(_assign_sampling_time(dt), dt)
-        elif global_sampling_time is not None and dt is None or global_sampling_time is not None and np.isclose(
-            dt, global_sampling_time
+        elif (
+            global_sampling_time is not None
+            and dt is None
+            or global_sampling_time is not None
+            and np.isclose(dt, global_sampling_time)
         ):
             assert np.isclose(_assign_sampling_time(dt), global_sampling_time)
         else:
@@ -180,8 +186,8 @@ class TestTransferOut:
     @pytest.mark.parametrize(
         "t_fun, x, p, expected",
         [
-            [tfun1, mu, [1.0, 0.0], mu],
-            [tfun2, mu, (1.0, 0.0), mu],
+            (tfun1, mu, [1.0, 0.0], mu),
+            (tfun2, mu, (1.0, 0.0), mu),
         ],
     )
     def test_inputs(self, t_fun, x, fft_sign, p, expected):
@@ -196,7 +202,9 @@ class TestTransferOut:
     @pytest.mark.parametrize("x", [np.ones((n, n))])
     def test_error(self, x):
         dt = self.dt
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError, match="x must be a one-dimensional array"
+        ):
             _ = transfer(tfun1, x, dt=dt, args=[1.0, 0.0])
 
 
@@ -277,28 +285,28 @@ class TestScaleShift:
     @pytest.mark.parametrize(
         "x, kwargs, expected",
         [
-            [[], {}, np.empty((0,))],
-            [x, {}, x],
-            [x, {"a": 2}, 2 * x],
-            [x, {"eta": 1}, np.cos(2 * pi * (t - dt))],
-            [x, {"a": 2, "eta": 1}, 2 * np.cos(2 * pi * (t - dt))],
-            [x, {"a": 2, "eta": dt, "dt": dt}, 2 * np.cos(2 * pi * (t - dt))],
-            [x_2, {"a": [2, 0.5]}, np.stack((2 * x, 0.5 * x))],
-            [
+            ([], {}, np.empty((0,))),
+            (x, {}, x),
+            (x, {"a": 2}, 2 * x),
+            (x, {"eta": 1}, np.cos(2 * pi * (t - dt))),
+            (x, {"a": 2, "eta": 1}, 2 * np.cos(2 * pi * (t - dt))),
+            (x, {"a": 2, "eta": dt, "dt": dt}, 2 * np.cos(2 * pi * (t - dt))),
+            (x_2, {"a": [2, 0.5]}, np.stack((2 * x, 0.5 * x))),
+            (
                 x_2,
                 {"eta": [1, -1]},
                 np.stack(
                     (np.cos(2 * pi * (t - dt)), np.cos(2 * pi * (t + dt)))
                 ),
-            ],
-            [
+            ),
+            (
                 x_2,
                 {"eta": [dt, -dt], "dt": dt},
                 np.stack(
                     (np.cos(2 * pi * (t - dt)), np.cos(2 * pi * (t + dt)))
                 ),
-            ],
-            [
+            ),
+            (
                 x_2,
                 {"a": [2, 0.5], "eta": [1, -1]},
                 np.stack(
@@ -307,8 +315,8 @@ class TestScaleShift:
                         0.5 * np.cos(2 * pi * (t + dt)),
                     )
                 ),
-            ],
-            [
+            ),
+            (
                 x_2,
                 {"a": [2, 0.5], "eta": [dt, -dt], "dt": dt},
                 np.stack(
@@ -317,8 +325,8 @@ class TestScaleShift:
                         0.5 * np.cos(2 * pi * (t + dt)),
                     )
                 ),
-            ],
-            [x_2.T, {"a": [2, 0.5], "axis": 0}, np.stack((2 * x, 0.5 * x)).T],
+            ),
+            (x_2.T, {"a": [2, 0.5], "axis": 0}, np.stack((2 * x, 0.5 * x)).T),
         ],
     )
     def test_inputs(
@@ -332,7 +340,7 @@ class TestScaleShift:
         )
 
     @pytest.mark.parametrize(
-        "x, kwargs", [[x, {"a": [2, 0.5]}], [x, {"eta": [1, -1]}]]
+        "x, kwargs", [(x, {"a": [2, 0.5]}), (x, {"eta": [1, -1]})]
     )
     def test_errors(self, x: ArrayLike, kwargs: dict) -> None:
         with pytest.raises(ValueError, match="correction with shape"):
@@ -389,79 +397,79 @@ class TestJacNoiseFit:
     @pytest.mark.parametrize(
         "fix_logv_alpha, desired_gradnll_logv_alpha",
         [
-            [
+            (
                 True,
                 [],
-            ],
-            [
+            ),
+            (
                 False,
                 [m * n / 2],
-            ],
+            ),
         ],
     )
     @pytest.mark.parametrize(
         "fix_logv_beta, desired_gradnll_logv_beta",
         [
-            [
+            (
                 True,
                 [],
-            ],
-            [
+            ),
+            (
                 False,
                 [0.0],
-            ],
+            ),
         ],
     )
     @pytest.mark.parametrize(
         "fix_logv_tau, desired_gradnll_logv_tau",
         [
-            [
+            (
                 True,
                 [],
-            ],
-            [
+            ),
+            (
                 False,
                 [0.0],
-            ],
+            ),
         ],
     )
     @pytest.mark.parametrize(
         "fix_delta_mu, desired_gradnll_delta_mu",
         [
-            [
+            (
                 True,
                 [],
-            ],
-            [
+            ),
+            (
                 False,
                 np.zeros(n),
-            ],
+            ),
         ],
     )
     @pytest.mark.parametrize(
         "fix_delta_a, desired_gradnll_delta_a",
         [
-            [
+            (
                 True,
                 [],
-            ],
-            [
+            ),
+            (
                 False,
                 np.zeros(m - 1),
-            ],
+            ),
         ],
     )
     @pytest.mark.parametrize(
         "fix_eta, desired_gradnll_eta",
         [
-            [
+            (
                 True,
                 [],
-            ],
-            [
+            ),
+            (
                 False,
                 np.zeros(m - 1),
-            ],
+            ),
         ],
     )
     def test_gradnll_calc(
@@ -908,13 +916,73 @@ class TestNoiseFit:
 
     @pytest.mark.parametrize(
         "x, mu0, a0, eta0, fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, "
-        "fix_mu, fix_a, fix_eta",
+        "fix_mu, fix_a, fix_eta, pattern",
         [
-            [x[:, 0], mu, a, eta, False, False, False, False, False, False],
-            [x, [], a, eta, False, False, False, False, False, False],
-            [x, mu, [], eta, False, False, False, False, False, False],
-            [x, mu, a, [], False, False, False, False, False, False],
-            [x, mu, a, eta, True, True, True, True, True, True],
+            (
+                x[:, 0],
+                mu,
+                a,
+                eta,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                "Data array x must be 2D",
+            ),
+            (
+                x,
+                [],
+                a,
+                eta,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                "Size of mu0 is incompatible with data array x",
+            ),
+            (
+                x,
+                mu,
+                [],
+                eta,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                "Size of a0 is incompatible with data array x",
+            ),
+            (
+                x,
+                mu,
+                a,
+                [],
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                "Size of eta0 is incompatible with data array x",
+            ),
+            (
+                x,
+                mu,
+                a,
+                eta,
+                True,
+                True,
+                True,
+                True,
+                True,
+                True,
+                "All variables are fixed",
+            ),
         ],
     )
     def test_exceptions(
@@ -929,6 +997,7 @@ class TestNoiseFit:
         fix_mu,
         fix_a,
         fix_eta,
+        pattern,
     ):
         m = self.m
         n = self.n
@@ -936,7 +1005,7 @@ class TestNoiseFit:
         sigma_alpha0 = self.alpha
         sigma_beta0 = self.beta
         sigma_tau0 = self.tau
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=pattern):
             _ = _parse_noisefit_input(
                 x.T,
                 dt=dt,
@@ -970,8 +1039,8 @@ class TestNoiseFit:
         "scale_sigma_alpha, scale_sigma_beta, scale_sigma_tau, "
         "scale_delta_mu, scale_delta_a, scale_eta",
         [
-            [None, None, None, None, None, None],
-            [alpha, beta, tau / dt, noise_amp, scale_delta_a, scale_eta],
+            (None, None, None, None, None, None),
+            (alpha, beta, tau / dt, noise_amp, scale_delta_a, scale_eta),
         ],
     )
     def test_inputs(
@@ -1018,13 +1087,13 @@ class TestNoiseFit:
         "fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, fix_mu, fix_a, "
         "fix_eta",
         [
-            [False, False, False, False, False, False],
-            [True, False, False, False, False, False],
-            [False, True, False, False, False, False],
-            [False, False, True, False, False, False],
-            [False, False, False, True, False, False],
-            [False, False, False, False, True, False],
-            [False, False, False, False, False, True],
+            (False, False, False, False, False, False),
+            (True, False, False, False, False, False),
+            (False, True, False, False, False, False),
+            (False, False, True, False, False, False),
+            (False, False, False, True, False, False),
+            (False, False, False, False, True, False),
+            (False, False, False, False, False, True),
         ],
     )
     def test_noisefit(
@@ -1094,7 +1163,7 @@ class TestFit:
     @pytest.mark.parametrize("noise_parms", [(1, 0, 0), sigma**2])
     @pytest.mark.parametrize(
         "y, numpy_sign_convention",
-        [[y_numpy_sign_true, True], [y_numpy_sign_false, False]],
+        [(y_numpy_sign_true, True), (y_numpy_sign_false, False)],
     )
     @pytest.mark.parametrize("f_bounds", [None, (0.0, np.inf)])
     @pytest.mark.parametrize("p_bounds", [None, ((0, -1), (2, 1))])
@@ -1131,8 +1200,12 @@ class TestFit:
         dt = self.dt
         y = self.y_numpy_sign_true
 
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError, match="`bounds` must contain 2 elements."
+        ):
             _ = fit(tfun, x, y, p0, dt=dt, p_bounds=())
 
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError, match="sigma_parms must be a tuple of length"
+        ):
             _ = fit(tfun, x, y, p0, (0, 0), dt=dt)

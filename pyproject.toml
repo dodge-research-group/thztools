@@ -90,6 +90,14 @@ target-version = "py38"
 line-length = 79
 exclude = ["examples/figgen/**"]
 
+[tool.ruff.lint.per-file-ignores]
+"docs/source/**" = ["INP001"]
+"tests/**" = ["INP001"]
+"test_thztools.py" = ["S101"]
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-names-type = "csv"
+
 [tool.coverage.run]
 source_pkgs = ["thztools", "tests"]
 branch = true

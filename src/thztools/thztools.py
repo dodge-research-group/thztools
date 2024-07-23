@@ -3011,7 +3011,7 @@ def fit(
     s = s[s > threshold]
     vt = vt[: s.size]
     all_var = np.diag(np.dot(vt.T / s**2, vt))
-
+    p_cov = np.dot(vt.T / s**2, vt)[:n_p,:n_p] #remove in actual coe
     p_opt = result.x[:n_p]
     p_var = all_var[:n_p]
     _delta = result.x[n_p:]
@@ -3039,7 +3039,7 @@ def fit(
     # either is a NumPy constant
     return FitResult(
         p_opt=p_opt,
-        p_var=p_var,
+        p_var=p_cov, #change back to p_var
         mu_opt=mu_opt,
         mu_var=mu_var,
         resnorm=float(resnorm),

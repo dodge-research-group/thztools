@@ -2268,7 +2268,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
 
         _eta = eta_scaled0 if fix_eta else _p[: m - 1]
 
@@ -2314,7 +2314,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
 
         _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
 
@@ -2365,7 +2365,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
 
         _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
 
@@ -2475,7 +2475,7 @@ def _parse_noisefit_output(
         a_out = a0
     else:
         a_out = np.concatenate(([1.0], 1.0 + x_out[: m - 1] * scale_delta_a))
-        x_out = x_out[m - 1 :]
+        x_out = x_out[m - 1:]
 
     if fix_eta:
         eta_out = eta0
@@ -2551,7 +2551,7 @@ def _parse_noisefit_output(
 
     if not fix_a:
         err_a = np.concatenate(([0], err[: m - 1]))
-        err = err[m - 1 :]
+        err = err[m - 1:]
 
     if not fix_eta:
         err_eta = np.concatenate(([0], err[: m - 1]))
@@ -2622,14 +2622,11 @@ class FitResult:
 def _costfuntls(
     fun: Callable,
     theta: ArrayLike,
-    fft_mu: ArrayLike,
-    fft_x: ArrayLike,
-    fft_y: ArrayLike,
+    mu: ArrayLike,
+    x: ArrayLike,
+    y: ArrayLike,
     sigma_x: ArrayLike,
     sigma_y: ArrayLike,
-    w_below_idx: ArrayLike,
-    w_in_idx: ArrayLike,
-    w_above_idx: ArrayLike,
     dt: float | None = 1.0,
 ) -> NDArray[np.float64]:
     r"""Computes the residual vector for the total least squares cost function.
@@ -2677,32 +2674,21 @@ def _costfuntls(
         :class:`UserWarning`.
     """
     theta = np.asarray(theta, dtype=np.float64)
-    fft_mu = np.asarray(fft_mu, dtype=np.complex128)
-    fft_x = np.asarray(fft_x, dtype=np.complex128)
-    fft_y = np.asarray(fft_y, dtype=np.complex128)
+    mu = np.asarray(mu, dtype=np.float64)
+    x = np.asarray(x, dtype=np.float64)
+    y = np.asarray(y, dtype=np.float64)
     sigma_x = np.asarray(sigma_x, dtype=np.float64)
     sigma_y = np.asarray(sigma_y, dtype=np.float64)
-    w_below_idx = np.asarray(w_below_idx, dtype=np.bool_)
-    w_in_idx = np.asarray(w_in_idx, dtype=np.bool_)
-    w_above_idx = np.asarray(w_above_idx, dtype=np.bool_)
 
     dt = _assign_sampling_time(dt)
-    n = sigma_x.shape[-1]
 
-    x = irfft(fft_x, n=n)
-    y = irfft(fft_y, n=n)
-    mu = irfft(
-        np.concatenate(
-            (fft_x[w_below_idx], fft_mu[w_in_idx], fft_x[w_above_idx])
-        ),
-        n=n,
-    )
     psi = transfer(lambda omega: fun(theta, omega), mu, dt=dt)
 
     delta_norm = (x - mu) / sigma_x
     eps_norm = (y - psi) / sigma_y
+    res = np.concatenate((delta_norm, eps_norm))
 
-    return np.concatenate((delta_norm, eps_norm))
+    return res
 
 
 def fit(
@@ -2875,11 +2861,6 @@ def fit(
     p0 = np.asarray(p0, dtype=np.float64)
     xdata = np.asarray(xdata, dtype=np.float64)
     ydata = np.asarray(ydata, dtype=np.float64)
-    fft_x = rfft(xdata)
-    fft_y = rfft(ydata)
-    etfe = fft_y / fft_x
-    if not numpy_sign_convention:
-        etfe = np.conj(etfe)
 
     if noise_parms is None:
         noise_parms = np.asarray((1.0, 0.0, 0.0), dtype=np.float64)
@@ -2917,11 +2898,25 @@ def fit(
     w_below_idx = w <= w_bounds[0]
     w_above_idx = w > w_bounds[1]
     w_in_idx = np.invert(w_below_idx) * np.invert(w_above_idx)
-    w_in = w[w_in_idx]
 
     n_below = np.sum(w_below_idx)
     n_in = np.sum(w_in_idx)
     n_above = np.sum(w_above_idx)
+    n_ex = n_below + n_above
+
+    n_a = 0
+    n_b = 0
+
+    if n_ex > 0:
+        n_a = n_ex
+        n_b = n_ex - 1
+        if n % 2 == 0 and n_below > 0 and n_above > 0:
+            n_b -= 1
+        elif n % 2 == 1 and n_below == 0:
+            n_b += 1
+
+    a = np.zeros(n_a, dtype=np.float64)
+    b = np.zeros(n_b, dtype=np.float64)
 
     alpha, beta, tau = noise_parms.tolist()
     # noinspection PyArgumentList
@@ -2930,79 +2925,108 @@ def fit(
     sigma_y = noise_model.noise_amp(ydata)
     v_x = np.diag(sigma_x**2)
     v_y = np.diag(sigma_y**2)
-    p0_est = np.concatenate((p0, np.zeros(n)))
+    p0_est = np.concatenate((p0, np.zeros(n_a), np.zeros(n_b), np.zeros(n)))
+
+    def fun_ex(_a, _b):
+        if n_a - n_b == 2:
+            return np.concatenate(([_a[0]], _a[1:-1] + _b*1j, [_a[-1]]))
+        elif n_a - n_b == 1:
+            if n_below == 0:
+                return np.concatenate((_a[:-1] + _b*1j, [_a[-1]]))
+            else:
+                return np.concatenate(([_a[0]], _a[1:] + _b*1j))
+        return _a + _b*1j
 
     def function(_theta, _w):
-        h_lo = etfe[w_below_idx]
-        h_in = fun(_theta, w_in)
-        h_hi = etfe[w_above_idx]
+        _a = _theta[n_p:n_p+n_a]
+        _b = _theta[n_p+n_a:]
+        h_ex = fun_ex(_a, _b)
+        h_in = fun(_theta, _w[w_in_idx])
+        _h = np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
         if not numpy_sign_convention:
-            h_in = np.conj(h_in)
-        return np.concatenate((h_lo, h_in, h_hi))
-
-    def td_fun(_p, _x):
-        _h = np.concatenate(
-            (np.zeros(n_below), fun(_p, w_in), np.zeros(n_above))
-        )
-        if numpy_sign_convention:
-            _h = irfft(rfft(_x) * _h, n=n)
-        else:
-            _h = irfft(rfft(_x) * np.conj(_h), n=n)
+            return np.conj(_h)
         return _h
 
+    def td_fun(_p, _x):
+        _h = function(_p, w)
+        if numpy_sign_convention:
+            return irfft(rfft(_x) * _h, n=n)
+        else:
+            return irfft(rfft(_x) * np.conj(_h), n=n)
+
     def function_flat(_x):
-        _tf = fun(_x, w_in)
+        _tf = fun(_x, w[w_in_idx])
         return np.concatenate((np.real(_tf), np.imag(_tf)))
 
-    def jacobian(_p, _x):
-        # Return Jacobian at included frequencies if provided, otherwise
-        # return Jacobian obtained with numerical differentiation
+    def jacobian_fun(_p):
         if jac is None:
             _tf_prime = approx_fprime(_p, function_flat)
             _tf_prime_complex = _tf_prime[0:n_in] + 1j * _tf_prime[n_in:]
-            return rfft(_x)[w_in_idx] * np.atleast_2d(_tf_prime_complex).T
+            return np.atleast_2d(_tf_prime_complex).T
+        else:
+            return jac(_p, w[w_in_idx])
 
-        return np.atleast_2d(jac(_p, w_in)).T
+    def jacobian_bl(_p, _fft_mu):
+        fft_jac_bl = np.concatenate((np.zeros((n_p, n_below)), jacobian_fun(
+            _p), np.zeros((n_p, n_above))), axis=-1)
+        jac_bl = irfft(fft_jac_bl*_fft_mu, n=n)
+        if n_a > 0:
+            a_circ = la.circulant(signal.unit_impulse(n_a))
+            jac_a = np.concatenate((a_circ[:, :n_below], np.zeros(
+                (n_a, n_in)), a_circ[:, n_below:]), axis=-1)
+            jac_bl_a = irfft(jac_a*_fft_mu, n=n)
+            jac_bl = np.concatenate((jac_bl, jac_bl_a), axis=0)
+        if n_b > 0:
+            b_circ = la.circulant(signal.unit_impulse(n_b)*1j)
+            if not numpy_sign_convention:
+                b_circ = np.conj(b_circ)
+            if n_a - n_b == 2:
+                jac_b = np.concatenate((np.zeros((n_b, 1)), b_circ[:, :n_below-1], np.zeros(
+                    (n_b, n_in)), b_circ[:, n_below-1:], np.zeros((n_b, 1))), axis=-1)
+            elif n_a - n_b == 1:
+                if n_below == 0:
+                    jac_b = np.concatenate(
+                        (np.zeros((n_b, n_in)), b_circ[:, :], np.zeros((n_b, 1))), axis=-1)
+                else:
+                    jac_b = np.concatenate(
+                        (np.zeros(
+                            (n_b, 1)), b_circ[:, :n_below-1], np.zeros((n_b, n_in)), b_circ[:, n_below-1:]), axis=-1)
+            else:
+                jac_b = np.concatenate(
+                    (np.zeros((n_b, n_in)), b_circ[:, :]), axis=-1)
+            jac_bl_b = irfft(jac_b*_fft_mu, n=n)
+            jac_bl = np.concatenate((jac_bl, jac_bl_b), axis=0)
+        return jac_bl
 
     def jac_fun(_x):
-        p_est = _x[:n_p]
-        mu_est = xdata[:] - _x[n_p:]
-        jac_tl = np.zeros((n, n_p))
+        p_est = _x[:n_p+n_a+n_b]
+        mu_est = xdata[:] - _x[n_p+n_a+n_b:]
+        jac_tl = np.zeros((n, n_p+n_a+n_b))
         jac_tr = np.diag(1 / sigma_x)
-        fft_jac_bl = np.concatenate(
-            (
-                np.zeros((n_p, n_below)),
-                jacobian(p_est, mu_est),
-                np.zeros((n_p, n_above)),
-            ),
-            axis=-1,
-        )
-        jac_bl = -(irfft(fft_jac_bl, n=n) / sigma_y).T
+        fft_mu_est = rfft(mu_est)
+        jac_bl = -(jacobian_bl(p_est[:n_p], fft_mu_est)/sigma_y).T
         jac_br = (
             la.circulant(td_fun(p_est, signal.unit_impulse(n))).T / sigma_y
         ).T
-
-        return np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
+        jac_tot = np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
+        return jac_tot
 
     result = opt.least_squares(
         lambda _p: _costfuntls(
             function,
-            _p[:n_p],
-            rfft(xdata[:] - _p[n_p:])[:],
-            fft_x[:],
-            fft_y[:],
+            _p[:n_p+n_a+n_b],
+            xdata[:] - _p[n_p+n_a+n_b:],
+            xdata[:],
+            ydata[:],
             sigma_x[:],
             sigma_y[:],
-            w_below_idx[:],
-            w_in_idx[:],
-            w_above_idx[:],
             dt,
         ),
         p0_est,
         jac=jac_fun,
         bounds=p_bounds,
         method=fit_method,
-        x_scale=np.concatenate((np.ones(n_p), sigma_x)),
+        x_scale=np.concatenate((np.ones(n_p+n_a+n_b), sigma_x)),
     )
 
     # Parse output
@@ -3012,32 +3036,33 @@ def fit(
     vt = vt[: s.size]
     all_var = np.diag(np.dot(vt.T / s**2, vt))
 
+    p_opt_all = result.x[:n_p+n_a+n_b]
     p_opt = result.x[:n_p]
     p_var = all_var[:n_p]
-    _delta = result.x[n_p:]
-    _fft_mu = rfft(xdata - _delta)
-    mu_opt = irfft(
-        np.concatenate(
-            (fft_x[w_below_idx], _fft_mu[w_in_idx], fft_x[w_above_idx])
-        ),
-        n=n,
-    )
-    mu_var = all_var[n_p:]  # I'm not sure about this!
-    psi_opt = transfer(lambda _w: function(p_opt, _w), mu_opt, dt=dt)
-    delta = xdata - mu_opt
+    delta = result.x[n_p+n_a+n_b:]
+
+    mu_opt = xdata - delta
+    mu_var = all_var[n_p+n_a+n_b:]
+    psi_opt = transfer(lambda _w: function(p_opt_all, _w), mu_opt, dt=dt)
     epsilon = ydata - psi_opt
     resnorm = 2 * result.cost
 
     h_circ = la.circulant(
-        transfer(lambda _w: function(p_opt, _w), signal.unit_impulse(n), dt=dt)
+        transfer(lambda _w: function(p_opt_all, _w),
+                 signal.unit_impulse(n), dt=dt)
     )
-    h_delta = transfer(lambda _w: function(p_opt, _w), delta, dt=dt)
+    h_delta = transfer(lambda _w: function(p_opt_all, _w), delta, dt=dt)
     u_x = h_circ @ v_x @ h_circ.T
     r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (epsilon - h_delta)
 
+    # To be returned?!
+    fun_val = function(p_opt_all, w)
+    fun_ex_low = fun_val[:n_below]
+    fun_ex_high = fun_val[-n_above:]
+
     # Cast resnorm as a Python float and success as a Python bool, in case
     # either is a NumPy constant
-    return FitResult(
+    res = FitResult(
         p_opt=p_opt,
         p_var=p_var,
         mu_opt=mu_opt,
@@ -3048,3 +3073,5 @@ def fit(
         r_tls=r_tls,
         success=bool(result.success),
     )
+
+    return res

@@ -2941,7 +2941,7 @@ def fit(
         _a = _theta[n_p:n_p+n_a]
         _b = _theta[n_p+n_a:]
         h_ex = fun_ex(_a, _b)
-        h_in = fun(_theta, _w[w_in_idx])
+        h_in = fun(_theta[:n_p], _w[w_in_idx])
         _h = np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
         if not numpy_sign_convention:
             return np.conj(_h)

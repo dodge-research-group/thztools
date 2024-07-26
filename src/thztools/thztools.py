@@ -706,10 +706,12 @@ def transfer(
     n = x.size
     w_scaled = 2 * np.pi * rfftfreq(n)
     h = tfun(w_scaled / dt, *args)
-    if not numpy_sign_convention:
-        h = np.conj(h)
+    if numpy_sign_convention:
+        y = np.fft.irfft(np.fft.rfft(x) * h, n=n)
+    else:
+        y = np.fft.irfft(np.fft.rfft(x) * np.conj(h), n=n)
 
-    return np.fft.irfft(np.fft.rfft(x) * h, n=n)
+    return y
 
 
 # noinspection PyShadowingNames
@@ -2950,10 +2952,7 @@ def fit(
         _b = _theta[n_p + n_a :]
         h_ex = fun_ex(_a, _b)
         h_in = fun(_theta[:n_p], _w[w_in_idx])
-        _h = np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
-        if not numpy_sign_convention:
-            return np.conj(_h)
-        return _h
+        return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
 
     def td_fun(_p, _x):
         _h = function(_p, w)
@@ -2986,7 +2985,10 @@ def fit(
             ),
             axis=-1,
         )
-        jac_bl = irfft(fft_jac_bl * _fft_mu, n=n)
+        if numpy_sign_convention:
+            jac_bl = irfft(fft_jac_bl * _fft_mu, n=n)
+        else:
+            jac_bl = irfft(np.conj(fft_jac_bl) * _fft_mu, n=n)
         if n_a > 0:
             a_circ = la.circulant(signal.unit_impulse(n_a))
             jac_a = np.concatenate(
@@ -2997,12 +2999,11 @@ def fit(
                 ),
                 axis=-1,
             )
+            # jac_a is real so no irfft depedence on numpy_sign_convention
             jac_bl_a = irfft(jac_a * _fft_mu, n=n)
             jac_bl = np.concatenate((jac_bl, jac_bl_a), axis=0)
         if n_b > 0:
             b_circ = la.circulant(signal.unit_impulse(n_b) * 1j)
-            if not numpy_sign_convention:
-                b_circ = np.conj(b_circ)
             if n_a - n_b == 2:  # noqa: PLR2004
                 jac_b = np.concatenate(
                     (
@@ -3038,7 +3039,10 @@ def fit(
                 jac_b = np.concatenate(
                     (np.zeros((n_b, n_in)), b_circ[:, :]), axis=-1
                 )
-            jac_bl_b = irfft(jac_b * _fft_mu, n=n)
+            if numpy_sign_convention:
+                jac_bl_b = irfft(jac_b * _fft_mu, n=n)
+            else:
+                jac_bl_b = irfft(np.conj(jac_b) * _fft_mu, n=n)
             jac_bl = np.concatenate((jac_bl, jac_bl_b), axis=0)
         return jac_bl
 

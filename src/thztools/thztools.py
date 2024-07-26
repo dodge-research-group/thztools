@@ -2964,7 +2964,7 @@ def fit(
             _tf_prime_complex = _tf_prime[0:n_in] + 1j * _tf_prime[n_in:]
             return np.atleast_2d(_tf_prime_complex).T
         else:
-            return jac(_p, w[w_in_idx])
+            return np.atleast_2d(jac(_p, w[w_in_idx])).T
 
     def jacobian_bl(_p, _fft_mu):
         fft_jac_bl = np.concatenate((np.zeros((n_p, n_below)), jacobian_fun(

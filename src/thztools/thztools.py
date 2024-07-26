@@ -2268,7 +2268,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1:]
+            _p = _p[m - 1 :]
 
         _eta = eta_scaled0 if fix_eta else _p[: m - 1]
 
@@ -2314,7 +2314,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1:]
+            _p = _p[m - 1 :]
 
         _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
 
@@ -2365,7 +2365,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1:]
+            _p = _p[m - 1 :]
 
         _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
 
@@ -2475,7 +2475,7 @@ def _parse_noisefit_output(
         a_out = a0
     else:
         a_out = np.concatenate(([1.0], 1.0 + x_out[: m - 1] * scale_delta_a))
-        x_out = x_out[m - 1:]
+        x_out = x_out[m - 1 :]
 
     if fix_eta:
         eta_out = eta0
@@ -2551,7 +2551,7 @@ def _parse_noisefit_output(
 
     if not fix_a:
         err_a = np.concatenate(([0], err[: m - 1]))
-        err = err[m - 1:]
+        err = err[m - 1 :]
 
     if not fix_eta:
         err_eta = np.concatenate(([0], err[: m - 1]))
@@ -2686,9 +2686,8 @@ def _costfuntls(
 
     delta_norm = (x - mu) / sigma_x
     eps_norm = (y - psi) / sigma_y
-    res = np.concatenate((delta_norm, eps_norm))
 
-    return res
+    return np.concatenate((delta_norm, eps_norm))
 
 
 def fit(
@@ -2901,9 +2900,6 @@ def fit(
         elif n % 2 == 1 and n_below == 0:
             n_b += 1
 
-    a = np.zeros(n_a, dtype=np.float64)
-    b = np.zeros(n_b, dtype=np.float64)
-
     alpha, beta, tau = noise_parms.tolist()
     # noinspection PyArgumentList
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
@@ -2920,26 +2916,38 @@ def fit(
         p_bounds = np.asarray(p_bounds, dtype=np.float64)
         if p_bounds.shape[0] == 2:  # noqa: PLR2004
             p_bounds = (
-                np.concatenate((p_bounds[0], np.full((n_a + n_b + n,), -np.inf))),
-                np.concatenate((p_bounds[1], np.full((n_a + n_b + n,), np.inf))),
+                np.concatenate(
+                    (p_bounds[0], np.full((n_a + n_b + n,), -np.inf))
+                ),
+                np.concatenate(
+                    (p_bounds[1], np.full((n_a + n_b + n,), np.inf))
+                ),
             )
         else:
             msg = "`bounds` must contain 2 elements."
             raise ValueError(msg)
 
     def fun_ex(_a, _b):
-        if n_a - n_b == 2:
-            return np.concatenate(([_a[0]], _a[1:-1] + _b*1j, [_a[-1]]))
-        elif n_a - n_b == 1:
+        # Transfer function is purely real at the first and last frequencies
+        if n_a - n_b == 2:  # noqa: PLR2004
+            return np.concatenate(([_a[0]], _a[1:-1] + _b * 1j, [_a[-1]]))
+
+        # Transfer function is purely real at either the first or last
+        # frequency
+        if n_a - n_b == 1:
+            # TF is real at last frequency
             if n_below == 0:
-                return np.concatenate((_a[:-1] + _b*1j, [_a[-1]]))
-            else:
-                return np.concatenate(([_a[0]], _a[1:] + _b*1j))
-        return _a + _b*1j
+                return np.concatenate((_a[:-1] + _b * 1j, [_a[-1]]))
+
+            # Otherwise TF is real at first frequency
+            return np.concatenate(([_a[0]], _a[1:] + _b * 1j))
+
+        # Transfer function is complex at all excluded frequencies
+        return _a + _b * 1j
 
     def function(_theta, _w):
-        _a = _theta[n_p:n_p+n_a]
-        _b = _theta[n_p+n_a:]
+        _a = _theta[n_p : n_p + n_a]
+        _b = _theta[n_p + n_a :]
         h_ex = fun_ex(_a, _b)
         h_in = fun(_theta[:n_p], _w[w_in_idx])
         _h = np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
@@ -2950,9 +2958,10 @@ def fit(
     def td_fun(_p, _x):
         _h = function(_p, w)
         if numpy_sign_convention:
+            # Use NumPy sign convention
             return irfft(rfft(_x) * _h, n=n)
-        else:
-            return irfft(rfft(_x) * np.conj(_h), n=n)
+        # Otherwise, return the complex conjugate
+        return irfft(rfft(_x) * np.conj(_h), n=n)
 
     def function_flat(_x):
         _tf = fun(_x, w[w_in_idx])
@@ -2960,62 +2969,97 @@ def fit(
 
     def jacobian_fun(_p):
         if jac is None:
+            # If Jacobian is not supplied, compute it numerically
             _tf_prime = approx_fprime(_p, function_flat)
             _tf_prime_complex = _tf_prime[0:n_in] + 1j * _tf_prime[n_in:]
             return np.atleast_2d(_tf_prime_complex).T
-        else:
-            return np.atleast_2d(jac(_p, w[w_in_idx])).T
+
+        # Otherwise, return supplied Jacobian
+        return np.atleast_2d(jac(_p, w[w_in_idx])).T
 
     def jacobian_bl(_p, _fft_mu):
-        fft_jac_bl = np.concatenate((np.zeros((n_p, n_below)), jacobian_fun(
-            _p), np.zeros((n_p, n_above))), axis=-1)
-        jac_bl = irfft(fft_jac_bl*_fft_mu, n=n)
+        fft_jac_bl = np.concatenate(
+            (
+                np.zeros((n_p, n_below)),
+                jacobian_fun(_p),
+                np.zeros((n_p, n_above)),
+            ),
+            axis=-1,
+        )
+        jac_bl = irfft(fft_jac_bl * _fft_mu, n=n)
         if n_a > 0:
             a_circ = la.circulant(signal.unit_impulse(n_a))
-            jac_a = np.concatenate((a_circ[:, :n_below], np.zeros(
-                (n_a, n_in)), a_circ[:, n_below:]), axis=-1)
-            jac_bl_a = irfft(jac_a*_fft_mu, n=n)
+            jac_a = np.concatenate(
+                (
+                    a_circ[:, :n_below],
+                    np.zeros((n_a, n_in)),
+                    a_circ[:, n_below:],
+                ),
+                axis=-1,
+            )
+            jac_bl_a = irfft(jac_a * _fft_mu, n=n)
             jac_bl = np.concatenate((jac_bl, jac_bl_a), axis=0)
         if n_b > 0:
-            b_circ = la.circulant(signal.unit_impulse(n_b)*1j)
+            b_circ = la.circulant(signal.unit_impulse(n_b) * 1j)
             if not numpy_sign_convention:
                 b_circ = np.conj(b_circ)
-            if n_a - n_b == 2:
-                jac_b = np.concatenate((np.zeros((n_b, 1)), b_circ[:, :n_below-1], np.zeros(
-                    (n_b, n_in)), b_circ[:, n_below-1:], np.zeros((n_b, 1))), axis=-1)
+            if n_a - n_b == 2:  # noqa: PLR2004
+                jac_b = np.concatenate(
+                    (
+                        np.zeros((n_b, 1)),
+                        b_circ[:, : n_below - 1],
+                        np.zeros((n_b, n_in)),
+                        b_circ[:, n_below - 1 :],
+                        np.zeros((n_b, 1)),
+                    ),
+                    axis=-1,
+                )
             elif n_a - n_b == 1:
                 if n_below == 0:
                     jac_b = np.concatenate(
-                        (np.zeros((n_b, n_in)), b_circ[:, :], np.zeros((n_b, 1))), axis=-1)
+                        (
+                            np.zeros((n_b, n_in)),
+                            b_circ[:, :],
+                            np.zeros((n_b, 1)),
+                        ),
+                        axis=-1,
+                    )
                 else:
                     jac_b = np.concatenate(
-                        (np.zeros(
-                            (n_b, 1)), b_circ[:, :n_below-1], np.zeros((n_b, n_in)), b_circ[:, n_below-1:]), axis=-1)
+                        (
+                            np.zeros((n_b, 1)),
+                            b_circ[:, : n_below - 1],
+                            np.zeros((n_b, n_in)),
+                            b_circ[:, n_below - 1 :],
+                        ),
+                        axis=-1,
+                    )
             else:
                 jac_b = np.concatenate(
-                    (np.zeros((n_b, n_in)), b_circ[:, :]), axis=-1)
-            jac_bl_b = irfft(jac_b*_fft_mu, n=n)
+                    (np.zeros((n_b, n_in)), b_circ[:, :]), axis=-1
+                )
+            jac_bl_b = irfft(jac_b * _fft_mu, n=n)
             jac_bl = np.concatenate((jac_bl, jac_bl_b), axis=0)
         return jac_bl
 
     def jac_fun(_x):
-        p_est = _x[:n_p+n_a+n_b]
-        mu_est = xdata[:] - _x[n_p+n_a+n_b:]
-        jac_tl = np.zeros((n, n_p+n_a+n_b))
+        p_est = _x[: n_p + n_a + n_b]
+        mu_est = xdata[:] - _x[n_p + n_a + n_b :]
+        jac_tl = np.zeros((n, n_p + n_a + n_b))
         jac_tr = np.diag(1 / sigma_x)
         fft_mu_est = rfft(mu_est)
-        jac_bl = -(jacobian_bl(p_est[:n_p], fft_mu_est)/sigma_y).T
+        jac_bl = -(jacobian_bl(p_est[:n_p], fft_mu_est) / sigma_y).T
         jac_br = (
             la.circulant(td_fun(p_est, signal.unit_impulse(n))).T / sigma_y
         ).T
-        jac_tot = np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
-        return jac_tot
+
+        return np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
 
     result = opt.least_squares(
         lambda _p: _costfuntls(
             function,
-            _p[:n_p+n_a+n_b],
-            xdata[:] - _p[n_p+n_a+n_b:],
+            _p[: n_p + n_a + n_b],
+            xdata[:] - _p[n_p + n_a + n_b :],
             xdata[:],
             ydata[:],
             sigma_x[:],
@@ -3026,7 +3070,7 @@ def fit(
         jac=jac_fun,
         bounds=p_bounds,
         method=fit_method,
-        x_scale=np.concatenate((np.ones(n_p+n_a+n_b), sigma_x)),
+        x_scale=np.concatenate((np.ones(n_p + n_a + n_b), sigma_x)),
     )
 
     # Parse output
@@ -3036,33 +3080,34 @@ def fit(
     vt = vt[: s.size]
     all_var = np.diag(np.dot(vt.T / s**2, vt))
 
-    p_opt_all = result.x[:n_p+n_a+n_b]
+    p_opt_all = result.x[: n_p + n_a + n_b]
     p_opt = result.x[:n_p]
     p_var = all_var[:n_p]
-    delta = result.x[n_p+n_a+n_b:]
+    delta = result.x[n_p + n_a + n_b :]
 
     mu_opt = xdata - delta
-    mu_var = all_var[n_p+n_a+n_b:]
+    mu_var = all_var[n_p + n_a + n_b :]
     psi_opt = transfer(lambda _w: function(p_opt_all, _w), mu_opt, dt=dt)
     epsilon = ydata - psi_opt
     resnorm = 2 * result.cost
 
     h_circ = la.circulant(
-        transfer(lambda _w: function(p_opt_all, _w),
-                 signal.unit_impulse(n), dt=dt)
+        transfer(
+            lambda _w: function(p_opt_all, _w), signal.unit_impulse(n), dt=dt
+        )
     )
     h_delta = transfer(lambda _w: function(p_opt_all, _w), delta, dt=dt)
     u_x = h_circ @ v_x @ h_circ.T
     r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (epsilon - h_delta)
 
     # To be returned?!
-    fun_val = function(p_opt_all, w)
-    fun_ex_low = fun_val[:n_below]
-    fun_ex_high = fun_val[-n_above:]
+    # fun_val = function(p_opt_all, w)
+    # fun_ex_low = fun_val[:n_below]
+    # fun_ex_high = fun_val[-n_above:]
 
     # Cast resnorm as a Python float and success as a Python bool, in case
     # either is a NumPy constant
-    res = FitResult(
+    return FitResult(
         p_opt=p_opt,
         p_var=p_var,
         mu_opt=mu_opt,
@@ -3073,5 +3118,3 @@ def fit(
         r_tls=r_tls,
         success=bool(result.success),
     )
-
-    return res

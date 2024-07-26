@@ -2879,20 +2879,6 @@ def fit(
     if f_bounds is None:
         f_bounds = np.array((0.0, np.inf), dtype=np.float64)
 
-    if p_bounds is None:
-        p_bounds = (-np.inf, np.inf)
-        fit_method = "lm"
-    else:
-        p_bounds = np.asarray(p_bounds, dtype=np.float64)
-        if p_bounds.shape[0] == 2:  # noqa: PLR2004
-            p_bounds = (
-                np.concatenate((p_bounds[0], np.full((n,), -np.inf))),
-                np.concatenate((p_bounds[1], np.full((n,), np.inf))),
-            )
-        else:
-            msg = "`bounds` must contain 2 elements."
-            raise ValueError(msg)
-
     w = 2 * np.pi * rfftfreq(n, dt)
     w_bounds = 2 * np.pi * np.asarray(f_bounds, dtype=np.float64)
     w_below_idx = w <= w_bounds[0]
@@ -2926,6 +2912,20 @@ def fit(
     v_x = np.diag(sigma_x**2)
     v_y = np.diag(sigma_y**2)
     p0_est = np.concatenate((p0, np.zeros(n_a), np.zeros(n_b), np.zeros(n)))
+
+    if p_bounds is None:
+        p_bounds = (-np.inf, np.inf)
+        fit_method = "lm"
+    else:
+        p_bounds = np.asarray(p_bounds, dtype=np.float64)
+        if p_bounds.shape[0] == 2:  # noqa: PLR2004
+            p_bounds = (
+                np.concatenate((p_bounds[0], np.full((n_a + n_b + n,), -np.inf))),
+                np.concatenate((p_bounds[1], np.full((n_a + n_b + n,), np.inf))),
+            )
+        else:
+            msg = "`bounds` must contain 2 elements."
+            raise ValueError(msg)
 
     def fun_ex(_a, _b):
         if n_a - n_b == 2:

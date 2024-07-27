@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Callable
 import numpy as np
 import scipy.linalg as la
 import scipy.optimize as opt
+from numpy import pi
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.random import default_rng
 from scipy import signal
@@ -347,7 +348,7 @@ class NoiseModel:
             x = np.moveaxis(x, axis, -1)
 
         n = x.shape[-1]
-        w_scaled = 2 * np.pi * rfftfreq(n)
+        w_scaled = 2 * pi * rfftfreq(n)
         xdot = irfft(1j * w_scaled * rfft(x), n=n) / dt
 
         noise_variance = (
@@ -704,7 +705,7 @@ def transfer(
 
     dt = _assign_sampling_time(dt)
     n = x.size
-    w_scaled = 2 * np.pi * rfftfreq(n)
+    w_scaled = 2 * pi * rfftfreq(n)
     h = tfun(w_scaled / dt, *args)
     if numpy_sign_convention:
         y = np.fft.irfft(np.fft.rfft(x) * h, n=n)
@@ -877,8 +878,8 @@ def wave(
 
     f_scaled = rfftfreq(n)
 
-    w = 2 * np.pi * f_scaled / dt
-    ell = np.exp(-((w * taul) ** 2) / 2) / np.sqrt(2 * np.pi * taul**2)
+    w = 2 * pi * f_scaled / dt
+    ell = np.exp(-((w * taul) ** 2) / 2) / np.sqrt(2 * pi * taul**2)
     r = 1 / (1 / taur - 1j * w) - 1 / (1 / taur + 1 / tauc - 1j * w)
     s = -1j * w * (ell * r) ** 2 * np.exp(1j * w * t0)
 
@@ -991,7 +992,7 @@ def scaleshift(
             raise ValueError(msg)
 
     f_scaled = rfftfreq(n)
-    w = 2 * np.pi * f_scaled / dt
+    w = 2 * pi * f_scaled / dt
     phase = np.expand_dims(eta, axis=eta.ndim) * w
 
     x_adjusted = np.fft.irfft(
@@ -1043,7 +1044,7 @@ def _nll_common(
 
     # Compute frequency vector and Fourier coefficients of mu
     f = rfftfreq(n)
-    w = 2 * np.pi * f
+    w = 2 * pi * f
     mu_f = rfft(mu)
 
     exp_iweta = np.exp(1j * np.outer(eta_on_dt, w))
@@ -1220,7 +1221,7 @@ def _jac_noisefit(
     vtau = np.exp(logv_tau_scaled * scale_logv_tau)
 
     f = rfftfreq(n)
-    w = 2 * np.pi * f
+    w = 2 * pi * f
 
     common = _nll_common(
         x=x,
@@ -1386,7 +1387,7 @@ def _hess_noisefit(
     vtau = np.exp(logv_tau_scaled * scale_logv_tau)
 
     f = rfftfreq(n)
-    w = 2 * np.pi * f
+    w = 2 * pi * f
 
     common = _nll_common(
         x=x,
@@ -2146,7 +2147,7 @@ def _parse_noisefit_input(
     # to the time-dependent variance
     if None in [sigma_alpha0, sigma_beta0, sigma_tau0]:
         mu0_f = np.fft.rfft(mu0)
-        w = 2 * np.pi * np.fft.rfftfreq(n, dt)
+        w = 2 * pi * np.fft.rfftfreq(n, dt)
         dmu0_dt = np.fft.irfft(1j * w * mu0_f, n=n)
         a_matrix = np.stack([np.ones(n), mu0**2, dmu0_dt**2], axis=1)
         sol = np.linalg.lstsq(a_matrix, v_t, rcond=None)
@@ -2880,15 +2881,16 @@ def fit(
     if f_bounds is None:
         f_bounds = np.array((0.0, np.inf), dtype=np.float64)
 
-    w = 2 * np.pi * rfftfreq(n, dt)
-    w_bounds = 2 * np.pi * np.asarray(f_bounds, dtype=np.float64)
-    w_below_idx = w <= w_bounds[0]
-    w_above_idx = w > w_bounds[1]
-    w_in_idx = np.invert(w_below_idx) * np.invert(w_above_idx)
+    f = rfftfreq(n, dt)
+    f_excl_lo_idx = (f <= f_bounds[0])
+    f_excl_hi_idx = (f > f_bounds[1])
+    f_incl_idx = ~f_excl_lo_idx * ~f_excl_hi_idx
 
-    n_below = np.sum(w_below_idx)
-    n_in = np.sum(w_in_idx)
-    n_above = np.sum(w_above_idx)
+    w = 2 * pi * f
+
+    n_below = np.sum(f_excl_lo_idx)
+    n_in = np.sum(f_incl_idx)
+    n_above = np.sum(f_excl_hi_idx)
     n_ex = n_below + n_above
 
     n_a = 0
@@ -2951,7 +2953,7 @@ def fit(
         _a = _theta[n_p : n_p + n_a]
         _b = _theta[n_p + n_a :]
         h_ex = fun_ex(_a, _b)
-        h_in = fun(_theta[:n_p], _w[w_in_idx])
+        h_in = tfun(_theta[:n_p], _w[f_incl_idx])  # Sensitive to sign convention
         return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
 
     def td_fun(_p, _x):
@@ -2963,7 +2965,7 @@ def fit(
         return irfft(rfft(_x) * np.conj(_h), n=n)
 
     def function_flat(_x):
-        _tf = fun(_x, w[w_in_idx])
+        _tf = tfun(_x, w[f_incl_idx])  # Sensitive to sign convention
         return np.concatenate((np.real(_tf), np.imag(_tf)))
 
     def jacobian_fun(_p):
@@ -2974,7 +2976,7 @@ def fit(
             return np.atleast_2d(_tf_prime_complex).T
 
         # Otherwise, return supplied Jacobian
-        return np.atleast_2d(jac(_p, w[w_in_idx])).T
+        return np.atleast_2d(jac(_p, w[f_incl_idx])).T
 
     def jacobian_bl(_p, _fft_mu):
         fft_jac_bl = np.concatenate(

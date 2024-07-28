@@ -700,7 +700,7 @@ def transfer(
         msg = "x must be a one-dimensional array"
         raise ValueError(msg)
 
-    args = np.asarray(args)
+    args = np.atleast_1d(args)
 
     dt = _assign_sampling_time(dt)
     n = x.size
@@ -2866,6 +2866,7 @@ def fit(
     """
     fit_method = "trf"
 
+    args = np.atleast_1d(args)
     if kwargs is None:
         kwargs = {}
 
@@ -2876,7 +2877,7 @@ def fit(
             return np.conj(tfun(_omega, *p, *args, **kwargs))
         return tfun(_omega, *p, *args, **kwargs)
 
-    p0 = np.asarray(p0, dtype=np.float64)
+    p0 = np.atleast_1d(p0).astype(np.float64)
     xdata = np.asarray(xdata, dtype=np.float64)
     ydata = np.asarray(ydata, dtype=np.float64)
 

@@ -1133,70 +1133,19 @@ class TestNoiseFit:
 
 
 class TestFit:
-    n = 16
-    dt = 1.0 / n
-    t = np.arange(n) * dt
-    f = np.fft.rfftfreq(n, dt)
-    x = np.sin(4 * pi * t)
-    p0 = (0.5, dt)
+    n_even = 16
+    dt_even = 1.0 / n_even
+    t_even = np.arange(n_even) * dt_even
+    f_even = np.fft.rfftfreq(n_even, dt_even)
+    x_even = np.sin(4 * pi * t_even)
+    p0_even = (0.5, dt_even)
 
-    y_numpy_sign_true = transfer(
-        tfun, x, dt=dt, args=p0, numpy_sign_convention=True
+    y_even_numpy_sign_true = transfer(
+        tfun, x_even, dt=dt_even, args=p0_even, numpy_sign_convention=True
     )
-    y_numpy_sign_false = transfer(
-        tfun, x, dt=dt, args=p0, numpy_sign_convention=False
+    y_even_numpy_sign_false = transfer(
+        tfun, x_even, dt=dt_even, args=p0_even, numpy_sign_convention=False
     )
-    alpha, beta, tau = 1e-5, 0, 0
-    sigma = np.array([alpha, beta, tau])
-    noise_model = NoiseModel(alpha, beta, tau, dt=dt)
-
-    @pytest.mark.parametrize("noise_parms", [(1, 0, 0), sigma**2])
-    @pytest.mark.parametrize(
-        "y, numpy_sign_convention",
-        [(y_numpy_sign_true, True), (y_numpy_sign_false, False)],
-    )
-    @pytest.mark.parametrize(
-        "f_bounds",
-        [
-            None,
-            (-np.inf, np.inf),
-            (-np.inf, f[-2]),
-            (-np.inf, f[-3]),
-            (f[0], np.inf),
-            (f[0], f[-2]),
-            (f[0], f[-3]),
-            (f[1], np.inf),
-            (f[1], f[-2]),
-            (f[1], f[-3]),
-        ],
-    )
-    @pytest.mark.parametrize("p_bounds", [None, ((0, -1), (2, 1))])
-    @pytest.mark.parametrize("jac", [None, jac_fun])
-    def test_inputs(
-        self,
-        y,
-        noise_parms,
-        numpy_sign_convention,
-        f_bounds,
-        p_bounds,
-        jac,
-    ):
-        p0 = self.p0
-        x = self.x
-        dt = self.dt
-        p = fit(
-            tfun,
-            x,
-            y,
-            p0,
-            noise_parms,
-            dt=dt,
-            numpy_sign_convention=numpy_sign_convention,
-            f_bounds=f_bounds,
-            p_bounds=p_bounds,
-            jac=jac,
-        )
-        assert_allclose(p.p_opt, p0)
 
     n_odd = 15
     dt_odd = 1.0 / n_odd
@@ -1211,6 +1160,57 @@ class TestFit:
     y_odd_numpy_sign_false = transfer(
         tfun, x_odd, dt=dt_odd, args=p0_odd, numpy_sign_convention=False
     )
+
+    alpha, beta, tau = 1e-5, 0, 0
+    sigma = np.array([alpha, beta, tau])
+
+    @pytest.mark.parametrize("noise_parms", [(1, 0, 0), sigma**2])
+    @pytest.mark.parametrize(
+        "y, numpy_sign_convention",
+        [(y_even_numpy_sign_true, True), (y_even_numpy_sign_false, False)],
+    )
+    @pytest.mark.parametrize(
+        "f_bounds",
+        [
+            None,
+            (-np.inf, np.inf),
+            (-np.inf, f_even[-2]),
+            (-np.inf, f_even[-3]),
+            (f_even[0], np.inf),
+            (f_even[0], f_even[-2]),
+            (f_even[0], f_even[-3]),
+            (f_even[1], np.inf),
+            (f_even[1], f_even[-2]),
+            (f_even[1], f_even[-3]),
+        ],
+    )
+    @pytest.mark.parametrize("p_bounds", [None, ((0, -1), (2, 1))])
+    @pytest.mark.parametrize("jac", [None, jac_fun])
+    def test_inputs_even_length(
+        self,
+        y,
+        noise_parms,
+        numpy_sign_convention,
+        f_bounds,
+        p_bounds,
+        jac,
+    ):
+        p0 = self.p0_even
+        x = self.x_even
+        dt = self.dt_even
+        p = fit(
+            tfun,
+            x,
+            y,
+            p0,
+            noise_parms,
+            dt=dt,
+            numpy_sign_convention=numpy_sign_convention,
+            f_bounds=f_bounds,
+            p_bounds=p_bounds,
+            jac=jac,
+        )
+        assert_allclose(p.p_opt, p0)
 
     @pytest.mark.parametrize(
         "y_odd, numpy_sign_convention",
@@ -1232,7 +1232,7 @@ class TestFit:
         ],
     )
     @pytest.mark.parametrize("jac", [None, jac_fun])
-    def test_odd_length(self, y_odd, numpy_sign_convention, f_bounds, jac):
+    def test_inputs_odd_length(self, y_odd, numpy_sign_convention, f_bounds, jac):
         p = fit(
             tfun,
             self.x_odd,
@@ -1247,10 +1247,10 @@ class TestFit:
         assert_allclose(p.p_opt, self.p0_odd)
 
     def test_errors(self):
-        p0 = self.p0
-        x = self.x
-        dt = self.dt
-        y = self.y_numpy_sign_true
+        p0 = self.p0_even
+        x = self.x_even
+        dt = self.dt_even
+        y = self.y_even_numpy_sign_true
 
         with pytest.raises(
             ValueError, match="`bounds` must contain 2 elements."

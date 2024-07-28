@@ -1137,7 +1137,7 @@ class TestFit:
     dt = 1.0 / n
     t = np.arange(n) * dt
     f = np.fft.rfftfreq(n, dt)
-    x = np.cos(4 * pi * t)
+    x = np.sin(4 * pi * t)
     p0 = (0.5, dt)
 
     y_numpy_sign_true = transfer(
@@ -1198,11 +1198,11 @@ class TestFit:
         )
         assert_allclose(p.p_opt, p0)
 
-    n_odd = n - 1
+    n_odd = 15
     dt_odd = 1.0 / n_odd
     t_odd = np.arange(n_odd) * dt_odd
     f_odd = np.fft.rfftfreq(n_odd, dt_odd)
-    x_odd = np.cos(4 * pi * t_odd)
+    x_odd = np.sin(4 * pi * t_odd)
     p0_odd = (0.5, dt_odd)
 
     y_odd_numpy_sign_true = transfer(

@@ -2701,6 +2701,8 @@ def fit(
     *,
     dt: float | None = None,
     numpy_sign_convention: bool = True,
+    args: tuple = (),
+    kwargs: dict | None = None,
     f_bounds: ArrayLike | None = None,
     p_bounds: ArrayLike | None = None,
     jac: Callable | None = None,
@@ -2742,6 +2744,11 @@ def fit(
         :math:`x(t) = a e^{i\omega t}`. Default is ``True``. When set to
         ``False``, uses the convention more common in physics,
         :math:`x(t) = a e^{-i\omega t}`.
+    args : tuple
+        Additional arguments for ``tfun``.
+    kwargs : dict or None, optional
+        Additional keyword arguments for ``tfun``. Default is ``None``, which
+        passes no keyword arguments.
     f_bounds : array_like, optional
         Frequency bounds. Default is ``None``, which sets ``f_bounds`` to
         ``(0.0, np.inf)``.
@@ -2859,6 +2866,16 @@ def fit(
     """
     fit_method = "trf"
 
+    if kwargs is None:
+        kwargs = {}
+
+    def _tfun_local(
+        _omega: NDArray[np.float64], *p: np.float64
+    ) -> NDArray[np.complex128]:
+        if not numpy_sign_convention:
+            return np.conj(tfun(_omega, *p, *args, **kwargs))
+        return tfun(_omega, *p, *args, **kwargs)
+
     p0 = np.asarray(p0, dtype=np.float64)
     xdata = np.asarray(xdata, dtype=np.float64)
     ydata = np.asarray(ydata, dtype=np.float64)
@@ -2958,13 +2975,11 @@ def fit(
         _a = np.asarray(_theta[n_p : n_p + n_a], dtype=np.float64)
         _b = np.asarray(_theta[n_p + n_a :], dtype=np.float64)
         h_ex = fun_ex(_a, _b)
-        h_in = tfun(
-            _w[f_incl_idx], *_theta[:n_p]
-        )  # Sensitive to sign convention
+        h_in = _tfun_local(_w[f_incl_idx], *_theta[:n_p])
         return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
 
     def function_flat(_x: NDArray[np.float64]) -> NDArray[np.float64]:
-        _tf = tfun(w[f_incl_idx], *_x)  # Sensitive to sign convention
+        _tf = _tfun_local(w[f_incl_idx], *_x)  # Sensitive to sign convention
         return np.concatenate((np.real(_tf), np.imag(_tf)))
 
     def jacobian_fun(_p: NDArray[np.float64]):
@@ -2988,10 +3003,7 @@ def fit(
             ),
             axis=-1,
         )
-        if numpy_sign_convention:
-            jac_bl = irfft(fft_jac_bl * _fft_mu, n=n)
-        else:
-            jac_bl = irfft(np.conj(fft_jac_bl) * _fft_mu, n=n)
+        jac_bl = irfft(fft_jac_bl * _fft_mu, n=n)
         if n_a > 0:
             a_circ = la.circulant(signal.unit_impulse(n_a))
             jac_a = np.concatenate(
@@ -3002,7 +3014,6 @@ def fit(
                 ),
                 axis=-1,
             )
-            # jac_a is real so no irfft depedence on numpy_sign_convention
             jac_bl_a = irfft(jac_a * _fft_mu, n=n)
             jac_bl = np.concatenate((jac_bl, jac_bl_a), axis=0)
         if n_b > 0:
@@ -3042,10 +3053,7 @@ def fit(
                 jac_b = np.concatenate(
                     (np.zeros((n_b, n_in)), b_circ[:, :]), axis=-1
                 )
-            if numpy_sign_convention:
-                jac_bl_b = irfft(jac_b * _fft_mu, n=n)
-            else:
-                jac_bl_b = irfft(np.conj(jac_b) * _fft_mu, n=n)
+            jac_bl_b = irfft(jac_b * _fft_mu, n=n)
             jac_bl = np.concatenate((jac_bl, jac_bl_b), axis=0)
         return jac_bl
 
@@ -3106,7 +3114,8 @@ def fit(
     u_x = h_circ @ v_x @ h_circ.T
     r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (epsilon - h_delta)
 
-    # To be returned?!
+    # TODO: add transfer function estimates at excluded frequencies to
+    #  FitResult
     # fun_val = function(w, p_opt_all)
     # fun_ex_low = fun_val[:n_below]
     # fun_ex_high = fun_val[-n_above:]

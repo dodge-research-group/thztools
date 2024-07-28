@@ -2963,16 +2963,6 @@ def fit(
         )  # Sensitive to sign convention
         return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
 
-    def td_fun(
-        _p: NDArray[np.float64], _x: NDArray[np.float64]
-    ):  # TODO: Replace with thztools.transfer
-        _h = function(w, *_p)
-        if numpy_sign_convention:
-            # Use NumPy sign convention
-            return irfft(rfft(_x) * _h, n=n)
-        # Otherwise, return the complex conjugate
-        return irfft(rfft(_x) * np.conj(_h), n=n)
-
     def function_flat(_x: NDArray[np.float64]) -> NDArray[np.float64]:
         _tf = tfun(w[f_incl_idx], *_x)  # Sensitive to sign convention
         return np.concatenate((np.real(_tf), np.imag(_tf)))
@@ -3066,9 +3056,10 @@ def fit(
         jac_tr = np.diag(1 / sigma_x)
         fft_mu_est = rfft(mu_est)
         jac_bl = -(jacobian_bl(p_est[:n_p], fft_mu_est) / sigma_y).T
-        jac_br = (
-            la.circulant(td_fun(p_est, signal.unit_impulse(n))).T / sigma_y
-        ).T
+        impulse_response = transfer(
+            function, signal.unit_impulse(n), dt=dt, args=p_est
+        )
+        jac_br = (la.circulant(impulse_response).T / sigma_y).T
 
         return np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
 

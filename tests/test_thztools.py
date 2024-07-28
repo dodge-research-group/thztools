@@ -1137,7 +1137,7 @@ class TestFit:
     dt = 1.0 / n
     t = np.arange(n) * dt
     f = np.fft.rfftfreq(n, dt)
-    x = np.cos(2 * pi * t)
+    x = np.cos(4 * pi * t)
     p0 = (0.5, dt)
 
     y_numpy_sign_true = transfer(
@@ -1150,20 +1150,6 @@ class TestFit:
     sigma = np.array([alpha, beta, tau])
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
 
-    n_odd = n - 1
-    dt_odd = 1.0 / n_odd
-    t_odd = np.arange(n_odd) * dt_odd
-    f_odd = np.fft.rfftfreq(n_odd, dt_odd)
-    x_odd = np.cos(2 * pi * t_odd)
-    p0_odd = (0.5, dt_odd)
-
-    y_odd_numpy_sign_true = transfer(
-        tfun, x_odd, dt=dt_odd, args=p0_odd, numpy_sign_convention=True
-    )
-    y_odd_numpy_sign_false = transfer(
-        tfun, x_odd, dt=dt_odd, args=p0_odd, numpy_sign_convention=False
-    )
-
     @pytest.mark.parametrize("noise_parms", [(1, 0, 0), sigma**2])
     @pytest.mark.parametrize(
         "y, numpy_sign_convention",
@@ -1174,11 +1160,14 @@ class TestFit:
         [
             None,
             (-np.inf, np.inf),
-            (f[0], np.inf),
             (-np.inf, f[-2]),
             (-np.inf, f[-3]),
+            (f[0], np.inf),
             (f[0], f[-2]),
             (f[0], f[-3]),
+            (f[1], np.inf),
+            (f[1], f[-2]),
+            (f[1], f[-3]),
         ],
     )
     @pytest.mark.parametrize("p_bounds", [None, ((0, -1), (2, 1))])
@@ -1209,6 +1198,20 @@ class TestFit:
         )
         assert_allclose(p.p_opt, p0)
 
+    n_odd = n - 1
+    dt_odd = 1.0 / n_odd
+    t_odd = np.arange(n_odd) * dt_odd
+    f_odd = np.fft.rfftfreq(n_odd, dt_odd)
+    x_odd = np.cos(4 * pi * t_odd)
+    p0_odd = (0.5, dt_odd)
+
+    y_odd_numpy_sign_true = transfer(
+        tfun, x_odd, dt=dt_odd, args=p0_odd, numpy_sign_convention=True
+    )
+    y_odd_numpy_sign_false = transfer(
+        tfun, x_odd, dt=dt_odd, args=p0_odd, numpy_sign_convention=False
+    )
+
     @pytest.mark.parametrize(
         "y_odd, numpy_sign_convention",
         [(y_odd_numpy_sign_true, True), (y_odd_numpy_sign_false, False)],
@@ -1218,9 +1221,14 @@ class TestFit:
         [
             None,
             (-np.inf, np.inf),
-            (f_odd[0], np.inf),
             (-np.inf, f_odd[-2]),
+            (-np.inf, f_odd[-3]),
+            (f_odd[0], np.inf),
             (f_odd[0], f_odd[-2]),
+            (f_odd[0], f_odd[-3]),
+            (f_odd[1], np.inf),
+            (f_odd[1], f_odd[-2]),
+            (f_odd[1], f_odd[-3]),
         ],
     )
     @pytest.mark.parametrize("jac", [None, jac_fun])

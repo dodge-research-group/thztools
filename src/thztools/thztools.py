@@ -2693,7 +2693,7 @@ def _costfuntls(
 
 
 def fit(
-    fun: Callable,
+    tfun: Callable,
     xdata: ArrayLike,
     ydata: ArrayLike,
     p0: ArrayLike,
@@ -2856,7 +2856,7 @@ def fit(
     >>> result.p_opt
     array([0.49..., 1.00...])
     >>> result.resnorm
-    332.560...
+    198.266...
 
     >>> _, ax = plt.subplots()
     >>> ax.plot(t, result.r_tls, '.')

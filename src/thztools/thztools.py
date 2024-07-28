@@ -577,7 +577,7 @@ def transfer(
     *,
     dt: float | None = None,
     numpy_sign_convention: bool = True,
-    args: tuple = (),
+    args: ArrayLike = (),
 ) -> NDArray[np.float64]:
     r"""
     Apply a transfer function to a waveform.
@@ -609,7 +609,7 @@ def transfer(
         :math:`x(t) = a e^{i\omega t}`. Default is ``True``. When set to
         ``False``, uses the convention more common in physics,
         :math:`x(t) = a e^{-i\omega t}`.
-    args : tuple, optional
+    args : array_like, optional
         Extra arguments passed to the transfer function.
 
     Returns
@@ -700,8 +700,7 @@ def transfer(
         msg = "x must be a one-dimensional array"
         raise ValueError(msg)
 
-    if not isinstance(args, tuple):
-        args = (args,)
+    args = np.asarray(args)
 
     dt = _assign_sampling_time(dt)
     n = x.size
@@ -2598,9 +2597,9 @@ class FitResult:
         Residuals of the input waveform ``x``, defined as ``x - mu_opt``.
     epsilon : array_like
         Residuals of the output waveform ``y``, defined as ``y - psi_opt``,
-        where ``psi_opt = thztools.transfer(tfun_opt, mu, dt=dt)`` and
-        ``tfun_opt`` is the parameterized transfer function evaluated at
-        ``p_opt``.
+        where ``psi_opt = thztools.transfer(tfun, mu, dt=dt, args=p_opt)``,
+        ``tfun`` is the parameterized transfer function, and ``p_opt`` is
+        the array of optimized parameters.
     r_tls : array_like
         Total least-squares residuals.
     success : bool
@@ -2623,7 +2622,7 @@ class FitResult:
 
 
 def _costfuntls(
-    fun: Callable,
+    tfun: Callable,
     theta: ArrayLike,
     mu: ArrayLike,
     x: ArrayLike,
@@ -2636,10 +2635,10 @@ def _costfuntls(
 
     Parameters
     ----------
-    fun : callable
+    tfun : callable
         Transfer function.
 
-            ``fun(p, w, *args, **kwargs) -> ndarray``
+            ``tfun(w, *p, *args, **kwargs) -> ndarray``
 
         Assumes the :math:`+i\omega t` convention for harmonic time dependence.
     theta : array_like
@@ -2685,7 +2684,7 @@ def _costfuntls(
 
     dt = _assign_sampling_time(dt)
 
-    psi = transfer(lambda omega: fun(theta, omega), mu, dt=dt)
+    psi = transfer(tfun, mu, dt=dt, args=theta)
 
     delta_norm = (x - mu) / sigma_x
     eps_norm = (y - psi) / sigma_y
@@ -2715,8 +2714,8 @@ def fit(
 
     Parameters
     ----------
-    fun : callable
-        Transfer function with signature ``fun(omega, *p, *args, **kwargs)``
+    tfun : callable
+        Transfer function with signature ``tfun(omega, *p, *args, **kwargs)``
         that returns an ``ndarray``. Assumes the :math:`+i\omega t` convention
         for harmonic time dependence when ``numpy_sign_convention`` is
         ``True``, the default.
@@ -2837,11 +2836,11 @@ def fit(
     >>> noise_model = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
     ...  sigma_tau=tau, dt=dt)
 
-    >>> def tfun(p, w):
-    ...    return p[0] * np.exp(1j * p[1] * w)
+    >>> def tfun(w, amplitude, delay):
+    ...    return amplitude * np.exp(1j * w * delay)
     >>>
     >>> p0 = (0.5, 1.0)
-    >>> psi = thz.transfer(lambda omega: tfun(p0, omega), mu, dt=dt)
+    >>> psi = thz.transfer(tfun, mu, dt=dt, args=p0)
     >>> xdata = mu + noise_model.noise_sim(mu, seed=0)
     >>> ydata = psi + noise_model.noise_sim(psi, seed=1)
     >>> result = thz.fit(tfun, xdata, ydata, p0, (alpha, beta, tau), dt=dt)
@@ -2880,10 +2879,12 @@ def fit(
 
     if f_bounds is None:
         f_bounds = np.array((0.0, np.inf), dtype=np.float64)
+    else:
+        f_bounds = np.asarray(f_bounds, dtype=np.float64)
 
     f = rfftfreq(n, dt)
-    f_excl_lo_idx = (f <= f_bounds[0])
-    f_excl_hi_idx = (f > f_bounds[1])
+    f_excl_lo_idx = f <= f_bounds[0]
+    f_excl_hi_idx = f > f_bounds[1]
     f_incl_idx = ~f_excl_lo_idx * ~f_excl_hi_idx
 
     w = 2 * pi * f
@@ -2931,7 +2932,9 @@ def fit(
             msg = "`bounds` must contain 2 elements."
             raise ValueError(msg)
 
-    def fun_ex(_a, _b):
+    def fun_ex(
+        _a: NDArray[np.float64], _b: NDArray[np.float64]
+    ) -> NDArray[np.complex128]:
         # Transfer function is purely real at the first and last frequencies
         if n_a - n_b == 2:  # noqa: PLR2004
             return np.concatenate(([_a[0]], _a[1:-1] + _b * 1j, [_a[-1]]))
@@ -2949,26 +2952,32 @@ def fit(
         # Transfer function is complex at all excluded frequencies
         return _a + _b * 1j
 
-    def function(_theta, _w):
-        _a = _theta[n_p : n_p + n_a]
-        _b = _theta[n_p + n_a :]
+    def function(
+        _w: NDArray[np.float64], *_theta: np.float64
+    ) -> NDArray[np.complex128]:
+        _a = np.asarray(_theta[n_p : n_p + n_a], dtype=np.float64)
+        _b = np.asarray(_theta[n_p + n_a :], dtype=np.float64)
         h_ex = fun_ex(_a, _b)
-        h_in = tfun(_theta[:n_p], _w[f_incl_idx])  # Sensitive to sign convention
+        h_in = tfun(
+            _w[f_incl_idx], *_theta[:n_p]
+        )  # Sensitive to sign convention
         return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
 
-    def td_fun(_p, _x):
-        _h = function(_p, w)
+    def td_fun(
+        _p: NDArray[np.float64], _x: NDArray[np.float64]
+    ):  # TODO: Replace with thztools.transfer
+        _h = function(w, *_p)
         if numpy_sign_convention:
             # Use NumPy sign convention
             return irfft(rfft(_x) * _h, n=n)
         # Otherwise, return the complex conjugate
         return irfft(rfft(_x) * np.conj(_h), n=n)
 
-    def function_flat(_x):
-        _tf = tfun(_x, w[f_incl_idx])  # Sensitive to sign convention
+    def function_flat(_x: NDArray[np.float64]) -> NDArray[np.float64]:
+        _tf = tfun(w[f_incl_idx], *_x)  # Sensitive to sign convention
         return np.concatenate((np.real(_tf), np.imag(_tf)))
 
-    def jacobian_fun(_p):
+    def jacobian_fun(_p: NDArray[np.float64]):
         if jac is None:
             # If Jacobian is not supplied, compute it numerically
             _tf_prime = approx_fprime(_p, function_flat)
@@ -2976,9 +2985,11 @@ def fit(
             return np.atleast_2d(_tf_prime_complex).T
 
         # Otherwise, return supplied Jacobian
-        return np.atleast_2d(jac(_p, w[f_incl_idx])).T
+        return np.atleast_2d(jac(w[f_incl_idx], _p)).T
 
-    def jacobian_bl(_p, _fft_mu):
+    def jacobian_bl(
+        _p: NDArray[np.float64], _fft_mu: NDArray[np.complex128]
+    ) -> NDArray[np.float64]:
         fft_jac_bl = np.concatenate(
             (
                 np.zeros((n_p, n_below)),
@@ -3048,7 +3059,7 @@ def fit(
             jac_bl = np.concatenate((jac_bl, jac_bl_b), axis=0)
         return jac_bl
 
-    def jac_fun(_x):
+    def jac_fun(_x: NDArray[np.float64]) -> NDArray[np.float64]:
         p_est = _x[: n_p + n_a + n_b]
         mu_est = xdata[:] - _x[n_p + n_a + n_b :]
         jac_tl = np.zeros((n, n_p + n_a + n_b))
@@ -3093,21 +3104,19 @@ def fit(
 
     mu_opt = xdata - delta
     mu_var = all_var[n_p + n_a + n_b :]
-    psi_opt = transfer(lambda _w: function(p_opt_all, _w), mu_opt, dt=dt)
+    psi_opt = transfer(function, mu_opt, dt=dt, args=p_opt_all)
     epsilon = ydata - psi_opt
     resnorm = 2 * result.cost
 
     h_circ = la.circulant(
-        transfer(
-            lambda _w: function(p_opt_all, _w), signal.unit_impulse(n), dt=dt
-        )
+        transfer(function, signal.unit_impulse(n), dt=dt, args=p_opt_all)
     )
-    h_delta = transfer(lambda _w: function(p_opt_all, _w), delta, dt=dt)
+    h_delta = transfer(function, delta, dt=dt, args=p_opt_all)
     u_x = h_circ @ v_x @ h_circ.T
     r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (epsilon - h_delta)
 
     # To be returned?!
-    # fun_val = function(p_opt_all, w)
+    # fun_val = function(w, p_opt_all)
     # fun_ex_low = fun_val[:n_below]
     # fun_ex_high = fun_val[-n_above:]
 

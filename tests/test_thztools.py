@@ -32,19 +32,11 @@ eps = np.sqrt(np.finfo(np.float64).eps)
 rtol = 1e-5
 
 
-def tfun(p, w):
-    return p[0] * np.exp(1j * p[1] * w)
-
-
-def tfun1(w, p):
-    return p[0] * np.exp(1j * p[1] * w)
-
-
-def tfun2(w, p0, p1):
+def tfun(w, p0, p1):
     return p0 * np.exp(1j * p1 * w)
 
 
-def jac_fun(p, w):
+def jac_fun(w, p):
     exp_ipw = np.exp(1j * p[1] * w)
     return np.stack((exp_ipw, 1j * w * p[0] * exp_ipw)).T
 
@@ -183,17 +175,14 @@ class TestTransferOut:
     mu = np.cos(2 * pi * t)
 
     @pytest.mark.parametrize("fft_sign", [True, False])
-    @pytest.mark.parametrize(
-        "t_fun, x, p, expected",
-        [
-            (tfun1, mu, [1.0, 0.0], mu),
-            (tfun2, mu, (1.0, 0.0), mu),
-        ],
-    )
-    def test_inputs(self, t_fun, x, fft_sign, p, expected):
+    def test_inputs(self, fft_sign):
         ts = self.dt
+        x = self.mu
+        expected = x
         assert_allclose(
-            transfer(t_fun, x, dt=ts, numpy_sign_convention=fft_sign, args=p),
+            transfer(
+                tfun, x, dt=ts, numpy_sign_convention=fft_sign, args=(1.0, 0.0)
+            ),
             expected,
             atol=eps,
             rtol=rtol,
@@ -205,7 +194,7 @@ class TestTransferOut:
         with pytest.raises(
             ValueError, match="x must be a one-dimensional array"
         ):
-            _ = transfer(tfun1, x, dt=dt, args=[1.0, 0.0])
+            _ = transfer(tfun, x, dt=dt, args=(1.0, 0.0))
 
 
 class TestTimebase:
@@ -1152,10 +1141,10 @@ class TestFit:
     p0 = (0.5, dt)
 
     y_numpy_sign_true = transfer(
-        tfun2, x, dt=dt, args=p0, numpy_sign_convention=True
+        tfun, x, dt=dt, args=p0, numpy_sign_convention=True
     )
     y_numpy_sign_false = transfer(
-        tfun2, x, dt=dt, args=p0, numpy_sign_convention=False
+        tfun, x, dt=dt, args=p0, numpy_sign_convention=False
     )
     alpha, beta, tau = 1e-5, 0, 0
     sigma = np.array([alpha, beta, tau])
@@ -1169,10 +1158,10 @@ class TestFit:
     p0_odd = (0.5, dt_odd)
 
     y_odd_numpy_sign_true = transfer(
-        tfun2, x_odd, dt=dt_odd, args=p0_odd, numpy_sign_convention=True
+        tfun, x_odd, dt=dt_odd, args=p0_odd, numpy_sign_convention=True
     )
     y_odd_numpy_sign_false = transfer(
-        tfun2, x_odd, dt=dt_odd, args=p0_odd, numpy_sign_convention=False
+        tfun, x_odd, dt=dt_odd, args=p0_odd, numpy_sign_convention=False
     )
 
     @pytest.mark.parametrize("noise_parms", [(1, 0, 0), sigma**2])

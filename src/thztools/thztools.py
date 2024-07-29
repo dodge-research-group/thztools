@@ -610,7 +610,8 @@ def transfer(
         ``False``, uses the convention more common in physics,
         :math:`x(t) = a e^{-i\omega t}`.
     args : array_like, optional
-        Extra arguments passed to the transfer function.
+        Extra arguments passed to the transfer function. All elements must be
+        real quantities.
 
     Returns
     -------
@@ -2585,12 +2586,16 @@ class FitResult:
     ----------
     p_opt : array_like
         Optimal fit parameters.
-    p_var : array_like
-        Variance of p_opt.
+    p_err : array_like
+        Uncertainty estimate for p_opt, ``p_err = np.sqrt(np.diag(p_cov))``.
+    p_cov : array_like
+        Covariance matrix estimate for p_opt, determined from the curvature of
+        the cost function at ``(p_opt, mu_opt)``.
     mu_opt : array_like
         Optimal underlying waveform.
-    mu_var : array_like
-        Variance of mu_opt.
+    mu_err : array_like
+        Estimated uncertainty in mu_opt, determined from the curvature of
+        the cost function at ``(p_opt, mu_opt)``.
     resnorm : float
         The value of chi-squared.
     delta : array_like
@@ -2601,7 +2606,7 @@ class FitResult:
         ``tfun`` is the parameterized transfer function, and ``p_opt`` is
         the array of optimized parameters.
     r_tls : array_like
-        Total least-squares residuals.
+        Normalized total least-squares residuals.
     success : bool
         True if one of the convergence criteria is satisfied.
 
@@ -2611,9 +2616,10 @@ class FitResult:
     """
 
     p_opt: NDArray[np.float64]
-    p_var: NDArray[np.float64]
+    p_err: NDArray[np.float64]
+    p_cov: NDArray[np.float64]
     mu_opt: NDArray[np.float64]
-    mu_var: NDArray[np.float64]
+    mu_err: NDArray[np.float64]
     resnorm: float
     delta: NDArray[np.float64]
     epsilon: NDArray[np.float64]
@@ -2711,7 +2717,7 @@ def fit(
     Fit a transfer function to time-domain data.
 
     Determines the total least-squares fit to ``xdata`` and ``ydata``, given
-    the parameterized transfer function relationship ``fun`` and noise model
+    the parameterized transfer function relationship ``tfun`` and noise model
     parameters ``noise_parms``.
 
     Parameters
@@ -2720,7 +2726,8 @@ def fit(
         Transfer function with signature ``tfun(omega, *p, *args, **kwargs)``
         that returns an ``ndarray``. Assumes the :math:`+i\omega t` convention
         for harmonic time dependence when ``numpy_sign_convention`` is
-        ``True``, the default.
+        ``True``, the default. All elements of ``p`` and ``args`` and all
+        values of ``kwargs`` must be real quantities.
     xdata : array_like
         Measured input signal.
     ydata : array_like
@@ -2745,10 +2752,10 @@ def fit(
         ``False``, uses the convention more common in physics,
         :math:`x(t) = a e^{-i\omega t}`.
     args : tuple
-        Additional arguments for ``tfun``.
+        Additional arguments for ``tfun``. All elements must be real.
     kwargs : dict or None, optional
         Additional keyword arguments for ``tfun``. Default is ``None``, which
-        passes no keyword arguments.
+        passes no keyword arguments. All values must be real.
     f_bounds : array_like, optional
         Frequency bounds. Default is ``None``, which sets ``f_bounds`` to
         ``(0.0, np.inf)``.
@@ -3101,15 +3108,16 @@ def fit(
     threshold = np.finfo(float).eps * max(result.jac.shape) * s[0]
     s = s[s > threshold]
     vt = vt[: s.size]
-    all_var = np.diag(np.dot(vt.T / s**2, vt))
+    cov = np.dot(vt.T / s**2, vt)
 
     p_opt_all = result.x[: n_p + n_a + n_b]
     p_opt = result.x[:n_p]
-    p_var = all_var[:n_p]
+    p_cov = cov[:n_p, :n_p]
+    p_err = np.sqrt(np.diag(p_cov))
     delta = result.x[n_p + n_a + n_b :]
 
     mu_opt = xdata - delta
-    mu_var = all_var[n_p + n_a + n_b :]
+    mu_err = np.sqrt(np.diag(cov)[n_p + n_a + n_b :])
     psi_opt = transfer(function, mu_opt, dt=dt, args=p_opt_all)
     epsilon = ydata - psi_opt
     resnorm = 2 * result.cost
@@ -3131,9 +3139,10 @@ def fit(
     # either is a NumPy constant
     return FitResult(
         p_opt=p_opt,
-        p_var=p_var,
+        p_err=p_err,
+        p_cov=p_cov,
         mu_opt=mu_opt,
-        mu_var=mu_var,
+        mu_err=mu_err,
         resnorm=float(resnorm),
         delta=delta,
         epsilon=epsilon,

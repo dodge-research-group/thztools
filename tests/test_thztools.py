@@ -30,21 +30,35 @@ from thztools.thztools import (
 
 eps = np.sqrt(np.finfo(np.float64).eps)
 rtol = 1e-5
+n_default = 16
 
 
 def tfun(w, p0, p1):
     return p0 * np.exp(1j * p1 * w)
 
 
-def jac_fun(w, p):
-    exp_ipw = np.exp(1j * p[1] * w)
-    return np.stack((exp_ipw, 1j * w * p[0] * exp_ipw)).T
+def jac_tfun(w, p0, p1):
+    return np.stack((np.exp(1j * p1 * w), 1j * w * p0 * np.exp(1j * p1 * w))).T
 
 
 # Reset options before each test
 @pytest.fixture(autouse=True)
 def global_reset():
     reset_option()
+
+
+@pytest.fixture(scope="class")
+def data_gen():
+    def _data_gen(n: int = n_default, *, np_sign: bool = True) -> dict:
+        dt = 1.0 / n
+        t = np.arange(n) * dt
+        f = np.fft.rfftfreq(n, dt)
+        x = np.sin(4 * pi * t)
+        p0 = (0.5, dt)
+        y = transfer(tfun, x, dt=dt, args=p0, numpy_sign_convention=np_sign)
+        return {"dt": dt, "t": t, "f": f, "x": x, "p0": p0, "y": y}
+
+    return _data_gen
 
 
 class TestOptions:
@@ -169,28 +183,25 @@ class TestNoiseModel:
 
 
 class TestTransferOut:
-    n = 16
-    dt = 1.0 / n
-    t = np.arange(n) * dt
-    mu = np.cos(2 * pi * t)
-
     @pytest.mark.parametrize("fft_sign", [True, False])
-    def test_inputs(self, fft_sign):
-        ts = self.dt
-        x = self.mu
+    def test_inputs(self, fft_sign, data_gen):
+        d = data_gen()
+        dt = d["dt"]
+        x = d["x"]
         expected = x
         assert_allclose(
             transfer(
-                tfun, x, dt=ts, numpy_sign_convention=fft_sign, args=(1.0, 0.0)
+                tfun, x, dt=dt, numpy_sign_convention=fft_sign, args=(1.0, 0.0)
             ),
             expected,
             atol=eps,
             rtol=rtol,
         )
 
-    @pytest.mark.parametrize("x", [np.ones((n, n))])
-    def test_error(self, x):
-        dt = self.dt
+    @pytest.mark.parametrize("x", [np.ones((n_default, n_default))])
+    def test_error(self, x, data_gen):
+        d = data_gen()
+        dt = d["dt"]
         with pytest.raises(
             ValueError, match="x must be a one-dimensional array"
         ):
@@ -337,35 +348,30 @@ class TestScaleShift:
 
 
 class TestCostFunTLS:
-    theta = (1, 0)
-    mu = np.arange(8)
-    xx = mu
-    yy = xx
-    sigmax = np.ones_like(xx)
-    sigmay = sigmax
-    w_below_idx = np.zeros(mu.size, dtype=bool)
-    w_in_idx = np.ones(mu.size, dtype=bool)
-    w_above_idx = np.zeros(mu.size, dtype=bool)
-    dt = 1.0
+    def test_output(self):
+        theta = (1, 0)
+        mu = np.arange(8)
+        xx = mu
+        yy = xx
+        sigmax = np.ones_like(xx)
+        sigmay = sigmax
+        dt = 1.0
 
-    assert_allclose(
-        _costfuntls(
-            tfun,
-            theta,
-            mu,
-            xx,
-            yy,
-            sigmax,
-            sigmay,
-            # w_below_idx,
-            # w_in_idx,
-            # w_above_idx,
-            dt,
-        ),
-        np.concatenate((np.zeros_like(xx), np.zeros_like(xx))),
-        atol=eps,
-        rtol=rtol,
-    )
+        assert_allclose(
+            _costfuntls(
+                tfun,
+                theta,
+                mu,
+                xx,
+                yy,
+                sigmax,
+                sigmay,
+                dt,
+            ),
+            np.concatenate((np.zeros_like(xx), np.zeros_like(xx))),
+            atol=eps,
+            rtol=rtol,
+        )
 
 
 class TestJacNoiseFit:
@@ -1133,71 +1139,60 @@ class TestNoiseFit:
 
 
 class TestFit:
-    n_even = 16
-    dt_even = 1.0 / n_even
-    t_even = np.arange(n_even) * dt_even
-    f_even = np.fft.rfftfreq(n_even, dt_even)
-    x_even = np.sin(4 * pi * t_even)
-    p0_even = (0.5, dt_even)
-
-    y_even_numpy_sign_true = transfer(
-        tfun, x_even, dt=dt_even, args=p0_even, numpy_sign_convention=True
-    )
-    y_even_numpy_sign_false = transfer(
-        tfun, x_even, dt=dt_even, args=p0_even, numpy_sign_convention=False
-    )
-
-    n_odd = 15
-    dt_odd = 1.0 / n_odd
-    t_odd = np.arange(n_odd) * dt_odd
-    f_odd = np.fft.rfftfreq(n_odd, dt_odd)
-    x_odd = np.sin(4 * pi * t_odd)
-    p0_odd = (0.5, dt_odd)
-
-    y_odd_numpy_sign_true = transfer(
-        tfun, x_odd, dt=dt_odd, args=p0_odd, numpy_sign_convention=True
-    )
-    y_odd_numpy_sign_false = transfer(
-        tfun, x_odd, dt=dt_odd, args=p0_odd, numpy_sign_convention=False
-    )
-
     alpha, beta, tau = 1e-5, 0, 0
     sigma = np.array([alpha, beta, tau])
 
+    @pytest.mark.parametrize("n", [15, 16])
+    @pytest.mark.parametrize("numpy_sign_convention", [True, False])
     @pytest.mark.parametrize("noise_parms", [(1, 0, 0), sigma**2])
-    @pytest.mark.parametrize(
-        "y, numpy_sign_convention",
-        [(y_even_numpy_sign_true, True), (y_even_numpy_sign_false, False)],
-    )
     @pytest.mark.parametrize(
         "f_bounds",
         [
             None,
             (-np.inf, np.inf),
-            (-np.inf, f_even[-2]),
-            (-np.inf, f_even[-3]),
-            (f_even[0], np.inf),
-            (f_even[0], f_even[-2]),
-            (f_even[0], f_even[-3]),
-            (f_even[1], np.inf),
-            (f_even[1], f_even[-2]),
-            (f_even[1], f_even[-3]),
+            (-np.inf, -2),
+            (-np.inf, -3),
+            (0, np.inf),
+            (0, -2),
+            (0, -3),
+            (1, np.inf),
+            (1, -2),
+            (1, -3),
         ],
     )
     @pytest.mark.parametrize("p_bounds", [None, ((0, -1), (2, 1))])
-    @pytest.mark.parametrize("jac", [None, jac_fun])
-    def test_inputs_even_length(
+    @pytest.mark.parametrize("jac", [None, jac_tfun])
+    def test_inputs(
         self,
-        y,
-        noise_parms,
+        n,
         numpy_sign_convention,
+        noise_parms,
         f_bounds,
         p_bounds,
         jac,
+        data_gen,
     ):
-        p0 = self.p0_even
-        x = self.x_even
-        dt = self.dt_even
+        d = data_gen(n, np_sign=numpy_sign_convention)
+        dt = d["dt"]
+        f = d["f"]
+        x = d["x"]
+        y = d["y"]
+        p0 = d["p0"]
+
+        if f_bounds is not None:
+            # Check if either the upper or lower bound is an integer. If it is,
+            # replace it with the value of the frequency array f at that index
+            # value. Need to change from tuple to list and back to modify
+            # individual elements.
+            f_bounds = list(f_bounds)
+            for i in range(2):
+                f_bounds[i] = (
+                    f[f_bounds[i]]
+                    if isinstance(f_bounds[i], int)
+                    else f_bounds[i]
+                )
+            f_bounds = tuple(f_bounds)
+
         p = fit(
             tfun,
             x,
@@ -1212,45 +1207,56 @@ class TestFit:
         )
         assert_allclose(p.p_opt, p0)
 
-    @pytest.mark.parametrize(
-        "y_odd, numpy_sign_convention",
-        [(y_odd_numpy_sign_true, True), (y_odd_numpy_sign_false, False)],
-    )
-    @pytest.mark.parametrize(
-        "f_bounds",
-        [
-            None,
-            (-np.inf, np.inf),
-            (-np.inf, f_odd[-2]),
-            (-np.inf, f_odd[-3]),
-            (f_odd[0], np.inf),
-            (f_odd[0], f_odd[-2]),
-            (f_odd[0], f_odd[-3]),
-            (f_odd[1], np.inf),
-            (f_odd[1], f_odd[-2]),
-            (f_odd[1], f_odd[-3]),
-        ],
-    )
-    @pytest.mark.parametrize("jac", [None, jac_fun])
-    def test_inputs_odd_length(self, y_odd, numpy_sign_convention, f_bounds, jac):
+    @pytest.mark.parametrize("numpy_sign_convention", [True, False])
+    @pytest.mark.parametrize("jac", [None, jac_tfun])
+    def test_args(self, data_gen, numpy_sign_convention, jac):
+        sigma = self.sigma
+        d = data_gen(np_sign=numpy_sign_convention)
+        p0 = d["p0"]
+        x = d["x"]
+        dt = d["dt"]
+        y = d["y"]
         p = fit(
             tfun,
-            self.x_odd,
-            y_odd,
-            self.p0_odd,
-            (1, 0, 0),
-            dt=self.dt_odd,
+            x,
+            y,
+            (p0[0]),
+            noise_parms=sigma,
+            dt=dt,
             numpy_sign_convention=numpy_sign_convention,
-            f_bounds=f_bounds,
+            args=(p0[1]),
             jac=jac,
         )
-        assert_allclose(p.p_opt, self.p0_odd)
+        assert_allclose(p.p_opt, p0[0])
 
-    def test_errors(self):
-        p0 = self.p0_even
-        x = self.x_even
-        dt = self.dt_even
-        y = self.y_even_numpy_sign_true
+    @pytest.mark.parametrize("numpy_sign_convention", [False])
+    @pytest.mark.parametrize("jac", [None, jac_tfun])
+    def test_kwargs(self, data_gen, numpy_sign_convention, jac):
+        sigma = self.sigma
+        d = data_gen(np_sign=numpy_sign_convention)
+        p0 = d["p0"]
+        x = d["x"]
+        dt = d["dt"]
+        y = d["y"]
+        p = fit(
+            tfun,
+            x,
+            y,
+            (p0[0]),
+            noise_parms=sigma,
+            dt=dt,
+            numpy_sign_convention=numpy_sign_convention,
+            kwargs={"p1": p0[1]},
+            jac=jac,
+        )
+        assert_allclose(p.p_opt, p0[0])
+
+    def test_errors(self, data_gen):
+        d = data_gen()
+        p0 = d["p0"]
+        x = d["x"]
+        dt = d["dt"]
+        y = d["y"]
 
         with pytest.raises(
             ValueError, match="`bounds` must contain 2 elements."

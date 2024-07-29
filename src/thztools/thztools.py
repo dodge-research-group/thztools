@@ -2757,7 +2757,7 @@ def fit(
         sets all parameter bounds to ``(-np.inf, np.inf)``.
     jac : None or callable, optional
         Jacobian of the residuals with respect to the fit parameters, with
-        signature ``jac(p, w, *args, **kwargs)``. Default is ``None``, which
+        signature ``jac(w, *p, *args, **kwargs)``. Default is ``None``, which
         uses :func:`scipy.optimize.approx_fprime`.
 
     Returns
@@ -2873,9 +2873,10 @@ def fit(
     def _tfun_local(
         _omega: NDArray[np.float64], *p: np.float64
     ) -> NDArray[np.complex128]:
+        out = tfun(_omega, *p, *args, **kwargs)
         if not numpy_sign_convention:
-            return np.conj(tfun(_omega, *p, *args, **kwargs))
-        return tfun(_omega, *p, *args, **kwargs)
+            return np.conj(out)
+        return out
 
     p0 = np.atleast_1d(p0).astype(np.float64)
     xdata = np.asarray(xdata, dtype=np.float64)
@@ -2980,18 +2981,23 @@ def fit(
         return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
 
     def function_flat(_x: NDArray[np.float64]) -> NDArray[np.float64]:
-        _tf = _tfun_local(w[f_incl_idx], *_x)  # Sensitive to sign convention
+        _tf = _tfun_local(w[f_incl_idx], *_x)
         return np.concatenate((np.real(_tf), np.imag(_tf)))
 
-    def jacobian_fun(_p: NDArray[np.float64]):
+    def jacobian_fun(_p: NDArray[np.float64]) -> NDArray[np.complex128]:
         if jac is None:
             # If Jacobian is not supplied, compute it numerically
             _tf_prime = approx_fprime(_p, function_flat)
             _tf_prime_complex = _tf_prime[0:n_in] + 1j * _tf_prime[n_in:]
-            return np.atleast_2d(_tf_prime_complex).T
-
-        # Otherwise, return supplied Jacobian
-        return np.atleast_2d(jac(w[f_incl_idx], _p)).T
+            out = np.atleast_2d(_tf_prime_complex).T
+        else:
+            # Otherwise, return supplied Jacobian
+            out = np.atleast_2d(jac(w[f_incl_idx], *_p, *args, **kwargs))[
+                :, :n_p
+            ].T
+        if not numpy_sign_convention:
+            return np.conj(out)
+        return out
 
     def jacobian_bl(
         _p: NDArray[np.float64], _fft_mu: NDArray[np.complex128]

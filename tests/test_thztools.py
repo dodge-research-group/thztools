@@ -1229,7 +1229,7 @@ class TestFit:
         )
         assert_allclose(p.p_opt, p0[0])
 
-    @pytest.mark.parametrize("numpy_sign_convention", [False])
+    @pytest.mark.parametrize("numpy_sign_convention", [True, False])
     @pytest.mark.parametrize("jac", [None, jac_tfun])
     def test_kwargs(self, data_gen, numpy_sign_convention, jac):
         sigma = self.sigma

@@ -31,4 +31,5 @@
          FitResult.epsilon
          FitResult.r_tls
          FitResult.success
+         FitResult.diagnostic
 

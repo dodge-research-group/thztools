@@ -2626,6 +2626,9 @@ class FitResult:
         Normalized total least-squares residuals.
     success : bool
         True if one of the convergence criteria is satisfied.
+    diagnostic : scipy.optimize.OptimizeResult
+        Instance of :class:`scipy.optimize.OptimizeResult` returned by
+        :func:`scipy.optimize.least_squares`.
 
     See Also
     --------
@@ -2643,6 +2646,7 @@ class FitResult:
     epsilon: NDArray[np.float64]
     r_tls: NDArray[np.float64]
     success: bool
+    diagnostic: OptimizeResult
 
 
 def _costfuntls(
@@ -3229,4 +3233,5 @@ def fit(
         epsilon=epsilon,
         r_tls=r_tls,
         success=bool(result.success),
+        diagnostic=result,
     )

@@ -1874,6 +1874,7 @@ def noisefit(
     scale_delta_mu: ArrayLike | None = None,
     scale_delta_a: ArrayLike | None = None,
     scale_eta: ArrayLike | None = None,
+    min_options: dict | None = None,
 ) -> NoiseResult:
     r"""
     Estimate noise model from a set of nominally identical waveforms.
@@ -1943,13 +1944,20 @@ def noisefit(
         use ``NoiseModel(sigma_alpha0, sigma_beta0,
         sigma_tau0).noise_amp(mu0)``.
     scale_delta_a : array_like with shape(n,), optional
-            Scale for varying signal amplitude drift vector. Default is
-            ``np.max((sigma_min, sigma_beta0))`` for all entries, where
-            ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``.
+        Scale for varying signal amplitude drift vector. Default is
+        ``np.max((sigma_min, sigma_beta0))`` for all entries, where
+        ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``.
     scale_eta : array_like with shape(n,), optional
-            Scale for varying signal delay drift vector. Default is
-            ``np.max((sigma_min, sigma_tau0))``, for all entries, where
-            ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``.
+        Scale for varying signal delay drift vector. Default is
+        ``np.max((sigma_min, sigma_tau0))``, for all entries, where
+        ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``.
+    min_options : dict or None, optional
+        Keyword options passed to the ``options`` parameter of
+        :func:`scipy.optimize.minimize`. See the documentation on the
+        `BFGS <https://docs.scipy.org/doc/scipy/reference/
+        optimize.minimize-bfgs.html#optimize-minimize-bfgs>`_
+        method for details. By default, ``gtol=1e-5 * x.size``. The options
+        ``eps`` and ``finite_diff_rel_step`` are not used.
 
     Raises
     ------
@@ -2083,7 +2091,14 @@ def noisefit(
     objective, jac, x0, input_parsed = parsed
 
     # Minimize cost function with respect to free parameters
-    out = minimize(objective, x0, method="BFGS", jac=jac, tol=1e-5 * x.size)
+    out = minimize(
+        objective,
+        x0,
+        method="BFGS",
+        jac=jac,
+        tol=1e-5 * x.size,
+        options=min_options,
+    )
 
     return _parse_noisefit_output(out, x, dt=dt, **input_parsed)
 
@@ -2584,28 +2599,30 @@ class FitResult:
 
     Parameters
     ----------
-    p_opt : array_like
+    p_opt : ndarray
         Optimal fit parameters.
-    p_err : array_like
+    p_err : ndarray
         Uncertainty estimate for p_opt, ``p_err = np.sqrt(np.diag(p_cov))``.
-    p_cov : array_like
+    p_cov : ndarray
         Covariance matrix estimate for p_opt, determined from the curvature of
         the cost function at ``(p_opt, mu_opt)``.
-    mu_opt : array_like
+    mu_opt : ndarray
         Optimal underlying waveform.
-    mu_err : array_like
+    mu_err : ndarray
         Estimated uncertainty in mu_opt, determined from the curvature of
         the cost function at ``(p_opt, mu_opt)``.
+    tfun_opt : complex ndarray
+        Estimated values of the transfer function at non-negative frequencies.
     resnorm : float
         The value of chi-squared.
-    delta : array_like
+    delta : ndarray
         Residuals of the input waveform ``x``, defined as ``x - mu_opt``.
-    epsilon : array_like
+    epsilon : ndarray
         Residuals of the output waveform ``y``, defined as ``y - psi_opt``,
         where ``psi_opt = thztools.transfer(tfun, mu, dt=dt, args=p_opt)``,
         ``tfun`` is the parameterized transfer function, and ``p_opt`` is
         the array of optimized parameters.
-    r_tls : array_like
+    r_tls : ndarray
         Normalized total least-squares residuals.
     success : bool
         True if one of the convergence criteria is satisfied.
@@ -2620,6 +2637,7 @@ class FitResult:
     p_cov: NDArray[np.float64]
     mu_opt: NDArray[np.float64]
     mu_err: NDArray[np.float64]
+    tfun_opt: NDArray[np.complex128]
     resnorm: float
     delta: NDArray[np.float64]
     epsilon: NDArray[np.float64]
@@ -2758,11 +2776,26 @@ def fit(
         Additional keyword arguments for ``tfun``. Default is ``None``, which
         passes no keyword arguments. All values must be real.
     f_bounds : array_like, optional
-        Frequency bounds. Default is ``None``, which sets ``f_bounds`` to
-        ``(0.0, np.inf)``.
-    p_bounds : None, 2-tuple of array_like, or Bounds, optional
+        Lower and upper bounds on the frequencies included in the fit. For
+        ``f_bounds = (f_lo, f_hi)``, the included frequencies ``f`` satisfy
+
+            ``f_lo <= f <= f_hi``.
+
+        The default is ``None``, which sets ``f_bounds`` to include all
+        frequencies except zero:
+
+            ``f_bounds = (np.finfo(np.float64).smallest_normal, np.inf)``.
+
+        Set the lower bound to ``0.0`` or any negative number to include zero
+        frequency.
+    p_bounds : None, 2-tuple of array_like, or :class:`scipy.optimize.Bounds`, optional
         Lower and upper bounds on fit parameter(s). Default is ``None``, which
-        sets all parameter bounds to ``(-np.inf, np.inf)``.
+        sets all parameter bounds to ``(-np.inf, np.inf)``. Each bound
+        constraint ``(p_lo, p_hi)`` represents a closed interval for the
+        parameter ``p``,
+
+            ``p_lo <= p <= p_hi``.
+
     jac : callable or None, optional
         Jacobian of the residuals with respect to the fit parameters, with
         signature ``jac(w, *p, *args, **kwargs)``. Default is ``None``, which
@@ -2799,9 +2832,9 @@ def fit(
         attributes are: ``p_opt``, the optimal fit parameter values; ``p_cov``,
         the parameter covariance matrix estimated from fit; ``resnorm``,
         the value of the total least-squares cost function for the fit;
-        ``r_tls``, and ``success``, which is `True` when the fit converges. See
-        the *Notes* section below and the :class:`FitResult` documentation for
-        more details and for a description of other attributes.
+        ``r_tls``, and ``success``, which is ``True`` when the fit converges.
+        See the *Notes* section below and the :class:`FitResult` documentation
+        for more details and for a description of other attributes.
 
     Raises
     ------
@@ -2849,11 +2882,17 @@ def fit(
 
     The optimization step uses :func:`scipy.optimize.least_squares` with ``p``
     and ``mu`` as free parameters. It minimizes the Euclidean norm of the
-    residual vector ``np.concat((delta / sigma_x, epsilon / sigma_y)``, where
-    ``delta = xdata - mu``, ``epsilon = ydata - psi``,
-    ``sigma_x = NoiseModel(*noise_parms, dt=dt).noise_amp(xdata)``,
-    ``sigma_y = NoiseModel(*noise_parms, dt=dt).noise_amp(ydata)``, and
-    ``psi = thz.transfer(fun(omega, *p, *args, **kwargs), mu, dt=dt)``.
+    residual vector
+
+        ``np.concat((delta / sigma_x, epsilon / sigma_y)``,
+
+    where
+
+        * ``delta = xdata - mu``,
+        * ``epsilon = ydata - psi``,
+        * ``sigma_x = NoiseModel(*noise_parms, dt=dt).noise_amp(xdata)``,
+        * ``sigma_y = NoiseModel(*noise_parms, dt=dt).noise_amp(ydata)``, and
+        * ``psi = thz.transfer(fun(omega, *p, *args, **kwargs), mu, dt=dt)``.
 
     References
     ----------
@@ -2929,12 +2968,14 @@ def fit(
     n_p = len(p0)
 
     if f_bounds is None:
-        f_bounds = np.array((0.0, np.inf), dtype=np.float64)
+        f_bounds = np.array(
+            (np.finfo(np.float64).smallest_normal, np.inf), dtype=np.float64
+        )
     else:
         f_bounds = np.asarray(f_bounds, dtype=np.float64)
 
     f = rfftfreq(n, dt)
-    f_excl_lo_idx = f <= f_bounds[0]
+    f_excl_lo_idx = f < f_bounds[0]
     f_excl_hi_idx = f > f_bounds[1]
     f_incl_idx = ~f_excl_lo_idx * ~f_excl_hi_idx
 
@@ -3172,11 +3213,7 @@ def fit(
     u_x = h_circ @ v_x @ h_circ.T
     r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (epsilon - h_delta)
 
-    # TODO: add transfer function estimates at excluded frequencies to
-    #  FitResult
-    # fun_val = function(w, p_opt_all)
-    # fun_ex_low = fun_val[:n_below]
-    # fun_ex_high = fun_val[-n_above:]
+    tfun_opt = function(w, *p_opt_all)
 
     # Cast resnorm as a Python float and success as a Python bool, in case
     # either is a NumPy constant
@@ -3186,6 +3223,7 @@ def fit(
         p_cov=p_cov,
         mu_opt=mu_opt,
         mu_err=mu_err,
+        tfun_opt=tfun_opt,
         resnorm=float(resnorm),
         delta=delta,
         epsilon=epsilon,

@@ -1152,16 +1152,17 @@ class TestFit:
             (-np.inf, np.inf),
             (-np.inf, -2),
             (-np.inf, -3),
-            (0, np.inf),
-            (0, -2),
-            (0, -3),
             (1, np.inf),
             (1, -2),
             (1, -3),
+            (2, np.inf),
+            (2, -2),
+            (2, -3),
         ],
     )
     @pytest.mark.parametrize("p_bounds", [None, ((0, -1), (2, 1))])
     @pytest.mark.parametrize("jac", [None, jac_tfun])
+    @pytest.mark.parametrize("lsq_options", [None, {}, {"verbose": 0}])
     def test_inputs(
         self,
         n,
@@ -1170,6 +1171,7 @@ class TestFit:
         f_bounds,
         p_bounds,
         jac,
+        lsq_options,
         data_gen,
     ):
         d = data_gen(n, np_sign=numpy_sign_convention)
@@ -1204,6 +1206,7 @@ class TestFit:
             f_bounds=f_bounds,
             p_bounds=p_bounds,
             jac=jac,
+            lsq_options=lsq_options,
         )
         assert_allclose(p.p_opt, p0)
 
@@ -1268,7 +1271,5 @@ class TestFit:
         ):
             _ = fit(tfun, x, y, p0, (0, 0), dt=dt)
 
-        with pytest.raises(
-            KeyError, match=f"Invalid key"
-        ):
+        with pytest.raises(KeyError, match="Invalid key"):
             _ = fit(tfun, x, y, p0, dt=dt, lsq_options={"bad_key": 0})

@@ -1267,3 +1267,8 @@ class TestFit:
             ValueError, match="sigma_parms must be a tuple of length"
         ):
             _ = fit(tfun, x, y, p0, (0, 0), dt=dt)
+
+        with pytest.raises(
+            KeyError, match=f"Invalid key"
+        ):
+            _ = fit(tfun, x, y, p0, dt=dt, lsq_options={"bad_key": 0})

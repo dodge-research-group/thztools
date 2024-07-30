@@ -2712,6 +2712,7 @@ def fit(
     f_bounds: ArrayLike | None = None,
     p_bounds: ArrayLike | None = None,
     jac: Callable | None = None,
+    lsq_options: dict | None = None,
 ) -> FitResult:
     r"""
     Fit a transfer function to time-domain data.
@@ -2762,10 +2763,34 @@ def fit(
     p_bounds : None, 2-tuple of array_like, or Bounds, optional
         Lower and upper bounds on fit parameter(s). Default is ``None``, which
         sets all parameter bounds to ``(-np.inf, np.inf)``.
-    jac : None or callable, optional
+    jac : callable or None, optional
         Jacobian of the residuals with respect to the fit parameters, with
         signature ``jac(w, *p, *args, **kwargs)``. Default is ``None``, which
         uses :func:`scipy.optimize.approx_fprime`.
+    lsq_options : dict or None, optional
+        Keyword options passed to :func:`scipy.optimize.least_squares`. The
+        following keywords are allowed:
+
+            * "ftol" : Tolerance for termination by the change of the cost
+              function. Default is 1e-8.
+            * "xtol" : Tolerance for termination by the change of the
+              independent variables. Default is 1e-8.
+            * "gtol" : Tolerance for termination by the norm of the gradient.
+              Default is 1e-8.
+            * "loss" : Determines the loss function. Default is "linear", which
+              gives a standard least-squares problem. Alternative settings have
+              not been tested and should be considered experimental.
+            * "f_scale" : Value of soft margin between inlier and outlier
+              residuals. This parameter has no effect with ``loss="linear"``.
+              Default is 1.0.
+            * "max_nfev" : Maximum number of function evaluations before the
+              termination. If None (default), the value is chosen
+              automatically.
+            * "verbose" : Level of algorithm's verbosity. Default is 0, which
+              works silently.
+
+        See the documentation for :func:`scipy.optimize.least_squares` for
+        details.
 
     Returns
     -------
@@ -2866,7 +2891,7 @@ def fit(
     198.266...
 
     >>> _, ax = plt.subplots()
-    >>> ax.plot(t, result.r_tls, '.')
+    >>> ax.plot(t, result.r_tls, ".")
     >>> ax.set_xlabel("t (ps)")
     >>> ax.set_ylabel(r"$r_\mathrm{TLS}$")
     >>> plt.show()
@@ -2957,6 +2982,23 @@ def fit(
         else:
             msg = "`bounds` must contain 2 elements."
             raise ValueError(msg)
+
+    if lsq_options is None:
+        lsq_options = {}
+    else:
+        valid_keys = {
+            "ftol",
+            "xtol",
+            "gtol",
+            "loss",
+            "f_scale",
+            "max_nfev",
+            "verbose",
+        }
+        bad_keys = set(lsq_options.keys()) - valid_keys
+        if len(bad_keys) > 0:
+            msg = f"Invalid key(s) {list(bad_keys)} in `lsq_options`"
+            raise KeyError(msg)
 
     def fun_ex(
         _a: NDArray[np.float64], _b: NDArray[np.float64]
@@ -3101,6 +3143,7 @@ def fit(
         bounds=p_bounds,
         method=fit_method,
         x_scale=np.concatenate((np.ones(n_p + n_a + n_b), sigma_x)),
+        **lsq_options,
     )
 
     # Parse output

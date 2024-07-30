@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Callable
 import numpy as np
 import scipy.linalg as la
 import scipy.optimize as opt
+from numpy import pi
 from numpy.fft import irfft, rfft, rfftfreq
 from numpy.random import default_rng
 from scipy import signal
@@ -347,7 +348,7 @@ class NoiseModel:
             x = np.moveaxis(x, axis, -1)
 
         n = x.shape[-1]
-        w_scaled = 2 * np.pi * rfftfreq(n)
+        w_scaled = 2 * pi * rfftfreq(n)
         xdot = irfft(1j * w_scaled * rfft(x), n=n) / dt
 
         noise_variance = (
@@ -576,7 +577,7 @@ def transfer(
     *,
     dt: float | None = None,
     numpy_sign_convention: bool = True,
-    args: tuple = (),
+    args: ArrayLike = (),
 ) -> NDArray[np.float64]:
     r"""
     Apply a transfer function to a waveform.
@@ -608,8 +609,9 @@ def transfer(
         :math:`x(t) = a e^{i\omega t}`. Default is ``True``. When set to
         ``False``, uses the convention more common in physics,
         :math:`x(t) = a e^{-i\omega t}`.
-    args : tuple, optional
-        Extra arguments passed to the transfer function.
+    args : array_like, optional
+        Extra arguments passed to the transfer function. All elements must be
+        real quantities.
 
     Returns
     -------
@@ -699,17 +701,18 @@ def transfer(
         msg = "x must be a one-dimensional array"
         raise ValueError(msg)
 
-    if not isinstance(args, tuple):
-        args = (args,)
+    args = np.atleast_1d(args)
 
     dt = _assign_sampling_time(dt)
     n = x.size
-    w_scaled = 2 * np.pi * rfftfreq(n)
+    w_scaled = 2 * pi * rfftfreq(n)
     h = tfun(w_scaled / dt, *args)
-    if not numpy_sign_convention:
-        h = np.conj(h)
+    if numpy_sign_convention:
+        y = np.fft.irfft(np.fft.rfft(x) * h, n=n)
+    else:
+        y = np.fft.irfft(np.fft.rfft(x) * np.conj(h), n=n)
 
-    return np.fft.irfft(np.fft.rfft(x) * h, n=n)
+    return y
 
 
 # noinspection PyShadowingNames
@@ -875,8 +878,8 @@ def wave(
 
     f_scaled = rfftfreq(n)
 
-    w = 2 * np.pi * f_scaled / dt
-    ell = np.exp(-((w * taul) ** 2) / 2) / np.sqrt(2 * np.pi * taul**2)
+    w = 2 * pi * f_scaled / dt
+    ell = np.exp(-((w * taul) ** 2) / 2) / np.sqrt(2 * pi * taul**2)
     r = 1 / (1 / taur - 1j * w) - 1 / (1 / taur + 1 / tauc - 1j * w)
     s = -1j * w * (ell * r) ** 2 * np.exp(1j * w * t0)
 
@@ -989,7 +992,7 @@ def scaleshift(
             raise ValueError(msg)
 
     f_scaled = rfftfreq(n)
-    w = 2 * np.pi * f_scaled / dt
+    w = 2 * pi * f_scaled / dt
     phase = np.expand_dims(eta, axis=eta.ndim) * w
 
     x_adjusted = np.fft.irfft(
@@ -1041,7 +1044,7 @@ def _nll_common(
 
     # Compute frequency vector and Fourier coefficients of mu
     f = rfftfreq(n)
-    w = 2 * np.pi * f
+    w = 2 * pi * f
     mu_f = rfft(mu)
 
     exp_iweta = np.exp(1j * np.outer(eta_on_dt, w))
@@ -1218,7 +1221,7 @@ def _jac_noisefit(
     vtau = np.exp(logv_tau_scaled * scale_logv_tau)
 
     f = rfftfreq(n)
-    w = 2 * np.pi * f
+    w = 2 * pi * f
 
     common = _nll_common(
         x=x,
@@ -1384,7 +1387,7 @@ def _hess_noisefit(
     vtau = np.exp(logv_tau_scaled * scale_logv_tau)
 
     f = rfftfreq(n)
-    w = 2 * np.pi * f
+    w = 2 * pi * f
 
     common = _nll_common(
         x=x,
@@ -1871,6 +1874,7 @@ def noisefit(
     scale_delta_mu: ArrayLike | None = None,
     scale_delta_a: ArrayLike | None = None,
     scale_eta: ArrayLike | None = None,
+    min_options: dict | None = None,
 ) -> NoiseResult:
     r"""
     Estimate noise model from a set of nominally identical waveforms.
@@ -1940,13 +1944,20 @@ def noisefit(
         use ``NoiseModel(sigma_alpha0, sigma_beta0,
         sigma_tau0).noise_amp(mu0)``.
     scale_delta_a : array_like with shape(n,), optional
-            Scale for varying signal amplitude drift vector. Default is
-            ``np.max((sigma_min, sigma_beta0))`` for all entries, where
-            ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``.
+        Scale for varying signal amplitude drift vector. Default is
+        ``np.max((sigma_min, sigma_beta0))`` for all entries, where
+        ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``.
     scale_eta : array_like with shape(n,), optional
-            Scale for varying signal delay drift vector. Default is
-            ``np.max((sigma_min, sigma_tau0))``, for all entries, where
-            ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``.
+        Scale for varying signal delay drift vector. Default is
+        ``np.max((sigma_min, sigma_tau0))``, for all entries, where
+        ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``.
+    min_options : dict or None, optional
+        Keyword options passed to the ``options`` parameter of
+        :func:`scipy.optimize.minimize`. See the documentation on the
+        `BFGS <https://docs.scipy.org/doc/scipy/reference/
+        optimize.minimize-bfgs.html#optimize-minimize-bfgs>`_
+        method for details. By default, ``gtol=1e-5 * x.size``. The options
+        ``eps`` and ``finite_diff_rel_step`` are not used.
 
     Raises
     ------
@@ -2080,7 +2091,14 @@ def noisefit(
     objective, jac, x0, input_parsed = parsed
 
     # Minimize cost function with respect to free parameters
-    out = minimize(objective, x0, method="BFGS", jac=jac, tol=1e-5 * x.size)
+    out = minimize(
+        objective,
+        x0,
+        method="BFGS",
+        jac=jac,
+        tol=1e-5 * x.size,
+        options=min_options,
+    )
 
     return _parse_noisefit_output(out, x, dt=dt, **input_parsed)
 
@@ -2144,7 +2162,7 @@ def _parse_noisefit_input(
     # to the time-dependent variance
     if None in [sigma_alpha0, sigma_beta0, sigma_tau0]:
         mu0_f = np.fft.rfft(mu0)
-        w = 2 * np.pi * np.fft.rfftfreq(n, dt)
+        w = 2 * pi * np.fft.rfftfreq(n, dt)
         dmu0_dt = np.fft.irfft(1j * w * mu0_f, n=n)
         a_matrix = np.stack([np.ones(n), mu0**2, dmu0_dt**2], axis=1)
         sol = np.linalg.lstsq(a_matrix, v_t, rcond=None)
@@ -2581,25 +2599,31 @@ class FitResult:
 
     Parameters
     ----------
-    p_opt : array_like
+    p_opt : ndarray
         Optimal fit parameters.
-    p_var : array_like
-        Variance of p_opt.
-    mu_opt : array_like
+    p_err : ndarray
+        Uncertainty estimate for p_opt, ``p_err = np.sqrt(np.diag(p_cov))``.
+    p_cov : ndarray
+        Covariance matrix estimate for p_opt, determined from the curvature of
+        the cost function at ``(p_opt, mu_opt)``.
+    mu_opt : ndarray
         Optimal underlying waveform.
-    mu_var : array_like
-        Variance of mu_opt.
+    mu_err : ndarray
+        Estimated uncertainty in mu_opt, determined from the curvature of
+        the cost function at ``(p_opt, mu_opt)``.
+    tfun_opt : complex ndarray
+        Estimated values of the transfer function at non-negative frequencies.
     resnorm : float
         The value of chi-squared.
-    delta : array_like
+    delta : ndarray
         Residuals of the input waveform ``x``, defined as ``x - mu_opt``.
-    epsilon : array_like
+    epsilon : ndarray
         Residuals of the output waveform ``y``, defined as ``y - psi_opt``,
-        where ``psi_opt = thztools.transfer(tfun_opt, mu, dt=dt)`` and
-        ``tfun_opt`` is the parameterized transfer function evaluated at
-        ``p_opt``.
-    r_tls : array_like
-        Total least-squares residuals.
+        where ``psi_opt = thztools.transfer(tfun, mu, dt=dt, args=p_opt)``,
+        ``tfun`` is the parameterized transfer function, and ``p_opt`` is
+        the array of optimized parameters.
+    r_tls : ndarray
+        Normalized total least-squares residuals.
     success : bool
         True if one of the convergence criteria is satisfied.
 
@@ -2609,9 +2633,11 @@ class FitResult:
     """
 
     p_opt: NDArray[np.float64]
-    p_var: NDArray[np.float64]
+    p_err: NDArray[np.float64]
+    p_cov: NDArray[np.float64]
     mu_opt: NDArray[np.float64]
-    mu_var: NDArray[np.float64]
+    mu_err: NDArray[np.float64]
+    tfun_opt: NDArray[np.complex128]
     resnorm: float
     delta: NDArray[np.float64]
     epsilon: NDArray[np.float64]
@@ -2620,26 +2646,23 @@ class FitResult:
 
 
 def _costfuntls(
-    fun: Callable,
+    tfun: Callable,
     theta: ArrayLike,
-    fft_mu: ArrayLike,
-    fft_x: ArrayLike,
-    fft_y: ArrayLike,
+    mu: ArrayLike,
+    x: ArrayLike,
+    y: ArrayLike,
     sigma_x: ArrayLike,
     sigma_y: ArrayLike,
-    w_below_idx: ArrayLike,
-    w_in_idx: ArrayLike,
-    w_above_idx: ArrayLike,
     dt: float | None = 1.0,
 ) -> NDArray[np.float64]:
     r"""Computes the residual vector for the total least squares cost function.
 
     Parameters
     ----------
-    fun : callable
+    tfun : callable
         Transfer function.
 
-            ``fun(p, w, *args, **kwargs) -> ndarray``
+            ``tfun(w, *p, *args, **kwargs) -> ndarray``
 
         Assumes the :math:`+i\omega t` convention for harmonic time dependence.
     theta : array_like
@@ -2677,27 +2700,15 @@ def _costfuntls(
         :class:`UserWarning`.
     """
     theta = np.asarray(theta, dtype=np.float64)
-    fft_mu = np.asarray(fft_mu, dtype=np.complex128)
-    fft_x = np.asarray(fft_x, dtype=np.complex128)
-    fft_y = np.asarray(fft_y, dtype=np.complex128)
+    mu = np.asarray(mu, dtype=np.float64)
+    x = np.asarray(x, dtype=np.float64)
+    y = np.asarray(y, dtype=np.float64)
     sigma_x = np.asarray(sigma_x, dtype=np.float64)
     sigma_y = np.asarray(sigma_y, dtype=np.float64)
-    w_below_idx = np.asarray(w_below_idx, dtype=np.bool_)
-    w_in_idx = np.asarray(w_in_idx, dtype=np.bool_)
-    w_above_idx = np.asarray(w_above_idx, dtype=np.bool_)
 
     dt = _assign_sampling_time(dt)
-    n = sigma_x.shape[-1]
 
-    x = irfft(fft_x, n=n)
-    y = irfft(fft_y, n=n)
-    mu = irfft(
-        np.concatenate(
-            (fft_x[w_below_idx], fft_mu[w_in_idx], fft_x[w_above_idx])
-        ),
-        n=n,
-    )
-    psi = transfer(lambda omega: fun(theta, omega), mu, dt=dt)
+    psi = transfer(tfun, mu, dt=dt, args=theta)
 
     delta_norm = (x - mu) / sigma_x
     eps_norm = (y - psi) / sigma_y
@@ -2706,7 +2717,7 @@ def _costfuntls(
 
 
 def fit(
-    fun: Callable,
+    tfun: Callable,
     xdata: ArrayLike,
     ydata: ArrayLike,
     p0: ArrayLike,
@@ -2714,24 +2725,28 @@ def fit(
     *,
     dt: float | None = None,
     numpy_sign_convention: bool = True,
+    args: tuple = (),
+    kwargs: dict | None = None,
     f_bounds: ArrayLike | None = None,
     p_bounds: ArrayLike | None = None,
     jac: Callable | None = None,
+    lsq_options: dict | None = None,
 ) -> FitResult:
     r"""
     Fit a transfer function to time-domain data.
 
     Determines the total least-squares fit to ``xdata`` and ``ydata``, given
-    the parameterized transfer function relationship ``fun`` and noise model
+    the parameterized transfer function relationship ``tfun`` and noise model
     parameters ``noise_parms``.
 
     Parameters
     ----------
-    fun : callable
-        Transfer function with signature ``fun(omega, *p, *args, **kwargs)``
+    tfun : callable
+        Transfer function with signature ``tfun(omega, *p, *args, **kwargs)``
         that returns an ``ndarray``. Assumes the :math:`+i\omega t` convention
         for harmonic time dependence when ``numpy_sign_convention`` is
-        ``True``, the default.
+        ``True``, the default. All elements of ``p`` and ``args`` and all
+        values of ``kwargs`` must be real quantities.
     xdata : array_like
         Measured input signal.
     ydata : array_like
@@ -2755,16 +2770,60 @@ def fit(
         :math:`x(t) = a e^{i\omega t}`. Default is ``True``. When set to
         ``False``, uses the convention more common in physics,
         :math:`x(t) = a e^{-i\omega t}`.
+    args : tuple
+        Additional arguments for ``tfun``. All elements must be real.
+    kwargs : dict or None, optional
+        Additional keyword arguments for ``tfun``. Default is ``None``, which
+        passes no keyword arguments. All values must be real.
     f_bounds : array_like, optional
-        Frequency bounds. Default is ``None``, which sets ``f_bounds`` to
-        ``(0.0, np.inf)``.
-    p_bounds : None, 2-tuple of array_like, or Bounds, optional
+        Lower and upper bounds on the frequencies included in the fit. For
+        ``f_bounds = (f_lo, f_hi)``, the included frequencies ``f`` satisfy
+
+            ``f_lo <= f <= f_hi``.
+
+        The default is ``None``, which sets ``f_bounds`` to include all
+        frequencies except zero:
+
+            ``f_bounds = (np.finfo(np.float64).smallest_normal, np.inf)``.
+
+        Set the lower bound to ``0.0`` or any negative number to include zero
+        frequency.
+    p_bounds : None, 2-tuple of array_like, or :class:`scipy.optimize.Bounds`, optional
         Lower and upper bounds on fit parameter(s). Default is ``None``, which
-        sets all parameter bounds to ``(-np.inf, np.inf)``.
-    jac : None or callable, optional
+        sets all parameter bounds to ``(-np.inf, np.inf)``. Each bound
+        constraint ``(p_lo, p_hi)`` represents a closed interval for the
+        parameter ``p``,
+
+            ``p_lo <= p <= p_hi``.
+
+    jac : callable or None, optional
         Jacobian of the residuals with respect to the fit parameters, with
-        signature ``jac(p, w, *args, **kwargs)``. Default is ``None``, which
+        signature ``jac(w, *p, *args, **kwargs)``. Default is ``None``, which
         uses :func:`scipy.optimize.approx_fprime`.
+    lsq_options : dict or None, optional
+        Keyword options passed to :func:`scipy.optimize.least_squares`. The
+        following keywords are allowed:
+
+            * "ftol" : Tolerance for termination by the change of the cost
+              function. Default is 1e-8.
+            * "xtol" : Tolerance for termination by the change of the
+              independent variables. Default is 1e-8.
+            * "gtol" : Tolerance for termination by the norm of the gradient.
+              Default is 1e-8.
+            * "loss" : Determines the loss function. Default is "linear", which
+              gives a standard least-squares problem. Alternative settings have
+              not been tested and should be considered experimental.
+            * "f_scale" : Value of soft margin between inlier and outlier
+              residuals. This parameter has no effect with ``loss="linear"``.
+              Default is 1.0.
+            * "max_nfev" : Maximum number of function evaluations before the
+              termination. If None (default), the value is chosen
+              automatically.
+            * "verbose" : Level of algorithm's verbosity. Default is 0, which
+              works silently.
+
+        See the documentation for :func:`scipy.optimize.least_squares` for
+        details.
 
     Returns
     -------
@@ -2773,9 +2832,9 @@ def fit(
         attributes are: ``p_opt``, the optimal fit parameter values; ``p_cov``,
         the parameter covariance matrix estimated from fit; ``resnorm``,
         the value of the total least-squares cost function for the fit;
-        ``r_tls``, and ``success``, which is `True` when the fit converges. See
-        the *Notes* section below and the :class:`FitResult` documentation for
-        more details and for a description of other attributes.
+        ``r_tls``, and ``success``, which is ``True`` when the fit converges.
+        See the *Notes* section below and the :class:`FitResult` documentation
+        for more details and for a description of other attributes.
 
     Raises
     ------
@@ -2823,11 +2882,17 @@ def fit(
 
     The optimization step uses :func:`scipy.optimize.least_squares` with ``p``
     and ``mu`` as free parameters. It minimizes the Euclidean norm of the
-    residual vector ``np.concat((delta / sigma_x, epsilon / sigma_y)``, where
-    ``delta = xdata - mu``, ``epsilon = ydata - psi``,
-    ``sigma_x = NoiseModel(*noise_parms, dt=dt).noise_amp(xdata)``,
-    ``sigma_y = NoiseModel(*noise_parms, dt=dt).noise_amp(ydata)``, and
-    ``psi = thz.transfer(fun(omega, *p, *args, **kwargs), mu, dt=dt)``.
+    residual vector
+
+        ``np.concat((delta / sigma_x, epsilon / sigma_y)``,
+
+    where
+
+        * ``delta = xdata - mu``,
+        * ``epsilon = ydata - psi``,
+        * ``sigma_x = NoiseModel(*noise_parms, dt=dt).noise_amp(xdata)``,
+        * ``sigma_y = NoiseModel(*noise_parms, dt=dt).noise_amp(ydata)``, and
+        * ``psi = thz.transfer(fun(omega, *p, *args, **kwargs), mu, dt=dt)``.
 
     References
     ----------
@@ -2849,11 +2914,11 @@ def fit(
     >>> noise_model = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
     ...  sigma_tau=tau, dt=dt)
 
-    >>> def tfun(p, w):
-    ...    return p[0] * np.exp(1j * p[1] * w)
+    >>> def tfun(w, amplitude, delay):
+    ...    return amplitude * np.exp(1j * w * delay)
     >>>
     >>> p0 = (0.5, 1.0)
-    >>> psi = thz.transfer(lambda omega: tfun(p0, omega), mu, dt=dt)
+    >>> psi = thz.transfer(tfun, mu, dt=dt, args=p0)
     >>> xdata = mu + noise_model.noise_sim(mu, seed=0)
     >>> ydata = psi + noise_model.noise_sim(psi, seed=1)
     >>> result = thz.fit(tfun, xdata, ydata, p0, (alpha, beta, tau), dt=dt)
@@ -2862,24 +2927,31 @@ def fit(
     >>> result.p_opt
     array([0.49..., 1.00...])
     >>> result.resnorm
-    332.560...
+    198.266...
 
     >>> _, ax = plt.subplots()
-    >>> ax.plot(t, result.r_tls, '.')
+    >>> ax.plot(t, result.r_tls, ".")
     >>> ax.set_xlabel("t (ps)")
     >>> ax.set_ylabel(r"$r_\mathrm{TLS}$")
     >>> plt.show()
     """
     fit_method = "trf"
 
-    p0 = np.asarray(p0, dtype=np.float64)
+    args = np.atleast_1d(args)
+    if kwargs is None:
+        kwargs = {}
+
+    def _tfun_local(
+        _omega: NDArray[np.float64], *p: np.float64
+    ) -> NDArray[np.complex128]:
+        out = tfun(_omega, *p, *args, **kwargs)
+        if not numpy_sign_convention:
+            return np.conj(out)
+        return out
+
+    p0 = np.atleast_1d(p0).astype(np.float64)
     xdata = np.asarray(xdata, dtype=np.float64)
     ydata = np.asarray(ydata, dtype=np.float64)
-    fft_x = rfft(xdata)
-    fft_y = rfft(ydata)
-    etfe = fft_y / fft_x
-    if not numpy_sign_convention:
-        etfe = np.conj(etfe)
 
     if noise_parms is None:
         noise_parms = np.asarray((1.0, 0.0, 0.0), dtype=np.float64)
@@ -2896,32 +2968,34 @@ def fit(
     n_p = len(p0)
 
     if f_bounds is None:
-        f_bounds = np.array((0.0, np.inf), dtype=np.float64)
-
-    if p_bounds is None:
-        p_bounds = (-np.inf, np.inf)
-        fit_method = "lm"
+        f_bounds = np.array(
+            (np.finfo(np.float64).smallest_normal, np.inf), dtype=np.float64
+        )
     else:
-        p_bounds = np.asarray(p_bounds, dtype=np.float64)
-        if p_bounds.shape[0] == 2:  # noqa: PLR2004
-            p_bounds = (
-                np.concatenate((p_bounds[0], np.full((n,), -np.inf))),
-                np.concatenate((p_bounds[1], np.full((n,), np.inf))),
-            )
-        else:
-            msg = "`bounds` must contain 2 elements."
-            raise ValueError(msg)
+        f_bounds = np.asarray(f_bounds, dtype=np.float64)
 
-    w = 2 * np.pi * rfftfreq(n, dt)
-    w_bounds = 2 * np.pi * np.asarray(f_bounds, dtype=np.float64)
-    w_below_idx = w <= w_bounds[0]
-    w_above_idx = w > w_bounds[1]
-    w_in_idx = np.invert(w_below_idx) * np.invert(w_above_idx)
-    w_in = w[w_in_idx]
+    f = rfftfreq(n, dt)
+    f_excl_lo_idx = f < f_bounds[0]
+    f_excl_hi_idx = f > f_bounds[1]
+    f_incl_idx = ~f_excl_lo_idx * ~f_excl_hi_idx
 
-    n_below = np.sum(w_below_idx)
-    n_in = np.sum(w_in_idx)
-    n_above = np.sum(w_above_idx)
+    w = 2 * pi * f
+
+    n_below = np.sum(f_excl_lo_idx)
+    n_in = np.sum(f_incl_idx)
+    n_above = np.sum(f_excl_hi_idx)
+    n_ex = n_below + n_above
+
+    n_a = 0
+    n_b = 0
+
+    if n_ex > 0:
+        n_a = n_ex
+        n_b = n_ex - 1
+        if n % 2 == 0 and n_below > 0 and n_above > 0:
+            n_b -= 1
+        elif n % 2 == 1 and n_below == 0:
+            n_b += 1
 
     alpha, beta, tau = noise_parms.tolist()
     # noinspection PyArgumentList
@@ -2930,79 +3004,187 @@ def fit(
     sigma_y = noise_model.noise_amp(ydata)
     v_x = np.diag(sigma_x**2)
     v_y = np.diag(sigma_y**2)
-    p0_est = np.concatenate((p0, np.zeros(n)))
+    p0_est = np.concatenate((p0, np.zeros(n_a), np.zeros(n_b), np.zeros(n)))
 
-    def function(_theta, _w):
-        h_lo = etfe[w_below_idx]
-        h_in = fun(_theta, w_in)
-        h_hi = etfe[w_above_idx]
-        if not numpy_sign_convention:
-            h_in = np.conj(h_in)
-        return np.concatenate((h_lo, h_in, h_hi))
-
-    def td_fun(_p, _x):
-        _h = np.concatenate(
-            (np.zeros(n_below), fun(_p, w_in), np.zeros(n_above))
-        )
-        if numpy_sign_convention:
-            _h = irfft(rfft(_x) * _h, n=n)
+    if p_bounds is None:
+        p_bounds = (-np.inf, np.inf)
+        fit_method = "lm"
+    else:
+        p_bounds = np.asarray(p_bounds, dtype=np.float64)
+        if p_bounds.shape[0] == 2:  # noqa: PLR2004
+            p_bounds = (
+                np.concatenate(
+                    (p_bounds[0], np.full((n_a + n_b + n,), -np.inf))
+                ),
+                np.concatenate(
+                    (p_bounds[1], np.full((n_a + n_b + n,), np.inf))
+                ),
+            )
         else:
-            _h = irfft(rfft(_x) * np.conj(_h), n=n)
-        return _h
+            msg = "`bounds` must contain 2 elements."
+            raise ValueError(msg)
 
-    def function_flat(_x):
-        _tf = fun(_x, w_in)
+    if lsq_options is None:
+        lsq_options = {}
+    else:
+        valid_keys = {
+            "ftol",
+            "xtol",
+            "gtol",
+            "loss",
+            "f_scale",
+            "max_nfev",
+            "verbose",
+        }
+        bad_keys = set(lsq_options.keys()) - valid_keys
+        if len(bad_keys) > 0:
+            msg = f"Invalid key(s) {list(bad_keys)} in `lsq_options`"
+            raise KeyError(msg)
+
+    def fun_ex(
+        _a: NDArray[np.float64], _b: NDArray[np.float64]
+    ) -> NDArray[np.complex128]:
+        # Transfer function is purely real at the first and last frequencies
+        if n_a - n_b == 2:  # noqa: PLR2004
+            return np.concatenate(([_a[0]], _a[1:-1] + _b * 1j, [_a[-1]]))
+
+        # Transfer function is purely real at either the first or last
+        # frequency
+        if n_a - n_b == 1:
+            # TF is real at last frequency
+            if n_below == 0:
+                return np.concatenate((_a[:-1] + _b * 1j, [_a[-1]]))
+
+            # Otherwise TF is real at first frequency
+            return np.concatenate(([_a[0]], _a[1:] + _b * 1j))
+
+        # Transfer function is complex at all excluded frequencies
+        return _a + _b * 1j
+
+    def function(
+        _w: NDArray[np.float64], *_theta: np.float64
+    ) -> NDArray[np.complex128]:
+        _a = np.asarray(_theta[n_p : n_p + n_a], dtype=np.float64)
+        _b = np.asarray(_theta[n_p + n_a :], dtype=np.float64)
+        h_ex = fun_ex(_a, _b)
+        h_in = _tfun_local(_w[f_incl_idx], *_theta[:n_p])
+        return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
+
+    def function_flat(_x: NDArray[np.float64]) -> NDArray[np.float64]:
+        _tf = _tfun_local(w[f_incl_idx], *_x)
         return np.concatenate((np.real(_tf), np.imag(_tf)))
 
-    def jacobian(_p, _x):
-        # Return Jacobian at included frequencies if provided, otherwise
-        # return Jacobian obtained with numerical differentiation
+    def jacobian_fun(_p: NDArray[np.float64]) -> NDArray[np.complex128]:
         if jac is None:
+            # If Jacobian is not supplied, compute it numerically
             _tf_prime = approx_fprime(_p, function_flat)
             _tf_prime_complex = _tf_prime[0:n_in] + 1j * _tf_prime[n_in:]
-            return rfft(_x)[w_in_idx] * np.atleast_2d(_tf_prime_complex).T
+            out = np.atleast_2d(_tf_prime_complex).T
+        else:
+            # Otherwise, return supplied Jacobian
+            out = np.atleast_2d(jac(w[f_incl_idx], *_p, *args, **kwargs))[
+                :, :n_p
+            ].T
+        if not numpy_sign_convention:
+            return np.conj(out)
+        return out
 
-        return np.atleast_2d(jac(_p, w_in)).T
-
-    def jac_fun(_x):
-        p_est = _x[:n_p]
-        mu_est = xdata[:] - _x[n_p:]
-        jac_tl = np.zeros((n, n_p))
-        jac_tr = np.diag(1 / sigma_x)
+    def jacobian_bl(
+        _p: NDArray[np.float64], _fft_mu: NDArray[np.complex128]
+    ) -> NDArray[np.float64]:
         fft_jac_bl = np.concatenate(
             (
                 np.zeros((n_p, n_below)),
-                jacobian(p_est, mu_est),
+                jacobian_fun(_p),
                 np.zeros((n_p, n_above)),
             ),
             axis=-1,
         )
-        jac_bl = -(irfft(fft_jac_bl, n=n) / sigma_y).T
-        jac_br = (
-            la.circulant(td_fun(p_est, signal.unit_impulse(n))).T / sigma_y
-        ).T
+        jac_bl = irfft(fft_jac_bl * _fft_mu, n=n)
+        if n_a > 0:
+            a_circ = la.circulant(signal.unit_impulse(n_a))
+            jac_a = np.concatenate(
+                (
+                    a_circ[:, :n_below],
+                    np.zeros((n_a, n_in)),
+                    a_circ[:, n_below:],
+                ),
+                axis=-1,
+            )
+            jac_bl_a = irfft(jac_a * _fft_mu, n=n)
+            jac_bl = np.concatenate((jac_bl, jac_bl_a), axis=0)
+        if n_b > 0:
+            b_circ = la.circulant(signal.unit_impulse(n_b) * 1j)
+            if n_a - n_b == 2:  # noqa: PLR2004
+                jac_b = np.concatenate(
+                    (
+                        np.zeros((n_b, 1)),
+                        b_circ[:, : n_below - 1],
+                        np.zeros((n_b, n_in)),
+                        b_circ[:, n_below - 1 :],
+                        np.zeros((n_b, 1)),
+                    ),
+                    axis=-1,
+                )
+            elif n_a - n_b == 1:
+                if n_below == 0:
+                    jac_b = np.concatenate(
+                        (
+                            np.zeros((n_b, n_in)),
+                            b_circ[:, :],
+                            np.zeros((n_b, 1)),
+                        ),
+                        axis=-1,
+                    )
+                else:
+                    jac_b = np.concatenate(
+                        (
+                            np.zeros((n_b, 1)),
+                            b_circ[:, : n_below - 1],
+                            np.zeros((n_b, n_in)),
+                            b_circ[:, n_below - 1 :],
+                        ),
+                        axis=-1,
+                    )
+            else:
+                jac_b = np.concatenate(
+                    (np.zeros((n_b, n_in)), b_circ[:, :]), axis=-1
+                )
+            jac_bl_b = irfft(jac_b * _fft_mu, n=n)
+            jac_bl = np.concatenate((jac_bl, jac_bl_b), axis=0)
+        return jac_bl
+
+    def jac_fun(_x: NDArray[np.float64]) -> NDArray[np.float64]:
+        p_est = _x[: n_p + n_a + n_b]
+        mu_est = xdata[:] - _x[n_p + n_a + n_b :]
+        jac_tl = np.zeros((n, n_p + n_a + n_b))
+        jac_tr = np.diag(1 / sigma_x)
+        fft_mu_est = rfft(mu_est)
+        jac_bl = -(jacobian_bl(p_est[:n_p], fft_mu_est) / sigma_y).T
+        impulse_response = transfer(
+            function, signal.unit_impulse(n), dt=dt, args=p_est
+        )
+        jac_br = (la.circulant(impulse_response).T / sigma_y).T
 
         return np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
 
     result = opt.least_squares(
         lambda _p: _costfuntls(
             function,
-            _p[:n_p],
-            rfft(xdata[:] - _p[n_p:])[:],
-            fft_x[:],
-            fft_y[:],
+            _p[: n_p + n_a + n_b],
+            xdata[:] - _p[n_p + n_a + n_b :],
+            xdata[:],
+            ydata[:],
             sigma_x[:],
             sigma_y[:],
-            w_below_idx[:],
-            w_in_idx[:],
-            w_above_idx[:],
             dt,
         ),
         p0_est,
         jac=jac_fun,
         bounds=p_bounds,
         method=fit_method,
-        x_scale=np.concatenate((np.ones(n_p), sigma_x)),
+        x_scale=np.concatenate((np.ones(n_p + n_a + n_b), sigma_x)),
+        **lsq_options,
     )
 
     # Parse output
@@ -3010,38 +3192,38 @@ def fit(
     threshold = np.finfo(float).eps * max(result.jac.shape) * s[0]
     s = s[s > threshold]
     vt = vt[: s.size]
-    all_var = np.diag(np.dot(vt.T / s**2, vt))
+    cov = np.dot(vt.T / s**2, vt)
 
+    p_opt_all = result.x[: n_p + n_a + n_b]
     p_opt = result.x[:n_p]
-    p_var = all_var[:n_p]
-    _delta = result.x[n_p:]
-    _fft_mu = rfft(xdata - _delta)
-    mu_opt = irfft(
-        np.concatenate(
-            (fft_x[w_below_idx], _fft_mu[w_in_idx], fft_x[w_above_idx])
-        ),
-        n=n,
-    )
-    mu_var = all_var[n_p:]  # I'm not sure about this!
-    psi_opt = transfer(lambda _w: function(p_opt, _w), mu_opt, dt=dt)
-    delta = xdata - mu_opt
+    p_cov = cov[:n_p, :n_p]
+    p_err = np.sqrt(np.diag(p_cov))
+    delta = result.x[n_p + n_a + n_b :]
+
+    mu_opt = xdata - delta
+    mu_err = np.sqrt(np.diag(cov)[n_p + n_a + n_b :])
+    psi_opt = transfer(function, mu_opt, dt=dt, args=p_opt_all)
     epsilon = ydata - psi_opt
     resnorm = 2 * result.cost
 
     h_circ = la.circulant(
-        transfer(lambda _w: function(p_opt, _w), signal.unit_impulse(n), dt=dt)
+        transfer(function, signal.unit_impulse(n), dt=dt, args=p_opt_all)
     )
-    h_delta = transfer(lambda _w: function(p_opt, _w), delta, dt=dt)
+    h_delta = transfer(function, delta, dt=dt, args=p_opt_all)
     u_x = h_circ @ v_x @ h_circ.T
     r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (epsilon - h_delta)
+
+    tfun_opt = function(w, *p_opt_all)
 
     # Cast resnorm as a Python float and success as a Python bool, in case
     # either is a NumPy constant
     return FitResult(
         p_opt=p_opt,
-        p_var=p_var,
+        p_err=p_err,
+        p_cov=p_cov,
         mu_opt=mu_opt,
-        mu_var=mu_var,
+        mu_err=mu_err,
+        tfun_opt=tfun_opt,
         resnorm=float(resnorm),
         delta=delta,
         epsilon=epsilon,

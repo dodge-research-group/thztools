@@ -1,10 +1,10 @@
 :orphan:
 
-thztools.FitResult.p\_var
+thztools.FitResult.p\_err
 =========================
 
 .. currentmodule:: thztools
 
 attribute
 
-.. autoattribute:: thztools.FitResult.p_var
+.. autoattribute:: thztools.FitResult.p_err

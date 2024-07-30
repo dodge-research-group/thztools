@@ -21,9 +21,11 @@
          :toctree:
       
          FitResult.p_opt
-         FitResult.p_var
+         FitResult.p_err
+         FitResult.p_cov
          FitResult.mu_opt
-         FitResult.mu_var
+         FitResult.mu_err
+         FitResult.tfun_opt
          FitResult.resnorm
          FitResult.delta
          FitResult.epsilon

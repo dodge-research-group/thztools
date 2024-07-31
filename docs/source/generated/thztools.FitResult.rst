@@ -25,7 +25,7 @@
          FitResult.p_cov
          FitResult.mu_opt
          FitResult.mu_err
-         FitResult.tfun_opt
+         FitResult.frfun_opt
          FitResult.resnorm
          FitResult.delta
          FitResult.epsilon

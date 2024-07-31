@@ -62,13 +62,13 @@ def set_option(key: str, value: Any) -> None:
     Available options, with descriptions:
 
     sampling_time : float | None
-        Global sampling time, normally in picoseconds. When set to None, the
-        default, times and frequencies are treated as dimensionless quantities
-        that are scaled by the (undetermined) sampling time.
+        Global sampling time, normally in picoseconds. When set to ``None``,
+        the default, times and frequencies are treated as dimensionless
+        quantities that are scaled by the (undetermined) sampling time.
 
     Examples
     --------
-    The global `sampling_time` option is initialized to ``None`` at startup.
+    The global ``sampling_time`` option is initialized to ``None`` at startup.
 
     >>> import thztools as thz
     >>> thz.get_option("sampling_time")
@@ -102,13 +102,13 @@ def get_option(key: str) -> Any:
     Available options, with descriptions:
 
     sampling_time : float | None
-        Global sampling time, normally in picoseconds. When set to None, the
-        default, times and frequencies are treated as dimensionless quantities
-        that are scaled by the (undetermined) sampling time.
+        Global sampling time, normally in picoseconds. When set to ``None``,
+        the default, times and frequencies are treated as dimensionless
+        quantities that are scaled by the (undetermined) sampling time.
 
     Examples
     --------
-    The global `sampling_time` option is initialized to ``None`` at startup.
+    The global ``sampling_time`` option is initialized to ``None`` at startup.
 
     >>> import thztools as thz
     >>> thz.get_option("sampling_time")
@@ -141,13 +141,13 @@ def reset_option(key: str | None = None) -> None:
     Available options, with descriptions:
 
     sampling_time : float | None
-        Global sampling time, normally in picoseconds. When set to None, the
-        default, times and frequencies are treated as dimensionless quantities
-        that are scaled by the (undetermined) sampling time.
+        Global sampling time, normally in picoseconds. When set to ``None``,
+        the default, times and frequencies are treated as dimensionless
+        quantities that are scaled by the (undetermined) sampling time.
 
     Examples
     --------
-    The global `sampling_time` option is initialized to ``None`` at startup.
+    The global ``sampling_time`` option is initialized to ``None`` at startup.
 
     >>> import thztools as thz
     >>> thz.get_option("sampling_time")
@@ -571,8 +571,8 @@ class NoiseResult:
 
 
 # noinspection PyShadowingNames
-def transfer(
-    tfun: Callable,
+def apply_frf(
+    frfun: Callable,
     x: ArrayLike,
     *,
     dt: float | None = None,
@@ -580,14 +580,14 @@ def transfer(
     args: ArrayLike = (),
 ) -> NDArray[np.float64]:
     r"""
-    Apply a transfer function to a waveform.
+    Apply a frequency response function to a waveform.
 
     Parameters
     ----------
-    tfun : callable
-        Transfer function.
+    frfun : callable
+        Frequency response function.
 
-            ``tfun(omega, *args) -> ndarray``
+            ``frfun(omega, *args) -> ndarray``
 
         where ``omega`` is an array of angular frequencies and ``args`` is a
         tuple of the fixed parameters needed to completely specify
@@ -604,19 +604,19 @@ def transfer(
         parameters in ``args`` must be expressed with the sampling time as the
         unit of time.
     numpy_sign_convention : bool, optional
-        Adopt NumPy sign convention for harmonic time dependence, e.g, express
+        Adopt NumPy sign convention for harmonic time dependence, e.g., express
         a harmonic function with frequency :math:`\omega` as
         :math:`x(t) = a e^{i\omega t}`. Default is ``True``. When set to
         ``False``, uses the convention more common in physics,
         :math:`x(t) = a e^{-i\omega t}`.
     args : array_like, optional
-        Extra arguments passed to the transfer function. All elements must be
-        real quantities.
+        Extra arguments passed to the frequency response function. All elements
+        must be real quantities.
 
     Returns
     -------
     y : ndarray
-        Result of applying the transfer function to ``x``.
+        Result of applying the frequency response function to ``x``.
 
     Warns
     -----
@@ -628,25 +628,25 @@ def transfer(
 
     See Also
     --------
-    fit : Fit a transfer function to time-domain data.
+    fit : Fit a frequency response function to time-domain data.
 
     Notes
     -----
     The output waveform is computed by transforming :math:`x[n]` into the
-    frequency domain, multiplying by the transfer function :math:`H[n]`,
-    then transforming back into the time domain.
+    frequency domain, multiplying by the frequency response function
+    :math:`H[n]`, then transforming back into the time domain.
 
     .. math:: y[n] = \mathcal{F}^{-1}\{H[n] \mathcal{F}\{x[n]\}\}
 
     Examples
     --------
-    Apply a transfer function that rescales the input by :math:`a` and shifts
-    it by :math:`\tau`.
+    Apply a frequency response function that rescales the input by :math:`a`
+    and shifts it by :math:`\tau`.
 
     .. math:: H(\omega) = a\exp(-i\omega\tau).
 
-    Note that this form assumes the :math:`e^{+i\omega t}` representation
-    of harmonic time dependence, which corresponds to the default setting
+    Note that this form assumes the :math:`e^{+i\omega t}` representation of
+    harmonic time dependence, which corresponds to the default setting
     ``numpy_sign_convention=True``.
 
     >>> import numpy as np
@@ -658,7 +658,7 @@ def transfer(
     >>> def shiftscale(_w, _a, _tau):
     ...     return _a * np.exp(-1j * _w * _tau)
     >>>
-    >>> y = thz.transfer(
+    >>> y = thz.apply_frf(
     ...     shiftscale, x, dt=dt, numpy_sign_convention=True, args=(0.5, 1)
     ... )
 
@@ -671,8 +671,8 @@ def transfer(
     >>> ax.set_ylabel("Amplitude (arb. units)")
     >>> plt.show()
 
-    If the transfer function is expressed using the :math:`e^{-i\omega t}`
-    representation, more common in physics,
+    If the frequency response function is expressed using the
+    :math:`e^{-i\omega t}` representation more common in physics,
 
     .. math:: H(\omega) = a\exp(i\omega\tau),
 
@@ -681,7 +681,7 @@ def transfer(
     >>> def shiftscale_phys(_w, _a, _tau):
     ...     return _a * np.exp(1j * _w * _tau)
     >>>
-    >>> y_p = thz.transfer(
+    >>> y_p = thz.apply_frf(
     ...     shiftscale_phys, x, dt=dt, numpy_sign_convention=False, args=(0.5, 1)
     ... )
 
@@ -706,7 +706,7 @@ def transfer(
     dt = _assign_sampling_time(dt)
     n = x.size
     w_scaled = 2 * pi * rfftfreq(n)
-    h = tfun(w_scaled / dt, *args)
+    h = frfun(w_scaled / dt, *args)
     if numpy_sign_convention:
         y = np.fft.irfft(np.fft.rfft(x) * h, n=n)
     else:
@@ -2602,26 +2602,31 @@ class FitResult:
     p_opt : ndarray
         Optimal fit parameters.
     p_err : ndarray
-        Uncertainty estimate for p_opt, ``p_err = np.sqrt(np.diag(p_cov))``.
+        Uncertainty estimate for ``p_opt``,
+        ``p_err = np.sqrt(np.diag(p_cov))``.
     p_cov : ndarray
-        Covariance matrix estimate for p_opt, determined from the curvature of
-        the cost function at ``(p_opt, mu_opt)``.
+        Covariance matrix estimate for ``p_opt``, determined from the curvature
+        of the cost function at ``(p_opt, mu_opt)``.
     mu_opt : ndarray
-        Optimal underlying waveform.
+        Optimal estimate of the input waveform.
     mu_err : ndarray
-        Estimated uncertainty in mu_opt, determined from the curvature of
+        Estimated uncertainty in ``mu_opt``, determined from the curvature of
         the cost function at ``(p_opt, mu_opt)``.
-    tfun_opt : complex ndarray
-        Estimated values of the transfer function at non-negative frequencies.
+    psi_opt : ndarray
+        Optimal estimate of the output waveform.
+    frfun_opt : complex ndarray
+        Estimated values of the frequency response function at non-negative
+        frequencies.
     resnorm : float
-        The value of chi-squared.
+        Euclidean norm (i.e., sum of the squares) of the normalized total
+        least-squares residuals.
     delta : ndarray
         Residuals of the input waveform ``x``, defined as ``x - mu_opt``.
     epsilon : ndarray
         Residuals of the output waveform ``y``, defined as ``y - psi_opt``,
-        where ``psi_opt = thztools.transfer(tfun, mu, dt=dt, args=p_opt)``,
-        ``tfun`` is the parameterized transfer function, and ``p_opt`` is
-        the array of optimized parameters.
+        where ``psi_opt = thztools.apply_frf(frfun, mu, dt=dt, args=p_opt)``,
+        ``frfun`` is the parameterized frequency response function, and
+        ``p_opt`` is the array of optimized parameters.
     r_tls : ndarray
         Normalized total least-squares residuals.
     success : bool
@@ -2632,7 +2637,7 @@ class FitResult:
 
     See Also
     --------
-    fit : Fit a transfer function to time-domain data.
+    fit : Fit a frequency response function to time-domain data.
     """
 
     p_opt: NDArray[np.float64]
@@ -2640,7 +2645,8 @@ class FitResult:
     p_cov: NDArray[np.float64]
     mu_opt: NDArray[np.float64]
     mu_err: NDArray[np.float64]
-    tfun_opt: NDArray[np.complex128]
+    psi_opt: NDArray[np.float64]
+    frfun_opt: NDArray[np.complex128]
     resnorm: float
     delta: NDArray[np.float64]
     epsilon: NDArray[np.float64]
@@ -2650,7 +2656,7 @@ class FitResult:
 
 
 def _costfuntls(
-    tfun: Callable,
+    frfun: Callable,
     theta: ArrayLike,
     mu: ArrayLike,
     x: ArrayLike,
@@ -2663,10 +2669,10 @@ def _costfuntls(
 
     Parameters
     ----------
-    tfun : callable
-        Transfer function.
+    frfun : callable
+        Frequency response function.
 
-            ``tfun(w, *p, *args, **kwargs) -> ndarray``
+            ``frfun(w, *p, *args, **kwargs) -> ndarray``
 
         Assumes the :math:`+i\omega t` convention for harmonic time dependence.
     theta : array_like
@@ -2712,7 +2718,7 @@ def _costfuntls(
 
     dt = _assign_sampling_time(dt)
 
-    psi = transfer(tfun, mu, dt=dt, args=theta)
+    psi = apply_frf(frfun, mu, dt=dt, args=theta)
 
     delta_norm = (x - mu) / sigma_x
     eps_norm = (y - psi) / sigma_y
@@ -2721,7 +2727,7 @@ def _costfuntls(
 
 
 def fit(
-    tfun: Callable,
+    frfun: Callable,
     xdata: ArrayLike,
     ydata: ArrayLike,
     p0: ArrayLike,
@@ -2737,20 +2743,21 @@ def fit(
     lsq_options: dict | None = None,
 ) -> FitResult:
     r"""
-    Fit a transfer function to time-domain data.
+    Fit a parameterized frequency response function to time-domain data.
 
     Determines the total least-squares fit to ``xdata`` and ``ydata``, given
-    the parameterized transfer function relationship ``tfun`` and noise model
-    parameters ``noise_parms``.
+    the parameterized frequency response function relationship ``frfun`` and
+    noise model parameters ``noise_parms``.
 
     Parameters
     ----------
-    tfun : callable
-        Transfer function with signature ``tfun(omega, *p, *args, **kwargs)``
-        that returns an ``ndarray``. Assumes the :math:`+i\omega t` convention
-        for harmonic time dependence when ``numpy_sign_convention`` is
-        ``True``, the default. All elements of ``p`` and ``args`` and all
-        values of ``kwargs`` must be real quantities.
+    frfun : callable
+        Frequency response function with signature ``frfun(omega, *p, *args,
+        **kwargs)`` that returns an ``ndarray``. Assumes the
+        :math:`+i\omega t` convention for harmonic time dependence when
+        ``numpy_sign_convention`` is ``True``, the default. All elements of
+        ``p`` and ``args`` and all values of ``kwargs`` must be real
+        quantities.
     xdata : array_like
         Measured input signal.
     ydata : array_like
@@ -2775,9 +2782,9 @@ def fit(
         ``False``, uses the convention more common in physics,
         :math:`x(t) = a e^{-i\omega t}`.
     args : tuple
-        Additional arguments for ``tfun``. All elements must be real.
+        Additional arguments for ``frfun``. All elements must be real.
     kwargs : dict or None, optional
-        Additional keyword arguments for ``tfun``. Default is ``None``, which
+        Additional keyword arguments for ``frfun``. Default is ``None``, which
         passes no keyword arguments. All values must be real.
     f_bounds : array_like, optional
         Lower and upper bounds on the frequencies included in the fit. For
@@ -2860,7 +2867,7 @@ def fit(
     Notes
     -----
     This function computes the maximum-likelihood estimate for the parameters
-    :math:`\boldsymbol{\theta}` in the transfer function model
+    :math:`\boldsymbol{\theta}` in the frequency response function model
     :math:`H(\omega; \boldsymbol{\theta})` by minimizing
     the total least-squares cost function
 
@@ -2896,7 +2903,8 @@ def fit(
         * ``epsilon = ydata - psi``,
         * ``sigma_x = NoiseModel(*noise_parms, dt=dt).noise_amp(xdata)``,
         * ``sigma_y = NoiseModel(*noise_parms, dt=dt).noise_amp(ydata)``, and
-        * ``psi = thz.transfer(fun(omega, *p, *args, **kwargs), mu, dt=dt)``.
+        * ``psi = thz.apply_frf(frfun(omega, *p, *args, **kwargs), mu,
+          dt=dt)``.
 
     References
     ----------
@@ -2918,14 +2926,14 @@ def fit(
     >>> noise_model = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
     ...  sigma_tau=tau, dt=dt)
 
-    >>> def tfun(w, amplitude, delay):
+    >>> def frfun(w, amplitude, delay):
     ...    return amplitude * np.exp(1j * w * delay)
     >>>
     >>> p0 = (0.5, 1.0)
-    >>> psi = thz.transfer(tfun, mu, dt=dt, args=p0)
+    >>> psi = thz.apply_frf(frfun, mu, dt=dt, args=p0)
     >>> xdata = mu + noise_model.noise_sim(mu, seed=0)
     >>> ydata = psi + noise_model.noise_sim(psi, seed=1)
-    >>> result = thz.fit(tfun, xdata, ydata, p0, (alpha, beta, tau), dt=dt)
+    >>> result = thz.fit(frfun, xdata, ydata, p0, (alpha, beta, tau), dt=dt)
     >>> result.success
     True
     >>> result.p_opt
@@ -2945,10 +2953,10 @@ def fit(
     if kwargs is None:
         kwargs = {}
 
-    def _tfun_local(
+    def _frfun_local(
         _omega: NDArray[np.float64], *p: np.float64
     ) -> NDArray[np.complex128]:
-        out = tfun(_omega, *p, *args, **kwargs)
+        out = frfun(_omega, *p, *args, **kwargs)
         if not numpy_sign_convention:
             return np.conj(out)
         return out
@@ -3071,11 +3079,11 @@ def fit(
         _a = np.asarray(_theta[n_p : n_p + n_a], dtype=np.float64)
         _b = np.asarray(_theta[n_p + n_a :], dtype=np.float64)
         h_ex = fun_ex(_a, _b)
-        h_in = _tfun_local(_w[f_incl_idx], *_theta[:n_p])
+        h_in = _frfun_local(_w[f_incl_idx], *_theta[:n_p])
         return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
 
     def function_flat(_x: NDArray[np.float64]) -> NDArray[np.float64]:
-        _tf = _tfun_local(w[f_incl_idx], *_x)
+        _tf = _frfun_local(w[f_incl_idx], *_x)
         return np.concatenate((np.real(_tf), np.imag(_tf)))
 
     def jacobian_fun(_p: NDArray[np.float64]) -> NDArray[np.complex128]:
@@ -3165,7 +3173,7 @@ def fit(
         jac_tr = np.diag(1 / sigma_x)
         fft_mu_est = rfft(mu_est)
         jac_bl = -(jacobian_bl(p_est[:n_p], fft_mu_est) / sigma_y).T
-        impulse_response = transfer(
+        impulse_response = apply_frf(
             function, signal.unit_impulse(n), dt=dt, args=p_est
         )
         jac_br = (la.circulant(impulse_response).T / sigma_y).T
@@ -3206,18 +3214,18 @@ def fit(
 
     mu_opt = xdata - delta
     mu_err = np.sqrt(np.diag(cov)[n_p + n_a + n_b :])
-    psi_opt = transfer(function, mu_opt, dt=dt, args=p_opt_all)
+    psi_opt = apply_frf(function, mu_opt, dt=dt, args=p_opt_all)
     epsilon = ydata - psi_opt
     resnorm = 2 * result.cost
 
     h_circ = la.circulant(
-        transfer(function, signal.unit_impulse(n), dt=dt, args=p_opt_all)
+        apply_frf(function, signal.unit_impulse(n), dt=dt, args=p_opt_all)
     )
-    h_delta = transfer(function, delta, dt=dt, args=p_opt_all)
+    h_delta = apply_frf(function, delta, dt=dt, args=p_opt_all)
     u_x = h_circ @ v_x @ h_circ.T
     r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (epsilon - h_delta)
 
-    tfun_opt = function(w, *p_opt_all)
+    frfun_opt = function(w, *p_opt_all)
 
     # Cast resnorm as a Python float and success as a Python bool, in case
     # either is a NumPy constant
@@ -3227,7 +3235,8 @@ def fit(
         p_cov=p_cov,
         mu_opt=mu_opt,
         mu_err=mu_err,
-        tfun_opt=tfun_opt,
+        psi_opt=psi_opt,
+        frfun_opt=frfun_opt,
         resnorm=float(resnorm),
         delta=delta,
         epsilon=epsilon,

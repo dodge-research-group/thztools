@@ -18,13 +18,13 @@ from thztools.thztools import (
     _hess_noisefit,
     _jac_noisefit,
     _parse_noisefit_input,
+    apply_frf,
     fit,
     get_option,
     noisefit,
     reset_option,
     scaleshift,
     set_option,
-    transfer,
     wave,
 )
 
@@ -55,7 +55,7 @@ def data_gen():
         f = np.fft.rfftfreq(n, dt)
         x = np.sin(4 * pi * t)
         p0 = (0.5, dt)
-        y = transfer(tfun, x, dt=dt, args=p0, numpy_sign_convention=np_sign)
+        y = apply_frf(tfun, x, dt=dt, args=p0, numpy_sign_convention=np_sign)
         return {"dt": dt, "t": t, "f": f, "x": x, "p0": p0, "y": y}
 
     return _data_gen
@@ -190,7 +190,7 @@ class TestTransferOut:
         x = d["x"]
         expected = x
         assert_allclose(
-            transfer(
+            apply_frf(
                 tfun, x, dt=dt, numpy_sign_convention=fft_sign, args=(1.0, 0.0)
             ),
             expected,
@@ -205,7 +205,7 @@ class TestTransferOut:
         with pytest.raises(
             ValueError, match="x must be a one-dimensional array"
         ):
-            _ = transfer(tfun, x, dt=dt, args=(1.0, 0.0))
+            _ = apply_frf(tfun, x, dt=dt, args=(1.0, 0.0))
 
 
 class TestTimebase:

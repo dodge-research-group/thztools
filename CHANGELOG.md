@@ -5,6 +5,38 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org)
 for maintaining this file.
 
+## [0.5.0] - 2024-08-01
+
+### Changed
+- Change development status to beta
+- Change `mu_var` attribute of `FitResult` to `mu_err`
+- Change `p_var` attribute of `FitResult` to `p_cov`
+- Revise example of simulating noise
+- Revise example of simulating a waveform
+- Complete draft JOSS paper
+- Rename `transfer` as `apply_frf`
+- Revise docstrings for consistency and clarity
+- Apply bias correction to noise model parameter estimates
+- Reorganize tests
+
+### Added
+- Add configuration file for doctests with PyTest
+- Add example of appling a frequency response function
+- Add example of estimating noise model parameters
+- Add example of fitting a parameterized frequency response function model
+- Add example of rescaling and shifting a waveform
+- Add `diagnostic`, `dof`, `frfun_opt`, `p_err`, and `psi_opt` attributes to
+  `FitResult`
+- Add frequency bounds to `fit`
+- Add tests for new functionality
+
+### Removed
+- Remove `examples` directory from top level
+- Remove unused lint options from `pyproject.toml`
+
+### Fixed
+- Correct total least-squares residual computation
+
 ## [0.4.2] - 2024-06-30
 
 ### Changed
@@ -214,6 +246,7 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.5.0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.0
 [0.4.2]: https://github.com/dodge-research-group/thztools/releases/tag/v0.4.2
 [0.4.1]: https://github.com/dodge-research-group/thztools/releases/tag/v0.4.1
 [0.4.0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.4.0

@@ -42,7 +42,7 @@ Waveform utilities
     :toctree: generated/
     :caption: Waveform utilities
 
+    apply_frf
     scaleshift
     timebase
-    transfer
     wave

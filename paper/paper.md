@@ -46,8 +46,40 @@ date: 4 May 2024
 bibliography: paper.bib
 ---
 # Summary
-Example text with citations [@lee2023; @mohtashemi2021; @peretti2019; @tayvah2021]
+Terahertz time-domain spectroscopy (THz-TDS) uses short electromagnetic pulses
+to probe the electromagnetic response of matter over frequencies from about
+0.1 THz to about 10 THz, where
+1 THz = 10<sup>12</sup> Hz [@neu2018a]. A typical measurement
+compares two electromagnetic pulses, one of which has interacted with a material
+and another which has not. The pulses are measured as a function of time, but
+the electromagnetic properties of matter are most naturally described as a
+function of frequency, so statistical signal processing techniques must be used
+to relate the time-domain measurements to the frequency-domain properties of
+interest. The `THzTools` package provides an interface for implementing maximum-
+likelihood methods for THz-TDS analysis, described
+previously [@mohtashemi2021].
 
 # Statement of need
+
+In the conventional approach to THz-TDS analysis [@neu2018a], one transforms
+the time-domain measurements into the frequency domain for further analysis.
+This approach has well-known problems, however, which can be resolved by
+using a maximum-likelihood estimation procedure in the time 
+domain [@mohtashemi2021]. To support this mode of analysis, the `THzTools`
+package provides functionality and documentation that are unavailable in
+existing THz-TDS analysis software [@peretti2019; @tayvah2021; @lee2023]. It
+provides functions to simulate THz-TDS measurements, apply a freqeuncy response
+function to a THz-TDS waveform, characterize the noise of a THz-TDS system, and
+fit a parameterized frequency response function to a pair of input and output
+waveforms.
+
+We developed some of the functionality of `THzTools` in an earlier MATLAB
+implementation, which remains undocumented [@dodge2021]. After translating
+this codebase to Python, we introduced new functionality, optimized the code for
+speed and efficiency, and revised the user interface to make it easier to use.
+
+# Acknowledgements
+J. S. D. acknowledges support from the Natural Sciences and Engineering
+Research Council of Canada (NSERC).
 
 # References

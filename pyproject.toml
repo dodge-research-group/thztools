@@ -25,7 +25,7 @@ maintainers = [
     { name="Steve Dodge", email="jsdodge@sfu.ca" },
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
   	"Programming Language :: Python",
   	"Programming Language :: Python :: 3.8",
@@ -85,94 +85,18 @@ make-logo = ["python logo/make_logo.py; mv thztools_logo.svg docs/source/_static
 [[tool.hatch.envs.all.matrix]]
 python = ["3.8", "3.9", "3.10", "3.11", "3.12",]
 
-[tool.hatch.envs.lint]
-detached = true
-dependencies = [
-    "black>=23.1.0",
-    "black[jupyter]",
-    "mypy>=1.0.0",
-    "numpy",
-    "ruff>=0.4.8",
-]
-[tool.hatch.envs.lint.scripts]
-typing = "mypy --install-types --non-interactive {args:src/thztools tests}"
-style = [
-    "ruff check {args:.}",
-    "black --check --diff {args:.}",
-]
-fmt = [
-    "black {args:.}",
-    "ruff check --fix {args:.}",
-    "style",
-]
-all = [
-    "style",
-    "typing",
-]
-
-[tool.black]
-target-version = ["py38"]
-line-length = 79
-skip-string-normalization = true
-
 [tool.ruff]
 target-version = "py38"
 line-length = 79
-[tool.ruff.lint]
-select = [
-    "A",
-    "ARG",
-    "B",
-    "C",
-    "DTZ",
-    "E",
-    "EM",
-    "F",
-    "FBT",
-    "I",
-    "ICN",
-    "ISC",
-    "N",
-    "NPY201",
-    "PLC",
-    "PLE",
-    "PLR",
-    "PLW",
-    "Q",
-    "RUF",
-    "S",
-    "T",
-    "TID",
-    "UP",
-    "W",
-    "YTT",
-]
-ignore = [
-    # Allow non-abstract empty methods in abstract base classes
-    "B027",
-    # Allow boolean positional values in function calls, like `dict.get(... True)`
-    "FBT003",
-    # Ignore checks for possible passwords
-    "S105", "S106", "S107",
-    # Ignore complexity
-    "C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915",
-    # Allow print statements
-    "T201"
-]
-unfixable = [
-    # Don't touch unused imports
-    "F401",
-]
-
-[tool.ruff.lint.isort]
-known-first-party = ["thztools"]
-
-[tool.ruff.lint.flake8-tidy-imports]
-ban-relative-imports = "all"
+exclude = ["examples/figgen/**"]
 
 [tool.ruff.lint.per-file-ignores]
-# Tests can use magic values, assertions, and relative imports
-"tests/**/*" = ["PLR2004", "S101", "TID252"]
+"docs/source/**" = ["INP001"]
+"tests/**" = ["INP001"]
+"test_thztools.py" = ["S101"]
+
+[tool.ruff.lint.flake8-pytest-style]
+parametrize-names-type = "csv"
 
 [tool.coverage.run]
 source_pkgs = ["thztools", "tests"]
@@ -198,10 +122,6 @@ exclude_lines = [
 addopts = [
     "--import-mode=importlib",
 ]
-## Show warnings as errors for debugging
-#filterwarnings = [
-#    "error",
-#]
 
 [tool.hatch.envs.docs]
 dependencies = [
@@ -231,6 +151,15 @@ module = [
     "scipy.optimize",
 ]
 ignore_missing_imports = true
+
+[tool.hatch.envs.lint]
+detached = true
+dependencies = [
+    "mypy>=1.0.0",
+    "numpy",
+]
+[tool.hatch.envs.lint.scripts]
+typing = "mypy --install-types --non-interactive {args:src/thztools tests}"
 
 [tool.hatch.build.targets.sdist]
 exclude = [

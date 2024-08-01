@@ -2049,14 +2049,14 @@ def noisefit(
     >>> noise_res = thz.noisefit(x, sigma_alpha0=alpha, sigma_beta0=beta,
     ...  sigma_tau0=tau, dt=dt)
     >>> noise_res.noise_model
-    NoiseModel(sigma_alpha=9.971...e-05, sigma_beta=0.00975...,
-    sigma_tau=0.000890..., dt=0.05)
+    NoiseModel(sigma_alpha=0.000100..., sigma_beta=0.00984...,
+    sigma_tau=0.000899..., dt=0.05)
 
     >>> plt.plot(t, np.std(thz.scaleshift(x, a=1 / noise_res.a,
     ... eta=-noise_res.eta, axis=0), axis=1), "-",
     ... label="Data")
-    >>> plt.plot(t, noise_res.noise_model.noise_amp(noise_res.mu)
-    ...  * np.sqrt(m / (m - 1)), "--", label="Fit")
+    >>> plt.plot(t, noise_res.noise_model.noise_amp(noise_res.mu),
+    ...  "--", label="Fit")
     >>> plt.legend()
     >>> plt.xlabel("t (ps)")
     >>> plt.ylabel(r"$\sigma(t)$")
@@ -2461,22 +2461,25 @@ def _parse_noisefit_output(
     """Parse noisefit output"""
     # Parse output
     n, m = x.shape
+    bias_correction = np.sqrt(m / (m - 1))
 
     x_out = out.x
     if fix_sigma_alpha:
         alpha = sigma_alpha0
     else:
-        alpha = np.exp(x_out[0] * scale_logv_alpha / 2)
+        alpha = np.exp(x_out[0] * scale_logv_alpha / 2) * bias_correction
         x_out = x_out[1:]
     if fix_sigma_beta:
         beta = sigma_beta0
     else:
-        beta = np.exp(x_out[0] * scale_logv_beta / 2)
+        beta = np.exp(x_out[0] * scale_logv_beta / 2) * bias_correction
         x_out = x_out[1:]
     if fix_sigma_tau:
         tau = sigma_tau0
     else:
-        tau = float(np.exp(x_out[0] * scale_logv_tau / 2) * dt)
+        tau = (
+            float(np.exp(x_out[0] * scale_logv_tau / 2) * dt) * bias_correction
+        )
         x_out = x_out[1:]
 
     noise_model = NoiseModel(

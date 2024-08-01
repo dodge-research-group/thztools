@@ -2623,6 +2623,13 @@ class FitResult:
     resnorm : float
         Euclidean norm (i.e., sum of the squares) of the normalized total
         least-squares residuals.
+    dof : int
+        Number of statistical degrees of freedom,
+        ``dof = n - n_p - n_a - n_b``, where ``n`` is the number of samples in
+        each waveform, ``n_p`` is the number of fit parameters in the frequency
+        response function, and ``n_a + n_b`` is the number of real parameters
+        necessary to specify the frequency response function at the excluded
+        frequencies.
     delta : ndarray
         Residuals of the input waveform ``x``, defined as ``x - mu_opt``.
     epsilon : ndarray
@@ -2651,6 +2658,7 @@ class FitResult:
     psi_opt: NDArray[np.float64]
     frfun_opt: NDArray[np.complex128]
     resnorm: float
+    dof: int
     delta: NDArray[np.float64]
     epsilon: NDArray[np.float64]
     r_tls: NDArray[np.float64]
@@ -2846,6 +2854,7 @@ def fit(
         attributes are: ``p_opt``, the optimal fit parameter values; ``p_cov``,
         the parameter covariance matrix estimated from fit; ``resnorm``,
         the value of the total least-squares cost function for the fit;
+        ``dof``, the number of statistical degrees of freedom in the fit;
         ``r_tls``, and ``success``, which is ``True`` when the fit converges.
         See the *Notes* section below and the :class:`FitResult` documentation
         for more details and for a description of other attributes.
@@ -3220,6 +3229,7 @@ def fit(
     psi_opt = apply_frf(function, mu_opt, dt=dt, args=p_opt_all)
     epsilon = ydata - psi_opt
     resnorm = 2 * result.cost
+    dof = n - n_p - n_a - n_b
 
     h_circ = la.circulant(
         apply_frf(function, signal.unit_impulse(n), dt=dt, args=p_opt_all)
@@ -3241,6 +3251,7 @@ def fit(
         psi_opt=psi_opt,
         frfun_opt=frfun_opt,
         resnorm=float(resnorm),
+        dof=dof,
         delta=delta,
         epsilon=epsilon,
         r_tls=r_tls,

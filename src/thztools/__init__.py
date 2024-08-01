@@ -9,6 +9,7 @@ from thztools.thztools import (
     GlobalOptions,
     NoiseModel,
     NoiseResult,
+    apply_frf,
     fit,
     get_option,
     noisefit,
@@ -17,7 +18,6 @@ from thztools.thztools import (
     scaleshift,
     set_option,
     timebase,
-    transfer,
     wave,
 )
 
@@ -34,7 +34,7 @@ __all__ = [
     "scaleshift",
     "set_option",
     "timebase",
-    "transfer",
+    "apply_frf",
     "wave",
     "__version__",
 ]

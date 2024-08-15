@@ -5,6 +5,15 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org)
 for maintaining this file.
 
+## [0.5.1] - 2024-08-15
+
+### Added
+- Add `CONTRIBUTING.md` file
+- Add *Installation* section to `README.md`
+
+### Fixed
+- Fix error in `bug_report` issue template
+
 ## [0.5.0] - 2024-08-01
 
 ### Changed
@@ -246,6 +255,7 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.5.1]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.1
 [0.5.0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.0
 [0.4.2]: https://github.com/dodge-research-group/thztools/releases/tag/v0.4.2
 [0.4.1]: https://github.com/dodge-research-group/thztools/releases/tag/v0.4.1

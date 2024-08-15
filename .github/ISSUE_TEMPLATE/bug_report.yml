@@ -1,5 +1,5 @@
 name: Bug Report
-description: Create a report to help us improve SciPy
+description: Create a report to help us improve THzTools
 title: "BUG: <Please write a comprehensive title after the 'BUG: ' prefix>"
 labels: [defect]
 

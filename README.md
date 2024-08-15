@@ -23,3 +23,19 @@ This is *beta* software that is currently under development.
 | **Cite**          | L. Mohtashemi et al., *Opt. Express* **29**, 4912 (2021). [(DOI)](https://doi.org/10.1364/OE.417724)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 The original MATLAB code is available at [Zenodo](https://zenodo.org/record/4876388).
+
+## Installation
+
+You can install THzTools with `pip`:
+
+```shell
+pip install thztools
+```
+
+THzTools is also available through `conda-forge`:
+
+```shell
+conda install -c conda-forge thztools
+```
+
+See the [Getting started](https://dodge-research-group.github.io/thztools/getting_started.html) tutorial for additional information.

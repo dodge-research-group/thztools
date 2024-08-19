@@ -21,12 +21,17 @@
          :toctree:
       
          FitResult.p_opt
-         FitResult.p_var
+         FitResult.p_err
+         FitResult.p_cov
          FitResult.mu_opt
-         FitResult.mu_var
+         FitResult.mu_err
+         FitResult.psi_opt
+         FitResult.frfun_opt
          FitResult.resnorm
+         FitResult.dof
          FitResult.delta
          FitResult.epsilon
          FitResult.r_tls
          FitResult.success
+         FitResult.diagnostic
 

@@ -2819,9 +2819,9 @@ def fit(
             ``p_lo <= p <= p_hi``.
 
     jac : callable or None, optional
-        Jacobian of the residuals with respect to the fit parameters, with
-        signature ``jac(w, *p, *args, **kwargs)``. Default is ``None``, which
-        uses :func:`scipy.optimize.approx_fprime`.
+        Jacobian of the frequency response function with respect to the fit
+        parameters, with signature ``jac(w, *p, *args, **kwargs)``. Default is
+        ``None``, which uses :func:`scipy.optimize.approx_fprime`.
     lsq_options : dict or None, optional
         Keyword options passed to :func:`scipy.optimize.least_squares`. The
         following keywords are allowed:

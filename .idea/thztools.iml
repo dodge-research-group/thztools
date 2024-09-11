@@ -16,7 +16,7 @@
       <excludeFolder url="file://$MODULE_DIR$/docs/doctest/plot_directive" />
       <excludeFolder url="file://$MODULE_DIR$/docs/source/examples/.ipynb_checkpoints" />
     </content>
-    <orderEntry type="jdk" jdkName="thztools" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.11 (thztools)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">

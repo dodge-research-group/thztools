@@ -76,6 +76,10 @@ To lint the code base with ``ruff``::
 
   hatch fmt
 
+To run type checking with ``mypy``::
+
+  hatch run lint:typing
+
 To build the documentation with ``sphinx`` and test examples with ``doctest``::
 
   hatch run docs:build

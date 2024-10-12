@@ -72,9 +72,9 @@ To execute tests with ``pytest``::
 
   hatch run test
 
-To lint the code base with ``ruff`` and apply ``black`` format rules::
+To lint the code base with ``ruff``::
 
-  hatch run lint:all
+  hatch fmt
 
 To build the documentation with ``sphinx`` and test examples with ``doctest``::
 

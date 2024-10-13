@@ -49,7 +49,7 @@ bibliography: paper.bib
 Terahertz time-domain spectroscopy (THz-TDS) uses short electromagnetic pulses
 to probe the electromagnetic response of matter over frequencies from about
 0.1 THz to about 10 THz, where
-1 THz = 10<sup>12</sup> Hz [@neu2018a]. A typical measurement
+1 THz = 10^12^ Hz [@neu2018a]. A typical measurement
 compares two electromagnetic pulses, one of which has interacted with a material
 and another which has not. The pulses are measured as a function of time, but
 the electromagnetic properties of matter are most naturally described as a
@@ -68,7 +68,7 @@ using a maximum-likelihood estimation procedure in the time
 domain [@mohtashemi2021]. To support this mode of analysis, the `THzTools`
 package provides functionality and documentation that are unavailable in
 existing THz-TDS analysis software [@peretti2019; @tayvah2021; @lee2023]. It
-provides functions to simulate THz-TDS measurements, apply a freqeuncy response
+provides functions to simulate THz-TDS measurements, apply a frequency response
 function to a THz-TDS waveform, characterize the noise of a THz-TDS system, and
 fit a parameterized frequency response function to a pair of input and output
 waveforms.
@@ -79,7 +79,11 @@ this codebase to Python, we introduced new functionality, optimized the code for
 speed and efficiency, and revised the user interface to make it easier to use.
 
 # Acknowledgements
-J. S. D. acknowledges support from the Natural Sciences and Engineering
-Research Council of Canada (NSERC).
+J. P. L. and S. H.-G. acknowledge support from Mitacs Globalink Research
+Internship Program. A. N. acknowledges support from the Natural Sciences and
+Engineering Research Council of Canada Collaborative Research and Training
+Experience (NSERC CREATE) Program in Quantum Computing. J. S. D. acknowledges
+support from the Natural Sciences and Engineering Research Council of Canada
+(NSERC).
 
 # References

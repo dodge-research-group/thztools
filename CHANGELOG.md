@@ -9,10 +9,12 @@ for maintaining this file.
 
 ### Fixed
 - Fix documentation error in the Contributing section
+- Fix typographical errors in JOSS paper
 
 ### Added
 - Add [repostatus.org](https://www.repostatus.org/) badge
 - Add documentation on type checking in the Contributing section
+- Add student acknowledgements to JOSS paper
 
 ## [0.5.2] - 2024-09-11
 

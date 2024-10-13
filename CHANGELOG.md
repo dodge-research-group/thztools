@@ -9,11 +9,14 @@ for maintaining this file.
 
 ### Fixed
 - Fix documentation error in the Contributing section
+  ([#59](https://github.com/dodge-research-group/thztools/issues/59))
 - Fix typographical errors in JOSS paper
 
 ### Added
 - Add [repostatus.org](https://www.repostatus.org/) badge
+  ([#58](https://github.com/dodge-research-group/thztools/issues/58))
 - Add documentation on type checking in the Contributing section
+  ([#59](https://github.com/dodge-research-group/thztools/issues/59))
 - Add student acknowledgements to JOSS paper
 
 ## [0.5.2] - 2024-09-11

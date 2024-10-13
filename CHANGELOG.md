@@ -5,6 +5,15 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org)
 for maintaining this file.
 
+## [0.5.3] - 2024-10-12
+
+### Fixed
+- Fix documentation error in the Contributing section
+
+### Added
+- Add [repostatus.org](https://www.repostatus.org/) badge
+- Add documentation on type checking in the Contributing section
+
 ## [0.5.2] - 2024-09-11
 
 ### Changed
@@ -263,6 +272,7 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.5.3]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.3
 [0.5.2]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.2
 [0.5.1]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.1
 [0.5.0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.0

@@ -39,3 +39,91 @@ conda install -c conda-forge thztools
 ```
 
 See the [Getting started](https://dodge-research-group.github.io/thztools/getting_started.html) tutorial for additional information.
+
+## Usage
+
+In the conventional approach to THz-TDS analysis, one transforms
+the time-domain measurements into the frequency domain for further analysis.
+This approach has well-known problems, however, which can be resolved by
+using a maximum-likelihood estimation procedure in the time 
+domain. To support this mode of analysis, the `THzTools`
+package provides functionality and documentation that are unavailable in
+existing THz-TDS analysis software. It provides functions to simulate THz-TDS
+measurements (eg, [`timebase`](https://dodge-research-group.github.io/thztools/generated/thztools.timebase.html)
+and [`wave`](https://dodge-research-group.github.io/thztools/generated/thztools.wave.html)), 
+apply a frequency response function to a THz-TDS waveform ([`apply_frf`](https://dodge-research-group.github.io/thztools/generated/thztools.apply_frf.html)),
+characterize the noise of a THz-TDS system ([`noisefit`](https://dodge-research-group.github.io/thztools/generated/thztools.noisefit.html)),
+and fit a parameterized frequency response function to a pair of input and
+output waveforms ([`fit`](https://dodge-research-group.github.io/thztools/generated/thztools.fit.html)).
+
+With THzTools, you can:
+- [Simulate a terahertz waveform](https://dodge-research-group.github.io/thztools/examples/simulate-waveform.html)
+- [Simulate realistic time-domain noise for a waveform](https://dodge-research-group.github.io/thztools/examples/simulate-noise.html)
+- [Apply a frequency response function (FRF) to a time-domain waveform](https://dodge-research-group.github.io/thztools/examples/apply-frequency-response.html)
+- [Rescale and shift a waveform](https://dodge-research-group.github.io/thztools/examples/rescale-and-shift-waveform.html#)
+- [Estimate time-domain system noise parameters from a set of measured waveforms](https://dodge-research-group.github.io/thztools/examples/estimate-noise.html)
+- [Fit a parameterized FRF to a pair of time-domain waveforms](https://dodge-research-group.github.io/thztools/examples/fit-with-frf.html)
+
+For example, the following code creates an ideal waveform and applies a
+frequency response function to it.
+
+```python
+import numpy as np
+import thztools as thz
+
+# Set the waveform parameters
+n = 256  # Number of samples
+dt = 0.05  # Sampling time [ps]
+a = 0.5 # Scale factor
+eta = 1.0 # Delay [ps]
+
+# Simulate the waveform
+t = thz.timebase(n, dt=dt)
+mu = thz.wave(n, dt=dt)
+
+# Define a frequency response function
+def frfun(omega, _a, _eta):
+    return _a * np.exp(-1j * omega * _eta)
+
+# Apply the frequency response function to the waveform
+psi = thz.apply_frf(frfun, mu, dt=dt, args=(a, eta))
+```
+
+## Citation
+
+If you use THzTools, please consider citing the **paper** and/or the **software
+package**.
+
+### Paper
+```shell
+@article{Mohtashemi:21,
+author = {Laleh Mohtashemi and Paul Westlund and Derek G. Sahota and 
+Graham B. Lea and Ian Bushfield and Payam Mousavi and J. Steven Dodge},
+journal = {Opt. Express},
+number = {4},
+pages = {4912--4926},
+publisher = {Optica Publishing Group},
+title = {Maximum-likelihood parameter estimation in terahertz time-domain 
+spectroscopy},
+volume = {29},
+month = {Feb},
+year = {2021},
+url = {https://opg.optica.org/oe/abstract.cfm?URI=oe-29-4-4912},
+doi = {10.1364/OE.417724},
+}
+```
+
+### Software Package
+```shell
+@software{Posada_Loaiza_THzTools_2024,
+author = {Posada Loaiza, Jonathan and Higuera-Quintero, Santiago and Noori, 
+Alireza and Mohtashemi, Laleh and Hall, R. P. and Yimam, Naod Ayalew and 
+Dodge, J. Steven},
+license = {MIT},
+month = oct,
+title = {{THzTools}},
+url = {https://github.com/dodge-research-group/thztools},
+version = {0.5.3},
+year = {2024}
+}
+```

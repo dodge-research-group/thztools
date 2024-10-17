@@ -14,7 +14,7 @@ license = "MIT"
 keywords = ["terahertz", "THz", "time-domain spectroscopy", "data analysis"]
 authors = [
     { name="Jonathan Posada Loaiza", email="jonathan.posada1@udea.edu.co" },
-    { name="Santiago Higuera-Quintero", email="s.higuera@uniandes.edu.co" },
+    { name="Santiago Higuera-Quintero", email="santiago.higuera@itp3.uni-stuttgart.de" },
     { name="Alireza Noori", email="alireza_noori@sfu.ca" },
     { name="Laleh Mohtashemi", email="lalehmo@gmail.com" },
     { name="R. P. Hall", email="rph4@sfu.ca" },

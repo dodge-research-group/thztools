@@ -1,3 +1,51 @@
+# SPDX-License-Identifier: MIT
+# Copyright Contributors to the THzTools project.
+"""
+Data analysis tools for terahertz time-domain spectroscopy.
+
+Classes:
+    FitResult: Dataclass for the output of `fit`.
+    NoiseModel: Dataclass to describe the time-domain noise model.
+    NoiseResult: Dataclass for the output of `noisefit`.
+
+Functions:
+    apply_frf: Apply a frequency response function to a waveform.
+    fit: Fit a parameterized frequency response function to time-domain data.
+    noisefit: Estimate noise model from a set of nominally identical waveforms.
+    scaleshift: Rescale and shift waveforms.
+    timebase: Timebase for time-domain waveforms.
+    wave: Simulate a terahertz waveform.
+
+Other Functions:
+    get_option: Get global option.
+    reset_option: Reset global option.
+    set_option: Set global option.
+
+Example:
+
+Create an ideal waveform and apply a frequency response function to it.
+
+    >>> import numpy as np
+    >>> import thztools as thz
+
+    >>> # Set the waveform parameters
+    >>> n = 256  # Number of samples
+    >>> dt = 0.05  # Sampling time [ps]
+    >>> a = 0.5 # Scale factor
+    >>> eta = 1.0 # Delay [ps]
+
+    >>> # Simulate the waveform
+    >>> t = thz.timebase(n, dt=dt)
+    >>> mu = thz.wave(n, dt=dt)
+
+    >>> # Define a frequency response function
+    >>> def frfun(omega, _a, _eta):
+    >>>     return _a * np.exp(-1j * omega * _eta)
+
+    >>> # Apply the frequency response function to the waveform
+    >>> psi = thz.apply_frf(frfun, mu, dt=dt, args=(a, eta))
+
+"""
 from __future__ import annotations
 
 import warnings
@@ -196,7 +244,7 @@ def _assign_sampling_time(dt: float | None) -> float:
 @dataclass
 class NoiseModel:
     r"""
-    Noise model class.
+    Dataclass to describe the time-domain noise model.
 
     For noise parameters :math:`\sigma_\alpha`, :math:`\sigma_\beta`,
     :math:`\sigma_\tau` and signal vector :math:`\boldsymbol{\mu}`, the

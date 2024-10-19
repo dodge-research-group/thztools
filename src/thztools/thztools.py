@@ -270,6 +270,20 @@ class NoiseModel:
         :attr:`dt` and ``thztools.get_option("sampling_time")`` are ``None``,
         the :attr:`sigma_tau` parameter is given in units of the sampling time.
 
+    Attributes
+    ----------
+    sigma_alpha : float
+        Additive noise amplitude.
+    sigma_beta : float
+        Multiplicative noise amplitude.
+    sigma_tau : float
+        Timebase noise amplitude.
+    dt : float or None, optional
+        Sampling time, normally in picoseconds. Default is None, which sets
+        the sampling time to ``thztools.options.sampling_time``. If both
+        :attr:`dt` and ``thztools.get_option("sampling_time")`` are ``None``,
+        the :attr:`sigma_tau` parameter is given in units of the sampling time.
+
     Warns
     -----
     UserWarning
@@ -569,6 +583,35 @@ class NoiseResult:
     Dataclass for the output of :func:`noisefit`.
 
     Parameters
+    ----------
+    noise_model : NoiseModel
+        Noise parameters, represented as a :class:`NoiseModel` object.
+    mu : ndarray, shape (n,)
+        Signal vector.
+    a : ndarray, shape (m,)
+        Signal amplitude drift vector.
+    eta : ndarray, shape (m,)
+        Signal delay drift vector.
+    fval : float
+        Value of optimized NLL cost function.
+    hess_inv : ndarray
+        Inverse Hessian matrix of optimized NLL cost function.
+    err_sigma_alpha, err_sigma_beta, err_sigma_tau : float
+        Estimated uncertainty in the noise model parameters. Set equal to 0.0
+        when the parameter is fixed.
+    err_mu : ndarray
+        Estimated uncertainty in ``mu``.
+    err_a : ndarray
+        Estimated uncertainty in ``a``.
+    err_eta : ndarray
+        Estimated uncertainty in ``eta``.
+    diagnostic : scipy.optimize.OptimizeResult
+        Instance of :class:`scipy.optimize.OptimizeResult` returned by
+        :func:`scipy.optimize.minimize`. Note that the attributes ``fun``,
+        ``jac``, and ``hess_inv`` represent functions over the internally
+        scaled parameters.
+
+    Attributes
     ----------
     noise_model : NoiseModel
         Noise parameters, represented as a :class:`NoiseModel` object.
@@ -1055,6 +1098,34 @@ def scaleshift(
 
 @dataclass
 class CommonNLL:
+    r"""
+    Dataclass for passing intermediate cost function variables.
+
+    The functions `_nll_noisefit`, `_jac_noisefit`, and `_hess_noisefit`
+    involve computations with a common set of array variables for a given
+    input. The `_nll_common` function encapsulates this computation and
+    uses the `CommonNLL` dataclass to organize the output. A future release may
+    implement caching to improve speed.
+
+    Attributes
+    ----------
+    ressq: ndarray with shape (m, n)
+        Square of residuals, equal to (x - zeta)**2.
+    vtot: ndarray with shape (m, n)
+        Estimate for time-domain variance, corrected for drift in amplitude
+        and time delay.
+    zeta: ndarray with shape (m, n)
+        Time-domain waveform estimates, corrected for drift in amplitude and
+        time delay.
+    dzeta: ndarray with shape (m, n)
+        Time-domain derivative of zeta.
+    a: ndarray with shape (m,)
+        Amplitude drift parameters.
+    zeta_f: ndarray with shape (m, n_f)
+        Fourier amplitudes of zeta.
+    exp_iweta: ndarray with shape (m, n_f)
+        Frequency response function array used to correct for time-delay drift.
+    """
     ressq: NDArray[np.float64]
     vtot: NDArray[np.float64]
     zeta: NDArray[np.float64]
@@ -2649,6 +2720,51 @@ class FitResult:
     Dataclass for the output of :func:`fit`.
 
     Parameters
+    ----------
+    p_opt : ndarray
+        Optimal fit parameters.
+    p_err : ndarray
+        Uncertainty estimate for ``p_opt``,
+        ``p_err = np.sqrt(np.diag(p_cov))``.
+    p_cov : ndarray
+        Covariance matrix estimate for ``p_opt``, determined from the curvature
+        of the cost function at ``(p_opt, mu_opt)``.
+    mu_opt : ndarray
+        Optimal estimate of the input waveform.
+    mu_err : ndarray
+        Estimated uncertainty in ``mu_opt``, determined from the curvature of
+        the cost function at ``(p_opt, mu_opt)``.
+    psi_opt : ndarray
+        Optimal estimate of the output waveform.
+    frfun_opt : complex ndarray
+        Estimated values of the frequency response function at non-negative
+        frequencies.
+    resnorm : float
+        Euclidean norm (i.e., sum of the squares) of the normalized total
+        least-squares residuals.
+    dof : int
+        Number of statistical degrees of freedom,
+        ``dof = n - n_p - n_a - n_b``, where ``n`` is the number of samples in
+        each waveform, ``n_p`` is the number of fit parameters in the frequency
+        response function, and ``n_a + n_b`` is the number of real parameters
+        necessary to specify the frequency response function at the excluded
+        frequencies.
+    delta : ndarray
+        Residuals of the input waveform ``x``, defined as ``x - mu_opt``.
+    epsilon : ndarray
+        Residuals of the output waveform ``y``, defined as ``y - psi_opt``,
+        where ``psi_opt = thztools.apply_frf(frfun, mu, dt=dt, args=p_opt)``,
+        ``frfun`` is the parameterized frequency response function, and
+        ``p_opt`` is the array of optimized parameters.
+    r_tls : ndarray
+        Normalized total least-squares residuals.
+    success : bool
+        True if one of the convergence criteria is satisfied.
+    diagnostic : scipy.optimize.OptimizeResult
+        Instance of :class:`scipy.optimize.OptimizeResult` returned by
+        :func:`scipy.optimize.least_squares`.
+
+    Attributes
     ----------
     p_opt : ndarray
         Optimal fit parameters.

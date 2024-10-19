@@ -40,7 +40,7 @@ Create an ideal waveform and apply a frequency response function to it.
 
     >>> # Define a frequency response function
     >>> def frfun(omega, _a, _eta):
-    >>>     return _a * np.exp(-1j * omega * _eta)
+    ...     return _a * np.exp(-1j * omega * _eta)
 
     >>> # Apply the frequency response function to the waveform
     >>> psi = thz.apply_frf(frfun, mu, dt=dt, args=(a, eta))

@@ -31,8 +31,8 @@ Create an ideal waveform and apply a frequency response function to it.
     >>> # Set the waveform parameters
     >>> n = 256  # Number of samples
     >>> dt = 0.05  # Sampling time [ps]
-    >>> a = 0.5 # Scale factor
-    >>> eta = 1.0 # Delay [ps]
+    >>> a = 0.5  # Scale factor
+    >>> eta = 1.0  # Delay [ps]
 
     >>> # Simulate the waveform
     >>> t = thz.timebase(n, dt=dt)
@@ -46,6 +46,7 @@ Create an ideal waveform and apply a frequency response function to it.
     >>> psi = thz.apply_frf(frfun, mu, dt=dt, args=(a, eta))
 
 """
+
 from __future__ import annotations
 
 import warnings
@@ -1126,6 +1127,7 @@ class CommonNLL:
     exp_iweta: ndarray with shape (m, n_f)
         Frequency response function array used to correct for time-delay drift.
     """
+
     ressq: NDArray[np.float64]
     vtot: NDArray[np.float64]
     zeta: NDArray[np.float64]

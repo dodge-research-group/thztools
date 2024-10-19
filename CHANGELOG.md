@@ -5,6 +5,19 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org)
 for maintaining this file.
 
+## [0.5.4] - 2024-10-19
+
+### Added
+- Add CITATION.cff file
+- Add citation information to README
+- Add links to README that point to online documentation examples
+- Add usage information and example code to README
+- Add Attributes section to each dataclass docstring
+- Add support for Python 3.13
+
+### Removed
+- Remove support for Python 3.8
+
 ## [0.5.3] - 2024-10-12
 
 ### Fixed
@@ -274,6 +287,7 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.5.4]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.4
 [0.5.3]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.3
 [0.5.2]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.2
 [0.5.1]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.1

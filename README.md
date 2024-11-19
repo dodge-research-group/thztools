@@ -89,6 +89,24 @@ def frfun(omega, _a, _eta):
 psi = thz.apply_frf(frfun, mu, dt=dt, args=(a, eta))
 ```
 
+## Related software
+Below is a list of other software projects that address related tasks in
+THz-TDS analysis, with summaries taken from the project documentation.
+- https://github.com/THzbiophotonics/Fit-TDS
+  - "Python code aiming at the retrieving of material parameter from a
+    TeraHertz time domain spectroscopy (TDS) measurements from a fit in the time
+    domain."
+- https://github.com/puls-lab/phoeniks
+  - "A free and open-source (FOSS) Python class to extract the refractive index
+    and absorption coefficient from time traces of a THz Time Domain
+    Spectrometer (THz-TDS)."
+- https://github.com/dotTHzTAG/CaTSper
+  - "The CaTSper tool extracts the frequency-dependent optical constants from
+    terahertz time-domain waveforms." (uses MATLAB)
+- https://github.com/YaleTHz/nelly
+  - "Nelly is a package for extracing refractice indices and conductivities from
+    time-domain terahertz spectroscopy data." (uses MATLAB)
+
 ## Citation
 
 If you use THzTools, please consider citing the **paper** and/or the **software

@@ -11,41 +11,41 @@ authors:
   - given-names: Jonathan
     family-names: Posada Loaiza
     orcid: 'https://orcid.org/0009-0004-4443-6161'
-    affiliation: Simon Fraser University
+    affiliation: Physics Department, Simon Fraser University
     email: jonathan.posada1@udea.edu.co
   - given-names: Santiago
     family-names: Higuera-Quintero
     email: santiago.higuera@itp3.uni-stuttgart.de
-    affiliation: Simon Fraser University
+    affiliation: Physics Department, Simon Fraser University
     orcid: 'https://orcid.org/0000-0001-6905-4662'
   - given-names: Alireza
     family-names: Noori
     orcid: 'https://orcid.org/0009-0009-1091-0802'
     email: alireza_noori@sfu.ca
-    affiliation: Simon Fraser University
+    affiliation: Physics Department, Simon Fraser University
   - email: lalehmo@gmail.com
     given-names: Laleh
     family-names: Mohtashemi
     orcid: 'https://orcid.org/0000-0002-2706-857X'
-    affiliation: Simon Fraser University
+    affiliation: Physics Department, Simon Fraser University
   - given-names: R. P.
     family-names: Hall
     orcid: 'https://orcid.org/0009-0004-1137-3651'
     email: rph4@sfu.ca
-    affiliation: Simon Fraser University
+    affiliation: Physics Department, Simon Fraser University
   - email: nayimam@gmail.com
     given-names: Naod Ayalew
     family-names: Yimam
     orcid: 'https://orcid.org/0009-0007-7522-5027'
-    affiliation: Simon Fraser University
+    affiliation: Physics Department, Simon Fraser University
   - given-names: J. Steven
     family-names: Dodge
     email: jsdodge@sfu.ca
-    affiliation: Simon Fraser University
+    affiliation: Physics Department, Simon Fraser University
     orcid: 'https://orcid.org/0000-0003-3219-7314'
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.13924460
+    value: 10.5281/zenodo.10100093
     description: Zenodo
 repository-code: 'https://github.com/dodge-research-group/thztools'
 abstract: >-
@@ -68,6 +68,6 @@ keywords:
   - Time-domain terahertz spectroscopy
   - Maximum-likelihood analysis
 license: MIT
-commit: 0661124821ece1e65b01f7e20a0e37f0c64ec825
-version: 0.5.3
-date-released: '2024-10-13'
+commit: 07de6ca0b786ee74c9f138e41bf81a66a4020e0c
+version: 0.5.5
+date-released: '2024-11-19'

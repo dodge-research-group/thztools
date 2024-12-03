@@ -5,6 +5,16 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org)
 for maintaining this file.
 
+## [0.5.5.post0] - 2024-12-02
+
+### Added
+- Add pyOpenSci badge to `README.md`
+- Add JOSS badge to `README.md`
+
+### Changed
+- Update `CITATION.cff`
+- Change citation information in `README.md`
+
 ## [0.5.5] - 2024-11-19
 
 ### Added
@@ -295,6 +305,7 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.5.5.post0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.5.post0
 [0.5.5]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.5
 [0.5.4]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.4
 [0.5.3]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.3

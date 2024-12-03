@@ -1,73 +1,68 @@
-# This CITATION.cff file was generated with cffinit.
-# Visit https://bit.ly/cffinit to generate yours today!
-
-cff-version: 1.2.0
-title: THzTools
-message: >-
-  If you use this software, please cite it using the
-  metadata from this file.
-type: software
+cff-version: "1.2.0"
 authors:
-  - given-names: Jonathan
-    family-names: Posada Loaiza
-    orcid: 'https://orcid.org/0009-0004-4443-6161'
-    affiliation: Physics Department, Simon Fraser University
-    email: jonathan.posada1@udea.edu.co
-  - given-names: Santiago
-    family-names: Higuera-Quintero
-    email: santiago.higuera@itp3.uni-stuttgart.de
-    affiliation: Physics Department, Simon Fraser University
-    orcid: 'https://orcid.org/0000-0001-6905-4662'
-  - given-names: Alireza
-    family-names: Noori
-    orcid: 'https://orcid.org/0009-0009-1091-0802'
-    email: alireza_noori@sfu.ca
-    affiliation: Physics Department, Simon Fraser University
-  - email: lalehmo@gmail.com
+- family-names: Loaiza
+  given-names: Jonathan Posada
+  orcid: "https://orcid.org/0009-0004-4443-6161"
+- family-names: Higuera-Quintero
+  given-names: Santiago
+  orcid: "https://orcid.org/0000-0001-6905-4662"
+- family-names: Noori
+  given-names: Alireza
+  orcid: "https://orcid.org/0009-0009-1091-0802"
+- family-names: Mohtashemi
+  given-names: Laleh
+  orcid: "https://orcid.org/0000-0002-2706-857X"
+- family-names: Hall
+  given-names: R. P.
+  orcid: "https://orcid.org/0009-0004-1137-3651"
+- family-names: Yimam
+  given-names: Naod Ayalew
+  orcid: "https://orcid.org/0009-0007-7522-5027"
+- family-names: Dodge
+  given-names: J. Steven
+  orcid: "https://orcid.org/0000-0003-3219-7314"
+contact:
+- family-names: Dodge
+  given-names: J. Steven
+  orcid: "https://orcid.org/0000-0003-3219-7314"
+doi: 10.5281/zenodo.14188761
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Loaiza
+    given-names: Jonathan Posada
+    orcid: "https://orcid.org/0009-0004-4443-6161"
+  - family-names: Higuera-Quintero
+    given-names: Santiago
+    orcid: "https://orcid.org/0000-0001-6905-4662"
+  - family-names: Noori
+    given-names: Alireza
+    orcid: "https://orcid.org/0009-0009-1091-0802"
+  - family-names: Mohtashemi
     given-names: Laleh
-    family-names: Mohtashemi
-    orcid: 'https://orcid.org/0000-0002-2706-857X'
-    affiliation: Physics Department, Simon Fraser University
-  - given-names: R. P.
-    family-names: Hall
-    orcid: 'https://orcid.org/0009-0004-1137-3651'
-    email: rph4@sfu.ca
-    affiliation: Physics Department, Simon Fraser University
-  - email: nayimam@gmail.com
+    orcid: "https://orcid.org/0000-0002-2706-857X"
+  - family-names: Hall
+    given-names: R. P.
+    orcid: "https://orcid.org/0009-0004-1137-3651"
+  - family-names: Yimam
     given-names: Naod Ayalew
-    family-names: Yimam
-    orcid: 'https://orcid.org/0009-0007-7522-5027'
-    affiliation: Physics Department, Simon Fraser University
-  - given-names: J. Steven
-    family-names: Dodge
-    email: jsdodge@sfu.ca
-    affiliation: Physics Department, Simon Fraser University
-    orcid: 'https://orcid.org/0000-0003-3219-7314'
-identifiers:
-  - type: doi
-    value: 10.5281/zenodo.10100093
-    description: Zenodo
-repository-code: 'https://github.com/dodge-research-group/thztools'
-abstract: >-
-  THzTools is an open-source Python package for data
-  analysis in terahertz time-domain spectroscopy
-
-  (THz-TDS). As the name suggests, THz-TDS involves
-  measurements of terahertz-frequency
-
-  electromagnetic waveforms that are acquired as a function
-  of time, which users typically
-
-  represent as a function of frequency for analysis.
-  THzTools makes it easier for researchers
-
-  to use statistically optimal methods for doing this
-  analysis, as described in L. Mohtashemi et al.,
-   Opt. Express 29, 4912 (2021) (https://doi.org/10.1364/OE.417724).
-keywords:
-  - Time-domain terahertz spectroscopy
-  - Maximum-likelihood analysis
-license: MIT
-commit: 07de6ca0b786ee74c9f138e41bf81a66a4020e0c
-version: 0.5.5
-date-released: '2024-11-19'
+    orcid: "https://orcid.org/0009-0007-7522-5027"
+  - family-names: Dodge
+    given-names: J. Steven
+    orcid: "https://orcid.org/0000-0003-3219-7314"
+  date-published: 2024-12-02
+  doi: 10.21105/joss.07542
+  issn: 2475-9066
+  issue: 104
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 7542
+  title: "THzTools: data analysis software for terahertz time-domain
+    spectroscopy"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.07542"
+  volume: 9
+title: "THzTools: data analysis software for terahertz time-domain
+  spectroscopy"

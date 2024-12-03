@@ -114,7 +114,7 @@ describes the maximum-likelihood methodology and/or the Journal of Open Source
 Software (**JOSS**) paper that describes the software.
 
 ### Optics Express
-```shell
+```
 @article{Mohtashemi2021,
 author = {Laleh Mohtashemi and Paul Westlund and Derek G. Sahota and 
 Graham B. Lea and Ian Bushfield and Payam Mousavi and J. Steven Dodge},
@@ -133,7 +133,7 @@ doi = {10.1364/OE.417724},
 ```
 
 ### JOSS
-```shell
+```
 @article{loaiza2024,
   title = {{{THzTools}}: Data Analysis Software for Terahertz Time-Domain Spectroscopy},
   shorttitle = {{{THzTools}}},

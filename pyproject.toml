@@ -125,6 +125,7 @@ exclude_lines = [
 ]
 
 [tool.pytest.ini_options]
+filterwarnings = ["error"]
 addopts = [
     "--import-mode=importlib",
     "--strict-config",

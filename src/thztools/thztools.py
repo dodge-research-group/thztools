@@ -64,7 +64,6 @@ from numpy.random import default_rng
 from scipy import signal
 from scipy.linalg import sqrtm
 from scipy.optimize import OptimizeResult, approx_fprime, minimize
-from scipy.signal.windows import __all__ as windowlist
 
 if sys.version_info >= (3, 10):
     from typing import Concatenate
@@ -880,7 +879,7 @@ def timebase(
     [2.5  2.55 2.6 ]
     """
     dt = _assign_sampling_time(dt)
-    return t_init + dt * np.arange(n)
+    return np.asarray(t_init + dt * np.arange(n), dtype=np.float64)
 
 
 def wave(
@@ -991,64 +990,6 @@ def wave(
     x_unscaled = irfft(np.conj(s), n=n)
 
     return a * x_unscaled / np.max(x_unscaled)
-
-
-def fft(
-    x: ArrayLike,
-    *,
-    n: int | None = None,
-    window: str | None = None,
-) -> NDArray[np.complex128]:
-    r"""
-    Apply a fourier transform and default tukey window.
-
-    Parameters
-    ----------
-
-    x : array-like
-        Data array.
-    n : int or None
-        Transformation axis length. If 'n' is more than the input, the array is
-        zero padded to 'n'. If 'n' . If 'n' is less than the input, the array is
-        spliced. If not given, the 'x' array length is used.
-    window : str or None
-        Scipy window transform for x. If window is None, a default 'tukey' window
-        function is applied.
-
-    Returns
-    -----
-    x_fft: ndarray
-        Transformed array.
-
-    Raises
-    -----
-    ValueError
-        If the ``window`` parameter is not a window function
-        in scipy.signal.windows
-
-    Notes
-    -----
-    This function applies fourier and scipy window transformations
-    to real inputs. The default window is 'tukey', a tapered cosine.
-
-    Examples
-    -----
-
-    """
-    x = np.asarray(x, dtype=float)
-    n = x.size if n is None else 2 * (n - 1)
-
-    if window is None:
-        windx = signal.windows.tukey(len(x)) * x
-        x_fft = np.fft.rfft(windx, n)
-    elif window not in windowlist:
-        msg = f"Window parameter only accepts functions in {windowlist}"
-        raise ValueError(msg)
-    else:
-        windx = x * signal.windows.get_window(window, len(x))
-        x_fft = np.fft.rfft(windx, n)
-
-    return x_fft
 
 
 # noinspection PyShadowingNames
@@ -3251,7 +3192,7 @@ def fit(
     f_excl_hi_idx = f > f_bounds[1]
     f_incl_idx = ~f_excl_lo_idx * ~f_excl_hi_idx
 
-    w = 2 * pi * f
+    w = np.asarray(2 * pi * f, dtype=np.float64)
 
     n_below = np.sum(f_excl_lo_idx)
     n_in = np.sum(f_incl_idx)

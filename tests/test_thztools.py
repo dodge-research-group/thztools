@@ -30,7 +30,6 @@ from thztools.thztools import (
     _jac_noisefit,
     _parse_noisefit_input,
     apply_frf,
-    fft,
     fit,
     get_option,
     noisefit,
@@ -293,33 +292,6 @@ class TestWave:
             atol=eps,
             rtol=rtol,
         )
-
-
-class TestFFT:
-    @pytest.mark.parametrize(
-        "n",
-        [
-            0,
-            -9,
-        ],
-    )
-    def testfft_errors(self, n: int | None) -> None:
-        t = np.linspace(-10, 10, 1000)
-        yarray = np.sin(0.7 * t) + 0.5 * np.sin(t)
-        with pytest.raises(
-            ValueError, match=r".*Invalid.*FFT.*data.*points.*"
-        ):
-            fft(yarray, n=n, window=None)
-
-    @pytest.mark.parametrize("window", ["azure"])
-    def testfft_window(self, window: str | None) -> None:
-        t = np.linspace(-10, 10, 1000)
-        yarray = np.sin(0.7 * t) + 0.5 * np.sin(t)
-        with pytest.raises(
-            ValueError,
-            match=r".*Window.*parameter.*only.*accepts.*functions.*in.*",
-        ):
-            fft(yarray, n=None, window=window)
 
 
 class TestScaleShift:

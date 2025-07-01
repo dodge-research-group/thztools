@@ -161,7 +161,7 @@ dependencies = [
 ]
 
 [tool.mypy]
-plugins = "numpy.typing.mypy_plugin"
+#plugins = "numpy.typing.mypy_plugin"
 strict = true
 warn_unreachable = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]

@@ -25,6 +25,7 @@ import thztools
 from thztools.thztools import (
     NoiseModel,
     _assign_sampling_time,
+    _assign_workers,
     _costfuntls,
     _hess_noisefit,
     _jac_noisefit,
@@ -83,10 +84,22 @@ class TestOptions:
         reset_option("sampling_time")
         assert get_option("sampling_time") is None
 
+        assert get_option("workers") is None
+        set_option("workers", 1)
+        assert get_option("workers") == 1
+        reset_option("workers")
+        assert get_option("workers") is None
+
     @pytest.mark.parametrize("global_sampling_time", [None, 0.1])
     @pytest.mark.parametrize("dt", [None, 0.1, 1.0])
+    @pytest.mark.parametrize("global_workers", [None, 1])
+    @pytest.mark.parametrize("workers", [None, 1, -1])
     def test_assignment(
-        self, global_sampling_time: float | None, dt: float | None
+        self,
+        global_sampling_time: float | None,
+        dt: float | None,
+        global_workers: int | None,
+        workers: int | None,
     ) -> None:
         set_option("sampling_time", global_sampling_time)
         if global_sampling_time is None and dt is None:
@@ -106,6 +119,25 @@ class TestOptions:
         else:
             with pytest.warns(UserWarning):
                 _assign_sampling_time(dt)
+
+        set_option("workers", global_workers)
+        if global_workers is None and workers is None:
+            assert _assign_workers(workers) == -1
+        elif global_workers is None and workers is not None:
+            assert _assign_workers(workers) == workers
+        elif (
+            global_workers is not None
+            and workers is None
+            or (
+                global_workers is not None
+                and workers is not None
+                and workers == global_workers
+            )
+        ):
+            assert _assign_workers(workers) == global_workers
+        else:
+            with pytest.warns(UserWarning):
+                _assign_workers(workers)
 
 
 class TestNoiseModel:
@@ -410,6 +442,7 @@ class TestJacNoiseFit:
     delta_a = np.zeros(m - 1)
     eta = np.zeros(m - 1)
     desired_nll = x.size * np.log(2 * pi) / 2
+    workers = -1
 
     @pytest.mark.parametrize(
         "fix_logv_alpha, desired_gradnll_logv_alpha",
@@ -544,6 +577,7 @@ class TestJacNoiseFit:
             scale_delta_mu=np.ones(n),
             scale_delta_a=np.ones(m - 1),
             scale_eta_on_dt=np.ones(m - 1),
+            workers=self.workers,
         )
         assert_allclose(gradnll, desired_gradnll, atol=10 * eps, rtol=rtol)
 
@@ -567,6 +601,7 @@ class TestHessNoiseFit:
     scale_delta_mu = np.ones_like(delta_mu)
     scale_delta_a = np.ones_like(delta_a)
     scale_eta = np.ones_like(eta)
+    workers = -1
 
     def test_hess_logv_logv(self) -> None:
         desired_hess_logv_logv = np.array(
@@ -609,6 +644,7 @@ class TestHessNoiseFit:
             scale_delta_mu=self.scale_delta_mu,
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=scale_eta_on_dt,
+            workers=self.workers,
         )
         assert_allclose(
             hess_logv_logv, desired_hess_logv_logv, atol=eps, rtol=rtol
@@ -658,6 +694,7 @@ class TestHessNoiseFit:
             scale_delta_mu=self.scale_delta_mu,
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=scale_eta_on_dt,
+            workers=self.workers,
         )[:3, 3:]
         assert_allclose(
             hess_logv_mu, desired_hess_logv_mu, atol=eps, rtol=rtol
@@ -688,6 +725,7 @@ class TestHessNoiseFit:
             scale_delta_mu=self.scale_delta_mu,
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=scale_eta_on_dt,
+            workers=self.workers,
         )[:3, 3:]
         assert_allclose(hess_logv_a, desired_hess_logv_a, atol=eps, rtol=rtol)
 
@@ -720,6 +758,7 @@ class TestHessNoiseFit:
             scale_delta_mu=self.scale_delta_mu,
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=scale_eta_on_dt,
+            workers=self.workers,
         )[:3, 3:]
         assert_allclose(
             hess_logv_eta, desired_hess_logv_eta, atol=eps, rtol=rtol
@@ -775,6 +814,7 @@ class TestHessNoiseFit:
             scale_delta_mu=self.scale_delta_mu,
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=scale_eta_on_dt,
+            workers=self.workers,
         )
         assert_allclose(hess_mu_mu, desired_hess_mu_mu, atol=eps, rtol=rtol)
 
@@ -807,6 +847,7 @@ class TestHessNoiseFit:
             scale_delta_mu=self.scale_delta_mu,
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=scale_eta_on_dt,
+            workers=self.workers,
         )[:n, n:]
         assert_allclose(hess_mu_a, desired_hess_mu_a, atol=eps, rtol=rtol)
 
@@ -839,6 +880,7 @@ class TestHessNoiseFit:
             scale_delta_mu=self.scale_delta_mu,
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=scale_eta_on_dt,
+            workers=self.workers,
         )[:n, n:]
         assert_allclose(hess_mu_eta, desired_hess_mu_eta, atol=eps, rtol=rtol)
 
@@ -865,6 +907,7 @@ class TestHessNoiseFit:
             scale_delta_mu=self.scale_delta_mu,
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=scale_eta_on_dt,
+            workers=self.workers,
         )
         assert_allclose(hess_a_a, desired_hess_a_a, atol=eps, rtol=rtol)
 
@@ -892,6 +935,7 @@ class TestHessNoiseFit:
             scale_delta_mu=self.scale_delta_mu,
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=scale_eta_on_dt,
+            workers=self.workers,
         )[: m - 1, m - 1 :]
         assert_allclose(hess_a_eta, desired_hess_a_eta, atol=eps, rtol=rtol)
 
@@ -918,6 +962,7 @@ class TestHessNoiseFit:
             scale_delta_mu=self.scale_delta_mu,
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=scale_eta_on_dt,
+            workers=self.workers,
         )
         assert_allclose(
             hess_eta_eta, desired_hess_eta_eta, atol=eps, rtol=rtol
@@ -941,6 +986,7 @@ class TestNoiseFit:
     eta = np.zeros(m)
     scale_delta_a = 1e-2 * np.ones(m - 1)
     scale_eta = 1e-3 * np.ones(m - 1) / dt
+    workers = -1
 
     @pytest.mark.parametrize(
         "x, mu0, a0, eta0, fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, "
@@ -1056,6 +1102,7 @@ class TestNoiseFit:
                 scale_delta_mu=np.ones(n),
                 scale_delta_a=np.ones(m - 1),
                 scale_eta=np.ones(m - 1),
+                workers=self.workers,
             )
 
     @pytest.mark.parametrize("sigma_alpha0", [None, alpha, 0.0])
@@ -1110,6 +1157,7 @@ class TestNoiseFit:
             scale_delta_mu=scale_delta_mu,
             scale_delta_a=scale_delta_a,
             scale_eta=scale_eta,
+            workers=self.workers,
         )
 
     @pytest.mark.parametrize(
@@ -1158,6 +1206,7 @@ class TestNoiseFit:
             fix_mu=fix_mu,
             fix_a=fix_a,
             fix_eta=fix_eta,
+            workers=self.workers,
         )
         assert result.diagnostic["status"] == 0
 

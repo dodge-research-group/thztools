@@ -851,7 +851,8 @@ def apply_frf(
         y = irfft(rfft(x) * h, n=n)
     else:
         y = irfft(rfft(x) * np.conj(h), n=n)
-    y = cast(np.ndarray[tuple[int], np.dtype[np.float64]], y)
+    if TYPE_CHECKING:
+        y = cast(np.ndarray[tuple[int], np.dtype[np.float64]], y)
     return y
 
 

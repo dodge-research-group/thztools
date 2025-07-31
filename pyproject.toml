@@ -170,7 +170,6 @@ enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 [tool.hatch.envs.types]
 extra-dependencies = [
     "mypy>=1.0.0",
-    "scipy-stubs",
 ]
 [tool.hatch.envs.types.scripts]
 check = """

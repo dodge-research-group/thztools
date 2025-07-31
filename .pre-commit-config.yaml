@@ -38,7 +38,7 @@ repos:
             --show-error-code-links,
             --show-error-context,
           ]
-        additional_dependencies: [numpy, pytest, scipy-stubs]
+        additional_dependencies: [numpy, pytest]
         verbose: true
   - repo: https://github.com/codespell-project/codespell
     rev: "v2.4.1"

@@ -57,13 +57,17 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import scipy.linalg as la
-import scipy.optimize as opt
 from numpy import pi
 from numpy.random import default_rng
 from scipy import signal
 from scipy.fft import irfft, rfft, rfftfreq
 from scipy.linalg import sqrtm
-from scipy.optimize import OptimizeResult, approx_fprime, minimize
+from scipy.optimize import (
+    OptimizeResult,
+    approx_fprime,
+    least_squares,
+    minimize,
+)
 from scipy.signal.windows import __all__ as windowlist
 
 if sys.version_info >= (3, 10):
@@ -76,6 +80,7 @@ else:
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from typing import Concatenate, cast
 
     from numpy.typing import ArrayLike, NDArray
 
@@ -454,7 +459,7 @@ class NoiseModel:
         w_scaled = 2 * pi * rfftfreq(n)
         xdot = irfft(1j * w_scaled * rfft(x), n=n) / dt
 
-        noise_variance = (
+        noise_variance = np.array(
             self.sigma_alpha**2
             + (self.sigma_beta * x) ** 2
             + (self.sigma_tau * xdot) ** 2
@@ -704,13 +709,16 @@ class NoiseResult:
 
 # noinspection PyShadowingNames
 def apply_frf(
-    frfun: Callable[..., NDArray[np.complex128]],
+    frfun: Callable[
+        Concatenate[np.ndarray[tuple[int], np.dtype[np.float64]], ...],
+        NDArray[np.complex128],
+    ],
     x: ArrayLike,
     *,
     dt: float | None = None,
     numpy_sign_convention: bool = True,
     args: ArrayLike = (),
-) -> NDArray[np.float64]:
+) -> np.ndarray[tuple[int], np.dtype[np.float64]]:
     r"""
     Apply a frequency response function to a waveform.
 
@@ -843,7 +851,7 @@ def apply_frf(
         y = irfft(rfft(x) * h, n=n)
     else:
         y = irfft(rfft(x) * np.conj(h), n=n)
-
+    y = cast(np.ndarray[tuple[int], np.dtype[np.float64]], y)
     return y
 
 
@@ -1017,7 +1025,7 @@ def wave(
 
     x_unscaled = irfft(np.conj(s), n=n)
 
-    return a * x_unscaled / np.max(x_unscaled)
+    return np.asarray(a * x_unscaled / np.max(x_unscaled), dtype=np.float64)
 
 
 # noinspection PyShadowingNames
@@ -2282,8 +2290,8 @@ def noisefit(
 
     # Minimize cost function with respect to free parameters
     out = minimize(
-        objective,
-        x0,
+        fun=objective,
+        x0=x0,
         method="BFGS",
         jac=jac,
         tol=1e-5 * x.size,
@@ -3346,7 +3354,7 @@ def fit(
         h_in = _frfun_local(_w[f_incl_idx], *_theta[:n_p])
         return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
 
-    def function_flat(_x: NDArray[np.float64]) -> NDArray[np.float64]:
+    def function_flat(_x: NDArray[np.float64], /) -> NDArray[np.float64]:
         _tf = _frfun_local(w[f_incl_idx], *_x)
         return np.concatenate((np.real(_tf), np.imag(_tf)))
 
@@ -3379,7 +3387,9 @@ def fit(
             ),
             axis=-1,
         )
-        jac_bl = irfft(fft_jac_bl * _fft_mu, n=n)
+        jac_bl: np.ndarray[tuple[Any, ...], np.dtype[np.float64]] = irfft(
+            fft_jac_bl * _fft_mu, n=n
+        )
         if n_a > 0:
             a_circ = la.circulant(signal.unit_impulse(n_a))
             jac_a = np.concatenate(
@@ -3391,7 +3401,9 @@ def fit(
                 axis=-1,
             )
             jac_bl_a = irfft(jac_a * _fft_mu, n=n)
-            jac_bl = np.concatenate((jac_bl, jac_bl_a), axis=0)
+            jac_bl = np.concatenate(
+                (jac_bl, jac_bl_a), axis=0, dtype=np.float64
+            )
         if n_b > 0:
             b_circ = la.circulant(signal.unit_impulse(n_b) * 1j)
             if n_a - n_b == 2:  # noqa: PLR2004
@@ -3430,7 +3442,9 @@ def fit(
                     (np.zeros((n_b, n_in)), b_circ[:, :]), axis=-1
                 )
             jac_bl_b = irfft(jac_b * _fft_mu, n=n)
-            jac_bl = np.concatenate((jac_bl, jac_bl_b), axis=0)
+            jac_bl = np.concatenate(
+                (jac_bl, jac_bl_b), axis=0, dtype=np.float64
+            )
         return jac_bl
 
     def jac_fun(_x: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -3447,7 +3461,7 @@ def fit(
 
         return np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
 
-    result = opt.least_squares(
+    result = least_squares(
         lambda _p: _costfuntls(
             function,
             _p[: n_p + n_a + n_b],
@@ -3574,6 +3588,10 @@ def etfe(
     win = win1d.reshape(shape)
     windx = x * win
     windy = y * win
-    x_fft = rfft(windx, n=nfft, axis=axis)
-    y_fft = rfft(windy, n=nfft, axis=axis)
+    x_fft: np.ndarray[tuple[Any, ...], np.dtype[np.complex128]] = rfft(
+        windx, n=nfft, axis=axis
+    )
+    y_fft: np.ndarray[tuple[Any, ...], np.dtype[np.complex128]] = rfft(
+        windy, n=nfft, axis=axis
+    )
     return y_fft / x_fft

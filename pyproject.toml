@@ -79,7 +79,12 @@ cov = [
     "cov-report",
 ]
 doctest = "pytest -v --doctest-modules {args:src/thztools}"
-make-logo = ["python logo/make_logo.py; mv thztools_logo.svg docs/source/_static/;mv thztools_logo_dark.svg docs/source/_static/"]
+make-logo = [
+    """
+    python logo/make_logo.py; mv thztools_logo.svg docs/source/_static/;\
+    mv thztools_logo_dark.svg docs/source/_static/
+    """
+]
 
 [[tool.hatch.envs.all.matrix]]
 python = ["3.9", "3.10", "3.11", "3.12", "3.13", ]
@@ -156,32 +161,21 @@ dependencies = [
 [tool.hatch.envs.docs.scripts]
 build = "sphinx-build -v -b html docs/source docs/build/html"
 
-[tool.hatch.envs.all]
-dependencies = [
-    "typing-extensions",
-]
-
 [tool.mypy]
 strict = true
+ignore_missing_imports = true
 warn_unreachable = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 
-[[tool.mypy.overrides]]
-module = [
-    "pytest",
-    "scipy",
-    "scipy.linalg",
-    "scipy.optimize",
-    "scipy.signal.windows",
-]
-ignore_missing_imports = true
-
 [tool.hatch.envs.types]
 extra-dependencies = [
-  "mypy>=1.0.0",
+    "mypy>=1.0.0",
 ]
 [tool.hatch.envs.types.scripts]
-check = "mypy --install-types --non-interactive {args:src/thztools tests}"
+check = """
+mypy --install-types --non-interactive --show-error-code-links \
+--show-error-context {args:src/thztools tests}
+"""
 
 [tool.hatch.build.targets.sdist]
 exclude = [

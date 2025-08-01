@@ -26,7 +26,7 @@ repos:
       - id: blacken-docs
         additional_dependencies: [black==24.*]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.15.0"
+    rev: "v1.16.1"
     hooks:
       - id: mypy
         files: src/thztools|tests

@@ -2,12 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
 
-from thztools import wave
+from thztools import timebase, wave
 
 n = 1024
-ts = 0.01
+dt = 0.01
 t0 = 1
-mu, t = wave(n, ts, t0)
+t = timebase(n, dt=dt)
+mu = wave(n, dt=dt, t0=t0)
 
 # Use the Multicolored Lines example in the Matplotlib documentation to produce
 # the rainbow-colored waveform.

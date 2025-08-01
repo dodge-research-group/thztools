@@ -7,6 +7,8 @@ import numpy as np
 import pytest
 from numpy import pi
 from numpy.testing import assert_allclose
+from scipy import signal
+from scipy.fft import rfft
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -1376,35 +1378,13 @@ class TestFit:
 
 
 class TestETFE:
-    def test_even_list(self):
-        x = np.asarray(
-            [
-                0.0512,
-                0.5913,
-                0.4230,
-                0.7401,
-                0.4780,
-                0.3536,
-                0.4750,
-                0.4877,
-                0.8022,
-                0.7286,
-            ]
-        )
-        y = np.asarray(
-            [
-                0.0814,
-                0.7072,
-                0.1607,
-                0.5481,
-                0.7540,
-                0.4741,
-                0.3695,
-                0.2887,
-                0.3708,
-                0.2735,
-            ]
-        )
+    def test_even_list(self): 
+        x = np.asarray([0.0512, 0.5913, 0.4230, 0.7401, 
+                  0.4780, 0.3536, 0.4750, 0.4877, 
+                  0.8022, 0.7286])
+        y = np.asarray([0.0814, 0.7072, 0.1607, 0.5481, 
+                  0.7540, 0.4741, 0.3695, 0.2887, 
+                  0.3708, 0.2735])
         axis = -1
         ax_len = x.shape[axis]
         nfft = ax_len
@@ -1412,44 +1392,18 @@ class TestETFE:
 
         windx = x * win1d
         windy = y * win1d
-
-        expected = rfft(windy, n=nfft, axis=axis) / rfft(
-            windx, n=nfft, axis=axis
-        )
+        
+        expected = rfft(windy, n=nfft, axis= axis) / rfft(windx,n=nfft, axis= axis)
         result = etfe(x, y)
         assert np.allclose(result, expected)
 
     def test_odd_list(self):
-        x = np.array(
-            [
-                0.0512,
-                0.5913,
-                0.4230,
-                0.7401,
-                0.4780,
-                0.3536,
-                0.4750,
-                0.4877,
-                0.8022,
-                0.7286,
-                0.019,
-            ]
-        )
-        y = np.array(
-            [
-                0.0814,
-                0.7072,
-                0.1607,
-                0.5481,
-                0.7540,
-                0.4741,
-                0.3695,
-                0.2887,
-                0.3708,
-                0.2735,
-                1.49,
-            ]
-        )
+        x = np.array([0.0512, 0.5913, 0.4230, 0.7401, 
+                  0.4780, 0.3536, 0.4750, 0.4877, 
+                  0.8022, 0.7286, 0.019])
+        y = np.array([0.0814, 0.7072, 0.1607, 0.5481, 
+                      0.7540, 0.4741, 0.3695, 0.2887, 
+                  0.3708, 0.2735, 1.49])
         axis = -1
         ax_len = x.shape[axis]
         nfft = ax_len
@@ -1457,44 +1411,32 @@ class TestETFE:
 
         windx = x * win1d
         windy = y * win1d
-
-        expected = rfft(windy, n=nfft, axis=axis) / rfft(
-            windx, n=nfft, axis=axis
-        )
+        
+        expected = rfft(windy, n=nfft, axis= axis) / rfft(windx,n=nfft, axis= axis)
         result = etfe(x, y)
         assert np.allclose(result, expected)
 
-    def test_RuntTimeWarning(self):  # checks if there's a divide by zero
+    def test_RuntTimeWarning(self): #checks if there's a divide by zero
         x = np.array([1, -1, 1, -1])
         y = np.array([0.1424, 0, 0.7442, 1])
-
-        with pytest.warns(RuntimeWarning):
+    
+        with pytest.warns(RuntimeWarning): 
             etfe(x, y)
 
-    def test_ValueError(self):  # checks if x and y arrays have same length
+    def test_ValueError(self): #checks if x and y arrays have same length
         x = np.array([0.0512, 0.5913, 0.4230])
         y = np.array([0.0814, 0.7072, 0.1607, 0.5481])
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError): 
             etfe(x, y)
-
-    def test_sqaure_matrix(
-        self,
-    ):  # checks if function works with a nested list
-        x = np.array(
-            [
-                [0.0512, 0.5913, 0.4230],
-                [0.7401, 0.4780, 0.3536],
-                [0.4750, 0.4877, 0.8022],
-            ]
-        )
-        y = np.array(
-            [
-                [0.0814, 0.7072, 0.1607],
-                [0.5481, 0.7540, 0.4741],
-                [0.3695, 0.2887, 0.3708],
-            ]
-        )
+    
+    def test_sqaure_matrix(self): #checks if function works with a nested list
+        x = np.array([ [0.0512, 0.5913, 0.4230], 
+                       [0.7401, 0.4780, 0.3536],
+                       [0.4750, 0.4877, 0.8022] ])
+        y = np.array([ [0.0814, 0.7072, 0.1607], 
+                       [0.5481, 0.7540, 0.4741], 
+                       [0.3695, 0.2887, 0.3708] ])
 
         axis = -1
         ax_len = x.shape[axis]
@@ -1507,17 +1449,17 @@ class TestETFE:
 
         windx = x * win
         windy = y * win
-
-        expected = rfft(windy, n=nfft, axis=axis) / rfft(
-            windx, n=nfft, axis=axis
-        )
+        
+        expected = rfft(windy, n=nfft, axis= axis) / rfft(windx,n=nfft, axis= axis)
         result = etfe(x, y)
         assert np.allclose(result, expected)
 
-    def test_non_sqaure_matrix(self):
-        x = np.array([[0.0512, 0.5913, 0.4230], [0.7401, 0.4780, 0.3536]])
-        y = np.array([[0.0814, 0.7072, 0.1607], [0.5481, 0.7540, 0.4741]])
-
+    def test_non_sqaure_matrix(self):   
+        x = np.array([ [0.0512, 0.5913, 0.4230], 
+                       [0.7401, 0.4780, 0.3536] ])
+        y = np.array([ [0.0814, 0.7072, 0.1607], 
+                       [0.5481, 0.7540, 0.4741] ])
+        
         axis = -1
         ax_len = x.shape[axis]
         nfft = ax_len
@@ -1529,16 +1471,16 @@ class TestETFE:
 
         windx = x * win
         windy = y * win
-
-        expected = rfft(windy, n=nfft, axis=axis) / rfft(
-            windx, n=nfft, axis=axis
-        )
+        
+        expected = rfft(windy, n=nfft, axis= axis) / rfft(windx,n=nfft, axis= axis)
         result = etfe(x, y)
         assert np.allclose(result, expected)
 
     def test_n_greater_than_xlen(self):
-        x = np.array([0.0512, 0.5913, 0.4230, 0.7401, 0.4780, 0.3536])
-        y = np.array([0.0814, 0.7072, 0.1607, 0.5481, 0.7540, 0.4741])
+        x = np.array([0.0512, 0.5913, 0.4230, 
+                0.7401, 0.4780, 0.3536])
+        y = np.array([0.0814, 0.7072, 0.1607, 
+                  0.5481, 0.7540, 0.4741])
 
         axis = -1
         ax_len = x.shape[axis]
@@ -1547,16 +1489,16 @@ class TestETFE:
 
         windx = x * win1d
         windy = y * win1d
-
-        expected = rfft(windy, n=nfft, axis=axis) / rfft(
-            windx, n=nfft, axis=axis
-        )
-        result = etfe(x, y, n=8)
+        
+        expected = rfft(windy, n=nfft, axis= axis) / rfft(windx,n=nfft, axis= axis)
+        result = etfe(x, y, n = 8)
         assert np.allclose(result, expected)
 
     def test_n_less_than_xlen(self):
-        x = np.array([0.0512, 0.5913, 0.4230, 0.7401, 0.4780, 0.3536])
-        y = np.array([0.0814, 0.7072, 0.1607, 0.5481, 0.7540, 0.4741])
+        x = np.array([0.0512, 0.5913, 0.4230, 
+                0.7401, 0.4780, 0.3536])
+        y = np.array([0.0814, 0.7072, 0.1607, 
+                  0.5481, 0.7540, 0.4741])
 
         axis = -1
         ax_len = x.shape[axis]
@@ -1565,9 +1507,7 @@ class TestETFE:
 
         windx = x * win1d
         windy = y * win1d
-
-        expected = rfft(windy, n=nfft, axis=axis) / rfft(
-            windx, n=nfft, axis=axis
-        )
-        result = etfe(x, y, n=5)
+        
+        expected = rfft(windy, n=nfft, axis= axis) / rfft(windx,n=nfft, axis= axis)
+        result = etfe(x, y, n = 5)
         assert np.allclose(result, expected)

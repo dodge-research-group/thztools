@@ -1378,7 +1378,7 @@ class TestFit:
 
 
 class TestETFE:
-    def test_even_list(self):
+    def test_even_list(self) -> None:
         x = np.asarray(
             [
                 0.0512,
@@ -1421,7 +1421,7 @@ class TestETFE:
         result = etfe(x, y)
         assert np.allclose(result, expected)
 
-    def test_odd_list(self):
+    def test_odd_list(self) -> None:
         x = np.array(
             [
                 0.0512,
@@ -1466,23 +1466,21 @@ class TestETFE:
         result = etfe(x, y)
         assert np.allclose(result, expected)
 
-    def test_RuntTimeWarning(self):  # checks if there's a divide by zero
+    def test_RuntTimeWarning(self) -> None:  # checks if there's a divide by zero
         x = np.array([1, -1, 1, -1])
         y = np.array([0.1424, 0, 0.7442, 1])
 
         with pytest.warns(RuntimeWarning):
             etfe(x, y)
 
-    def test_ValueError(self):  # checks if x and y arrays have same length
+    def test_ValueError(self) -> None:  # checks if x and y arrays have same length
         x = np.array([0.0512, 0.5913, 0.4230])
         y = np.array([0.0814, 0.7072, 0.1607, 0.5481])
 
         with pytest.raises(ValueError):
             etfe(x, y)
 
-    def test_sqaure_matrix(
-        self,
-    ):  # checks if function works with a nested list
+    def test_sqaure_matrix(self) -> None:  # checks if function works with a nested list
         x = np.array(
             [
                 [0.0512, 0.5913, 0.4230],
@@ -1516,7 +1514,7 @@ class TestETFE:
         result = etfe(x, y)
         assert np.allclose(result, expected)
 
-    def test_non_sqaure_matrix(self):
+    def test_non_sqaure_matrix(self) -> None:
         x = np.array([[0.0512, 0.5913, 0.4230], [0.7401, 0.4780, 0.3536]])
         y = np.array([[0.0814, 0.7072, 0.1607], [0.5481, 0.7540, 0.4741]])
 
@@ -1538,7 +1536,7 @@ class TestETFE:
         result = etfe(x, y)
         assert np.allclose(result, expected)
 
-    def test_n_greater_than_xlen(self):
+    def test_n_greater_than_xlen(self) -> None:
         x = np.array([0.0512, 0.5913, 0.4230, 0.7401, 0.4780, 0.3536])
         y = np.array([0.0814, 0.7072, 0.1607, 0.5481, 0.7540, 0.4741])
 
@@ -1556,7 +1554,7 @@ class TestETFE:
         result = etfe(x, y, n=8)
         assert np.allclose(result, expected)
 
-    def test_n_less_than_xlen(self):
+    def test_n_less_than_xlen(self) -> None:
         x = np.array([0.0512, 0.5913, 0.4230, 0.7401, 0.4780, 0.3536])
         y = np.array([0.0814, 0.7072, 0.1607, 0.5481, 0.7540, 0.4741])
 

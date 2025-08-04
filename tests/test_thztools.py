@@ -1378,6 +1378,9 @@ class TestFit:
 
 
 class TestETFE:
+    #All x and y vector values in this class were randomly generated and are non-special except one.
+    #The x vector values for test_RuntTimeWarning() were chosen as their FFT contains 0 components,
+    # which is what the function is testing for.
     def test_even_list(self) -> None:
         x = np.asarray(
             [

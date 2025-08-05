@@ -7,6 +7,8 @@ import numpy as np
 import pytest
 from numpy import pi
 from numpy.testing import assert_allclose
+from scipy import signal
+from scipy.fft import rfft
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -31,6 +33,7 @@ from thztools.thztools import (
     _jac_noisefit,
     _parse_noisefit_input,
     apply_frf,
+    etfe,
     fit,
     get_option,
     noisefit,
@@ -1372,3 +1375,208 @@ class TestFit:
 
         with pytest.raises(KeyError, match="Invalid key"):
             _ = fit(tfun, x, y, p0, dt=dt, lsq_options={"bad_key": 0})
+
+
+class TestETFE:
+    # All x and y vector values in this class were randomly generated and are non-special except one.
+    # The x vector values for test_RuntTimeWarning() were chosen as their FFT contains 0 components,
+    # which is what the function is testing for.
+    def test_even_list(self) -> None:
+        x = np.asarray(
+            [
+                0.0512,
+                0.5913,
+                0.4230,
+                0.7401,
+                0.4780,
+                0.3536,
+                0.4750,
+                0.4877,
+                0.8022,
+                0.7286,
+            ]
+        )
+        y = np.asarray(
+            [
+                0.0814,
+                0.7072,
+                0.1607,
+                0.5481,
+                0.7540,
+                0.4741,
+                0.3695,
+                0.2887,
+                0.3708,
+                0.2735,
+            ]
+        )
+        axis = -1
+        ax_len = x.shape[axis]
+        nfft = ax_len
+        win1d = signal.windows.tukey(ax_len)
+
+        windx = x * win1d
+        windy = y * win1d
+
+        expected = rfft(windy, n=nfft, axis=axis) / rfft(
+            windx, n=nfft, axis=axis
+        )
+        result = etfe(x, y)
+        assert np.allclose(result, expected)
+
+    def test_odd_list(self) -> None:
+        x = np.array(
+            [
+                0.0512,
+                0.5913,
+                0.4230,
+                0.7401,
+                0.4780,
+                0.3536,
+                0.4750,
+                0.4877,
+                0.8022,
+                0.7286,
+                0.019,
+            ]
+        )
+        y = np.array(
+            [
+                0.0814,
+                0.7072,
+                0.1607,
+                0.5481,
+                0.7540,
+                0.4741,
+                0.3695,
+                0.2887,
+                0.3708,
+                0.2735,
+                1.49,
+            ]
+        )
+        axis = -1
+        ax_len = x.shape[axis]
+        nfft = ax_len
+        win1d = signal.windows.tukey(ax_len)
+
+        windx = x * win1d
+        windy = y * win1d
+
+        expected = rfft(windy, n=nfft, axis=axis) / rfft(
+            windx, n=nfft, axis=axis
+        )
+        result = etfe(x, y)
+        assert np.allclose(result, expected)
+
+    def test_RuntTimeWarning(
+        self,
+    ) -> None:  # checks if there's a divide by zero
+        x = np.array([1, -1, 1, -1])
+        y = np.array([0.1424, 0, 0.7442, 1])
+
+        with pytest.warns(RuntimeWarning):
+            etfe(x, y)
+
+    def test_ValueError(
+        self,
+    ) -> None:  # checks if x and y arrays have same length
+        x = np.array([0.0512, 0.5913, 0.4230])
+        y = np.array([0.0814, 0.7072, 0.1607, 0.5481])
+
+        with pytest.raises(ValueError):
+            etfe(x, y)
+
+    def test_sqaure_matrix(
+        self,
+    ) -> None:  # checks if function works with a nested list
+        x = np.array(
+            [
+                [0.0512, 0.5913, 0.4230],
+                [0.7401, 0.4780, 0.3536],
+                [0.4750, 0.4877, 0.8022],
+            ]
+        )
+        y = np.array(
+            [
+                [0.0814, 0.7072, 0.1607],
+                [0.5481, 0.7540, 0.4741],
+                [0.3695, 0.2887, 0.3708],
+            ]
+        )
+
+        axis = -1
+        ax_len = x.shape[axis]
+        nfft = ax_len
+        win1d = signal.windows.tukey(ax_len)
+
+        shape = [1] * x.ndim
+        shape[axis] = ax_len
+        win = win1d.reshape(shape)
+
+        windx = x * win
+        windy = y * win
+
+        expected = rfft(windy, n=nfft, axis=axis) / rfft(
+            windx, n=nfft, axis=axis
+        )
+        result = etfe(x, y)
+        assert np.allclose(result, expected)
+
+    def test_non_sqaure_matrix(self) -> None:
+        x = np.array([[0.0512, 0.5913, 0.4230], [0.7401, 0.4780, 0.3536]])
+        y = np.array([[0.0814, 0.7072, 0.1607], [0.5481, 0.7540, 0.4741]])
+
+        axis = -1
+        ax_len = x.shape[axis]
+        nfft = ax_len
+        win1d = signal.windows.tukey(ax_len)
+
+        shape = [1] * x.ndim
+        shape[axis] = ax_len
+        win = win1d.reshape(shape)
+
+        windx = x * win
+        windy = y * win
+
+        expected = rfft(windy, n=nfft, axis=axis) / rfft(
+            windx, n=nfft, axis=axis
+        )
+        result = etfe(x, y)
+        assert np.allclose(result, expected)
+
+    def test_n_greater_than_xlen(self) -> None:
+        x = np.array([0.0512, 0.5913, 0.4230, 0.7401, 0.4780, 0.3536])
+        y = np.array([0.0814, 0.7072, 0.1607, 0.5481, 0.7540, 0.4741])
+
+        axis = -1
+        ax_len = x.shape[axis]
+        nfft = 8
+        win1d = signal.windows.tukey(ax_len)
+
+        windx = x * win1d
+        windy = y * win1d
+
+        expected = rfft(windy, n=nfft, axis=axis) / rfft(
+            windx, n=nfft, axis=axis
+        )
+        result = etfe(x, y, n=8)
+        assert np.allclose(result, expected)
+
+    def test_n_less_than_xlen(self) -> None:
+        x = np.array([0.0512, 0.5913, 0.4230, 0.7401, 0.4780, 0.3536])
+        y = np.array([0.0814, 0.7072, 0.1607, 0.5481, 0.7540, 0.4741])
+
+        axis = -1
+        ax_len = x.shape[axis]
+        nfft = 5
+        win1d = signal.windows.tukey(ax_len)
+
+        windx = x * win1d
+        windy = y * win1d
+
+        expected = rfft(windy, n=nfft, axis=axis) / rfft(
+            windx, n=nfft, axis=axis
+        )
+        result = etfe(x, y, n=5)
+        assert np.allclose(result, expected)

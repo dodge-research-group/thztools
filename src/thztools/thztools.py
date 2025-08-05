@@ -56,19 +56,19 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import scipy.linalg as la
 from numpy import pi
 from numpy.random import default_rng
-from scipy import signal
 from scipy.fft import irfft, rfft, rfftfreq
-from scipy.linalg import sqrtm
+from scipy.linalg import circulant, sqrtm, svd
 from scipy.optimize import (
     OptimizeResult,
     approx_fprime,
     least_squares,
     minimize,
 )
+from scipy.signal import unit_impulse
 from scipy.signal.windows import __all__ as windowlist
+from scipy.signal.windows import get_window, tukey
 
 if sys.version_info >= (3, 10):
     from typing import Concatenate
@@ -3392,7 +3392,7 @@ def fit(
             fft_jac_bl * _fft_mu, n=n
         )
         if n_a > 0:
-            a_circ = la.circulant(signal.unit_impulse(n_a))
+            a_circ = circulant(unit_impulse(n_a))
             jac_a = np.concatenate(
                 (
                     a_circ[:, :n_below],
@@ -3406,7 +3406,7 @@ def fit(
                 (jac_bl, jac_bl_a), axis=0, dtype=np.float64
             )
         if n_b > 0:
-            b_circ = la.circulant(signal.unit_impulse(n_b) * 1j)
+            b_circ = circulant(unit_impulse(n_b) * 1j)
             if n_a - n_b == 2:  # noqa: PLR2004
                 jac_b = np.concatenate(
                     (
@@ -3456,12 +3456,14 @@ def fit(
         fft_mu_est = rfft(mu_est)
         jac_bl = -(jacobian_bl(p_est[:n_p], fft_mu_est) / sigma_y).T
         impulse_response = apply_frf(
-            function, signal.unit_impulse(n), dt=dt, args=p_est
+            function, unit_impulse(n), dt=dt, args=p_est
         )
-        jac_br = (la.circulant(impulse_response).T / sigma_y).T
+        jac_br = (circulant(impulse_response).T / sigma_y).T
 
         return np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
 
+    # print(type(least_squares))
+    # reveal_type(least_squares)
     result = least_squares(
         lambda _p: _costfuntls(
             function,
@@ -3482,7 +3484,7 @@ def fit(
     )
 
     # Parse output
-    _, s, vt = la.svd(result.jac, full_matrices=False)
+    _, s, vt = svd(result.jac, full_matrices=False)
     threshold = np.finfo(float).eps * max(result.jac.shape) * s[0]
     s = s[s > threshold]
     vt = vt[: s.size]
@@ -3501,8 +3503,8 @@ def fit(
     resnorm = 2 * result.cost
     dof = n - n_p - n_a - n_b
 
-    h_circ = la.circulant(
-        apply_frf(function, signal.unit_impulse(n), dt=dt, args=p_opt_all)
+    h_circ = circulant(
+        apply_frf(function, unit_impulse(n), dt=dt, args=p_opt_all)
     )
     h_delta = apply_frf(function, delta, dt=dt, args=p_opt_all)
     u_x = h_circ @ v_x @ h_circ.T
@@ -3552,7 +3554,7 @@ def etfe(
         Length of the fft. If 'n' is greater than 'len(x)', pad zeroes to length of 'n'.
         If 'n' less than 'len(x)', signal is truncated. if None, uses n equals 'len(x)'.
     window: str or None, optional (will use None if nothing provided)
-        Name of a window function from 'scipi.signal.windows'. If None, applies a Tukey Window.
+        Name of a window function from 'scipy.signal.windows'. If None, applies a Tukey window.
     axis: int or none, optional parameter (will use last value of x array if nothing provided)
         Direction of fourier transform.
     Returns
@@ -3573,16 +3575,14 @@ def etfe(
     nfft = ax_len if n is None else n
 
     if window is None:
-        win1d = signal.windows.tukey(ax_len)
-        # windx = signal.windows.tukey(len(x)) * x
-        # windy = signal.windows.tukey(len(y)) * y
+        win1d = tukey(ax_len)
     elif window not in windowlist:
         wind_out_of_range = (
             "Window parameter only accepts functions in {windowlist}"
         )
         raise ValueError(wind_out_of_range)
     else:
-        win1d = signal.windows.get_window(window, ax_len)
+        win1d = get_window(window, ax_len)
 
     shape = [1] * x.ndim
     shape[axis] = ax_len

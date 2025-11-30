@@ -1182,6 +1182,7 @@ class CommonNLL:
     zeta: NDArray[np.float64]
     dzeta: NDArray[np.float64]
     a: NDArray[np.float64]
+    eta_on_dt: NDArray[np.float64]
     zeta_f: NDArray[np.complex128]
     exp_iweta: NDArray[np.complex128]
 
@@ -1195,6 +1196,7 @@ def _nll_common(
     delta_a_scaled: NDArray[np.float64],
     eta_on_dt_scaled: NDArray[np.float64],
     *,
+    estimate_mu: bool,
     scale_logv_alpha: float,
     scale_logv_beta: float,
     scale_logv_tau: float,
@@ -1209,9 +1211,13 @@ def _nll_common(
     vbeta = np.exp(logv_beta_scaled * scale_logv_beta)
     vtau = np.exp(logv_tau_scaled * scale_logv_tau)
 
-    mu = x[0, :] - delta_mu_scaled * scale_delta_mu
     a = 1.0 + np.insert(delta_a_scaled * scale_delta_a, 0, 0.0)
     eta_on_dt = np.insert(eta_on_dt_scaled * scale_eta_on_dt, 0, 0.0)
+
+    if not estimate_mu:
+        mu = x[0, :] - delta_mu_scaled * scale_delta_mu
+    else:
+        mu = np.sum(scaleshift(x, a=a, eta=-eta_on_dt), axis=0)/np.sum(a**2)
 
     # Compute frequency vector and Fourier coefficients of mu
     f = rfftfreq(n)
@@ -1234,6 +1240,7 @@ def _nll_common(
         zeta=zeta,
         dzeta=dzeta,
         a=a,
+        eta_on_dt=eta_on_dt,
         zeta_f=zeta_f,
         exp_iweta=exp_iweta,
     )
@@ -1248,6 +1255,7 @@ def _nll_noisefit(
     delta_a_scaled: NDArray[np.float64],
     eta_on_dt_scaled: NDArray[np.float64],
     *,
+    estimate_mu: bool,
     scale_logv_alpha: float,
     scale_logv_beta: float,
     scale_logv_tau: float,
@@ -1308,6 +1316,7 @@ def _nll_noisefit(
         delta_mu_scaled=delta_mu_scaled,
         delta_a_scaled=delta_a_scaled,
         eta_on_dt_scaled=eta_on_dt_scaled,
+        estimate_mu=estimate_mu,
         scale_logv_alpha=scale_logv_alpha,
         scale_logv_beta=scale_logv_beta,
         scale_logv_tau=scale_logv_tau,
@@ -1335,6 +1344,7 @@ def _jac_noisefit(
     fix_logv_alpha: bool,
     fix_logv_beta: bool,
     fix_logv_tau: bool,
+    estimate_mu: bool,
     fix_delta_mu: bool,
     fix_delta_a: bool,
     fix_eta: bool,
@@ -1411,6 +1421,7 @@ def _jac_noisefit(
         delta_mu_scaled=delta_mu_scaled,
         delta_a_scaled=delta_a_scaled,
         eta_on_dt_scaled=eta_on_dt_scaled,
+        estimate_mu=estimate_mu,
         scale_logv_alpha=scale_logv_alpha,
         scale_logv_beta=scale_logv_beta,
         scale_logv_tau=scale_logv_tau,
@@ -1419,12 +1430,14 @@ def _jac_noisefit(
         scale_eta_on_dt=scale_eta_on_dt,
         workers=workers,
     )
+
     ressq = common.ressq
     vtot = common.vtot
     zeta = common.zeta
     dzeta = common.dzeta
     zeta_f = common.zeta_f
     a = common.a
+    eta_on_dt = common.eta_on_dt
     exp_iweta = common.exp_iweta
 
     # Compute residuals and their squares for subsequent computations
@@ -1466,7 +1479,16 @@ def _jac_noisefit(
     if fix_delta_a:
         jac_delta_a = []
     else:
-        term = (vtot - valpha) * dvar - reswt * zeta
+        if not estimate_mu:
+            term = (vtot - valpha) * dvar - reswt * zeta
+        else:
+            fac = ((1-2/np.sum(a**2))/np.sum(a**2))
+            dzetada = zeta + fac*(x.T*a**2).T
+            dzetada_f = rfft(dzetada, workers=workers)
+            ddzetada = irfft(1j * w * dzetada_f, n=n, workers=workers)
+            term = (zeta * dzetada * vbeta + dzeta *
+                    ddzetada * vtau) * dvar - reswt * dzetada
+
         dnllda = np.sum(term, axis=1) / a
         # Exclude first term, which is held fixed
         jac_delta_a = dnllda[1:] * scale_delta_a
@@ -1475,11 +1497,32 @@ def _jac_noisefit(
         jac_eta = []
     else:
         ddzeta = irfft(-(w**2) * zeta_f, n=n, workers=workers)
-        dnlldeta = -np.sum(
-            dvar * (zeta * dzeta * valpha + dzeta * ddzeta * vtau)
-            - reswt * dzeta,
-            axis=1,
-        )
+        if not estimate_mu:
+            dnlldeta = -np.sum(
+                dvar * (zeta * dzeta * valpha + dzeta * ddzeta * vtau)
+                - reswt * dzeta,
+                axis=1,
+            )
+        else:
+            x_rev_f = exp_iweta * rfft(x, workers=workers)
+            dx_rev = irfft(1j * w * x_rev_f, n=n, workers=workers)
+            ddx_rev = irfft(-(w**2) * x_rev_f, n=n, workers=workers)
+            dzeta_x_rev = dzeta - scaleshift(dx_rev,
+                                             a=a**2,
+                                             eta=eta_on_dt)/np.sum(a**2)
+            ddzeta_x_rev = ddzeta - scaleshift(ddx_rev,
+                                               a=a**2,
+                                               eta=eta_on_dt)/np.sum(a**2)
+
+            dnlldeta = -np.sum(
+                dvar * (zeta * dzeta_x_rev * valpha +
+                        dzeta * ddzeta_x_rev * vtau)
+                - reswt * dzeta_x_rev,
+                axis=1,
+            )
+        # Exclude first term, which is held fixed
+        jac_eta = dnlldeta[1:] * scale_eta_on_dt
+
         # Exclude first term, which is held fixed
         jac_eta = dnlldeta[1:] * scale_eta_on_dt
 
@@ -1508,6 +1551,7 @@ def _hess_noisefit(
     fix_logv_alpha: bool,
     fix_logv_beta: bool,
     fix_logv_tau: bool,
+    estimate_mu: bool,
     fix_delta_mu: bool,
     fix_delta_a: bool,
     fix_eta: bool,
@@ -1584,6 +1628,7 @@ def _hess_noisefit(
         delta_mu_scaled=delta_mu_scaled,
         delta_a_scaled=delta_a_scaled,
         eta_on_dt_scaled=eta_on_dt_scaled,
+        estimate_mu=estimate_mu,
         scale_logv_alpha=scale_logv_alpha,
         scale_logv_beta=scale_logv_beta,
         scale_logv_tau=scale_logv_tau,
@@ -2056,6 +2101,7 @@ def noisefit(
     fix_sigma_alpha: bool = False,
     fix_sigma_beta: bool = False,
     fix_sigma_tau: bool = False,
+    estimate_mu: bool = False,
     fix_mu: bool = False,
     fix_a: bool = False,
     fix_eta: bool = False,
@@ -2110,6 +2156,7 @@ def noisefit(
         Fix signal amplitude drift vector. Default is False.
     fix_eta : bool, optional
         Fix signal delay drift vector. Default is False.
+
 
     Returns
     -------
@@ -2275,6 +2322,7 @@ def noisefit(
         fix_sigma_alpha=fix_sigma_alpha,
         fix_sigma_beta=fix_sigma_beta,
         fix_sigma_tau=fix_sigma_tau,
+        estimate_mu=estimate_mu,
         fix_mu=fix_mu,
         fix_a=fix_a,
         fix_eta=fix_eta,
@@ -2315,6 +2363,7 @@ def _parse_noisefit_input(
     fix_sigma_alpha: bool,
     fix_sigma_beta: bool,
     fix_sigma_tau: bool,
+    estimate_mu: bool,
     fix_mu: bool,
     fix_a: bool,
     fix_eta: bool,
@@ -2495,7 +2544,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
 
         _eta = eta_scaled0 if fix_eta else _p[: m - 1]
 
@@ -2507,6 +2556,7 @@ def _parse_noisefit_input(
             _delta,
             _epsilon,
             _eta,
+            estimate_mu=estimate_mu,
             scale_logv_alpha=scale_logv_alpha,
             scale_logv_beta=scale_logv_beta,
             scale_logv_tau=scale_logv_tau,
@@ -2542,7 +2592,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
 
         _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
 
@@ -2557,6 +2607,7 @@ def _parse_noisefit_input(
             fix_logv_alpha=fix_sigma_alpha,
             fix_logv_beta=fix_sigma_beta,
             fix_logv_tau=fix_sigma_tau,
+            estimate_mu=estimate_mu,
             fix_delta_mu=fix_mu,
             fix_delta_a=fix_a,
             fix_eta=fix_eta,
@@ -2594,7 +2645,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
 
         _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
 
@@ -2609,6 +2660,7 @@ def _parse_noisefit_input(
             fix_logv_alpha=fix_sigma_alpha,
             fix_logv_beta=fix_sigma_beta,
             fix_logv_tau=fix_sigma_tau,
+            estimate_mu=estimate_mu,
             fix_delta_mu=fix_mu,
             fix_delta_a=fix_a,
             fix_eta=fix_eta,
@@ -2631,6 +2683,7 @@ def _parse_noisefit_input(
         "fix_sigma_alpha": fix_sigma_alpha,
         "fix_sigma_beta": fix_sigma_beta,
         "fix_sigma_tau": fix_sigma_tau,
+        "estimate_mu": estimate_mu,
         "fix_mu": fix_mu,
         "fix_a": fix_a,
         "fix_eta": fix_eta,
@@ -2659,6 +2712,7 @@ def _parse_noisefit_output(
     fix_sigma_alpha: bool,
     fix_sigma_beta: bool,
     fix_sigma_tau: bool,
+    estimate_mu: bool,
     fix_mu: bool,
     fix_a: bool,
     fix_eta: bool,
@@ -2708,7 +2762,7 @@ def _parse_noisefit_output(
         a_out = a0
     else:
         a_out = np.concatenate(([1.0], 1.0 + x_out[: m - 1] * scale_delta_a))
-        x_out = x_out[m - 1 :]
+        x_out = x_out[m - 1:]
 
     if fix_eta:
         eta_out = eta0
@@ -2784,7 +2838,7 @@ def _parse_noisefit_output(
 
     if not fix_a:
         err_a = np.concatenate(([0], err[: m - 1]))
-        err = err[m - 1 :]
+        err = err[m - 1:]
 
     if not fix_eta:
         err_eta = np.concatenate(([0], err[: m - 1]))
@@ -3349,8 +3403,8 @@ def fit(
     def function(
         _w: NDArray[np.float64], /, *_theta: np.float64
     ) -> NDArray[np.complex128]:
-        _a = np.asarray(_theta[n_p : n_p + n_a], dtype=np.float64)
-        _b = np.asarray(_theta[n_p + n_a :], dtype=np.float64)
+        _a = np.asarray(_theta[n_p: n_p + n_a], dtype=np.float64)
+        _b = np.asarray(_theta[n_p + n_a:], dtype=np.float64)
         h_ex = fun_ex(_a, _b)
         h_in = _frfun_local(_w[f_incl_idx], *_theta[:n_p])
         return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
@@ -3413,7 +3467,7 @@ def fit(
                         np.zeros((n_b, 1)),
                         b_circ[:, : n_below - 1],
                         np.zeros((n_b, n_in)),
-                        b_circ[:, n_below - 1 :],
+                        b_circ[:, n_below - 1:],
                         np.zeros((n_b, 1)),
                     ),
                     axis=-1,
@@ -3434,7 +3488,7 @@ def fit(
                             np.zeros((n_b, 1)),
                             b_circ[:, : n_below - 1],
                             np.zeros((n_b, n_in)),
-                            b_circ[:, n_below - 1 :],
+                            b_circ[:, n_below - 1:],
                         ),
                         axis=-1,
                     )
@@ -3450,7 +3504,7 @@ def fit(
 
     def jac_fun(_x: NDArray[np.float64]) -> NDArray[np.float64]:
         p_est = _x[: n_p + n_a + n_b]
-        mu_est = xdata[:] - _x[n_p + n_a + n_b :]
+        mu_est = xdata[:] - _x[n_p + n_a + n_b:]
         jac_tl = np.zeros((n, n_p + n_a + n_b))
         jac_tr = np.diag(1 / sigma_x)
         fft_mu_est = rfft(mu_est)
@@ -3468,7 +3522,7 @@ def fit(
         lambda _p: _costfuntls(
             function,
             _p[: n_p + n_a + n_b],
-            xdata[:] - _p[n_p + n_a + n_b :],
+            xdata[:] - _p[n_p + n_a + n_b:],
             xdata[:],
             ydata[:],
             sigma_x[:],
@@ -3494,10 +3548,10 @@ def fit(
     p_opt = result.x[:n_p]
     p_cov = cov[:n_p, :n_p]
     p_err = np.sqrt(np.diag(p_cov))
-    delta = result.x[n_p + n_a + n_b :]
+    delta = result.x[n_p + n_a + n_b:]
 
     mu_opt = xdata - delta
-    mu_err = np.sqrt(np.diag(cov)[n_p + n_a + n_b :])
+    mu_err = np.sqrt(np.diag(cov)[n_p + n_a + n_b:])
     psi_opt = apply_frf(function, mu_opt, dt=dt, args=p_opt_all)
     epsilon = ydata - psi_opt
     resnorm = 2 * result.cost

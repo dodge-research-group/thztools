@@ -1448,7 +1448,7 @@ def _jac_noisefit(
     if fix_logv_tau:
         jac_logv_tau = []
     else:
-        jac_logv_tau = [0.5 * np.sum(dzeta**2 * dvar) * vbeta * scale_logv_tau]
+        jac_logv_tau = [0.5 * np.sum(dzeta**2 * dvar) * vtau * scale_logv_tau]
 
     if fix_delta_mu:
         jac_delta_mu = []
@@ -1476,7 +1476,7 @@ def _jac_noisefit(
     else:
         ddzeta = irfft(-(w**2) * zeta_f, n=n, workers=workers)
         dnlldeta = -np.sum(
-            dvar * (zeta * dzeta * valpha + dzeta * ddzeta * vtau)
+            dvar * (zeta * dzeta * vbeta + dzeta * ddzeta * vtau)
             - reswt * dzeta,
             axis=1,
         )

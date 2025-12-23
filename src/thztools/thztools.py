@@ -1448,7 +1448,7 @@ def _jac_noisefit(
     if fix_logv_tau:
         jac_logv_tau = []
     else:
-        jac_logv_tau = [0.5 * np.sum(dzeta**2 * dvar) * vbeta * scale_logv_tau]
+        jac_logv_tau = [0.5 * np.sum(dzeta**2 * dvar) * vtau * scale_logv_tau]
 
     if fix_delta_mu:
         jac_delta_mu = []
@@ -1476,7 +1476,7 @@ def _jac_noisefit(
     else:
         ddzeta = irfft(-(w**2) * zeta_f, n=n, workers=workers)
         dnlldeta = -np.sum(
-            dvar * (zeta * dzeta * valpha + dzeta * ddzeta * vtau)
+            dvar * (zeta * dzeta * vbeta + dzeta * ddzeta * vtau)
             - reswt * dzeta,
             axis=1,
         )
@@ -2761,19 +2761,19 @@ def _parse_noisefit_output(
     # Parse error vector
     # Propagate error from log(V) to sigma
     if not fix_sigma_alpha:
-        err_sigma_alpha = err[0]
+        err_sigma_alpha = err[0] * bias_correction
         err = err[1:]
     else:
         err_sigma_alpha = 0.0
 
     if not fix_sigma_beta:
-        err_sigma_beta = err[0]
+        err_sigma_beta = err[0] * bias_correction
         err = err[1:]
     else:
         err_sigma_beta = 0.0
 
     if not fix_sigma_tau:
-        err_sigma_tau = err[0]
+        err_sigma_tau = err[0] * bias_correction
         err = err[1:]
     else:
         err_sigma_tau = 0.0

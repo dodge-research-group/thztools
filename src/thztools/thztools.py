@@ -55,6 +55,7 @@ import warnings
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+import numdifftools as nd
 import numpy as np
 from numpy import pi
 from numpy.random import default_rng
@@ -69,7 +70,6 @@ from scipy.optimize import (
 from scipy.signal import unit_impulse
 from scipy.signal.windows import __all__ as windowlist
 from scipy.signal.windows import get_window, tukey
-import numdifftools as nd
 
 if sys.version_info >= (3, 10):
     from typing import Concatenate
@@ -1223,10 +1223,8 @@ def _nll_common(
     if est_mu:
         scale = np.sum(a**2)
         x_f = rfft(x, workers=workers)
-        mu_f = np.einsum('j,jk,jk->k', a,
-                         exp_iweta, x_f)/scale
-        zeta_f = np.einsum('i,ik,k->ik', a,
-                           np.conj(exp_iweta), mu_f)
+        mu_f = np.einsum("j,jk,jk->k", a, exp_iweta, x_f) / scale
+        zeta_f = np.einsum("i,ik,k->ik", a, np.conj(exp_iweta), mu_f)
     else:
         mu = x[0, :] - delta_mu_scaled * scale_delta_mu
         mu_f = rfft(mu, workers=workers)
@@ -1291,7 +1289,7 @@ def _nll_noisefit(
     eta_on_dt_scaled : ndarray
         Scaled delay deviation vector with shape (m - 1,).
     est_mu : bool
-        Estimate the underlying waveform using a weighted average of the measured waveforms instead of fitting for it when 
+        Estimate the underlying waveform using a weighted average of the measured waveforms instead of fitting for it when
         ``True``.
     scale_logv_alpha, scale_logv_beta,  scale_logv_tau: float
         Scale parameters for log variance parameters.
@@ -1381,7 +1379,7 @@ def _jac_noisefit(
     fix_logv_alpha, fix_logv_beta, fix_logv_tau : bool
         Exclude noise parameter from gradiate calculation when ``True``.
     est_mu : bool
-        Estimate the underlying waveform using a weighted average of the measured waveforms instead of fitting for it when 
+        Estimate the underlying waveform using a weighted average of the measured waveforms instead of fitting for it when
         ``True``.
     fix_delta_mu : bool
         Exclude signal deviation vector from gradiate calculation when
@@ -1482,7 +1480,8 @@ def _jac_noisefit(
             ) - 1j * vtau * w * rfft(dvar * dzeta, workers=workers)
             jac_delta_mu = (
                 -np.sum(
-                    (irfft(exp_iweta * p, n=n, workers=workers).T * a).T, axis=0
+                    (irfft(exp_iweta * p, n=n, workers=workers).T * a).T,
+                    axis=0,
                 )
                 * scale_delta_mu
             )
@@ -1494,21 +1493,24 @@ def _jac_noisefit(
             scale = np.sum(a**2)
             x_f = rfft(x, workers=workers)
             x_back_forth_f = np.einsum(
-                'ik,jk,jk->ijk', np.conj(exp_iweta), exp_iweta, x_f)
-            dzetada_f = np.einsum('ij,jn->ijn', np.diag(1/a), zeta_f) +\
-                (
-                np.einsum('i,ijn->ijn', a, x_back_forth_f) - 2 *
-                np.einsum('j,in->ijn', a, zeta_f)
-            )/scale
+                "ik,jk,jk->ijk", np.conj(exp_iweta), exp_iweta, x_f
+            )
+            dzetada_f = (
+                np.einsum("ij,jn->ijn", np.diag(1 / a), zeta_f)
+                + (
+                    np.einsum("i,ijn->ijn", a, x_back_forth_f)
+                    - 2 * np.einsum("j,in->ijn", a, zeta_f)
+                )
+                / scale
+            )
             dzetada = irfft(dzetada_f, n=n, workers=workers)
             ddzetada = irfft(1j * w * dzetada_f, n=n, workers=workers)
-            term = (np.einsum('ijn,in,in->jn', dzetada, zeta, dvar) *
-                    vbeta +
-                    np.einsum('ijn,in,in->jn', ddzetada, dzeta, dvar) *
-                    vtau) -\
-                np.einsum('ijn,in->jn', dzetada, reswt)
+            term = (
+                np.einsum("ijn,in,in->jn", dzetada, zeta, dvar) * vbeta
+                + np.einsum("ijn,in,in->jn", ddzetada, dzeta, dvar) * vtau
+            ) - np.einsum("ijn,in->jn", dzetada, reswt)
         else:
-            term = np.diag(1/a) @ ((vtot - valpha) * dvar - reswt * zeta)
+            term = np.diag(1 / a) @ ((vtot - valpha) * dvar - reswt * zeta)
         dnllda = np.sum(term, axis=1)
         # Exclude first term, which is held fixed
         jac_delta_a = dnllda[1:] * scale_delta_a
@@ -1520,19 +1522,26 @@ def _jac_noisefit(
             scale = np.sum(a**2)
             x_f = rfft(x, workers=workers)
             x_back_forth_f = np.einsum(
-                'ik,jk,jk->ijk', np.conj(exp_iweta), exp_iweta, x_f)
+                "ik,jk,jk->ijk", np.conj(exp_iweta), exp_iweta, x_f
+            )
 
-            dzetadeta_f = 1j*w*(-np.einsum('ij,jn->ijn', np.identity(m), zeta_f) + np.einsum(
-                'ij,ijn->ijn', np.outer(a, a), x_back_forth_f)/scale)
+            dzetadeta_f = (
+                1j
+                * w
+                * (
+                    -np.einsum("ij,jn->ijn", np.identity(m), zeta_f)
+                    + np.einsum("ij,ijn->ijn", np.outer(a, a), x_back_forth_f)
+                    / scale
+                )
+            )
 
             dzetadeta = irfft(dzetadeta_f, n, workers=workers)
-            ddzetadeta = irfft(1j*w*dzetadeta_f, n, workers=workers)
+            ddzetadeta = irfft(1j * w * dzetadeta_f, n, workers=workers)
 
-            term = (np.einsum('ijn,in,in->jn', dzetadeta, zeta, dvar) *
-                    vbeta +
-                    np.einsum('ijn,in,in->jn', ddzetadeta, dzeta, dvar) *
-                    vtau) -\
-                np.einsum('ijn,in->jn', dzetadeta, reswt)
+            term = (
+                np.einsum("ijn,in,in->jn", dzetadeta, zeta, dvar) * vbeta
+                + np.einsum("ijn,in,in->jn", ddzetadeta, dzeta, dvar) * vtau
+            ) - np.einsum("ijn,in->jn", dzetadeta, reswt)
             dnlldeta = np.sum(term, axis=1)
         else:
             ddzeta = irfft(-(w**2) * zeta_f, n=n, workers=workers)
@@ -1600,7 +1609,7 @@ def _hess_noisefit(
     fix_logv_alpha, fix_logv_beta, fix_logv_tau : bool
         Exclude noise parameter from gradiate calculation when ``True``.
     est_mu : bool
-        Estimate the underlying waveform using a weighted average of the measured waveforms instead of fitting for it when 
+        Estimate the underlying waveform using a weighted average of the measured waveforms instead of fitting for it when
         ``True``.
     fix_delta_mu : bool
         Exclude signal deviation vector from gradiate calculation when
@@ -2420,10 +2429,7 @@ def _parse_noisefit_input(
         msg = "All variables are fixed"
         raise ValueError(msg)
 
-    if (
-        fix_mu
-        and est_mu
-    ):
+    if fix_mu and est_mu:
         msg = "est_mu and fix_mu cannot be used at the same time. est_mu has been disabled."
         warnings.warn(msg, category=UserWarning, stacklevel=3)
         est_mu = False
@@ -2578,7 +2584,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1:]
+            _p = _p[m - 1 :]
 
         _eta = eta_scaled0 if fix_eta else _p[: m - 1]
 
@@ -2629,7 +2635,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1:]
+            _p = _p[m - 1 :]
 
         _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
 
@@ -2682,7 +2688,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1:]
+            _p = _p[m - 1 :]
 
         _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
 
@@ -2802,7 +2808,7 @@ def _parse_noisefit_output(
         a_out = a0
     else:
         a_out = np.concatenate(([1.0], 1.0 + x_out[: m - 1] * scale_delta_a))
-        x_out = x_out[m - 1:]
+        x_out = x_out[m - 1 :]
 
     if fix_eta:
         eta_out = eta0
@@ -2879,7 +2885,7 @@ def _parse_noisefit_output(
 
     if not fix_a:
         err_a = np.concatenate(([0], err[: m - 1]))
-        err = err[m - 1:]
+        err = err[m - 1 :]
 
     if not fix_eta:
         err_eta = np.concatenate(([0], err[: m - 1]))
@@ -2890,44 +2896,52 @@ def _parse_noisefit_output(
         f = rfftfreq(n)
         w = 2 * pi * f
 
-        exp_iweta = np.exp(1j * np.outer(eta_out/dt, w))
+        exp_iweta = np.exp(1j * np.outer(eta_out / dt, w))
         x_f = rfft(x.T)
-        x_back_f = exp_iweta*x_f
+        x_back_f = exp_iweta * x_f
 
-        mu_f = np.einsum('j,jk->k', a_out,
-                         x_back_f)/scale
+        mu_f = np.einsum("j,jk->k", a_out, x_back_f) / scale
 
-        delay_impulse = irfft(rfft(unit_impulse(n)) *
-                              exp_iweta, n, workers=workers)
+        delay_impulse = irfft(
+            rfft(unit_impulse(n)) * exp_iweta, n, workers=workers
+        )
         delay_matrix = circulant(delay_impulse)
 
         var_x = noise_model.noise_var(x.T)
-        var_x_average = np.einsum(
-            'ijk,ik,ikj,i->jk', delay_matrix, var_x, delay_matrix, a_out**2)/scale**2
+        var_x_average = (
+            np.einsum(
+                "ijk,ik,ikj,i->jk", delay_matrix, var_x, delay_matrix, a_out**2
+            )
+            / scale**2
+        )
 
-        dmu_da_f = (x_back_f-2*np.einsum('j,k->jk', a_out, mu_f))/scale
+        dmu_da_f = (x_back_f - 2 * np.einsum("j,k->jk", a_out, mu_f)) / scale
         dmu_da = irfft(dmu_da_f, n, workers=workers)
 
-        dmu_deta_f = np.einsum("j,jk->jk", a_out, 1j*(w/dt)*x_back_f)/scale
+        dmu_deta_f = (
+            np.einsum("j,jk->jk", a_out, 1j * (w / dt) * x_back_f) / scale
+        )
         dmu_deta = irfft(dmu_deta_f, n, workers=workers)
 
         if fix_a and not fix_eta:
-            var_a_eta = dmu_deta[1:].T @\
-                hess_inv[-m+1:, -m+1:] @\
-                dmu_deta[1:]
+            var_a_eta = (
+                dmu_deta[1:].T @ hess_inv[-m + 1 :, -m + 1 :] @ dmu_deta[1:]
+            )
         elif not fix_a and fix_eta:
-            var_a_eta = dmu_da[1:].T @\
-                hess_inv[-m+1:, -m+1:] @\
-                dmu_da[1:]
+            var_a_eta = (
+                dmu_da[1:].T @ hess_inv[-m + 1 :, -m + 1 :] @ dmu_da[1:]
+            )
         elif fix_a and fix_eta:
             var_a_eta = 0
         else:
-            var_a_eta = np.concatenate((dmu_da[1:], dmu_deta[1:])).T @\
-                hess_inv[-2*m+2:, -2*m+2:] @\
-                np.concatenate((dmu_da[1:], dmu_deta[1:]))
+            var_a_eta = (
+                np.concatenate((dmu_da[1:], dmu_deta[1:])).T
+                @ hess_inv[-2 * m + 2 :, -2 * m + 2 :]
+                @ np.concatenate((dmu_da[1:], dmu_deta[1:]))
+            )
 
         mu_out = irfft(mu_f, n, workers=workers)
-        err_mu = np.sqrt(np.diag(var_a_eta+var_x_average))
+        err_mu = np.sqrt(np.diag(var_a_eta + var_x_average))
 
     # Cast fun as a Python float in case it is a NumPy constant
     return NoiseResult(
@@ -3489,8 +3503,8 @@ def fit(
     def function(
         _w: NDArray[np.float64], /, *_theta: np.float64
     ) -> NDArray[np.complex128]:
-        _a = np.asarray(_theta[n_p: n_p + n_a], dtype=np.float64)
-        _b = np.asarray(_theta[n_p + n_a:], dtype=np.float64)
+        _a = np.asarray(_theta[n_p : n_p + n_a], dtype=np.float64)
+        _b = np.asarray(_theta[n_p + n_a :], dtype=np.float64)
         h_ex = fun_ex(_a, _b)
         h_in = _frfun_local(_w[f_incl_idx], *_theta[:n_p])
         return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
@@ -3553,7 +3567,7 @@ def fit(
                         np.zeros((n_b, 1)),
                         b_circ[:, : n_below - 1],
                         np.zeros((n_b, n_in)),
-                        b_circ[:, n_below - 1:],
+                        b_circ[:, n_below - 1 :],
                         np.zeros((n_b, 1)),
                     ),
                     axis=-1,
@@ -3574,7 +3588,7 @@ def fit(
                             np.zeros((n_b, 1)),
                             b_circ[:, : n_below - 1],
                             np.zeros((n_b, n_in)),
-                            b_circ[:, n_below - 1:],
+                            b_circ[:, n_below - 1 :],
                         ),
                         axis=-1,
                     )
@@ -3590,7 +3604,7 @@ def fit(
 
     def jac_fun(_x: NDArray[np.float64]) -> NDArray[np.float64]:
         p_est = _x[: n_p + n_a + n_b]
-        mu_est = xdata[:] - _x[n_p + n_a + n_b:]
+        mu_est = xdata[:] - _x[n_p + n_a + n_b :]
         jac_tl = np.zeros((n, n_p + n_a + n_b))
         jac_tr = np.diag(1 / sigma_x)
         fft_mu_est = rfft(mu_est)
@@ -3608,7 +3622,7 @@ def fit(
         lambda _p: _costfuntls(
             function,
             _p[: n_p + n_a + n_b],
-            xdata[:] - _p[n_p + n_a + n_b:],
+            xdata[:] - _p[n_p + n_a + n_b :],
             xdata[:],
             ydata[:],
             sigma_x[:],
@@ -3634,10 +3648,10 @@ def fit(
     p_opt = result.x[:n_p]
     p_cov = cov[:n_p, :n_p]
     p_err = np.sqrt(np.diag(p_cov))
-    delta = result.x[n_p + n_a + n_b:]
+    delta = result.x[n_p + n_a + n_b :]
 
     mu_opt = xdata - delta
-    mu_err = np.sqrt(np.diag(cov)[n_p + n_a + n_b:])
+    mu_err = np.sqrt(np.diag(cov)[n_p + n_a + n_b :])
     psi_opt = apply_frf(function, mu_opt, dt=dt, args=p_opt_all)
     epsilon = ydata - psi_opt
     resnorm = 2 * result.cost

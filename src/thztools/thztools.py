@@ -1570,6 +1570,7 @@ def _hess_noisefit(
     fix_logv_alpha: bool,
     fix_logv_beta: bool,
     fix_logv_tau: bool,
+    est_mu: bool,
     fix_delta_mu: bool,
     fix_delta_a: bool,
     fix_eta: bool,
@@ -1598,6 +1599,9 @@ def _hess_noisefit(
         Scaled delay deviation vector with shape (m - 1,).
     fix_logv_alpha, fix_logv_beta, fix_logv_tau : bool
         Exclude noise parameter from gradiate calculation when ``True``.
+    est_mu : bool
+        Estimate the underlying waveform using a weighted average of the measured waveforms instead of fitting for it when 
+        ``True``.
     fix_delta_mu : bool
         Exclude signal deviation vector from gradiate calculation when
         ``True``.
@@ -1646,6 +1650,7 @@ def _hess_noisefit(
         delta_mu_scaled=delta_mu_scaled,
         delta_a_scaled=delta_a_scaled,
         eta_on_dt_scaled=eta_on_dt_scaled,
+        est_mu=est_mu,
         scale_logv_alpha=scale_logv_alpha,
         scale_logv_beta=scale_logv_beta,
         scale_logv_tau=scale_logv_tau,

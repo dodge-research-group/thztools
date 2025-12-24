@@ -1460,22 +1460,19 @@ def _jac_noisefit(
     else:
         jac_logv_tau = [0.5 * np.sum(dzeta**2 * dvar) * vtau * scale_logv_tau]
 
-    if fix_delta_mu:
+    if fix_delta_mu or est_mu:
         jac_delta_mu = []
     else:
-        if est_mu:
-            jac_delta_mu = []
-        else:
-            p = rfft(
-                vbeta * dvar * zeta - reswt, workers=workers
-            ) - 1j * vtau * w * rfft(dvar * dzeta, workers=workers)
-            jac_delta_mu = (
-                -np.sum(
-                    (irfft(exp_iweta * p, n=n, workers=workers).T * a).T,
-                    axis=0,
-                )
-                * scale_delta_mu
+        p = rfft(
+            vbeta * dvar * zeta - reswt, workers=workers
+        ) - 1j * vtau * w * rfft(dvar * dzeta, workers=workers)
+        jac_delta_mu = (
+            -np.sum(
+                (irfft(exp_iweta * p, n=n, workers=workers).T * a).T,
+                axis=0,
             )
+            * scale_delta_mu
+        )
 
     if fix_delta_a:
         jac_delta_a = []

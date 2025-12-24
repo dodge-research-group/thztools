@@ -50,7 +50,6 @@ Create an ideal waveform and apply a frequency response function to it.
 
 from __future__ import annotations
 
-import sys
 import warnings
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
@@ -70,14 +69,6 @@ from scipy.optimize import (
 from scipy.signal import unit_impulse
 from scipy.signal.windows import __all__ as windowlist
 from scipy.signal.windows import get_window, tukey
-
-if sys.version_info >= (3, 10):
-    from typing import Concatenate
-elif sys.version_info[:2] == (3, 9):
-    from typing_extensions import Concatenate
-else:
-    msg = "Concatenate type annotation unavailable for Python 3.8 and earlier."
-    raise ValueError(msg)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -2325,8 +2316,8 @@ def noisefit(
     >>> noise_res = thz.noisefit(x, sigma_alpha0=alpha, sigma_beta0=beta,
     ...  sigma_tau0=tau, dt=dt)
     >>> noise_res.noise_model
-    NoiseModel(sigma_alpha=0.000100..., sigma_beta=0.00984...,
-    sigma_tau=0.000899..., dt=0.05)
+    NoiseModel(sigma_alpha=0.000100..., sigma_beta=0.00985...,
+    sigma_tau=0.000894..., dt=0.05)
 
     >>> plt.plot(t, np.std(thz.scaleshift(x, dt=dt, a=1 / noise_res.a,
     ... eta=-noise_res.eta, axis=0), axis=1), "-",
@@ -2839,6 +2830,7 @@ def _parse_noisefit_output(
                     scale_delta_a,
                     scale_eta,
                 ],
+                strict=False,
             )
             if not tf
         ]

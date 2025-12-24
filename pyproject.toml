@@ -10,7 +10,7 @@ Data analysis software tools for terahertz time-domain spectroscopy (THz-TDS)
 """
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = ["terahertz", "THz", "time-domain spectroscopy", "data analysis"]
 authors = [
     { name="Jonathan Posada Loaiza", email="jonathan.posada1@udea.edu.co" },
@@ -28,11 +28,11 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
   	"Programming Language :: Python",
-  	"Programming Language :: Python :: 3.9",
   	"Programming Language :: Python :: 3.10",
   	"Programming Language :: Python :: 3.11",
   	"Programming Language :: Python :: 3.12",
   	"Programming Language :: Python :: 3.13",
+  	"Programming Language :: Python :: 3.14",
   	"Programming Language :: Python :: Implementation :: CPython",
   	"Programming Language :: Python :: Implementation :: PyPy",
     "Operating System :: OS Independent",
@@ -87,7 +87,7 @@ make-logo = [
 ]
 
 [[tool.hatch.envs.all.matrix]]
-python = ["3.9", "3.10", "3.11", "3.12", "3.13", ]
+python = ["3.10", "3.11", "3.12", "3.13", "3.14", ]
 
 [tool.ruff]
 line-length = 79

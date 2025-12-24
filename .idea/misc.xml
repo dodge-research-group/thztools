@@ -3,7 +3,7 @@
   <component name="Black">
     <option name="sdkName" value="thztools" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.13 (thztools)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Hatch (thztools) [Python 3.12.12]" project-jdk-type="Python SDK" />
   <component name="PythonCompatibilityInspectionAdvertiser">
     <option name="version" value="3" />
   </component>

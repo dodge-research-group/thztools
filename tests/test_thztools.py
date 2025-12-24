@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -12,16 +11,9 @@ from scipy.fft import rfft
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from typing import Concatenate
 
     from numpy.typing import ArrayLike, NDArray
-
-if sys.version_info >= (3, 10):
-    from typing import Concatenate
-elif sys.version_info[:2] == (3, 9):
-    from typing_extensions import Concatenate
-else:
-    msg = "Concatenate type annotation unavailable for Python 3.8 and earlier."
-    raise ValueError(msg)
 
 import thztools
 from thztools.thztools import (
@@ -1469,7 +1461,7 @@ class TestETFE:
         result = etfe(x, y)
         assert np.allclose(result, expected)
 
-    def test_RuntTimeWarning(
+    def test_run_time_warning(
         self,
     ) -> None:  # checks if there's a divide by zero
         x = np.array([1, -1, 1, -1])
@@ -1478,13 +1470,16 @@ class TestETFE:
         with pytest.warns(RuntimeWarning):
             etfe(x, y)
 
-    def test_ValueError(
+    def test_value_error(
         self,
     ) -> None:  # checks if x and y arrays have same length
         x = np.array([0.0512, 0.5913, 0.4230])
         y = np.array([0.0814, 0.7072, 0.1607, 0.5481])
 
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError,
+            match="operands could not be broadcast together with shapes .*",
+        ):
             etfe(x, y)
 
     def test_sqaure_matrix(

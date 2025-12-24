@@ -2575,7 +2575,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
 
         _eta = eta_scaled0 if fix_eta else _p[: m - 1]
 
@@ -2626,7 +2626,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
 
         _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
 
@@ -2679,7 +2679,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
 
         _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
 
@@ -2694,6 +2694,7 @@ def _parse_noisefit_input(
             fix_logv_alpha=fix_sigma_alpha,
             fix_logv_beta=fix_sigma_beta,
             fix_logv_tau=fix_sigma_tau,
+            est_mu=est_mu,
             fix_delta_mu=fix_mu,
             fix_delta_a=fix_a,
             fix_eta=fix_eta,
@@ -2799,7 +2800,7 @@ def _parse_noisefit_output(
         a_out = a0
     else:
         a_out = np.concatenate(([1.0], 1.0 + x_out[: m - 1] * scale_delta_a))
-        x_out = x_out[m - 1 :]
+        x_out = x_out[m - 1:]
 
     if fix_eta:
         eta_out = eta0
@@ -2877,7 +2878,7 @@ def _parse_noisefit_output(
 
     if not fix_a:
         err_a = np.concatenate(([0], err[: m - 1]))
-        err = err[m - 1 :]
+        err = err[m - 1:]
 
     if not fix_eta:
         err_eta = np.concatenate(([0], err[: m - 1]))
@@ -2917,18 +2918,18 @@ def _parse_noisefit_output(
 
         if fix_a and not fix_eta:
             var_a_eta = (
-                dmu_deta[1:].T @ hess_inv[-m + 1 :, -m + 1 :] @ dmu_deta[1:]
+                dmu_deta[1:].T @ hess_inv[-m + 1:, -m + 1:] @ dmu_deta[1:]
             )
         elif not fix_a and fix_eta:
             var_a_eta = (
-                dmu_da[1:].T @ hess_inv[-m + 1 :, -m + 1 :] @ dmu_da[1:]
+                dmu_da[1:].T @ hess_inv[-m + 1:, -m + 1:] @ dmu_da[1:]
             )
         elif fix_a and fix_eta:
             var_a_eta = 0
         else:
             var_a_eta = (
                 np.concatenate((dmu_da[1:], dmu_deta[1:])).T
-                @ hess_inv[-2 * m + 2 :, -2 * m + 2 :]
+                @ hess_inv[-2 * m + 2:, -2 * m + 2:]
                 @ np.concatenate((dmu_da[1:], dmu_deta[1:]))
             )
 
@@ -3495,8 +3496,8 @@ def fit(
     def function(
         _w: NDArray[np.float64], /, *_theta: np.float64
     ) -> NDArray[np.complex128]:
-        _a = np.asarray(_theta[n_p : n_p + n_a], dtype=np.float64)
-        _b = np.asarray(_theta[n_p + n_a :], dtype=np.float64)
+        _a = np.asarray(_theta[n_p: n_p + n_a], dtype=np.float64)
+        _b = np.asarray(_theta[n_p + n_a:], dtype=np.float64)
         h_ex = fun_ex(_a, _b)
         h_in = _frfun_local(_w[f_incl_idx], *_theta[:n_p])
         return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
@@ -3559,7 +3560,7 @@ def fit(
                         np.zeros((n_b, 1)),
                         b_circ[:, : n_below - 1],
                         np.zeros((n_b, n_in)),
-                        b_circ[:, n_below - 1 :],
+                        b_circ[:, n_below - 1:],
                         np.zeros((n_b, 1)),
                     ),
                     axis=-1,
@@ -3580,7 +3581,7 @@ def fit(
                             np.zeros((n_b, 1)),
                             b_circ[:, : n_below - 1],
                             np.zeros((n_b, n_in)),
-                            b_circ[:, n_below - 1 :],
+                            b_circ[:, n_below - 1:],
                         ),
                         axis=-1,
                     )
@@ -3596,7 +3597,7 @@ def fit(
 
     def jac_fun(_x: NDArray[np.float64]) -> NDArray[np.float64]:
         p_est = _x[: n_p + n_a + n_b]
-        mu_est = xdata[:] - _x[n_p + n_a + n_b :]
+        mu_est = xdata[:] - _x[n_p + n_a + n_b:]
         jac_tl = np.zeros((n, n_p + n_a + n_b))
         jac_tr = np.diag(1 / sigma_x)
         fft_mu_est = rfft(mu_est)
@@ -3614,7 +3615,7 @@ def fit(
         lambda _p: _costfuntls(
             function,
             _p[: n_p + n_a + n_b],
-            xdata[:] - _p[n_p + n_a + n_b :],
+            xdata[:] - _p[n_p + n_a + n_b:],
             xdata[:],
             ydata[:],
             sigma_x[:],
@@ -3640,10 +3641,10 @@ def fit(
     p_opt = result.x[:n_p]
     p_cov = cov[:n_p, :n_p]
     p_err = np.sqrt(np.diag(p_cov))
-    delta = result.x[n_p + n_a + n_b :]
+    delta = result.x[n_p + n_a + n_b:]
 
     mu_opt = xdata - delta
-    mu_err = np.sqrt(np.diag(cov)[n_p + n_a + n_b :])
+    mu_err = np.sqrt(np.diag(cov)[n_p + n_a + n_b:])
     psi_opt = apply_frf(function, mu_opt, dt=dt, args=p_opt_all)
     epsilon = ydata - psi_opt
     resnorm = 2 * result.cost

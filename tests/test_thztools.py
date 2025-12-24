@@ -523,6 +523,7 @@ class TestJacNoiseFit:
         fix_logv_alpha: bool,
         fix_logv_beta: bool,
         fix_logv_tau: bool,
+        est_mu: bool,
         fix_delta_mu: bool,
         fix_delta_a: bool,
         fix_eta: bool,
@@ -563,6 +564,7 @@ class TestJacNoiseFit:
             fix_logv_alpha=fix_logv_alpha,
             fix_logv_beta=fix_logv_beta,
             fix_logv_tau=fix_logv_tau,
+            est_mu=est_mu,
             fix_delta_mu=fix_delta_mu,
             fix_delta_a=fix_delta_a,
             fix_eta=fix_eta,
@@ -630,6 +632,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=False,
             fix_logv_beta=False,
             fix_logv_tau=False,
+            est_mu=False,
             fix_delta_mu=True,
             fix_delta_a=True,
             fix_eta=True,
@@ -680,6 +683,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=False,
             fix_logv_beta=False,
             fix_logv_tau=False,
+            est_mu=False,
             fix_delta_mu=False,
             fix_delta_a=True,
             fix_eta=True,
@@ -711,6 +715,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=False,
             fix_logv_beta=False,
             fix_logv_tau=False,
+            est_mu=True,
             fix_delta_mu=True,
             fix_delta_a=False,
             fix_eta=True,
@@ -744,6 +749,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=False,
             fix_logv_beta=False,
             fix_logv_tau=False,
+            est_mu=False,
             fix_delta_mu=True,
             fix_delta_a=True,
             fix_eta=False,
@@ -800,6 +806,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=True,
             fix_logv_beta=True,
             fix_logv_tau=True,
+            est_mu=False,
             fix_delta_mu=False,
             fix_delta_a=True,
             fix_eta=True,
@@ -833,6 +840,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=True,
             fix_logv_beta=True,
             fix_logv_tau=True,
+            est_mu=False,
             fix_delta_mu=False,
             fix_delta_a=False,
             fix_eta=True,
@@ -866,6 +874,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=True,
             fix_logv_beta=True,
             fix_logv_tau=True,
+            est_mu=False,
             fix_delta_mu=False,
             fix_delta_a=True,
             fix_eta=False,
@@ -893,6 +902,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=True,
             fix_logv_beta=True,
             fix_logv_tau=True,
+            est_mu=False,
             fix_delta_mu=True,
             fix_delta_a=False,
             fix_eta=True,
@@ -921,6 +931,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=True,
             fix_logv_beta=True,
             fix_logv_tau=True,
+            est_mu=False,
             fix_delta_mu=True,
             fix_delta_a=False,
             fix_eta=False,
@@ -931,7 +942,7 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=scale_eta_on_dt,
             workers=self.workers,
-        )[: m - 1, m - 1 :]
+        )[: m - 1, m - 1:]
         assert_allclose(hess_a_eta, desired_hess_a_eta, atol=eps, rtol=rtol)
 
     def test_hess_eta_eta(self) -> None:
@@ -948,6 +959,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=True,
             fix_logv_beta=True,
             fix_logv_tau=True,
+            est_mu=False,
             fix_delta_mu=True,
             fix_delta_a=True,
             fix_eta=False,
@@ -985,13 +997,14 @@ class TestNoiseFit:
 
     @pytest.mark.parametrize(
         "x, mu0, a0, eta0, fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, "
-        "fix_mu, fix_a, fix_eta, pattern",
+        "est_mu, fix_mu, fix_a, fix_eta, pattern",
         [
             (
                 x[:, 0],
                 mu,
                 a,
                 eta,
+                False,
                 False,
                 False,
                 False,
@@ -1011,6 +1024,7 @@ class TestNoiseFit:
                 False,
                 False,
                 False,
+                False,
                 "Size of mu0 is incompatible with data array x",
             ),
             (
@@ -1018,6 +1032,7 @@ class TestNoiseFit:
                 mu,
                 [],
                 eta,
+                False,
                 False,
                 False,
                 False,
@@ -1037,6 +1052,7 @@ class TestNoiseFit:
                 False,
                 False,
                 False,
+                False,
                 "Size of eta0 is incompatible with data array x",
             ),
             (
@@ -1047,6 +1063,7 @@ class TestNoiseFit:
                 True,
                 True,
                 True,
+                False,
                 True,
                 True,
                 True,
@@ -1064,6 +1081,7 @@ class TestNoiseFit:
         fix_sigma_alpha: bool,
         fix_sigma_beta: bool,
         fix_sigma_tau: bool,
+        est_mu: bool,
         fix_mu: bool,
         fix_a: bool,
         fix_eta: bool,
@@ -1088,6 +1106,7 @@ class TestNoiseFit:
                 fix_sigma_alpha=fix_sigma_alpha,
                 fix_sigma_beta=fix_sigma_beta,
                 fix_sigma_tau=fix_sigma_tau,
+                est_mu=est_mu,
                 fix_mu=fix_mu,
                 fix_a=fix_a,
                 fix_eta=fix_eta,
@@ -1143,6 +1162,7 @@ class TestNoiseFit:
             fix_sigma_alpha=False,
             fix_sigma_beta=False,
             fix_sigma_tau=False,
+            est_mu=False,
             fix_mu=False,
             fix_a=False,
             fix_eta=False,
@@ -1156,16 +1176,16 @@ class TestNoiseFit:
         )
 
     @pytest.mark.parametrize(
-        "fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, fix_mu, fix_a, "
+        "fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, est_mu, fix_mu, fix_a, "
         "fix_eta",
         [
-            (False, False, False, False, False, False),
-            (True, False, False, False, False, False),
-            (False, True, False, False, False, False),
-            (False, False, True, False, False, False),
-            (False, False, False, True, False, False),
-            (False, False, False, False, True, False),
-            (False, False, False, False, False, True),
+            (False, False, False, False, False, False, False),
+            (True, False, False, False, False, False, False),
+            (False, True, False, False, False, False, False),
+            (False, False, True, False, False, False, False),
+            (False, False, False, False, True, False, False),
+            (False, False, False, False, False, True, False),
+            (False, False, False, False, False, False, True),
         ],
     )
     def test_noisefit(
@@ -1174,6 +1194,7 @@ class TestNoiseFit:
         fix_sigma_alpha: bool,
         fix_sigma_beta: bool,
         fix_sigma_tau: bool,
+        est_mu: bool,
         fix_mu: bool,
         fix_a: bool,
         fix_eta: bool,
@@ -1198,6 +1219,7 @@ class TestNoiseFit:
             fix_sigma_alpha=fix_sigma_alpha,
             fix_sigma_beta=fix_sigma_beta,
             fix_sigma_tau=fix_sigma_tau,
+            est_mu=est_mu,
             fix_mu=fix_mu,
             fix_a=fix_a,
             fix_eta=fix_eta,

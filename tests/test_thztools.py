@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 if sys.version_info >= (3, 10):
     from typing import Concatenate
 elif sys.version_info[:2] == (3, 9):
-    from typing_extensions import Concatenate
+    from typing import Concatenate
 else:
     msg = "Concatenate type annotation unavailable for Python 3.8 and earlier."
     raise ValueError(msg)

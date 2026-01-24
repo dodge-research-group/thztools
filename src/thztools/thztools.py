@@ -2724,7 +2724,6 @@ def _parse_noisefit_input(
         "scale_eta": scale_eta,
         "workers": workers,
         "jac": jac,
-        "hess": hess,
     }
     return objective, jac, x0, input_parsed
 

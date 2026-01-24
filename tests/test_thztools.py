@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -12,16 +11,9 @@ from scipy.fft import rfft
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from typing import Concatenate
 
     from numpy.typing import ArrayLike, NDArray
-
-if sys.version_info >= (3, 10):
-    from typing import Concatenate
-elif sys.version_info[:2] == (3, 9):
-    from typing_extensions import Concatenate
-else:
-    msg = "Concatenate type annotation unavailable for Python 3.8 and earlier."
-    raise ValueError(msg)
 
 import thztools
 from thztools.thztools import (
@@ -531,6 +523,7 @@ class TestJacNoiseFit:
         fix_logv_alpha: bool,
         fix_logv_beta: bool,
         fix_logv_tau: bool,
+        est_mu: bool,
         fix_delta_mu: bool,
         fix_delta_a: bool,
         fix_eta: bool,
@@ -571,6 +564,7 @@ class TestJacNoiseFit:
             fix_logv_alpha=fix_logv_alpha,
             fix_logv_beta=fix_logv_beta,
             fix_logv_tau=fix_logv_tau,
+            est_mu=est_mu,
             fix_delta_mu=fix_delta_mu,
             fix_delta_a=fix_delta_a,
             fix_eta=fix_eta,
@@ -638,6 +632,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=False,
             fix_logv_beta=False,
             fix_logv_tau=False,
+            est_mu=False,
             fix_delta_mu=True,
             fix_delta_a=True,
             fix_eta=True,
@@ -688,6 +683,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=False,
             fix_logv_beta=False,
             fix_logv_tau=False,
+            est_mu=False,
             fix_delta_mu=False,
             fix_delta_a=True,
             fix_eta=True,
@@ -719,6 +715,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=False,
             fix_logv_beta=False,
             fix_logv_tau=False,
+            est_mu=True,
             fix_delta_mu=True,
             fix_delta_a=False,
             fix_eta=True,
@@ -752,6 +749,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=False,
             fix_logv_beta=False,
             fix_logv_tau=False,
+            est_mu=False,
             fix_delta_mu=True,
             fix_delta_a=True,
             fix_eta=False,
@@ -808,6 +806,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=True,
             fix_logv_beta=True,
             fix_logv_tau=True,
+            est_mu=False,
             fix_delta_mu=False,
             fix_delta_a=True,
             fix_eta=True,
@@ -841,6 +840,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=True,
             fix_logv_beta=True,
             fix_logv_tau=True,
+            est_mu=False,
             fix_delta_mu=False,
             fix_delta_a=False,
             fix_eta=True,
@@ -874,6 +874,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=True,
             fix_logv_beta=True,
             fix_logv_tau=True,
+            est_mu=False,
             fix_delta_mu=False,
             fix_delta_a=True,
             fix_eta=False,
@@ -901,6 +902,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=True,
             fix_logv_beta=True,
             fix_logv_tau=True,
+            est_mu=False,
             fix_delta_mu=True,
             fix_delta_a=False,
             fix_eta=True,
@@ -929,6 +931,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=True,
             fix_logv_beta=True,
             fix_logv_tau=True,
+            est_mu=False,
             fix_delta_mu=True,
             fix_delta_a=False,
             fix_eta=False,
@@ -956,6 +959,7 @@ class TestHessNoiseFit:
             fix_logv_alpha=True,
             fix_logv_beta=True,
             fix_logv_tau=True,
+            est_mu=False,
             fix_delta_mu=True,
             fix_delta_a=True,
             fix_eta=False,
@@ -993,13 +997,14 @@ class TestNoiseFit:
 
     @pytest.mark.parametrize(
         "x, mu0, a0, eta0, fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, "
-        "fix_mu, fix_a, fix_eta, pattern",
+        "est_mu, fix_mu, fix_a, fix_eta, pattern",
         [
             (
                 x[:, 0],
                 mu,
                 a,
                 eta,
+                False,
                 False,
                 False,
                 False,
@@ -1019,6 +1024,7 @@ class TestNoiseFit:
                 False,
                 False,
                 False,
+                False,
                 "Size of mu0 is incompatible with data array x",
             ),
             (
@@ -1026,6 +1032,7 @@ class TestNoiseFit:
                 mu,
                 [],
                 eta,
+                False,
                 False,
                 False,
                 False,
@@ -1045,6 +1052,7 @@ class TestNoiseFit:
                 False,
                 False,
                 False,
+                False,
                 "Size of eta0 is incompatible with data array x",
             ),
             (
@@ -1055,6 +1063,7 @@ class TestNoiseFit:
                 True,
                 True,
                 True,
+                False,
                 True,
                 True,
                 True,
@@ -1072,6 +1081,7 @@ class TestNoiseFit:
         fix_sigma_alpha: bool,
         fix_sigma_beta: bool,
         fix_sigma_tau: bool,
+        est_mu: bool,
         fix_mu: bool,
         fix_a: bool,
         fix_eta: bool,
@@ -1096,6 +1106,7 @@ class TestNoiseFit:
                 fix_sigma_alpha=fix_sigma_alpha,
                 fix_sigma_beta=fix_sigma_beta,
                 fix_sigma_tau=fix_sigma_tau,
+                est_mu=est_mu,
                 fix_mu=fix_mu,
                 fix_a=fix_a,
                 fix_eta=fix_eta,
@@ -1151,6 +1162,7 @@ class TestNoiseFit:
             fix_sigma_alpha=False,
             fix_sigma_beta=False,
             fix_sigma_tau=False,
+            est_mu=False,
             fix_mu=False,
             fix_a=False,
             fix_eta=False,
@@ -1164,16 +1176,16 @@ class TestNoiseFit:
         )
 
     @pytest.mark.parametrize(
-        "fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, fix_mu, fix_a, "
+        "fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, est_mu, fix_mu, fix_a, "
         "fix_eta",
         [
-            (False, False, False, False, False, False),
-            (True, False, False, False, False, False),
-            (False, True, False, False, False, False),
-            (False, False, True, False, False, False),
-            (False, False, False, True, False, False),
-            (False, False, False, False, True, False),
-            (False, False, False, False, False, True),
+            (False, False, False, False, False, False, False),
+            (True, False, False, False, False, False, False),
+            (False, True, False, False, False, False, False),
+            (False, False, True, False, False, False, False),
+            (False, False, False, False, True, False, False),
+            (False, False, False, False, False, True, False),
+            (False, False, False, False, False, False, True),
         ],
     )
     def test_noisefit(
@@ -1182,6 +1194,7 @@ class TestNoiseFit:
         fix_sigma_alpha: bool,
         fix_sigma_beta: bool,
         fix_sigma_tau: bool,
+        est_mu: bool,
         fix_mu: bool,
         fix_a: bool,
         fix_eta: bool,
@@ -1206,6 +1219,7 @@ class TestNoiseFit:
             fix_sigma_alpha=fix_sigma_alpha,
             fix_sigma_beta=fix_sigma_beta,
             fix_sigma_tau=fix_sigma_tau,
+            est_mu=est_mu,
             fix_mu=fix_mu,
             fix_a=fix_a,
             fix_eta=fix_eta,
@@ -1469,7 +1483,7 @@ class TestETFE:
         result = etfe(x, y)
         assert np.allclose(result, expected)
 
-    def test_RuntTimeWarning(
+    def test_run_time_warning(
         self,
     ) -> None:  # checks if there's a divide by zero
         x = np.array([1, -1, 1, -1])
@@ -1478,13 +1492,16 @@ class TestETFE:
         with pytest.warns(RuntimeWarning):
             etfe(x, y)
 
-    def test_ValueError(
+    def test_value_error(
         self,
     ) -> None:  # checks if x and y arrays have same length
         x = np.array([0.0512, 0.5913, 0.4230])
         y = np.array([0.0814, 0.7072, 0.1607, 0.5481])
 
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError,
+            match="operands could not be broadcast together with shapes .*",
+        ):
             etfe(x, y)
 
     def test_sqaure_matrix(

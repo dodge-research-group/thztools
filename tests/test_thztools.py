@@ -479,13 +479,25 @@ class TestJacNoiseFit:
         ],
     )
     @pytest.mark.parametrize(
-        "fix_delta_mu, desired_gradnll_delta_mu",
+        "est_mu, fix_delta_mu, desired_gradnll_delta_mu",
         [
             (
+                True,
                 True,
                 np.array([]),
             ),
             (
+                True,
+                False,
+                np.array([]),
+            ),
+            (
+                False,
+                True,
+                np.array([]),
+            ),
+            (
+                False,
                 False,
                 np.zeros(n),
             ),

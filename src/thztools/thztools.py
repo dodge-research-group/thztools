@@ -2562,12 +2562,11 @@ def _parse_noisefit_input(
             _p = _p[1:]
         if fix_mu:
             _delta = delta0
+        elif est_mu:
+            _delta = []
         else:
-            if est_mu:
-                _delta = []
-            else:
-                _delta = _p[:n]
-                _p = _p[n:]
+            _delta = _p[:n]
+            _p = _p[n:]
         if fix_a:
             _epsilon = epsilon0
         else:
@@ -2613,12 +2612,11 @@ def _parse_noisefit_input(
             _p = _p[1:]
         if fix_mu:
             _delta = delta0
+        elif est_mu:
+            _delta = []
         else:
-            if est_mu:
-                _delta = []
-            else:
-                _delta = _p[:n]
-                _p = _p[n:]
+            _delta = _p[:n]
+            _p = _p[n:]
         if fix_a:
             _epsilon = epsilon0
         else:
@@ -2757,7 +2755,6 @@ def _parse_noisefit_output(
     scale_eta: NDArray[np.float64],
     workers: int,
     jac: Callable[[NDArray[np.float64]], NDArray[np.float64]],
-    hess: Callable[[NDArray[np.float64]], NDArray[np.float64]],
 ) -> NoiseResult:
     """Parse noisefit output"""
     # Parse output

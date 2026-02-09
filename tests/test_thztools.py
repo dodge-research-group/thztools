@@ -954,7 +954,7 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=scale_eta_on_dt,
             workers=self.workers,
-        )[: m - 1, m - 1 :]
+        )[: m - 1, m - 1:]
         assert_allclose(hess_a_eta, desired_hess_a_eta, atol=eps, rtol=rtol)
 
     def test_hess_eta_eta(self) -> None:
@@ -991,16 +991,16 @@ class TestHessNoiseFit:
 class TestNoiseFit:
     rng = np.random.default_rng(0)
     n = 256
-    m = 64
+    m = 16
     dt = 0.05
     t = np.arange(n) * dt
     mu = wave(n, dt=dt, t0=n * dt / 3)
-    alpha, beta, tau = 1e-5, 1e-3, 1e-3
+    alpha, beta, tau = 1e-5, 1e-3, 1e-4
     sigma = np.array([alpha, beta, tau])
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
     noise = noise_model.noise_sim(np.ones((m, 1)) * mu, seed=0)
     noise_amp = noise_model.noise_amp(mu)
-    x = np.array(mu + noise)
+    x = np.atleast_2d(np.array(mu + noise))
     a = np.ones(m)
     eta = np.zeros(m)
     scale_delta_a = 1e-2 * np.ones(m - 1)
@@ -1131,6 +1131,78 @@ class TestNoiseFit:
                 workers=self.workers,
             )
 
+    @pytest.mark.parametrize(
+        "x, mu0, a0, eta0, fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, "
+        "est_mu, fix_mu, fix_a, fix_eta, pattern",
+        [
+            (
+                x,
+                mu,
+                a,
+                eta,
+                False,
+                False,
+                False,
+                True,
+                True,
+                False,
+                False,
+                "est_mu and fix_mu cannot be used at the same time. est_mu has been disabled.",
+            )
+        ],
+    )
+    def test_est_mu_and_fix_mu_warns_and_disables(
+        self,
+        x: NDArray[np.float64],
+        mu0: NDArray[np.float64],
+        a0: NDArray[np.float64],
+        eta0: NDArray[np.float64],
+        *,
+        fix_sigma_alpha: bool,
+        fix_sigma_beta: bool,
+        fix_sigma_tau: bool,
+        est_mu: bool,
+        fix_mu: bool,
+        fix_a: bool,
+        fix_eta: bool,
+        pattern: str,
+    ) -> None:
+        m = self.m
+        n = self.n
+        dt = self.dt
+        sigma_alpha0 = self.alpha
+        sigma_beta0 = self.beta
+        sigma_tau0 = self.tau
+        with pytest.warns(
+            UserWarning,
+            match=pattern,
+        ):
+            _, _, _, input_parsed = _parse_noisefit_input(
+                x.T,
+                dt=dt,
+                sigma_alpha0=sigma_alpha0,
+                sigma_beta0=sigma_beta0,
+                sigma_tau0=sigma_tau0,
+                mu0=mu0,
+                a0=a0,
+                eta0=eta0,
+                fix_sigma_alpha=fix_sigma_alpha,
+                fix_sigma_beta=fix_sigma_beta,
+                fix_sigma_tau=fix_sigma_tau,
+                est_mu=est_mu,
+                fix_mu=fix_mu,
+                fix_a=fix_a,
+                fix_eta=fix_eta,
+                scale_logv_alpha=1.0,
+                scale_logv_beta=1.0,
+                scale_logv_tau=1.0,
+                scale_delta_mu=np.ones(n),
+                scale_delta_a=np.ones(m - 1),
+                scale_eta=np.ones(m - 1),
+                workers=self.workers,
+            )
+            assert input_parsed["est_mu"] is False
+
     @pytest.mark.parametrize("sigma_alpha0", [None, alpha, 0.0])
     @pytest.mark.parametrize("sigma_beta0", [None, beta, 0.0])
     @pytest.mark.parametrize("sigma_tau0", [None, tau, 0.0])
@@ -1188,13 +1260,16 @@ class TestNoiseFit:
         )
 
     @pytest.mark.parametrize(
-        "fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, est_mu, fix_mu, fix_a, "
-        "fix_eta",
+        "fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, est_mu, fix_mu, fix_a, fix_eta",
         [
             (False, False, False, False, False, False, False),
             (True, False, False, False, False, False, False),
             (False, True, False, False, False, False, False),
             (False, False, True, False, False, False, False),
+            (False, False, False, True, False, False, False),
+            (False, False, False, True, False, True, False),
+            (False, False, False, True, False, False, True),
+            (False, False, False, True, False, True, True),
             (False, False, False, False, True, False, False),
             (False, False, False, False, False, True, False),
             (False, False, False, False, False, False, True),

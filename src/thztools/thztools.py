@@ -1402,6 +1402,40 @@ def _jac_noisefit(
     gradnll_scaled : ndarray
         Gradient of the negative log-likelihood function with respect to
         the free parameters.
+
+    Examples
+    --------   
+    >>> import numpy as np
+    >>> import thztools as thz
+    >>> from matplotlib import pyplot as plt
+
+    >>> rng = np.random.default_rng(0)
+    >>> n, m, dt = 256, 50, 0.05
+    >>> t = thz.timebase(n, dt=dt)
+    >>> mu = thz.wave(n, dt=dt)
+    >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
+
+    >>> noise_model = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta, sigma_tau=tau, dt=dt)
+
+    >>> a = 1.0 + 1e-2 * np.concatenate(([0.0],rng.standard_normal(m - 1)))
+    >>> eta = 1e-3 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
+    >>> z = thz.scaleshift(np.repeat(np.atleast_2d(mu), m, axis=0), dt=dt, a=a, eta=eta).T  # Orient the array columnwise
+    >>> x = z + noise_model.noise_sim(z, axis=0, seed=12345)
+
+    >>> noise_res_fit = thz.noisefit(x, sigma_alpha0=alpha, sigma_beta0=beta, sigma_tau0=tau, dt=dt, est_mu=False)
+    >>> noise_res_mean = thz.noisefit(x, sigma_alpha0=alpha, sigma_beta0=beta, sigma_tau0=tau, dt=dt, est_mu=True)
+
+    >>> noise_res_fit.noise_model
+    >>> plt.plot(t, np.std(thz.scaleshift(x, a=1 / noise_res_fit.a, eta=-noise_res_fit.eta, axis=0), axis=1), "-", label="Data")
+    >>> plt.plot(t, noise_res_fit.noise_model.noise_amp(noise_res_fit.mu), "--", label=r"Model Fit")
+
+    >>> noise_res_mean.noise_model
+    >>> plt.plot(t, noise_res_mean.noise_model.noise_amp(noise_res_mean.mu), "--", label=r"$\bar{\mu}$ Fit")
+    >>> plt.legend()
+    >>> plt.xlabel("t (ps)")
+    >>> plt.ylabel(r"$\sigma(t)$")
+    >>> plt.show()
+
     """
     m, n = x.shape
 

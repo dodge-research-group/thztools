@@ -64,7 +64,7 @@ dependencies = [
     "pre-commit",
     "pytest",
     "pytest-cov",
-    "scipy",
+    "scipy>=1.15",
     "scipy-doctest",
 ]
 [tool.hatch.envs.default.scripts]

@@ -954,7 +954,7 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta_on_dt=scale_eta_on_dt,
             workers=self.workers,
-        )[: m - 1, m - 1:]
+        )[: m - 1, m - 1 :]
         assert_allclose(hess_a_eta, desired_hess_a_eta, atol=eps, rtol=rtol)
 
     def test_hess_eta_eta(self) -> None:
@@ -1132,7 +1132,6 @@ class TestNoiseFit:
             )
 
     def test_warning(self) -> None:
-
         x = self.x
         mu0 = self.mu
         a0 = self.a
@@ -1145,9 +1144,7 @@ class TestNoiseFit:
         fix_mu = True
         fix_a = False
         fix_eta = False
-        pattern = (
-            "est_mu and fix_mu cannot be used at the same time. est_mu has been disabled."
-        )
+        pattern = "est_mu and fix_mu cannot be used at the same time. est_mu has been disabled."
 
         m = self.m
         n = self.n

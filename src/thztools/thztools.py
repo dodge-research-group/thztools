@@ -2649,59 +2649,6 @@ def _parse_noisefit_input(
             workers=workers,
         )
 
-    def hess(_p: NDArray[np.float64]) -> NDArray[np.float64]:
-        if fix_sigma_alpha:
-            _logv_alpha = logv0_scaled[0]
-        else:
-            _logv_alpha = _p[0]
-            _p = _p[1:]
-        if fix_sigma_beta:
-            _logv_beta = logv0_scaled[1]
-        else:
-            _logv_beta = _p[0]
-            _p = _p[1:]
-        if fix_sigma_tau:
-            _logv_tau = logv0_scaled[2]
-        else:
-            _logv_tau = _p[0]
-            _p = _p[1:]
-        if fix_mu:
-            _delta = delta0
-        else:
-            _delta = _p[:n]
-            _p = _p[n:]
-        if fix_a:
-            _epsilon = epsilon0
-        else:
-            _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
-
-        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
-
-        return _hess_noisefit(
-            x.T,
-            _logv_alpha,
-            _logv_beta,
-            _logv_tau,
-            _delta,
-            _epsilon,
-            _eta_on_dt,
-            fix_logv_alpha=fix_sigma_alpha,
-            fix_logv_beta=fix_sigma_beta,
-            fix_logv_tau=fix_sigma_tau,
-            est_mu=est_mu,
-            fix_delta_mu=fix_mu,
-            fix_delta_a=fix_a,
-            fix_eta=fix_eta,
-            scale_logv_alpha=scale_logv_alpha,
-            scale_logv_beta=scale_logv_beta,
-            scale_logv_tau=scale_logv_tau,
-            scale_delta_mu=scale_delta_mu,
-            scale_delta_a=scale_delta_a,
-            scale_eta_on_dt=scale_eta / dt,  # Scale in units of dt
-            workers=workers,
-        )
-
     input_parsed = {
         "sigma_alpha0": sigma_alpha0,
         "sigma_beta0": sigma_beta0,
@@ -2891,6 +2838,7 @@ def _parse_noisefit_output(
         delay_impulse = irfft(
             rfft(unit_impulse(n)) * exp_iweta, n, workers=workers
         )
+
         delay_matrix = circulant(delay_impulse)
 
         var_x = noise_model.noise_var(x.T)

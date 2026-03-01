@@ -991,7 +991,7 @@ class TestHessNoiseFit:
 class TestNoiseFit:
     rng = np.random.default_rng(0)
     n = 256
-    m = 64
+    m = 32
     dt = 0.05
     t = np.arange(n) * dt
     mu = wave(n, dt=dt, t0=n * dt / 3)
@@ -1131,6 +1131,56 @@ class TestNoiseFit:
                 workers=self.workers,
             )
 
+    def test_warning(self) -> None:
+        x = self.x
+        mu0 = self.mu
+        a0 = self.a
+        eta0 = self.eta
+
+        fix_sigma_alpha = False
+        fix_sigma_beta = False
+        fix_sigma_tau = False
+        est_mu = True
+        fix_mu = True
+        fix_a = False
+        fix_eta = False
+        pattern = "est_mu and fix_mu cannot be used at the same time. est_mu has been disabled."
+
+        m = self.m
+        n = self.n
+        dt = self.dt
+        sigma_alpha0 = self.alpha
+        sigma_beta0 = self.beta
+        sigma_tau0 = self.tau
+
+        with pytest.warns(UserWarning, match=pattern):
+            _, _, _, input_parsed = _parse_noisefit_input(
+                x.T,
+                dt=dt,
+                sigma_alpha0=sigma_alpha0,
+                sigma_beta0=sigma_beta0,
+                sigma_tau0=sigma_tau0,
+                mu0=mu0,
+                a0=a0,
+                eta0=eta0,
+                fix_sigma_alpha=fix_sigma_alpha,
+                fix_sigma_beta=fix_sigma_beta,
+                fix_sigma_tau=fix_sigma_tau,
+                est_mu=est_mu,
+                fix_mu=fix_mu,
+                fix_a=fix_a,
+                fix_eta=fix_eta,
+                scale_logv_alpha=1.0,
+                scale_logv_beta=1.0,
+                scale_logv_tau=1.0,
+                scale_delta_mu=np.ones(n),
+                scale_delta_a=np.ones(m - 1),
+                scale_eta=np.ones(m - 1),
+                workers=self.workers,
+            )
+
+            assert input_parsed["est_mu"] is False
+
     @pytest.mark.parametrize("sigma_alpha0", [None, alpha, 0.0])
     @pytest.mark.parametrize("sigma_beta0", [None, beta, 0.0])
     @pytest.mark.parametrize("sigma_tau0", [None, tau, 0.0])
@@ -1188,13 +1238,16 @@ class TestNoiseFit:
         )
 
     @pytest.mark.parametrize(
-        "fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, est_mu, fix_mu, fix_a, "
-        "fix_eta",
+        "fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau, est_mu, fix_mu, fix_a, fix_eta",
         [
             (False, False, False, False, False, False, False),
             (True, False, False, False, False, False, False),
             (False, True, False, False, False, False, False),
             (False, False, True, False, False, False, False),
+            (False, False, False, True, False, False, False),
+            (False, False, False, True, False, True, False),
+            (False, False, False, True, False, False, True),
+            (False, False, False, True, False, True, True),
             (False, False, False, False, True, False, False),
             (False, False, False, False, False, True, False),
             (False, False, False, False, False, False, True),

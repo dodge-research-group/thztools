@@ -1610,12 +1610,8 @@ class TestETFE:
         result = etfe(x, y, n=5)
         assert np.allclose(result, expected)
 
-    @pytest.mark.parametrize("window", [None, 'tukey'])
-    def test_wind_tukey(
-        self,
-        *,
-        window: str | None
-    ) -> None:
+    @pytest.mark.parametrize("window", [None, "tukey"])
+    def test_wind_tukey(self, *, window: str | None) -> None:
         x = np.array(
             [
                 0.0512,
@@ -1651,10 +1647,10 @@ class TestETFE:
         ax_len = x.shape[axis]
         nfft = ax_len
         win1d = signal.windows.tukey(ax_len)
-        
+
         windx = x * win1d
         windy = y * win1d
-        
+
         expected = rfft(windy, n=nfft, axis=axis) / rfft(
             windx, n=nfft, axis=axis
         )
@@ -1663,14 +1659,12 @@ class TestETFE:
 
     def test_wind_value_error(
         self,
-    ) -> None:  
+    ) -> None:
         x = np.array([0.0512, 0.5913, 0.4230])
         y = np.array([0.0814, 0.7072, 0.1607])
-    
+
         with pytest.raises(
             ValueError,
             match="Window parameter only accepts functions in {windowlist}",
         ):
-            etfe(x, y, window='Random')
-        
-
+            etfe(x, y, window="Random")

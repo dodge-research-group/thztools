@@ -3461,8 +3461,6 @@ def fit(
                 ].T,
                 np.complex128,
             )
-        if not numpy_sign_convention:
-            return np.conj(out)
         return out
 
     def jacobian_bl(

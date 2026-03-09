@@ -2778,7 +2778,6 @@ def _parse_noisefit_output(
     )
 
     # Get or compute the inverse hessian
-    # hess_inv_scaled = np.linalg.inv(hess(out.x))
     hess_inv_scaled = np.linalg.inv(nd.Jacobian(jac)(out.x))
 
     # Convert inverse Hessian into unscaled parameters
@@ -3368,7 +3367,6 @@ def fit(
         elif n % 2 == 1 and n_below == 0:
             n_b += 1
 
-    # alpha, beta, tau = noise_parms.tolist()
     alpha = noise_parms[0]
     beta = noise_parms[1]
     tau = noise_parms[2]
@@ -3548,8 +3546,6 @@ def fit(
 
         return np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
 
-    # print(type(least_squares))
-    # reveal_type(least_squares)
     result = least_squares(
         lambda _p: _costfuntls(
             function,

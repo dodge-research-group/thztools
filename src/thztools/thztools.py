@@ -2573,7 +2573,7 @@ def _parse_noisefit_input(
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
 
-        _eta = eta_scaled0 if fix_eta else _p[: m - 1]
+        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
 
         return _nll_noisefit(
             x.T,
@@ -2582,7 +2582,7 @@ def _parse_noisefit_input(
             _logv_tau,
             _delta,
             _epsilon,
-            _eta,
+            _eta_on_dt,
             est_mu=est_mu,
             scale_logv_alpha=scale_logv_alpha,
             scale_logv_beta=scale_logv_beta,
@@ -2828,7 +2828,7 @@ def _parse_noisefit_output(
         f = rfftfreq(n)
         w = 2 * pi * f
 
-        exp_iweta = np.exp(1j * np.outer(eta_out / dt, w))
+        exp_iweta = np.exp(1j * np.outer(eta_out, w / dt))
         x_f = rfft(x.T)
         x_back_f = exp_iweta * x_f
 

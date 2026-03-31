@@ -116,7 +116,6 @@ omit = [
     "src/thztools/__init__.py",
     "src/thztools/__about__.py",
     "src/thztools/conftest.py",
-    "logo/make_logo.py",
 ]
 
 [tool.coverage.paths]

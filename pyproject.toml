@@ -101,7 +101,8 @@ extend-select = [
     "UP",  # pyupgrade
 ]
 [tool.ruff.lint.per-file-ignores]
-"docs/source/**" = ["INP001"]
+"docs/source/**" = ["INP001", "T201"]
+"logo/**" = ["INP001"]
 "tests/**" = ["INP001"]
 "test_thztools.py" = ["S101"]
 
@@ -170,6 +171,7 @@ enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 [tool.hatch.envs.types]
 extra-dependencies = [
     "mypy>=1.0.0",
+    "scipy-stubs",
 ]
 [tool.hatch.envs.types.scripts]
 check = """

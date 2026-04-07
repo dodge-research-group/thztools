@@ -844,7 +844,7 @@ def apply_frf(
     else:
         y = irfft(rfft(x) * np.conj(h), n=n)
     if TYPE_CHECKING:
-        y = cast(np.ndarray[tuple[int], np.dtype[np.float64]], y)
+        y = cast("np.ndarray[tuple[int], np.dtype[np.float64]]", y)
     return y
 
 
@@ -1630,7 +1630,7 @@ def _hess_noisefit(
         Gradient of the negative log-likelihood function with respect to
         the free parameters.
     """
-    m, n = x.shape
+    _, n = x.shape
 
     valpha = np.exp(logv_alpha_scaled * scale_logv_alpha)
     vbeta = np.exp(logv_beta_scaled * scale_logv_beta)

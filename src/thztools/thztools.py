@@ -72,7 +72,7 @@ from scipy.signal.windows import get_window, tukey
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from typing import Concatenate, cast
+    from typing import Concatenate, Literal, cast
 
     from numpy.typing import ArrayLike, NDArray
 
@@ -2358,7 +2358,7 @@ def noisefit(
     objective, jac, x0, input_parsed = parsed
 
     # Minimize cost function with respect to free parameters
-    out = minimize(
+    out: OptimizeResult = minimize(  # type: ignore[call-overload]
         fun=objective,
         x0=x0,
         method="BFGS",
@@ -3306,7 +3306,7 @@ def fit(
     >>> ax.set_ylabel(r"$r_\mathrm{TLS}$")
     >>> plt.show()
     """
-    fit_method = "trf"
+    fit_method: Literal["lm", "trf"] = "trf"
 
     if kwargs is None:
         kwargs = {}
@@ -3448,7 +3448,7 @@ def fit(
     def jacobian_fun(_p: NDArray[np.float64]) -> NDArray[np.complex128]:
         if jac is None:
             # If Jacobian is not supplied, compute it numerically
-            _tf_prime = approx_fprime(_p, function_flat)
+            _tf_prime = approx_fprime(_p, function_flat)  # type: ignore[arg-type]
             _tf_prime_complex = _tf_prime[0:n_in] + 1j * _tf_prime[n_in:]
             out = np.astype(np.atleast_2d(_tf_prime_complex).T, np.complex128)
         else:
@@ -3546,8 +3546,8 @@ def fit(
 
         return np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
 
-    result = least_squares(
-        lambda _p: _costfuntls(
+    def cfun_tls(_p: NDArray[np.float64]) -> NDArray[np.float64]:
+        return _costfuntls(
             function,
             _p[: n_p + n_a + n_b],
             xdata[:] - _p[n_p + n_a + n_b :],
@@ -3556,7 +3556,10 @@ def fit(
             sigma_x[:],
             sigma_y[:],
             dt,
-        ),
+        )
+
+    result = least_squares(
+        cfun_tls,
         p0_est,
         jac=jac_fun,
         bounds=p_bounds,
@@ -3566,7 +3569,12 @@ def fit(
     )
 
     # Parse output
-    _, s, vt = svd(result.jac, full_matrices=False)
+    #
+    # The type information for least_squares allows the jac attribute to be a dense
+    # ndarray, a sparse csr_array, or a LinearOperator. Here, jac is dense, so cast
+    # it that way before sending it to svd, which expects a dense array.
+    jac_dense = cast(np.ndarray, result.jac)
+    _, s, vt = svd(jac_dense, full_matrices=False)
     threshold = np.finfo(float).eps * max(result.jac.shape) * s[0]
     s = s[s > threshold]
     vt = vt[: s.size]

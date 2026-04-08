@@ -1256,7 +1256,7 @@ def _nll_noisefit(
     scale_delta_a: NDArray[np.float64],
     scale_eta_on_dt: NDArray[np.float64],
     workers: int,
-) -> np.float64:
+) -> float:
     r"""
     Compute the cost function for the time-domain noise model.
 
@@ -2357,14 +2357,16 @@ def noisefit(
 
     objective, jac, x0, input_parsed = parsed
 
+    method: Literal["BFGS"] = "BFGS"
+
     # Minimize cost function with respect to free parameters
-    out: OptimizeResult = minimize(  # type: ignore[call-overload]
+    out: OptimizeResult = minimize(
         fun=objective,
         x0=x0,
-        method="BFGS",
+        method=method,
         jac=jac,
         tol=1e-5 * x.size,
-        options=min_options,
+        options=min_options,  # type: ignore[arg-type]
     )
 
     return _parse_noisefit_output(out, x, dt=dt, **input_parsed)
@@ -2395,7 +2397,7 @@ def _parse_noisefit_input(
     scale_eta: ArrayLike | None,
     workers: int,
 ) -> tuple[
-    Callable[[NDArray[np.float64]], np.float64],
+    Callable[[NDArray[np.float64]], float],
     Callable[[NDArray[np.float64]], NDArray[np.float64]],
     NDArray[np.float64],
     dict[str, Any],
@@ -2544,7 +2546,7 @@ def _parse_noisefit_input(
     # Bundle free parameters together into objective function
     def objective(
         _p: NDArray[np.float64],
-    ) -> np.float64:
+    ) -> float:
         if fix_sigma_alpha:
             _logv_alpha = logv0_scaled[0]
         else:

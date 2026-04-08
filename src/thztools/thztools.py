@@ -52,7 +52,7 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numdifftools as nd
 import numpy as np
@@ -72,7 +72,7 @@ from scipy.signal.windows import get_window, tukey
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from typing import Concatenate, Literal, cast
+    from typing import Concatenate, Literal
 
     from numpy.typing import ArrayLike, NDArray
 

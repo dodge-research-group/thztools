@@ -173,6 +173,7 @@ extra-dependencies = [
     "mypy>=1.0.0",
     "scipy-stubs",
 ]
+
 [tool.hatch.envs.types.scripts]
 check = """
 mypy --install-types --non-interactive --show-error-code-links \

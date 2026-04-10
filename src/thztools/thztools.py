@@ -3575,7 +3575,7 @@ def fit(
     # The type information for least_squares allows the jac attribute to be a dense
     # ndarray, a sparse csr_array, or a LinearOperator. Here, jac is dense, so cast
     # it that way before sending it to svd, which expects a dense array.
-    jac_dense = cast(np.ndarray, result.jac)
+    jac_dense = cast("np.ndarray", result.jac)
     _, s, vt = svd(jac_dense, full_matrices=False)
     threshold = np.finfo(float).eps * max(result.jac.shape) * s[0]
     s = s[s > threshold]

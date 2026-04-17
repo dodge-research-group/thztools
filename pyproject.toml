@@ -156,7 +156,7 @@ minversion = "7"
 dependencies = [
     "ipykernel",
     "IPython",
-#    "matplotlib",
+    "matplotlib",
     "nbsphinx",
     "numpydoc",
     "pydata-sphinx-theme",

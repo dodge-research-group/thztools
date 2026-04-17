@@ -86,7 +86,7 @@ To build the documentation with ``sphinx``::
 
 To test docstring examples with ``doctest``::
 
-  hatch run docs:build
+  hatch run docs:doctest
 
 To execute tests with ``pytest`` and generate a code coverage report with ``coverage``::
 

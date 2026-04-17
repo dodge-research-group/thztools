@@ -36,7 +36,7 @@ jobs:
         run: pip install --upgrade hatch
 
       - name: Run tests
-        run: hatch run cov
+        run: hatch run coverage:cov
 
       - name: Run doctests
-        run: hatch run doctest
+        run: hatch run docs:doctest

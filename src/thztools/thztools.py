@@ -3450,7 +3450,7 @@ def fit(
     def jacobian_fun(_p: NDArray[np.float64]) -> NDArray[np.complex128]:
         if jac is None:
             # If Jacobian is not supplied, compute it numerically
-            _tf_prime = approx_fprime(_p, function_flat)  # type: ignore[arg-type]
+            _tf_prime = approx_fprime(_p, function_flat)
             _tf_prime_complex = _tf_prime[0:n_in] + 1j * _tf_prime[n_in:]
             out = np.astype(np.atleast_2d(_tf_prime_complex).T, np.complex128)
         else:

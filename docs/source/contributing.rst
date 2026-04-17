@@ -70,7 +70,7 @@ shortcuts that can be used for testing, linting, and building documentation.
 
 To execute tests with ``pytest``::
 
-  hatch run test
+  hatch test
 
 To lint the code base with ``ruff``::
 
@@ -78,11 +78,19 @@ To lint the code base with ``ruff``::
 
 To run type checking with ``mypy``::
 
-  hatch run lint:typing
+  hatch run types:check
 
-To build the documentation with ``sphinx`` and test examples with ``doctest``::
+To build the documentation with ``sphinx``::
 
   hatch run docs:build
+
+To test docstring examples with ``doctest``::
+
+  hatch run docs:build
+
+To execute tests with ``pytest`` and generate a code coverage report with ``coverage``::
+
+  hatch run coverage:cov
 
 To exit the ``hatch`` environment::
 

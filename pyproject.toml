@@ -41,7 +41,7 @@ classifiers = [
 dependencies = [
     "numpy",
     "numdifftools",
-    "scipy",
+    "scipy>=1.15",
 ]
 
 [project.urls]
@@ -60,15 +60,17 @@ dependencies = [
     "jupyter",
     "matplotlib",
     "numdifftools",
-    "numpy",
     "pre-commit",
+]
+
+[tool.hatch.envs.coverage]
+dependencies = [
+    "coverage[toml]>=6.5",
     "pytest",
     "pytest-cov",
-    "scipy>=1.15",
-    "scipy-doctest",
 ]
-[tool.hatch.envs.default.scripts]
-test = "pytest {args:tests}"
+
+[tool.hatch.envs.coverage.scripts]
 test-cov = "coverage run -m pytest {args:tests}"
 cov-report = [
     "- coverage combine",
@@ -79,7 +81,13 @@ cov = [
     "test-cov",
     "cov-report",
 ]
-doctest = "pytest -v --doctest-modules {args:src/thztools}"
+
+[tool.hatch.envs.logo]
+dependencies = [
+    "matplotlib"
+]
+
+[tool.hatch.envs.logo.scripts]
 make-logo = [
     """
     python logo/make_logo.py; mv thztools_logo.svg docs/source/_static/;\
@@ -148,10 +156,11 @@ minversion = "7"
 dependencies = [
     "ipykernel",
     "IPython",
-    "matplotlib",
+#    "matplotlib",
     "nbsphinx",
     "numpydoc",
     "pydata-sphinx-theme",
+    "scipy-doctest",
     "sphinx",
     "sphinx-design",
     "sphinx-gallery",
@@ -161,6 +170,7 @@ dependencies = [
 
 [tool.hatch.envs.docs.scripts]
 build = "sphinx-build -v -b html docs/source docs/build/html"
+doctest = "pytest -v --doctest-modules {args:src/thztools}"
 
 [tool.mypy]
 strict = true
@@ -169,8 +179,9 @@ warn_unreachable = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 
 [tool.hatch.envs.types]
-extra-dependencies = [
+dependencies = [
     "mypy>=1.0.0",
+    "pytest>=6",
     "scipy-stubs",
 ]
 

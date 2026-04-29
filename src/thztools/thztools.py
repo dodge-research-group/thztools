@@ -2202,11 +2202,11 @@ def noisefit(
         Scale for varying signal vector. When set to ``None``, the default,
         use ``NoiseModel(sigma_alpha0, sigma_beta0,
         sigma_tau0).noise_amp(mu0)``.
-    scale_delta_a : array_like with shape(n,), optional
+    scale_delta_a : array_like with shape(m - 1,), optional
         Scale for varying signal amplitude drift vector. Default is
         ``np.max((sigma_min, sigma_beta0))`` for all entries, where
         ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``.
-    scale_eta : array_like with shape(n,), optional
+    scale_eta : array_like with shape(m - 1,), optional
         Scale for varying signal delay drift vector. Default is
         ``np.max((sigma_min, sigma_tau0))``, for all entries, where
         ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``.

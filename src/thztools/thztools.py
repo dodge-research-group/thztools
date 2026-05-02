@@ -2292,47 +2292,35 @@ def noisefit(
     In basic usage, it should be possible to call ``noisefit`` with just
     the data array. In the code below, we simulate ``m = 50`` noisy waveforms
     with ``n = 256`` time points each, then verify that the fit results are
-    consistent with the true noise parameters for both est_mu = True, False.
+    consistent with the true noise parameters.
 
     >>> import numpy as np
     >>> import thztools as thz
     >>> from matplotlib import pyplot as plt
-
     >>> rng = np.random.default_rng(0)
     >>> n, m, dt = 256, 50, 0.05
     >>> t = thz.timebase(n, dt=dt)
     >>> mu = thz.wave(n, dt=dt)
     >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
-
+    >>>
     >>> noise_model = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
     ...     sigma_tau=tau, dt=dt)
-
-    >>> a = 1.0 + 1e-2 * np.concatenate(([0.0],rng.standard_normal(m - 1)))
+    >>> a = 1.0 + 1e-2 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
     >>> eta = 1e-3 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
     >>> z = thz.scaleshift(np.repeat(np.atleast_2d(mu), m, axis=0), dt=dt,
     ...     a=a, eta=eta).T  # Orient the array columnwise
-    >>> x = z + noise_model_search.noise_sim(z, axis=0, seed=12345)
-
-    >>> noise_res_search = thz.noisefit(x, sigma_alpha0=alpha, sigma_beta0=beta,
-    ...     sigma_tau0=tau, dt=dt, est_mu=False)
+    >>> x = z + noise_model.noise_sim(z, axis=0, seed=12345)
+    >>>
     >>> noise_res_direct = thz.noisefit(x, sigma_alpha0=alpha, sigma_beta0=beta,
-    ...     sigma_tau0=tau, dt=dt, est_mu=True)
-
-    >>> noise_res_search.noise_model
-    NoiseModel(sigma_alpha=0.000100..., sigma_beta=0.00985...,
-    sigma_tau=0.000894..., dt=0.05)
-    >>> plt.plot(t, np.std(thz.scaleshift(x, a=1/noise_res_search.a,
-    ...     eta=-noise_res_search.eta, axis=0), axis=1), "-", label="Data")
-    >>> plt.plot(t, noise_res_search.noise_model.noise_amp(noise_res_search.mu),
-    ...     linestyle=(0,(1,1)), label=r"Search Fit for $\mu$")
-
+    ...     sigma_tau0=tau, dt=dt)
     >>> noise_res_direct.noise_model
     NoiseModel(sigma_alpha=0.000100..., sigma_beta=0.00985...,
     sigma_tau=0.000892..., dt=0.05)
-
+    >>>
+    >>> plt.plot(t, np.std(thz.scaleshift(x, a=1/noise_res_direct.a,
+    ...     eta=-noise_res_direct.eta, axis=0), axis=1), "-", label="Data")
     >>> plt.plot(t, noise_res_direct.noise_model.noise_amp(noise_res_direct.mu),
-    ...     linestyle=(0,(1,3)), label=r"Direct Fit for $\mu$")
-
+    ...     "--", label=r"Direct Fit for $\mu$")
     >>> plt.legend()
     >>> plt.xlabel("t (ps)")
     >>> plt.ylabel(r"$\sigma(t)$")

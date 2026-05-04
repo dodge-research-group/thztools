@@ -3722,7 +3722,7 @@ def etfe(
         )
         raise ValueError(wind_out_of_range)
     else:
-        win1d = get_window(window, ax_len)
+        win1d = get_window(window, ax_len, fftbins=False)
 
     shape = [1] * x.ndim
     shape[axis] = ax_len

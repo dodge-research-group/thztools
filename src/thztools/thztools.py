@@ -2575,7 +2575,7 @@ def _parse_noisefit_input(
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
 
-        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
+        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1] / dt
 
         return _nll_noisefit(
             x.T,
@@ -2625,7 +2625,7 @@ def _parse_noisefit_input(
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
 
-        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
+        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1] / dt
 
         return _jac_noisefit(
             x.T,

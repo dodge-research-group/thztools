@@ -2474,14 +2474,20 @@ def _parse_noisefit_input(
     scale_delta_mu = np.asarray(scale_delta_mu, dtype=np.float64)
 
     if scale_delta_a is None:
-        scale_delta_a_amp = np.max((sigma_min, sigma_beta0))
-        scale_delta_a = scale_delta_a_amp * np.ones(m - 1)
+        # Estimate the appropriate scaling factor from the multiplicative noise amplitude
+        x_max = np.max(np.abs(x))
+        scale_delta_a_amp = np.max((sigma_min / x_max, sigma_beta0))
+        scale_delta_a = np.full((m - 1,), scale_delta_a_amp)
 
     scale_delta_a = np.asarray(scale_delta_a, dtype=np.float64)
 
     if scale_eta is None:
-        scale_eta_amp = np.max((sigma_min, sigma_tau0))
-        scale_eta = scale_eta_amp * np.ones(m - 1)
+        # Estimate the appropriate scaling factor from the timebase noise amplitude
+        diff_x_diff_t_max = np.max(np.abs(np.diff(x, axis=0)))
+        scale_eta_amp = np.max(
+            (sigma_min / diff_x_diff_t_max, sigma_tau0 / dt)
+        )
+        scale_eta = np.full((m - 1,), scale_eta_amp)
 
     scale_eta = np.asarray(scale_eta, dtype=np.float64)
 
@@ -2575,7 +2581,7 @@ def _parse_noisefit_input(
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
 
-        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1] / dt
+        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
 
         return _nll_noisefit(
             x.T,
@@ -2598,19 +2604,19 @@ def _parse_noisefit_input(
     # Bundle free parameters together into objective function
     def jac(_p: NDArray[np.float64]) -> NDArray[np.float64]:
         if fix_sigma_alpha:
-            _logv_alpha = logv0_scaled[0]
+            _logv_alpha_scaled = logv0_scaled[0]
         else:
-            _logv_alpha = _p[0]
+            _logv_alpha_scaled = _p[0]
             _p = _p[1:]
         if fix_sigma_beta:
-            _logv_beta = logv0_scaled[1]
+            _logv_beta_scaled = logv0_scaled[1]
         else:
-            _logv_beta = _p[0]
+            _logv_beta_scaled = _p[0]
             _p = _p[1:]
         if fix_sigma_tau:
-            _logv_tau = logv0_scaled[2]
+            _logv_tau_scaled = logv0_scaled[2]
         else:
-            _logv_tau = _p[0]
+            _logv_tau_scaled = _p[0]
             _p = _p[1:]
         if fix_mu:
             _delta = delta0
@@ -2625,16 +2631,16 @@ def _parse_noisefit_input(
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
 
-        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1] / dt
+        _eta_on_dt_scaled = eta_scaled0 / dt if fix_eta else _p[: m - 1]
 
         return _jac_noisefit(
             x.T,
-            _logv_alpha,
-            _logv_beta,
-            _logv_tau,
+            _logv_alpha_scaled,
+            _logv_beta_scaled,
+            _logv_tau_scaled,
             _delta,
             _epsilon,
-            _eta_on_dt,
+            _eta_on_dt_scaled,
             fix_logv_alpha=fix_sigma_alpha,
             fix_logv_beta=fix_sigma_beta,
             fix_logv_tau=fix_sigma_tau,

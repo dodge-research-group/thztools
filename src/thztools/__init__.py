@@ -11,6 +11,7 @@ from thztools.thztools import (
     NoiseResult,
     apply_frf,
     fit,
+    freqbase,
     get_option,
     noisefit,
     options,
@@ -18,7 +19,6 @@ from thztools.thztools import (
     scaleshift,
     set_option,
     timebase,
-    freqbase,
     wave,
 )
 

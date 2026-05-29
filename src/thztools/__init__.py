@@ -18,6 +18,7 @@ from thztools.thztools import (
     scaleshift,
     set_option,
     timebase,
+    freqbase,
     wave,
 )
 
@@ -36,5 +37,6 @@ __all__ = [
     "scaleshift",
     "set_option",
     "timebase",
+    "frqbase",
     "wave",
 ]

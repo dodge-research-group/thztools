@@ -37,6 +37,6 @@ __all__ = [
     "scaleshift",
     "set_option",
     "timebase",
-    "frqbase",
+    "freqbase",
     "wave",
 ]

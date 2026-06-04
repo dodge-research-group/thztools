@@ -3684,6 +3684,7 @@ def etfe(
     Calculates the empirical transfer-function estimate of an input ''x'' and an
     output ''y'' by taking the ratio of the fast fourier transform between the two inputs.
     Makes use of the numpy rfft function to calculate this, and takes a pad and window variable in order to use this function.
+
     Parameters
     ----------
     x: array-like
@@ -3697,6 +3698,7 @@ def etfe(
         Name of a window function from 'scipy.signal.windows'. If None, applies a Tukey window.
     axis: int or none, optional parameter (will use last value of x array if nothing provided)
         Direction of fourier transform.
+
     Returns
     ----------
     ndarray of complex128
@@ -3706,6 +3708,61 @@ def etfe(
     ----------
     ValueError
         If `window` is not a valid name in `scipy.signal.windows`.
+
+    Examples
+    ----------
+    >>> from matplotlib import pyplot as plt
+    >>> import numpy as np
+    >>> import thztools as thz
+
+    >>> n, dt = 256, 0.05
+    >>> a, eta = 0.5, 1
+    >>> sigma_alpha, sigma_beta, sigma_tau = 1e-4, 1e-2, 1e-3
+
+    >>> t = thz.timebase(n, dt=dt)
+    >>> mu = thz.wave(n, dt=dt)
+    >>> noise_model = thz.NoiseModel(sigma_alpha, sigma_beta, sigma_tau, dt=dt)
+    >>> x = mu + noise_model.noise_sim(mu, axis=0, seed=1234)
+
+    >>> z = thz.scaleshift(mu, dt=dt, a=a, eta=eta)
+    >>> y = z + noise_model.noise_sim(z, axis=0, seed=5678)
+
+    >>> h_f = thz.etfe(x, y, window=None, axis=-1)
+    >>> freqs = thz.freqbase(n, dt=dt)
+
+    >>> def frfun(omega, a, eta):
+    >>>     return a * np.exp(-1j * omega * eta)
+    >>> p0 = (a, eta)
+    >>> result = thz.fit(frfun, x, y, p0,
+    ... noise_parms=(sigma_alpha, sigma_beta, sigma_tau), dt=dt)
+
+    >>> fig, axs = plt.subplots(2, 2, figsize=(10,6))
+    >>> axs[0, 0].plot(freqs, np.real(h_f), '.', label=r'$\hat{H}_{ETFE}$')
+    >>> axs[0, 0].plot(freqs, np.real(result.frfun_opt), "--", label=r'$\hat{H}_{FIT}$')
+    >>> axs[0, 0].set_ylabel('Re{H}')
+    >>> axs[0, 0].tick_params(labelbottom=False)
+    >>> axs[0, 0].legend(loc='upper left')
+    >>> axs[1, 0].plot(freqs, np.imag(h_f), '.', label=r'$\hat{H}_{ETFE}$')
+    >>> axs[1, 0].plot(freqs, np.imag(result.frfun_opt), "--", label=r'$\hat{H}_{FIT}$')
+    >>> axs[1, 0].set_xlabel('Frequency (THz)')
+    >>> axs[1, 0].set_ylabel(r'Im{H}')
+    >>> axs[1, 0].legend(loc='upper left')
+    >>> axs[0, 1].plot(freqs, np.real(h_f), '.', label=r'$\hat{H}_{ETFE}$')
+    >>> axs[0, 1].plot(freqs, np.real(result.frfun_opt), "--", label=r'$\hat{H}_{FIT}$')
+    >>> axs[0, 1].set_xlim(0, 3)
+    >>> axs[0, 1].set_ylabel(r'Re{H}')
+    >>> axs[0, 1].tick_params(labelbottom=False)
+    >>> axs[0, 1].legend(loc='upper left')
+    >>> axs[1, 1].plot(freqs, np.imag(h_f), '.', label=r'$\hat{H}_{ETFE}$')
+    >>> axs[1, 1].plot(freqs, np.imag(result.frfun_opt), "--", label=r'$\hat{H}_{FIT}$')
+    >>> axs[1, 1].set_xlim(0, 3)
+    >>> axs[1, 1].set_xlabel('Frequency (THz)')
+    >>> axs[1, 1].set_ylabel(r'Im{H}')
+    >>> axs[1, 1].legend(loc='upper left')
+
+    >>> fig.tight_layout()
+    >>> fig.subplots_adjust(hspace=0)
+    >>> plt.show();
     """
     x = np.asarray(x)
     y = np.asarray(y)

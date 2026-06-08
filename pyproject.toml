@@ -117,6 +117,12 @@ extend-select = [
 [tool.ruff.lint.flake8-pytest-style]
 parametrize-names-type = "csv"
 
+[tool.codespell]
+skip = "./paper/paper.bib"
+count = true
+quiet-level = 3
+ignore-words-list = "nd"
+
 [tool.coverage.run]
 source_pkgs = ["thztools", "tests"]
 branch = true

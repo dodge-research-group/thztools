@@ -1,4 +1,15 @@
 from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+import numpy as np
+import pytest
+from numpy import pi
+from numpy.testing import assert_allclose
+from scipy import signal
+from scipy.fft import rfft
+
+import thztools
 from thztools.thztools import (
     NoiseModel,
     _assign_sampling_time,
@@ -17,16 +28,6 @@ from thztools.thztools import (
     set_option,
     wave,
 )
-import thztools
-
-from typing import TYPE_CHECKING, Any
-
-import numpy as np
-import pytest
-from numpy import pi
-from numpy.testing import assert_allclose
-from scipy import signal
-from scipy.fft import rfft
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -612,18 +613,18 @@ class TestHessNoiseFit:
                 [
                     9.0868913603740376e-01,
                     -4.9992936567322832e-01,
-                    -4.0873210855417352e-01
+                    -4.0873210855417352e-01,
                 ],
                 [
                     -4.9992936567322832e-01,
                     4.9998728991205499e-01,
-                    -3.3028595707506608e-05
+                    -3.3028595707506608e-05,
                 ],
                 [
                     -4.0873210855417352e-01,
                     -3.3028595707506608e-05,
-                    4.0877333427397833e-01
-                ]
+                    4.0877333427397833e-01,
+                ],
             ]
         )
         hess_logv_logv = _hess_noisefit(
@@ -660,20 +661,20 @@ class TestHessNoiseFit:
                     9.1113460501095378e-01,
                     2.0466371531152579e-03,
                     -9.1113460501095367e-01,
-                    -2.0466371531152783e-03
+                    -2.0466371531152783e-03,
                 ],
                 [
                     -4.9743484125577864e-01,
                     3.6848491428467496e-03,
                     4.9743484125577858e-01,
-                    -3.6848491428466790e-03
+                    -3.6848491428466790e-03,
                 ],
                 [
                     -4.0873186555842217e-01,
                     -3.9406235831977721e-03,
                     4.0873186555842217e-01,
-                    3.9406235831977209e-03
-                ]
+                    3.9406235831977209e-03,
+                ],
             ]
         )
         hess_logv_mu = _hess_noisefit(
@@ -708,7 +709,7 @@ class TestHessNoiseFit:
             [
                 [-9.0214533615766523e-01],
                 [4.9256945303631311e-01],
-                [4.0469501540981778e-01]
+                [4.0469501540981778e-01],
             ]
         )
         hess_logv_a = _hess_noisefit(
@@ -741,7 +742,7 @@ class TestHessNoiseFit:
             [
                 [-6.4297002447904136e-03],
                 [-1.1576294996753856e-02],
-                [1.2379834099536254e-02]
+                [1.2379834099536254e-02],
             ]
         )
         hess_logv_eta = _hess_noisefit(
@@ -778,26 +779,26 @@ class TestHessNoiseFit:
                     6.8491936723651670e-01,
                     -1.4686321764919071e-03,
                     3.0490752776855323e-01,
-                    1.3976575341522789e-03
+                    1.3976575341522789e-03,
                 ],
                 [
                     -1.4686321764919063e-03,
-                    2.3967798475695643e+00,
+                    2.3967798475695643e00,
                     1.3976575341522269e-03,
-                    -1.2396618253915874e+00
+                    -1.2396618253915874e00,
                 ],
                 [
                     3.0490752776855329e-01,
                     1.3976575341522269e-03,
                     6.8491936723651670e-01,
-                    -1.4686321764919566e-03
+                    -1.4686321764919566e-03,
                 ],
                 [
                     1.3976575341522789e-03,
-                    -1.2396618253915874e+00,
+                    -1.2396618253915874e00,
                     -1.4686321764919566e-03,
-                    2.3967798475695643e+00
-                ]
+                    2.3967798475695643e00,
+                ],
             ]
         )
         hess_mu_mu = _hess_noisefit(
@@ -828,10 +829,10 @@ class TestHessNoiseFit:
     def test_hess_delta_mu_delta_a(self) -> None:
         n = self.n
         desired_hess_mu_a = [
-            [-1.3928506713217048e+00],
+            [-1.3928506713217048e00],
             [-8.9698052624937884e-04],
-            [1.3928506713217048e+00],
-            [8.9698052624943554e-04]
+            [1.3928506713217048e00],
+            [8.9698052624943554e-04],
         ]
         hess_mu_a = _hess_noisefit(
             self.x,
@@ -864,7 +865,7 @@ class TestHessNoiseFit:
             [-1.4230634529969616e-03],
             [-9.4298235964307087e-01],
             [1.4230634529969390e-03],
-            [9.4298235964307087e-01]
+            [9.4298235964307087e-01],
         ]
         hess_mu_eta = _hess_noisefit(
             self.x,
@@ -943,7 +944,7 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta=self.scale_eta,
             workers=self.workers,
-        )[: m - 1, m - 1:]
+        )[: m - 1, m - 1 :]
         assert_allclose(hess_a_eta, desired_hess_a_eta, atol=eps, rtol=rtol)
 
     def test_hess_eta_eta(self) -> None:

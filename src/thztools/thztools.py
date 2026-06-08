@@ -1238,7 +1238,7 @@ def _nll_common(
     scale_logv_tau: float,
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
-    scale_eta_on_dt: NDArray[np.float64],
+    scale_eta: NDArray[np.float64],
     workers: int,
 ) -> CommonNLL:
     _, n = x.shape
@@ -1248,7 +1248,7 @@ def _nll_common(
     vtau = np.exp(logv_tau_scaled * scale_logv_tau)
 
     a = 1.0 + np.insert(delta_a_scaled * scale_delta_a, 0, 0.0)
-    eta_on_dt = np.insert(eta_on_dt_scaled * scale_eta_on_dt, 0, 0.0)
+    eta_on_dt = np.insert(eta_on_dt_scaled * scale_eta, 0, 0.0)
 
     # Compute frequency vector and Fourier coefficients of mu
     f = rfftfreq(n)
@@ -1299,7 +1299,7 @@ def _nll_noisefit(
     scale_logv_tau: float,
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
-    scale_eta_on_dt: NDArray[np.float64],
+    scale_eta: NDArray[np.float64],
     workers: int,
 ) -> float:
     r"""
@@ -1310,7 +1310,7 @@ def _nll_noisefit(
     ``logv_tau_scaled``, ``delta_mu_scaled``, ``delta_a_scaled``,
     ``eta_on_dt_scaled``, ``scale_logv_alpha``, ``scale_logv_beta``,
     ``scale_logv_tau``, ``scale_delta_mu``, ``scale_delta_a``, and
-    ``scale_eta_on_dt``.
+    ``scale_eta``.
 
     Parameters
     ----------
@@ -1333,12 +1333,8 @@ def _nll_noisefit(
         Array of scale parameters for ``delta`` with shape (n,).
     scale_delta_a : ndarray
         Array of scale parameters for ``alpha`` with shape (m - 1,).
-    scale_eta_on_dt : ndarray
-        Array of scale parameters for ``eta`` with shape (m - 1,). Should be
-        expressed in terms of the sampling time, i.e.,
-        ``scale_sigma_tau_on_dt = scale_sigma_tau / dt``, where ``dt`` is the
-        sampling time and ``scale_eta`` is the scale factor used in
-        ``eta_scaled = eta / scale_eta``.
+    scale_eta : ndarray
+        Array of scale parameters for ``eta`` with shape (m - 1,).
     workers : int
         The number of workers to use for parallel computation of FFTs. If
         negative, this number wraps around from ``os.cpu_count()``.
@@ -1363,7 +1359,7 @@ def _nll_noisefit(
         scale_logv_tau=scale_logv_tau,
         scale_delta_mu=scale_delta_mu,
         scale_delta_a=scale_delta_a,
-        scale_eta_on_dt=scale_eta_on_dt,
+        scale_eta=scale_eta,
         workers=workers,
     )
     ressq = common.ressq
@@ -1394,7 +1390,7 @@ def _jac_noisefit(
     scale_logv_tau: float,
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
-    scale_eta_on_dt: NDArray[np.float64],
+    scale_eta: NDArray[np.float64],
     workers: int,
 ) -> NDArray[np.float64]:
     r"""
@@ -1432,12 +1428,8 @@ def _jac_noisefit(
         Array of scale parameters for ``delta`` with shape (n,).
     scale_delta_a : ndarray
         Array of scale parameters for ``alpha`` with shape (m - 1,).
-    scale_eta_on_dt : ndarray
-        Array of scale parameters for ``eta`` with shape (m - 1,). Should be
-        expressed in terms of the sampling time, i.e.,
-        ``scale_sigma_tau_on_dt = scale_sigma_tau / dt``, where ``dt`` is the
-        sampling time and ``scale_eta`` is the scale factor used in
-        ``eta_scaled = eta / scale_eta``.
+    scale_eta : ndarray
+        Array of scale parameters for ``eta`` with shape (m - 1,).
     workers : int
         The number of workers to use for parallel computation of FFTs. If
         negative, this number wraps around from ``os.cpu_count()``.
@@ -1471,7 +1463,7 @@ def _jac_noisefit(
         scale_logv_tau=scale_logv_tau,
         scale_delta_mu=scale_delta_mu,
         scale_delta_a=scale_delta_a,
-        scale_eta_on_dt=scale_eta_on_dt,
+        scale_eta=scale_eta,
         workers=workers,
     )
     ressq = common.ressq
@@ -1585,7 +1577,7 @@ def _jac_noisefit(
             )
 
         # Exclude first term, which is held fixed
-        jac_eta = dnlldeta[1:] * scale_eta_on_dt
+        jac_eta = dnlldeta[1:] * scale_eta
 
     # Concatenate subarrays to produce full Jacobian wrt free parameters
     return np.concatenate(
@@ -1621,7 +1613,7 @@ def _hess_noisefit(
     scale_logv_tau: float,
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
-    scale_eta_on_dt: NDArray[np.float64],
+    scale_eta: NDArray[np.float64],
     workers: int,
 ) -> NDArray[np.float64]:
     r"""
@@ -1659,12 +1651,8 @@ def _hess_noisefit(
         Array of scale parameters for ``delta`` with shape (n,).
     scale_delta_a : ndarray
         Array of scale parameters for ``alpha`` with shape (m - 1,).
-    scale_eta_on_dt : ndarray
-        Array of scale parameters for ``eta`` with shape (m - 1,). Should be
-        expressed in terms of the sampling time, i.e.,
-        ``scale_sigma_tau_on_dt = scale_sigma_tau / dt``, where ``dt`` is the
-        sampling time and ``scale_eta`` is the scale factor used in
-        ``eta_scaled = eta / scale_eta``.
+    scale_eta : ndarray
+        Array of scale parameters for ``eta`` with shape (m - 1,).
     workers : int
         The number of workers to use for parallel computation of FFTs. If
         negative, this number wraps around from ``os.cpu_count()``.
@@ -1698,7 +1686,7 @@ def _hess_noisefit(
         scale_logv_tau=scale_logv_tau,
         scale_delta_mu=scale_delta_mu,
         scale_delta_a=scale_delta_a,
-        scale_eta_on_dt=scale_eta_on_dt,
+        scale_eta=scale_eta,
         workers=workers,
     )
     # Compute residuals and their squares for subsequent computations
@@ -2142,7 +2130,7 @@ def _hess_noisefit(
             [scale_logv_tau],
             -scale_delta_mu,
             scale_delta_a,
-            scale_eta_on_dt,
+            scale_eta,
         ],
         dtype=object,
     )
@@ -2249,12 +2237,14 @@ def noisefit(
         sigma_tau0).noise_amp(mu0)``.
     scale_delta_a : array_like with shape(m - 1,), optional
         Scale for varying signal amplitude drift vector. Default is
-        ``np.max((sigma_min, sigma_beta0))`` for all entries, where
-        ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``.
+        ``np.max((sigma_min / x_max, sigma_beta0))`` for all entries, where
+        ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))`` and
+        ``x_max = np.max(np.abs(x))``.
     scale_eta : array_like with shape(m - 1,), optional
         Scale for varying signal delay drift vector. Default is
-        ``np.max((sigma_min, sigma_tau0))``, for all entries, where
-        ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``.
+        ``(sigma_min / diff_x_diff_t_max, sigma_tau0 / dt)``, for all entries,
+        where ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``, and
+        ``diff_x_diff_t_max = np.max(np.abs(np.diff(x, axis=0)))``.
     min_options : dict or None, optional
         Keyword options passed to the ``options`` parameter of
         :func:`scipy.optimize.minimize`. See the documentation on the
@@ -2519,14 +2509,20 @@ def _parse_noisefit_input(
     scale_delta_mu = np.asarray(scale_delta_mu, dtype=np.float64)
 
     if scale_delta_a is None:
-        scale_delta_a_amp = np.max((sigma_min, sigma_beta0))
-        scale_delta_a = scale_delta_a_amp * np.ones(m - 1)
+        # Estimate the appropriate scaling factor from the multiplicative noise amplitude
+        x_max = np.max(np.abs(x))
+        scale_delta_a_amp = np.max((sigma_min / x_max, sigma_beta0))
+        scale_delta_a = np.full((m - 1,), scale_delta_a_amp)
 
     scale_delta_a = np.asarray(scale_delta_a, dtype=np.float64)
 
     if scale_eta is None:
-        scale_eta_amp = np.max((sigma_min, sigma_tau0))
-        scale_eta = scale_eta_amp * np.ones(m - 1)
+        # Estimate the appropriate scaling factor from the timebase noise amplitude
+        diff_x_diff_t_max = np.max(np.abs(np.diff(x, axis=0)))
+        scale_eta_amp = np.max(
+            (sigma_min / diff_x_diff_t_max, sigma_tau0 / dt)
+        )
+        scale_eta = np.full((m - 1,), scale_eta_amp)
 
     scale_eta = np.asarray(scale_eta, dtype=np.float64)
 
@@ -2571,7 +2567,7 @@ def _parse_noisefit_input(
             msg = "Size of eta0 is incompatible with data array x."
             raise ValueError(msg)
 
-    eta_scaled0 = eta0[1:] / scale_eta
+    eta_on_dt_scaled0 = eta0[1:] / dt / scale_eta
 
     # Set initial guesses for all free parameters
     x0 = np.array([], dtype=np.float64)
@@ -2586,26 +2582,26 @@ def _parse_noisefit_input(
     if not fix_a:
         x0 = np.concatenate((x0, epsilon0))
     if not fix_eta:
-        x0 = np.concatenate((x0, eta_scaled0))
+        x0 = np.concatenate((x0, eta_on_dt_scaled0))
 
     # Bundle free parameters together into objective function
     def objective(
         _p: NDArray[np.float64],
     ) -> float:
         if fix_sigma_alpha:
-            _logv_alpha = logv0_scaled[0]
+            _logv_alpha_scaled = logv0_scaled[0]
         else:
-            _logv_alpha = _p[0]
+            _logv_alpha_scaled = _p[0]
             _p = _p[1:]
         if fix_sigma_beta:
-            _logv_beta = logv0_scaled[1]
+            _logv_beta_scaled = logv0_scaled[1]
         else:
-            _logv_beta = _p[0]
+            _logv_beta_scaled = _p[0]
             _p = _p[1:]
         if fix_sigma_tau:
-            _logv_tau = logv0_scaled[2]
+            _logv_tau_scaled = logv0_scaled[2]
         else:
-            _logv_tau = _p[0]
+            _logv_tau_scaled = _p[0]
             _p = _p[1:]
         if fix_mu:
             _delta = delta0
@@ -2620,13 +2616,13 @@ def _parse_noisefit_input(
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
 
-        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
+        _eta_on_dt = eta_on_dt_scaled0 if fix_eta else _p[: m - 1]
 
         return _nll_noisefit(
             x.T,
-            _logv_alpha,
-            _logv_beta,
-            _logv_tau,
+            _logv_alpha_scaled,
+            _logv_beta_scaled,
+            _logv_tau_scaled,
             _delta,
             _epsilon,
             _eta_on_dt,
@@ -2636,26 +2632,26 @@ def _parse_noisefit_input(
             scale_logv_tau=scale_logv_tau,
             scale_delta_mu=scale_delta_mu,
             scale_delta_a=scale_delta_a,
-            scale_eta_on_dt=scale_eta / dt,  # Scale in units of dt
+            scale_eta=scale_eta,
             workers=workers,
         )
 
     # Bundle free parameters together into objective function
     def jac(_p: NDArray[np.float64]) -> NDArray[np.float64]:
         if fix_sigma_alpha:
-            _logv_alpha = logv0_scaled[0]
+            _logv_alpha_scaled = logv0_scaled[0]
         else:
-            _logv_alpha = _p[0]
+            _logv_alpha_scaled = _p[0]
             _p = _p[1:]
         if fix_sigma_beta:
-            _logv_beta = logv0_scaled[1]
+            _logv_beta_scaled = logv0_scaled[1]
         else:
-            _logv_beta = _p[0]
+            _logv_beta_scaled = _p[0]
             _p = _p[1:]
         if fix_sigma_tau:
-            _logv_tau = logv0_scaled[2]
+            _logv_tau_scaled = logv0_scaled[2]
         else:
-            _logv_tau = _p[0]
+            _logv_tau_scaled = _p[0]
             _p = _p[1:]
         if fix_mu:
             _delta = delta0
@@ -2670,16 +2666,16 @@ def _parse_noisefit_input(
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
 
-        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
+        _eta_on_dt_scaled = eta_on_dt_scaled0 if fix_eta else _p[: m - 1]
 
         return _jac_noisefit(
             x.T,
-            _logv_alpha,
-            _logv_beta,
-            _logv_tau,
+            _logv_alpha_scaled,
+            _logv_beta_scaled,
+            _logv_tau_scaled,
             _delta,
             _epsilon,
-            _eta_on_dt,
+            _eta_on_dt_scaled,
             fix_logv_alpha=fix_sigma_alpha,
             fix_logv_beta=fix_sigma_beta,
             fix_logv_tau=fix_sigma_tau,
@@ -2692,7 +2688,7 @@ def _parse_noisefit_input(
             scale_logv_tau=scale_logv_tau,
             scale_delta_mu=scale_delta_mu,
             scale_delta_a=scale_delta_a,
-            scale_eta_on_dt=scale_eta / dt,  # Scale in units of dt
+            scale_eta=scale_eta,
             workers=workers,
         )
 
@@ -2792,7 +2788,7 @@ def _parse_noisefit_output(
     if fix_eta:
         eta_out = eta0
     else:
-        eta_out = np.concatenate(([0.0], x_out[: m - 1] * scale_eta))
+        eta_out = np.concatenate(([0.0], x_out[: m - 1] * scale_eta * dt))
 
     diagnostic = out
     fun = out.fun
@@ -2816,7 +2812,7 @@ def _parse_noisefit_output(
                     [scale_logv_tau * tau / 2],
                     scale_delta_mu,
                     scale_delta_a,
-                    scale_eta,
+                    scale_eta * dt,
                 ],
                 strict=False,
             )
@@ -3681,6 +3677,7 @@ def etfe(
     Calculates the empirical transfer-function estimate of an input ''x'' and an
     output ''y'' by taking the ratio of the fast fourier transform between the two inputs.
     Makes use of the numpy rfft function to calculate this, and takes a pad and window variable in order to use this function.
+
     Parameters
     ----------
     x: array-like
@@ -3694,6 +3691,7 @@ def etfe(
         Name of a window function from 'scipy.signal.windows'. If None, applies a Tukey window.
     axis: int or none, optional parameter (will use last value of x array if nothing provided)
         Direction of fourier transform.
+
     Returns
     ----------
     ndarray of complex128
@@ -3703,6 +3701,61 @@ def etfe(
     ----------
     ValueError
         If `window` is not a valid name in `scipy.signal.windows`.
+
+    Examples
+    ----------
+    >>> from matplotlib import pyplot as plt
+    >>> import numpy as np
+    >>> import thztools as thz
+
+    >>> n, dt = 256, 0.05
+    >>> a, eta = 0.5, 1
+    >>> sigma_alpha, sigma_beta, sigma_tau = 1e-4, 1e-2, 1e-3
+
+    >>> t = thz.timebase(n, dt=dt)
+    >>> mu = thz.wave(n, dt=dt)
+    >>> noise_model = thz.NoiseModel(sigma_alpha, sigma_beta, sigma_tau, dt=dt)
+    >>> x = mu + noise_model.noise_sim(mu, axis=0, seed=1234)
+
+    >>> z = thz.scaleshift(mu, dt=dt, a=a, eta=eta)
+    >>> y = z + noise_model.noise_sim(z, axis=0, seed=5678)
+
+    >>> h_f = thz.etfe(x, y, window=None, axis=-1)
+    >>> freqs = thz.freqbase(n, dt=dt)
+
+    >>> def frfun(omega, a, eta):
+    >>>     return a * np.exp(-1j * omega * eta)
+    >>> p0 = (a, eta)
+    >>> result = thz.fit(frfun, x, y, p0,
+    ... noise_parms=(sigma_alpha, sigma_beta, sigma_tau), dt=dt)
+
+    >>> fig, axs = plt.subplots(2, 2, figsize=(10,6))
+    >>> axs[0, 0].plot(freqs, np.real(h_f), '.', label=r'$\hat{H}_{ETFE}$')
+    >>> axs[0, 0].plot(freqs, np.real(result.frfun_opt), "--", label=r'$\hat{H}_{FIT}$')
+    >>> axs[0, 0].set_ylabel('Re{H}')
+    >>> axs[0, 0].tick_params(labelbottom=False)
+    >>> axs[0, 0].legend(loc='upper left')
+    >>> axs[1, 0].plot(freqs, np.imag(h_f), '.', label=r'$\hat{H}_{ETFE}$')
+    >>> axs[1, 0].plot(freqs, np.imag(result.frfun_opt), "--", label=r'$\hat{H}_{FIT}$')
+    >>> axs[1, 0].set_xlabel('Frequency (THz)')
+    >>> axs[1, 0].set_ylabel(r'Im{H}')
+    >>> axs[1, 0].legend(loc='upper left')
+    >>> axs[0, 1].plot(freqs, np.real(h_f), '.', label=r'$\hat{H}_{ETFE}$')
+    >>> axs[0, 1].plot(freqs, np.real(result.frfun_opt), "--", label=r'$\hat{H}_{FIT}$')
+    >>> axs[0, 1].set_xlim(0, 3)
+    >>> axs[0, 1].set_ylabel(r'Re{H}')
+    >>> axs[0, 1].tick_params(labelbottom=False)
+    >>> axs[0, 1].legend(loc='upper left')
+    >>> axs[1, 1].plot(freqs, np.imag(h_f), '.', label=r'$\hat{H}_{ETFE}$')
+    >>> axs[1, 1].plot(freqs, np.imag(result.frfun_opt), "--", label=r'$\hat{H}_{FIT}$')
+    >>> axs[1, 1].set_xlim(0, 3)
+    >>> axs[1, 1].set_xlabel('Frequency (THz)')
+    >>> axs[1, 1].set_ylabel(r'Im{H}')
+    >>> axs[1, 1].legend(loc='upper left')
+
+    >>> fig.tight_layout()
+    >>> fig.subplots_adjust(hspace=0)
+    >>> plt.show();
     """
     x = np.asarray(x)
     y = np.asarray(y)
@@ -3719,7 +3772,7 @@ def etfe(
         )
         raise ValueError(wind_out_of_range)
     else:
-        win1d = get_window(window, ax_len)
+        win1d = get_window(window, ax_len, fftbins=False)
 
     shape = [1] * x.ndim
     shape[axis] = ax_len

@@ -9,12 +9,6 @@ from numpy.testing import assert_allclose
 from scipy import signal
 from scipy.fft import rfft
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-    from typing import Concatenate
-
-    from numpy.typing import ArrayLike, NDArray
-
 import thztools
 from thztools.thztools import (
     NoiseModel,
@@ -34,6 +28,13 @@ from thztools.thztools import (
     set_option,
     wave,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from typing import Concatenate
+
+    from numpy.typing import ArrayLike, NDArray
+
 
 eps = np.sqrt(np.finfo(np.float64).eps)
 rtol = 1e-5
@@ -596,8 +597,8 @@ class TestHessNoiseFit:
     logv_beta = 0
     logv_tau = 0
     delta_mu = np.zeros(n)
-    delta_a = np.zeros(m - 1)
-    eta = np.zeros(m - 1)
+    delta_a = np.full(m - 1, 1e-2)
+    eta = np.full(m - 1, 1e-3)
     scale_logv_alpha = 1.0
     scale_logv_beta = 1.0
     scale_logv_tau = 1.0
@@ -610,19 +611,19 @@ class TestHessNoiseFit:
         desired_hess_logv_logv = np.array(
             [
                 [
-                    9.1045125168940400e-01,
-                    -5.0000000000000000e-01,
-                    -4.1045125168940388e-01,
+                    9.0868913603740376e-01,
+                    -4.9992936567322832e-01,
+                    -4.0873210855417352e-01,
                 ],
                 [
-                    -5.0000000000000000e-01,
-                    5.0000000000000000e-01,
-                    -2.6197273189757708e-32,
+                    -4.9992936567322832e-01,
+                    4.9998728991205499e-01,
+                    -3.3028595707506608e-05,
                 ],
                 [
-                    -4.1045125168940388e-01,
-                    -2.6197273189757708e-32,
-                    4.1045125168940433e-01,
+                    -4.0873210855417352e-01,
+                    -3.3028595707506608e-05,
+                    4.0877333427397833e-01,
                 ],
             ]
         )
@@ -657,22 +658,22 @@ class TestHessNoiseFit:
         desired_hess_logv_mu = np.array(
             [
                 [
-                    9.1045125168940388e-01,
-                    1.6127071987048048e-16,
-                    -9.1045125168940388e-01,
-                    -1.8164267364532367e-16,
+                    9.1113460501095378e-01,
+                    2.0466371531152579e-03,
+                    -9.1113460501095367e-01,
+                    -2.0466371531152783e-03,
                 ],
                 [
-                    -5.0000000000000000e-01,
-                    1.1576587551626463e-16,
-                    5.0000000000000000e-01,
-                    -4.5128140582676141e-17,
+                    -4.9743484125577864e-01,
+                    3.6848491428467496e-03,
+                    4.9743484125577858e-01,
+                    -3.6848491428466790e-03,
                 ],
                 [
-                    -4.1045125168940416e-01,
-                    -2.7703659538674511e-16,
-                    4.1045125168940416e-01,
-                    2.2677081422799980e-16,
+                    -4.0873186555842217e-01,
+                    -3.9406235831977721e-03,
+                    4.0873186555842217e-01,
+                    3.9406235831977209e-03,
                 ],
             ]
         )
@@ -705,7 +706,11 @@ class TestHessNoiseFit:
 
     def test_hess_logv_delta_a(self) -> None:
         desired_hess_logv_a = np.array(
-            [[-0.9104512516894039], [0.5], [0.4104512516894041]]
+            [
+                [-9.0214533615766523e-01],
+                [4.9256945303631311e-01],
+                [4.0469501540981778e-01],
+            ]
         )
         hess_logv_a = _hess_noisefit(
             self.x,
@@ -735,9 +740,9 @@ class TestHessNoiseFit:
     def test_hess_logv_eta(self) -> None:
         desired_hess_logv_eta = np.array(
             [
-                [-3.767308415119052e-16],
-                [-8.901975977273483e-16],
-                [1.266928439239253e-15],
+                [-6.4297002447904136e-03],
+                [-1.1576294996753856e-02],
+                [1.2379834099536254e-02],
             ]
         )
         hess_logv_eta = _hess_noisefit(
@@ -771,28 +776,28 @@ class TestHessNoiseFit:
         desired_hess_mu_mu = np.array(
             [
                 [
-                    6.9885169083140497e-01,
-                    -1.7621763356243157e-16,
-                    3.0114830916859503e-01,
-                    2.2648341472117688e-16,
+                    6.8491936723651670e-01,
+                    -1.4686321764919071e-03,
+                    3.0490752776855323e-01,
+                    1.3976575341522789e-03,
                 ],
                 [
-                    -1.7621763356243157e-16,
-                    2.3873023067041736e00,
-                    1.7621763356243157e-16,
-                    -1.2337005501361697e00,
+                    -1.4686321764919063e-03,
+                    2.3967798475695643e00,
+                    1.3976575341522269e-03,
+                    -1.2396618253915874e00,
                 ],
                 [
-                    3.0114830916859503e-01,
-                    1.7621763356243157e-16,
-                    6.9885169083140497e-01,
-                    -2.2648341472117688e-16,
+                    3.0490752776855329e-01,
+                    1.3976575341522269e-03,
+                    6.8491936723651670e-01,
+                    -1.4686321764919566e-03,
                 ],
                 [
-                    2.2648341472117688e-16,
-                    -1.2337005501361697e00,
-                    -2.2648341472117688e-16,
-                    2.3873023067041736e00,
+                    1.3976575341522789e-03,
+                    -1.2396618253915874e00,
+                    -1.4686321764919566e-03,
+                    2.3967798475695643e00,
                 ],
             ]
         )
@@ -824,10 +829,10 @@ class TestHessNoiseFit:
     def test_hess_delta_mu_delta_a(self) -> None:
         n = self.n
         desired_hess_mu_a = [
-            [-1.4104512516894041e00],
-            [-1.7893015360387762e-16],
-            [1.4104512516894041e00],
-            [2.3462097484551508e-16],
+            [-1.3928506713217048e00],
+            [-8.9698052624937884e-04],
+            [1.3928506713217048e00],
+            [8.9698052624943554e-04],
         ]
         hess_mu_a = _hess_noisefit(
             self.x,
@@ -857,10 +862,10 @@ class TestHessNoiseFit:
     def test_hess_delta_mu_eta(self) -> None:
         n = self.n
         desired_hess_mu_eta = [
-            [2.72258458e-17],
-            [-9.40752854e-01],
-            [-9.62363025e-17],
-            [9.40752854e-01],
+            [-1.4230634529969616e-03],
+            [-9.4298235964307087e-01],
+            [1.4230634529969390e-03],
+            [9.4298235964307087e-01],
         ]
         hess_mu_eta = _hess_noisefit(
             self.x,
@@ -888,7 +893,7 @@ class TestHessNoiseFit:
         assert_allclose(hess_mu_eta, desired_hess_mu_eta, atol=eps, rtol=rtol)
 
     def test_hess_delta_a_delta_a(self) -> None:
-        desired_hess_a_a = [[0.3977033816628099]]
+        desired_hess_a_a = [[3.5518115603677713e-01]]
         hess_a_a = _hess_noisefit(
             self.x,
             self.logv_alpha,
@@ -916,7 +921,7 @@ class TestHessNoiseFit:
 
     def test_hess_delta_a_eta(self) -> None:
         m = self.m
-        desired_hess_a_eta = [[4.278233838022636e-16]]
+        desired_hess_a_eta = [[2.8179474316777152e-03]]
         hess_a_eta = _hess_noisefit(
             self.x,
             self.logv_alpha,
@@ -943,7 +948,7 @@ class TestHessNoiseFit:
         assert_allclose(hess_a_eta, desired_hess_a_eta, atol=eps, rtol=rtol)
 
     def test_hess_eta_eta(self) -> None:
-        desired_hess_eta_eta = [[2.9554622539561275]]
+        desired_hess_eta_eta = [[2.9624664535194403]]
         hess_eta_eta = _hess_noisefit(
             self.x,
             self.logv_alpha,

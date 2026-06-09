@@ -1562,6 +1562,49 @@ class TestETFE:
         result = etfe(x, y)
         assert np.allclose(result, expected)
 
+    def test_window_name(self) -> None:
+        x = np.asarray(
+            [
+                0.0512,
+                0.5913,
+                0.4230,
+                0.7401,
+                0.4780,
+                0.3536,
+                0.4750,
+                0.4877,
+                0.8022,
+                0.7286,
+            ]
+        )
+        y = np.asarray(
+            [
+                0.0814,
+                0.7072,
+                0.1607,
+                0.5481,
+                0.7540,
+                0.4741,
+                0.3695,
+                0.2887,
+                0.3708,
+                0.2735,
+            ]
+        )
+        axis = -1
+        ax_len = x.shape[axis]
+        nfft = ax_len
+        win1d = signal.windows.tukey(ax_len)
+
+        windx = x * win1d
+        windy = y * win1d
+
+        expected = rfft(windy, n=nfft, axis=axis) / rfft(
+            windx, n=nfft, axis=axis
+        )
+        result = etfe(x, y, window="tukey")
+        assert np.allclose(result, expected)
+
     def test_run_time_warning(
         self,
     ) -> None:  # checks if there's a divide by zero
@@ -1571,7 +1614,7 @@ class TestETFE:
         with pytest.warns(RuntimeWarning):
             etfe(x, y)
 
-    def test_value_error(
+    def test_broadcast_error(
         self,
     ) -> None:  # checks if x and y arrays have same length
         x = np.array([0.0512, 0.5913, 0.4230])
@@ -1582,6 +1625,15 @@ class TestETFE:
             match=r"operands could not be broadcast together with shapes .*",
         ):
             etfe(x, y)
+
+    def test_windowlist_error(self) -> None:
+        x = np.array([1, -1, 1, -1])
+        y = x
+        with pytest.raises(
+            ValueError,
+            match=r"Window parameter only accepts functions in .*",
+        ):
+            etfe(x, y, window="turkey")
 
     def test_sqaure_matrix(
         self,

@@ -2337,25 +2337,25 @@ def noisefit(
     >>> t = thz.timebase(n, dt=dt)
     >>> mu = thz.wave(n, dt=dt)
     >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
+    >>>
     >>> noise_model = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
-    ...  sigma_tau=tau, dt=dt)
-    >>> a = 1.0 + 1e-2 * np.concatenate(([0.0],
-    ...                                 rng.standard_normal(m - 1)))
+    ...     sigma_tau=tau, dt=dt)
+    >>> a = 1.0 + 1e-2 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
     >>> eta = 1e-3 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
     >>> z = thz.scaleshift(np.repeat(np.atleast_2d(mu), m, axis=0), dt=dt,
-    ...                    a=a, eta=eta).T  # Orient the array columnwise
+    ...     a=a, eta=eta).T  # Orient the array columnwise
     >>> x = z + noise_model.noise_sim(z, axis=0, seed=12345)
-    >>> noise_res = thz.noisefit(x, sigma_alpha0=alpha, sigma_beta0=beta,
-    ...  sigma_tau0=tau, dt=dt)
-    >>> noise_res.noise_model
+    >>>
+    >>> noise_res_direct = thz.noisefit(x, sigma_alpha0=alpha, sigma_beta0=beta,
+    ...     sigma_tau0=tau, dt=dt)
+    >>> noise_res_direct.noise_model
     NoiseModel(sigma_alpha=0.000100..., sigma_beta=0.00985...,
     sigma_tau=0.000892..., dt=0.05)
-
-    >>> plt.plot(t, np.std(thz.scaleshift(x, dt=dt, a=1 / noise_res.a,
-    ... eta=-noise_res.eta, axis=0), axis=1), "-",
-    ... label="Data")
-    >>> plt.plot(t, noise_res.noise_model.noise_amp(noise_res.mu),
-    ...  "--", label="Fit")
+    >>>
+    >>> plt.plot(t, np.std(thz.scaleshift(x, a=1/noise_res_direct.a,
+    ...     eta=-noise_res_direct.eta, axis=0), axis=1), "-", label="Data")
+    >>> plt.plot(t, noise_res_direct.noise_model.noise_amp(noise_res_direct.mu),
+    ...     "--", label=r"Direct Fit for $\mu$")
     >>> plt.legend()
     >>> plt.xlabel("t (ps)")
     >>> plt.ylabel(r"$\sigma(t)$")

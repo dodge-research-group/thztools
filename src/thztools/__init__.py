@@ -12,6 +12,7 @@ from thztools.thztools import (
     apply_frf,
     etfe,
     fit,
+    freqbase,
     get_option,
     noisefit,
     options,
@@ -38,5 +39,6 @@ __all__ = [
     "scaleshift",
     "set_option",
     "timebase",
+    "freqbase",
     "wave",
 ]

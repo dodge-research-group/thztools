@@ -278,6 +278,31 @@ class TestTimebase:
         assert_allclose(t, t_expected, rtol=rtol, atol=eps)
 
 
+class TestFreqbase:
+    @pytest.mark.parametrize(
+        "dt",
+        [
+            None,
+            1.0,
+            2.0,
+        ],
+    )
+    def test_freqbase(self, dt: float | None) -> None:
+        n = 8
+
+        f = thztools.freqbase(n, dt=dt)
+
+        dt = _assign_sampling_time(dt)
+        f_expected = np.arange(n // 2 + 1) * (1.0 / (n * dt))
+
+        assert_allclose(f, f_expected, rtol=rtol, atol=eps)
+
+    def test_freqbase_length(self) -> None:
+        n = 8
+        f = thztools.freqbase(n)
+        assert len(f) == n // 2 + 1
+
+
 class TestWave:
     @pytest.mark.parametrize(
         "t0",

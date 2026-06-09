@@ -25,13 +25,14 @@ Noise model
     NoiseResult
     noisefit
 
-Parameter estimation
---------------------
+Frequency response function estimation
+--------------------------------------
 
 .. autosummary::
     :toctree: generated/
-    :caption: Parameter estimation
+    :caption: Frequency response function estimation
 
+    etfe
     FitResult
     fit
 
@@ -43,6 +44,7 @@ Waveform utilities
     :caption: Waveform utilities
 
     apply_frf
+    freqbase
     scaleshift
     timebase
     wave

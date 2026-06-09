@@ -3674,28 +3674,31 @@ def etfe(
     axis: int = -1,
 ) -> NDArray[np.complex128]:
     r"""
-    Calculates the empirical transfer-function estimate of an input ''x'' and an
-    output ''y'' by taking the ratio of the fast fourier transform between the two inputs.
-    Makes use of the numpy rfft function to calculate this, and takes a pad and window variable in order to use this function.
+    Calculate the empirical transfer-function estimate.
+
+    Given a real input ''x'' and a real output ''y'', return the ratio of their discrete Fourier
+    transforms, ``h = rfft(y) / rfft(x)``. takes a pad and window variable in order to use this function.
 
     Parameters
     ----------
-    x: array-like
-        Input Signal
-    y: array-like
-        Output signal
-    n: int or none, optional parameter (will use None if nothing provided)
+    x : array_like
+        Input waveform.
+    y : array_like
+        Output waveform.
+    n : int or None, optional
         Length of the fft. If 'n' is greater than 'len(x)', pad zeroes to length of 'n'.
-        If 'n' less than 'len(x)', signal is truncated. if None, uses n equals 'len(x)'.
-    window: str or None, optional (will use None if nothing provided)
-        Name of a window function from 'scipy.signal.windows'. If None, applies a Tukey window.
-    axis: int or none, optional parameter (will use last value of x array if nothing provided)
-        Direction of fourier transform.
+        If 'n' less than 'len(x)', signal is truncated. Default is None, which sets
+        'n = len(x)'.
+    window : str or None, optional
+        Name of a window function from 'scipy.signal.windows'. Default is None, which applies
+        a Tukey window with 'alpha = 0.5'.
+    axis : int or None, optional
+        Fourier transform axis.
 
     Returns
     ----------
     ndarray of complex128
-        Empirical transfer function estimate, i.e. the ratio of the fast fourier transforms of y and x.
+        Empirical transfer function estimate.
 
     Raises
     ----------

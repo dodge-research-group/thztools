@@ -3724,18 +3724,20 @@ def etfe(
     >>> freqs = thz.freqbase(n, dt=dt)
 
     >>> def frfun(omega, a, eta):
-    >>>     return a * np.exp(-1j * omega * eta)
+    ...    return a * np.exp(-1j * omega * eta)
+    >>>
     >>> p0 = (a, eta)
-    >>> result = thz.fit(frfun, x, y, p0,
-    ... noise_parms=(sigma_alpha, sigma_beta, sigma_tau), dt=dt)
+    >>> result = thz.fit(
+    ...     frfun, x, y, p0, noise_parms=(sigma_alpha, sigma_beta, sigma_tau), dt=dt
+    ... )
 
-    >>> fig, axs = plt.subplots(2, 2, figsize=(10,6))
+    >>> fig, axs = plt.subplots(2, 2, figsize=(10, 6))
     >>> axs[0, 0].plot(freqs, np.real(h_f), ".", label=r"$\hat{H}_{ETFE}$")
     >>> axs[0, 0].plot(freqs, np.real(result.frfun_opt), "--", label=r"$\hat{H}_{FIT}$")
     >>> axs[0, 0].set_ylabel("Re{H}")
     >>> axs[0, 0].tick_params(labelbottom=False)
     >>> axs[0, 0].legend(loc="upper left")
-    >>> axs[1, 0].plot(freqs, np.imag(h_f), ""."", label=r"$\hat{H}_{ETFE}$")
+    >>> axs[1, 0].plot(freqs, np.imag(h_f), ".", label=r"$\hat{H}_{ETFE}$")
     >>> axs[1, 0].plot(freqs, np.imag(result.frfun_opt), "--", label=r"$\hat{H}_{FIT}$")
     >>> axs[1, 0].set_xlabel("Frequency (THz)")
     >>> axs[1, 0].set_ylabel(r"Im{H}")

@@ -3724,7 +3724,7 @@ def etfe(
     >>> freqs = thz.freqbase(n, dt=dt)
 
     >>> def frfun(omega, a, eta):
-    ...    return a * np.exp(-1j * omega * eta)
+    ...     return a * np.exp(-1j * omega * eta)
     >>>
     >>> p0 = (a, eta)
     >>> result = thz.fit(

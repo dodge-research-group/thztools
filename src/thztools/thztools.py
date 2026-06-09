@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright Contributors to the THzTools project.
-"""
+r"""
 Data analysis tools for terahertz time-domain spectroscopy.
 
 Classes:
@@ -3628,7 +3628,7 @@ def etfe(
     window: str | None = None,
     axis: int = -1,
 ) -> NDArray[np.complex128]:
-    """
+    r"""
     Calculates the empirical transfer-function estimate of an input ''x'' and an
     output ''y'' by taking the ratio of the fast fourier transform between the two inputs.
     Makes use of the numpy rfft function to calculate this, and takes a pad and window variable in order to use this function.
@@ -3685,33 +3685,34 @@ def etfe(
     ... noise_parms=(sigma_alpha, sigma_beta, sigma_tau), dt=dt)
 
     >>> fig, axs = plt.subplots(2, 2, figsize=(10,6))
-    >>> axs[0, 0].plot(freqs, np.real(h_f), '.', label=r'$\hat{H}_{ETFE}$')
-    >>> axs[0, 0].plot(freqs, np.real(result.frfun_opt), "--", label=r'$\hat{H}_{FIT}$')
-    >>> axs[0, 0].set_ylabel('Re{H}')
+    >>> axs[0, 0].plot(freqs, np.real(h_f), ".", label=r"$\hat{H}_{ETFE}$")
+    >>> axs[0, 0].plot(freqs, np.real(result.frfun_opt), "--", label=r"$\hat{H}_{FIT}$")
+    >>> axs[0, 0].set_ylabel("Re{H}")
     >>> axs[0, 0].tick_params(labelbottom=False)
-    >>> axs[0, 0].legend(loc='upper left')
-    >>> axs[1, 0].plot(freqs, np.imag(h_f), '.', label=r'$\hat{H}_{ETFE}$')
-    >>> axs[1, 0].plot(freqs, np.imag(result.frfun_opt), "--", label=r'$\hat{H}_{FIT}$')
-    >>> axs[1, 0].set_xlabel('Frequency (THz)')
-    >>> axs[1, 0].set_ylabel(r'Im{H}')
-    >>> axs[1, 0].legend(loc='upper left')
-    >>> axs[0, 1].plot(freqs, np.real(h_f), '.', label=r'$\hat{H}_{ETFE}$')
-    >>> axs[0, 1].plot(freqs, np.real(result.frfun_opt), "--", label=r'$\hat{H}_{FIT}$')
+    >>> axs[0, 0].legend(loc="upper left")
+    >>> axs[1, 0].plot(freqs, np.imag(h_f), ""."", label=r"$\hat{H}_{ETFE}$")
+    >>> axs[1, 0].plot(freqs, np.imag(result.frfun_opt), "--", label=r"$\hat{H}_{FIT}$")
+    >>> axs[1, 0].set_xlabel("Frequency (THz)")
+    >>> axs[1, 0].set_ylabel(r"Im{H}")
+    >>> axs[1, 0].legend(loc="upper left")
+    >>> axs[0, 1].plot(freqs, np.real(h_f), ".", label=r"$\hat{H}_{ETFE}$")
+    >>> axs[0, 1].plot(freqs, np.real(result.frfun_opt), "--", label=r"$\hat{H}_{FIT}$")
     >>> axs[0, 1].set_xlim(0, 3)
-    >>> axs[0, 1].set_ylabel(r'Re{H}')
+    >>> axs[0, 1].set_ylabel(r"Re{H}")
     >>> axs[0, 1].tick_params(labelbottom=False)
-    >>> axs[0, 1].legend(loc='upper left')
-    >>> axs[1, 1].plot(freqs, np.imag(h_f), '.', label=r'$\hat{H}_{ETFE}$')
-    >>> axs[1, 1].plot(freqs, np.imag(result.frfun_opt), "--", label=r'$\hat{H}_{FIT}$')
+    >>> axs[0, 1].legend(loc="upper left")
+    >>> axs[1, 1].plot(freqs, np.imag(h_f), ".", label=r"$\hat{H}_{ETFE}$")
+    >>> axs[1, 1].plot(freqs, np.imag(result.frfun_opt), "--", label=r"$\hat{H}_{FIT}$")
     >>> axs[1, 1].set_xlim(0, 3)
-    >>> axs[1, 1].set_xlabel('Frequency (THz)')
-    >>> axs[1, 1].set_ylabel(r'Im{H}')
-    >>> axs[1, 1].legend(loc='upper left')
+    >>> axs[1, 1].set_xlabel("Frequency (THz)")
+    >>> axs[1, 1].set_ylabel(r"Im{H}")
+    >>> axs[1, 1].legend(loc="upper left")
 
     >>> fig.tight_layout()
     >>> fig.subplots_adjust(hspace=0)
-    >>> plt.show();
+    >>> plt.show()
     """
+
     x = np.asarray(x)
     y = np.asarray(y)
 

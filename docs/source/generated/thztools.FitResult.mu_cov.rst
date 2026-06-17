@@ -1,10 +1,10 @@
 :orphan:
 
-thztools.FitResult.success
+thztools.FitResult.mu\_cov
 ==========================
 
 .. currentmodule:: thztools
 
 attribute
 
-.. autoattribute:: thztools.FitResult.success
+.. autoattribute:: thztools.FitResult.mu_cov

@@ -1,10 +1,10 @@
 :orphan:
 
-thztools.FitResult.psi\_opt
+thztools.FitResult.psi\_cov
 ===========================
 
 .. currentmodule:: thztools
 
 attribute
 
-.. autoattribute:: thztools.FitResult.psi_opt
+.. autoattribute:: thztools.FitResult.psi_cov

@@ -1,10 +1,10 @@
 :orphan:
 
-thztools.NoiseModel.sigma\_alpha
+thztools.FitResult.epsilon\_norm
 ================================
 
 .. currentmodule:: thztools
 
 attribute
 
-.. autoattribute:: thztools.NoiseModel.sigma_alpha
+.. autoattribute:: thztools.FitResult.epsilon_norm

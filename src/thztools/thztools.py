@@ -59,7 +59,7 @@ import numpy as np
 from numpy import pi
 from numpy.random import default_rng
 from scipy.fft import irfft, rfft, rfftfreq
-from scipy.linalg import circulant, sqrtm, svd
+from scipy.linalg import circulant, sqrtm, svd, inv
 from scipy.optimize import (
     OptimizeResult,
     approx_fprime,
@@ -2614,7 +2614,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
 
         _eta_on_dt = eta_on_dt_scaled0 if fix_eta else _p[: m - 1]
 
@@ -2664,7 +2664,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
 
         _eta_on_dt_scaled = eta_on_dt_scaled0 if fix_eta else _p[: m - 1]
 
@@ -2783,7 +2783,7 @@ def _parse_noisefit_output(
         a_out = a0
     else:
         a_out = np.concatenate(([1.0], 1.0 + x_out[: m - 1] * scale_delta_a))
-        x_out = x_out[m - 1 :]
+        x_out = x_out[m - 1:]
 
     if fix_eta:
         eta_out = eta0
@@ -2821,7 +2821,7 @@ def _parse_noisefit_output(
     )
 
     # Get or compute the inverse hessian
-    hess_inv_scaled = np.linalg.inv(nd.Jacobian(jac)(out.x))
+    hess_inv_scaled = inv(nd.Jacobian(jac)(out.x))
 
     # Convert inverse Hessian into unscaled parameters
     hess_inv = (
@@ -2860,7 +2860,7 @@ def _parse_noisefit_output(
 
     if not fix_a:
         err_a = np.concatenate(([0], err[: m - 1]))
-        err = err[m - 1 :]
+        err = err[m - 1:]
 
     if not fix_eta:
         err_eta = np.concatenate(([0], err[: m - 1]))
@@ -2901,18 +2901,18 @@ def _parse_noisefit_output(
 
         if fix_a and not fix_eta:
             var_a_eta = (
-                dmu_deta[1:].T @ hess_inv[-m + 1 :, -m + 1 :] @ dmu_deta[1:]
+                dmu_deta[1:].T @ hess_inv[-m + 1:, -m + 1:] @ dmu_deta[1:]
             )
         elif not fix_a and fix_eta:
             var_a_eta = (
-                dmu_da[1:].T @ hess_inv[-m + 1 :, -m + 1 :] @ dmu_da[1:]
+                dmu_da[1:].T @ hess_inv[-m + 1:, -m + 1:] @ dmu_da[1:]
             )
         elif fix_a and fix_eta:
             var_a_eta = 0
         else:
             var_a_eta = (
                 np.concatenate((dmu_da[1:], dmu_deta[1:])).T
-                @ hess_inv[-2 * m + 2 :, -2 * m + 2 :]
+                @ hess_inv[-2 * m + 2:, -2 * m + 2:]
                 @ np.concatenate((dmu_da[1:], dmu_deta[1:]))
             )
 
@@ -2994,16 +2994,31 @@ class FitResult:
     p_err : ndarray
         Uncertainty estimate for ``p_opt``,
         ``p_err = np.sqrt(np.diag(p_cov))``.
+
+        .. deprecated:: 0.6.0
+            This option is deprecated and will be removed in version 0.7.0.
+
     p_cov : ndarray
         Covariance matrix estimate for ``p_opt``, determined from the curvature
-        of the cost function at ``(p_opt, mu_opt)``.
+        of the cost function at ``(p_opt, mu_opt)``. To compute one standard 
+        deviation errors on the parameters, use ``p_err = np.sqrt(np.diag(p_cov))``.
     mu_opt : ndarray
         Optimal estimate of the input waveform.
     mu_err : ndarray
         Estimated uncertainty in ``mu_opt``, determined from the curvature of
         the cost function at ``(p_opt, mu_opt)``.
+
+        .. deprecated:: 0.6.0
+            This option is deprecated and will be removed in version 0.7.0.
+
+    mu_cov : ndarray
+        Covariance matrix estimate for ``mu_opt``. To compute one standard 
+        deviation errors of the input waveform, use ``mu_err = np.sqrt(np.diag(mu_cov))``.
     psi_opt : ndarray
         Optimal estimate of the output waveform.
+    psi_cov : ndarray
+        Covariance matrix estimate for ``psi_opt``. To compute one standard 
+        deviation errors of the output waveform, use ``psi_err = np.sqrt(np.diag(psi_cov))``.
     frfun_opt : complex ndarray
         Estimated values of the frequency response function at non-negative
         frequencies.
@@ -3019,11 +3034,24 @@ class FitResult:
         frequencies.
     delta : ndarray
         Residuals of the input waveform ``x``, defined as ``x - mu_opt``.
+    delta_norm : ndarray
+        Normalized residuals of the input waveform ``x``, defined as 
+        ``delta/noise_model.noise_amp(xdata)``.
+    delta_norm_cov : ndarray
+        Covariance matrix estimate for ``delta_norm``.
     epsilon : ndarray
         Residuals of the output waveform ``y``, defined as ``y - psi_opt``,
         where ``psi_opt = thztools.apply_frf(frfun, mu, dt=dt, args=p_opt)``,
         ``frfun`` is the parameterized frequency response function, and
         ``p_opt`` is the array of optimized parameters.
+    epsilon_norm : ndarray
+        Normalized residuals of the output waveform ``y``, defined as 
+        ``epsilon/noise_model.noise_amp(ydata)``.
+    epsilon_norm_cov : ndarray
+        Covariance matrix estimate for ``epsilon_norm``.
+    delta_norm_epsilon_norm_cov : ndarray
+        Cross-covariance matrix of the normalized residuals ``delta_norm`` 
+        and ``epsilon_norm``. 
     r_tls : ndarray
         Normalized total least-squares residuals.
     success : bool
@@ -3042,12 +3070,19 @@ class FitResult:
     p_cov: NDArray[np.float64]
     mu_opt: NDArray[np.float64]
     mu_err: NDArray[np.float64]
+    mu_cov: NDArray[np.float64]
     psi_opt: NDArray[np.float64]
+    psi_cov: NDArray[np.float64]
     frfun_opt: NDArray[np.complex128]
     resnorm: float
     dof: int
     delta: NDArray[np.float64]
+    delta_norm: NDArray[np.float64]
+    delta_norm_cov: NDArray[np.float64]
     epsilon: NDArray[np.float64]
+    epsilon_norm: NDArray[np.float64]
+    epsilon_norm_cov: NDArray[np.float64]
+    delta_norm_epsilon_norm_cov: NDArray[np.float64]
     r_tls: NDArray[np.float64]
     success: bool
     diagnostic: OptimizeResult
@@ -3418,6 +3453,8 @@ def fit(
     sigma_y = noise_model.noise_amp(ydata)
     v_x = np.diag(sigma_x**2)
     v_y = np.diag(sigma_y**2)
+    sigma_x_inv = np.diag(1/sigma_x)
+    sigma_y_inv = np.diag(1/sigma_y)
     p0_est = np.concatenate((p0, np.zeros(n_a), np.zeros(n_b), np.zeros(n)))
 
     if p_bounds is None:
@@ -3478,8 +3515,8 @@ def fit(
     def function(
         _w: NDArray[np.float64], /, *_theta: np.float64
     ) -> NDArray[np.complex128]:
-        _a = np.asarray(_theta[n_p : n_p + n_a], dtype=np.float64)
-        _b = np.asarray(_theta[n_p + n_a :], dtype=np.float64)
+        _a = np.asarray(_theta[n_p: n_p + n_a], dtype=np.float64)
+        _b = np.asarray(_theta[n_p + n_a:], dtype=np.float64)
         h_ex = fun_ex(_a, _b)
         h_in = _frfun_local(_w[f_incl_idx], *_theta[:n_p])
         return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
@@ -3540,7 +3577,7 @@ def fit(
                         np.zeros((n_b, 1)),
                         b_circ[:, : n_below - 1],
                         np.zeros((n_b, n_in)),
-                        b_circ[:, n_below - 1 :],
+                        b_circ[:, n_below - 1:],
                         np.zeros((n_b, 1)),
                     ),
                     axis=-1,
@@ -3561,7 +3598,7 @@ def fit(
                             np.zeros((n_b, 1)),
                             b_circ[:, : n_below - 1],
                             np.zeros((n_b, n_in)),
-                            b_circ[:, n_below - 1 :],
+                            b_circ[:, n_below - 1:],
                         ),
                         axis=-1,
                     )
@@ -3577,7 +3614,7 @@ def fit(
 
     def jac_fun(_x: NDArray[np.float64]) -> NDArray[np.float64]:
         p_est = _x[: n_p + n_a + n_b]
-        mu_est = xdata[:] - _x[n_p + n_a + n_b :]
+        mu_est = xdata[:] - _x[n_p + n_a + n_b:]
         jac_tl = np.zeros((n, n_p + n_a + n_b))
         jac_tr = np.diag(1 / sigma_x)
         fft_mu_est = rfft(mu_est)
@@ -3593,7 +3630,7 @@ def fit(
         return _costfuntls(
             function,
             _p[: n_p + n_a + n_b],
-            xdata[:] - _p[n_p + n_a + n_b :],
+            xdata[:] - _p[n_p + n_a + n_b:],
             xdata[:],
             ydata[:],
             sigma_x[:],
@@ -3627,10 +3664,11 @@ def fit(
     p_opt = result.x[:n_p]
     p_cov = cov[:n_p, :n_p]
     p_err = np.sqrt(np.diag(p_cov))
-    delta = result.x[n_p + n_a + n_b :]
+    delta = result.x[n_p + n_a + n_b:]
 
     mu_opt = xdata - delta
-    mu_err = np.sqrt(np.diag(cov)[n_p + n_a + n_b :])
+    mu_err = np.sqrt(np.diag(cov)[n_p + n_a + n_b:])
+    mu_cov = cov[n_p + n_a + n_b:, n_p + n_a + n_b:]
     psi_opt = apply_frf(function, mu_opt, dt=dt, args=p_opt_all)
     epsilon = ydata - psi_opt
     resnorm = 2 * result.cost
@@ -3641,7 +3679,14 @@ def fit(
     )
     h_delta = apply_frf(function, delta, dt=dt, args=p_opt_all)
     u_x = h_circ @ v_x @ h_circ.T
-    r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (epsilon - h_delta)
+    r_tls = sqrtm(inv(v_y + u_x)) @ (epsilon - h_delta)
+
+    psi_cov = h_circ @ mu_cov @ h_circ.T
+    delta_norm = delta/sigma_x
+    epsilon_norm = epsilon/sigma_y
+    delta_norm_cov = np.identity(n)-sigma_x_inv @ mu_cov @ sigma_x_inv
+    epsilon_norm_cov = np.identity(n)-sigma_y_inv @ psi_cov @ sigma_y_inv
+    delta_norm_epsilon_norm_cov = -sigma_x_inv @ mu_cov @ h_circ.T @ sigma_y_inv
 
     frfun_opt = function(w, *p_opt_all)
 
@@ -3653,12 +3698,19 @@ def fit(
         p_cov=p_cov,
         mu_opt=mu_opt,
         mu_err=mu_err,
+        mu_cov=mu_cov,
         psi_opt=psi_opt,
+        psi_cov=psi_cov,
         frfun_opt=frfun_opt,
         resnorm=float(resnorm),
         dof=dof,
         delta=delta,
+        delta_norm=delta_norm,
+        delta_norm_cov=delta_norm_cov,
         epsilon=epsilon,
+        epsilon_norm=epsilon_norm,
+        epsilon_norm_cov=epsilon_norm_cov,
+        delta_norm_epsilon_norm_cov=delta_norm_epsilon_norm_cov,
         r_tls=r_tls,
         success=bool(result.success),
         diagnostic=result,

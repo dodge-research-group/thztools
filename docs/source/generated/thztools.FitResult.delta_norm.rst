@@ -1,10 +1,10 @@
 :orphan:
 
-thztools.NoiseModel.sigma\_tau
+thztools.FitResult.delta\_norm
 ==============================
 
 .. currentmodule:: thztools
 
 attribute
 
-.. autoattribute:: thztools.NoiseModel.sigma_tau
+.. autoattribute:: thztools.FitResult.delta_norm

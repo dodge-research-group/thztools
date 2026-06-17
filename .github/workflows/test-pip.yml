@@ -1,4 +1,4 @@
-name: PyTest with pip
+name: Run PyTest Matrix
 
 on:
   push:
@@ -35,8 +35,20 @@ jobs:
       - name: Install Hatch
         run: pip install --upgrade hatch
 
+      - name: Run static analysis
+        run: hatch fmt --check
+
       - name: Run tests
-        run: hatch run coverage:cov
+        run: hatch test --python ${{ matrix.python-version }} --cover --cover-xml --randomize --parallel --retries 2 --retry-delay 1
 
       - name: Run doctests
         run: hatch run docs:doctest
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: unittests
+          fail_ci_if_error: false

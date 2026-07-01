@@ -3110,7 +3110,7 @@ class FitResult:
     diagnostic: OptimizeResult
 
     @property
-    def p_err(self):
+    def p_err(self) -> NDArray[np.float64]:
         msg = "\np_err is deprecated since version 0.6.0 and will be removed in version 0.8.0. \n" \
             "Use numpy.sqrt(numpy.diag(p_cov)) instead."
         warnings.warn(msg,
@@ -3119,7 +3119,7 @@ class FitResult:
         return self._p_err
 
     @property
-    def mu_err(self):
+    def mu_err(self) -> NDArray[np.float64]:
         msg = "\nmu_err is deprecated since version 0.6.0 and will be removed in version 0.8.0. \n" \
             "Use numpy.sqrt(numpy.diag(mu_cov)) instead."
         warnings.warn(msg,

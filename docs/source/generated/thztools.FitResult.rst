@@ -5,21 +5,21 @@
 
 .. autoclass:: FitResult
 
-   
+
 
    .. HACK -- the point here is that we don't want this to appear in the output, but the autosummary should still generate the pages.
       .. autosummary::
          :toctree:
-      
 
 
 
-   
+
+
 
    .. HACK -- the point here is that we don't want this to appear in the output, but the autosummary should still generate the pages.
       .. autosummary::
          :toctree:
-      
+
          FitResult.mu_err
          FitResult.p_err
          FitResult.p_opt
@@ -41,4 +41,3 @@
          FitResult.r_tls
          FitResult.success
          FitResult.diagnostic
-

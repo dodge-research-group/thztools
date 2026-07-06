@@ -913,7 +913,7 @@ def timebase(
 
 def freqbase(n: int, *, dt: float | None = None) -> NDArray[np.float64]:
     r"""
-    Discrete Fourier Transform sample frequencies for real FFTs.
+    Frequency base for :func:`thztools.etfe`.
 
     Parameters
     ----------
@@ -3025,8 +3025,8 @@ class FitResult:
         ``p_err = np.sqrt(np.diag(p_cov))``.
     p_cov : ndarray
         Covariance matrix estimate for ``p_opt``, determined from the curvature
-        of the cost function at ``(p_opt, mu_opt)``. To compute one standard
-        deviation errors on the parameters, use ``p_err = np.sqrt(np.diag(p_cov))``.
+        of the cost function at ``(p_opt, mu_opt)``. To compute the standard
+        errors for the parameters, use ``p_err = np.sqrt(np.diag(p_cov))``.
     mu_opt : ndarray
         Optimal estimate of the input waveform.
     mu_err : ndarray
@@ -3034,13 +3034,13 @@ class FitResult:
         the cost function at ``(p_opt, mu_opt)``.
     mu_cov : ndarray
         Covariance matrix estimate for ``mu_opt``, determined from the curvature
-        of the cost function at ``(p_opt, mu_opt)``. To compute one standard
-        deviation errors of the input waveform, use ``mu_err = np.sqrt(np.diag(mu_cov))``.
+        of the cost function at ``(p_opt, mu_opt)``. To compute the standard
+        errors for the input waveform, use ``mu_err = np.sqrt(np.diag(mu_cov))``.
     psi_opt : ndarray
         Optimal estimate of the output waveform.
     psi_cov : ndarray
-        Covariance matrix estimate for ``psi_opt``. To compute one standard
-        deviation errors of the output waveform, use ``psi_err = np.sqrt(np.diag(psi_cov))``.
+        Covariance matrix estimate for ``psi_opt``. To compute the standard
+        errors for the output waveform, use ``psi_err = np.sqrt(np.diag(psi_cov))``.
     frfun_opt : complex ndarray
         Estimated values of the frequency response function at non-negative
         frequencies.
@@ -3832,22 +3832,21 @@ def etfe(
     >>>
     >>> p0 = (a, eta)
     >>> result = thz.fit(
-    ...     frfun, x, y, p0, noise_parms=(sigma_alpha, sigma_beta, sigma_tau),
-    ...     dt=dt
+    ...     frfun, x, y, p0, noise_parms=(sigma_alpha, sigma_beta, sigma_tau), dt=dt
     ... )
 
     >>> fig, axs = plt.subplots(2, 1)
     >>>
-    >>> axs[0].plot(f, np.real(h_f), ".",
-    ...            label=r"$H_{\mathrm{ETFE}}$")
-    >>> axs[0].plot(f, np.real(result.frfun_opt),"--",
-    ...            label=r"$\hat{H}_{\mathrm{FIT}}$")
+    >>> axs[0].plot(f, np.real(h_f), ".", label=r"$H_{\mathrm{ETFE}}$")
+    >>> axs[0].plot(
+    ...     f, np.real(result.frfun_opt), "--", label=r"$\hat{H}_{\mathrm{FIT}}$"
+    ... )
     >>> axs[0].set_ylabel("Re{H}")
     >>> axs[0].set_ylim(-1.8, 1.8)
     >>> axs[0].tick_params(labelbottom=False)
     >>> axs[0].legend(loc="upper right")
     >>> axs[1].plot(f, np.imag(h_f), ".")
-    >>> axs[1].plot(f, np.imag(result.frfun_opt),"--")
+    >>> axs[1].plot(f, np.imag(result.frfun_opt), "--")
     >>> axs[1].set_xlabel("Frequency (THz)")
     >>> axs[1].set_ylabel(r"Im{H}")
     >>> axs[1].set_ylim(-1.8, 1.8)

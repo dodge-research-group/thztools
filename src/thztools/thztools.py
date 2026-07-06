@@ -59,7 +59,7 @@ import numpy as np
 from numpy import pi
 from numpy.random import default_rng
 from scipy.fft import irfft, rfft, rfftfreq
-from scipy.linalg import circulant, sqrtm, svd
+from scipy.linalg import circulant, inv, sqrtm, svd
 from scipy.optimize import (
     OptimizeResult,
     approx_fprime,
@@ -913,7 +913,7 @@ def timebase(
 
 def freqbase(n: int, *, dt: float | None = None) -> NDArray[np.float64]:
     r"""
-    Discrete Fourier Transform sample frequencies for real FFTs.
+    Frequency base for :func:`thztools.etfe`.
 
     Parameters
     ----------
@@ -2214,7 +2214,7 @@ def noisefit(
     Returns
     -------
     res : NoiseResult
-        Fit result represented as a ``NoiseResult`` object. Important
+        Fit result represented as a :class:`NoiseResult` object. Important
         attributes are: ``noise_model``, an instance of :class:`NoiseModel`
         with the estimated noise parameters; ``mu``, the estimated signal
         vector; ``a``, the estimated signal amplitude drift vector; ``eta``,
@@ -2821,7 +2821,7 @@ def _parse_noisefit_output(
     )
 
     # Get or compute the inverse hessian
-    hess_inv_scaled = np.linalg.inv(nd.Jacobian(jac)(out.x))
+    hess_inv_scaled = inv(nd.Jacobian(jac)(out.x))
 
     # Convert inverse Hessian into unscaled parameters
     hess_inv = (
@@ -2949,16 +2949,32 @@ class FitResult:
     p_err : ndarray
         Uncertainty estimate for ``p_opt``,
         ``p_err = np.sqrt(np.diag(p_cov))``.
+
+        .. deprecated:: 0.6.0
+            This option is deprecated and will be removed in version 0.8.0.
+
     p_cov : ndarray
         Covariance matrix estimate for ``p_opt``, determined from the curvature
-        of the cost function at ``(p_opt, mu_opt)``.
+        of the cost function at ``(p_opt, mu_opt)``. To compute one standard
+        deviation errors on the parameters, use ``p_err = np.sqrt(np.diag(p_cov))``.
     mu_opt : ndarray
         Optimal estimate of the input waveform.
     mu_err : ndarray
         Estimated uncertainty in ``mu_opt``, determined from the curvature of
         the cost function at ``(p_opt, mu_opt)``.
+
+        .. deprecated:: 0.6.0
+            This option is deprecated and will be removed in version 0.8.0.
+
+    mu_cov : ndarray
+        Covariance matrix estimate for ``mu_opt``, determined from the curvature
+        of the cost function at ``(p_opt, mu_opt)``. To compute one standard
+        deviation errors of the input waveform, use ``mu_err = np.sqrt(np.diag(mu_cov))``.
     psi_opt : ndarray
         Optimal estimate of the output waveform.
+    psi_cov : ndarray
+        Covariance matrix estimate for ``psi_opt``. To compute one standard
+        deviation errors of the output waveform, use ``psi_err = np.sqrt(np.diag(psi_cov))``.
     frfun_opt : complex ndarray
         Estimated values of the frequency response function at non-negative
         frequencies.
@@ -2974,11 +2990,24 @@ class FitResult:
         frequencies.
     delta : ndarray
         Residuals of the input waveform ``x``, defined as ``x - mu_opt``.
+    delta_norm : ndarray
+        Normalized residuals of the input waveform ``x``, defined as
+        ``delta/noise_model.noise_amp(xdata)``.
+    delta_norm_cov : ndarray
+        Covariance matrix estimate for ``delta_norm``.
     epsilon : ndarray
         Residuals of the output waveform ``y``, defined as ``y - psi_opt``,
         where ``psi_opt = thztools.apply_frf(frfun, mu, dt=dt, args=p_opt)``,
         ``frfun`` is the parameterized frequency response function, and
         ``p_opt`` is the array of optimized parameters.
+    epsilon_norm : ndarray
+        Normalized residuals of the output waveform ``y``, defined as
+        ``epsilon/noise_model.noise_amp(ydata)``.
+    epsilon_norm_cov : ndarray
+        Covariance matrix estimate for ``epsilon_norm``.
+    delta_norm_epsilon_norm_cov : ndarray
+        Cross-covariance matrix of the normalized residuals ``delta_norm``
+        and ``epsilon_norm``.
     r_tls : ndarray
         Normalized total least-squares residuals.
     success : bool
@@ -2996,14 +3025,22 @@ class FitResult:
         ``p_err = np.sqrt(np.diag(p_cov))``.
     p_cov : ndarray
         Covariance matrix estimate for ``p_opt``, determined from the curvature
-        of the cost function at ``(p_opt, mu_opt)``.
+        of the cost function at ``(p_opt, mu_opt)``. To compute the standard
+        errors for the parameters, use ``p_err = np.sqrt(np.diag(p_cov))``.
     mu_opt : ndarray
         Optimal estimate of the input waveform.
     mu_err : ndarray
         Estimated uncertainty in ``mu_opt``, determined from the curvature of
         the cost function at ``(p_opt, mu_opt)``.
+    mu_cov : ndarray
+        Covariance matrix estimate for ``mu_opt``, determined from the curvature
+        of the cost function at ``(p_opt, mu_opt)``. To compute the standard
+        errors for the input waveform, use ``mu_err = np.sqrt(np.diag(mu_cov))``.
     psi_opt : ndarray
         Optimal estimate of the output waveform.
+    psi_cov : ndarray
+        Covariance matrix estimate for ``psi_opt``. To compute the standard
+        errors for the output waveform, use ``psi_err = np.sqrt(np.diag(psi_cov))``.
     frfun_opt : complex ndarray
         Estimated values of the frequency response function at non-negative
         frequencies.
@@ -3019,11 +3056,24 @@ class FitResult:
         frequencies.
     delta : ndarray
         Residuals of the input waveform ``x``, defined as ``x - mu_opt``.
+    delta_norm : ndarray
+        Normalized residuals of the input waveform ``x``, defined as
+        ``delta/noise_model.noise_amp(xdata)``.
+    delta_norm_cov : ndarray
+        Covariance matrix estimate for ``delta_norm``.
     epsilon : ndarray
         Residuals of the output waveform ``y``, defined as ``y - psi_opt``,
         where ``psi_opt = thztools.apply_frf(frfun, mu, dt=dt, args=p_opt)``,
         ``frfun`` is the parameterized frequency response function, and
         ``p_opt`` is the array of optimized parameters.
+    epsilon_norm : ndarray
+        Normalized residuals of the output waveform ``y``, defined as
+        ``epsilon/noise_model.noise_amp(ydata)``.
+    epsilon_norm_cov : ndarray
+        Covariance matrix estimate for ``epsilon_norm``.
+    delta_norm_epsilon_norm_cov : ndarray
+        Cross-covariance matrix of the normalized residuals ``delta_norm``
+        and ``epsilon_norm``.
     r_tls : ndarray
         Normalized total least-squares residuals.
     success : bool
@@ -3038,19 +3088,52 @@ class FitResult:
     """
 
     p_opt: NDArray[np.float64]
-    p_err: NDArray[np.float64]
+    _p_err: NDArray[np.float64]
     p_cov: NDArray[np.float64]
     mu_opt: NDArray[np.float64]
-    mu_err: NDArray[np.float64]
+    _mu_err: NDArray[np.float64]
+    mu_cov: NDArray[np.float64]
     psi_opt: NDArray[np.float64]
+    psi_cov: NDArray[np.float64]
     frfun_opt: NDArray[np.complex128]
     resnorm: float
     dof: int
     delta: NDArray[np.float64]
+    delta_norm: NDArray[np.float64]
+    delta_norm_cov: NDArray[np.float64]
     epsilon: NDArray[np.float64]
+    epsilon_norm: NDArray[np.float64]
+    epsilon_norm_cov: NDArray[np.float64]
+    delta_norm_epsilon_norm_cov: NDArray[np.float64]
     r_tls: NDArray[np.float64]
     success: bool
     diagnostic: OptimizeResult
+
+    @property
+    def p_err(self) -> NDArray[np.float64]:
+        msg = (
+            "\np_err is deprecated since version 0.6.0 and will be removed in version 0.8.0. \n"
+            "Use numpy.sqrt(numpy.diag(p_cov)) instead."
+        )
+        warnings.warn(
+            msg,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._p_err
+
+    @property
+    def mu_err(self) -> NDArray[np.float64]:
+        msg = (
+            "\nmu_err is deprecated since version 0.6.0 and will be removed in version 0.8.0. \n"
+            "Use numpy.sqrt(numpy.diag(mu_cov)) instead."
+        )
+        warnings.warn(
+            msg,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._mu_err
 
 
 def _costfuntls(
@@ -3297,7 +3380,7 @@ def fit(
     and ``mu`` as free parameters. It minimizes the Euclidean norm of the
     residual vector
 
-        ``np.concat((delta / sigma_x, epsilon / sigma_y)``,
+        ``np.concatenate((delta / sigma_x, epsilon / sigma_y)``,
 
     where
 
@@ -3418,6 +3501,8 @@ def fit(
     sigma_y = noise_model.noise_amp(ydata)
     v_x = np.diag(sigma_x**2)
     v_y = np.diag(sigma_y**2)
+    sigma_x_inv = np.diag(1 / sigma_x)
+    sigma_y_inv = np.diag(1 / sigma_y)
     p0_est = np.concatenate((p0, np.zeros(n_a), np.zeros(n_b), np.zeros(n)))
 
     if p_bounds is None:
@@ -3630,7 +3715,8 @@ def fit(
     delta = result.x[n_p + n_a + n_b :]
 
     mu_opt = xdata - delta
-    mu_err = np.sqrt(np.diag(cov)[n_p + n_a + n_b :])
+    mu_cov = cov[n_p + n_a + n_b :, n_p + n_a + n_b :]
+    mu_err = np.sqrt(np.diag(mu_cov))
     psi_opt = apply_frf(function, mu_opt, dt=dt, args=p_opt_all)
     epsilon = ydata - psi_opt
     resnorm = 2 * result.cost
@@ -3641,7 +3727,16 @@ def fit(
     )
     h_delta = apply_frf(function, delta, dt=dt, args=p_opt_all)
     u_x = h_circ @ v_x @ h_circ.T
-    r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (epsilon - h_delta)
+    r_tls = sqrtm(inv(v_y + u_x)) @ (epsilon - h_delta)
+
+    psi_cov = h_circ @ mu_cov @ h_circ.T
+    delta_norm = delta / sigma_x
+    epsilon_norm = epsilon / sigma_y
+    delta_norm_cov = np.identity(n) - sigma_x_inv @ mu_cov @ sigma_x_inv
+    epsilon_norm_cov = np.identity(n) - sigma_y_inv @ psi_cov @ sigma_y_inv
+    delta_norm_epsilon_norm_cov = (
+        -sigma_x_inv @ mu_cov @ h_circ.T @ sigma_y_inv
+    )
 
     frfun_opt = function(w, *p_opt_all)
 
@@ -3649,16 +3744,23 @@ def fit(
     # either is a NumPy constant
     return FitResult(
         p_opt=p_opt,
-        p_err=p_err,
+        _p_err=p_err,
         p_cov=p_cov,
         mu_opt=mu_opt,
-        mu_err=mu_err,
+        _mu_err=mu_err,
+        mu_cov=mu_cov,
         psi_opt=psi_opt,
+        psi_cov=psi_cov,
         frfun_opt=frfun_opt,
         resnorm=float(resnorm),
         dof=dof,
         delta=delta,
+        delta_norm=delta_norm,
+        delta_norm_cov=delta_norm_cov,
         epsilon=epsilon,
+        epsilon_norm=epsilon_norm,
+        epsilon_norm_cov=epsilon_norm_cov,
+        delta_norm_epsilon_norm_cov=delta_norm_epsilon_norm_cov,
         r_tls=r_tls,
         success=bool(result.success),
         diagnostic=result,
@@ -3676,8 +3778,8 @@ def etfe(
     r"""
     Calculate the empirical transfer-function estimate.
 
-    Given a real input ''x'' and a real output ''y'', return the ratio of their discrete Fourier
-    transforms, ``h = rfft(y) / rfft(x)``. takes a pad and window variable in order to use this function.
+    Given the real input ``x`` and the real output ``y``, returns the ratio of their discrete Fourier
+    transforms, ``h_f = scipy.fft.rfft(y) / scipy.fft.rfft(x)``.
 
     Parameters
     ----------
@@ -3686,24 +3788,24 @@ def etfe(
     y : array_like
         Output waveform.
     n : int or None, optional
-        Length of the fft. If 'n' is greater than 'len(x)', pad zeroes to length of 'n'.
-        If 'n' less than 'len(x)', signal is truncated. Default is None, which sets
-        'n = len(x)'.
+        Number of points along transformation axis to use.
+        If ``n`` is greater than ``len(x)``, pad the signal with zeroes to ``n``.
+        If ``n`` less than ``len(x)``, signal is truncated. Default is None, which sets ``n = len(x)``.
     window : str or None, optional
-        Name of a window function from 'scipy.signal.windows'. Default is None, which applies
-        a Tukey window with 'alpha = 0.5'.
+        Name of a window function from :mod:`scipy.signal.windows`. Default is None, which applies
+        a Tukey window with ``alpha = 0.5``.
     axis : int or None, optional
-        Fourier transform axis.
+        Fourier transformed axis. If not given, the last axis is used.
 
     Returns
     ----------
-    ndarray of complex128
+    h_f : complex ndarray
         Empirical transfer function estimate.
 
     Raises
     ----------
     ValueError
-        If `window` is not a valid name in `scipy.signal.windows`.
+        If ``window`` is not a valid name in :mod:`scipy.signal.windows`.
 
     Examples
     ----------
@@ -3717,14 +3819,13 @@ def etfe(
 
     >>> t = thz.timebase(n, dt=dt)
     >>> mu = thz.wave(n, dt=dt)
+    >>> z = thz.scaleshift(mu, dt=dt, a=a, eta=eta)
     >>> noise_model = thz.NoiseModel(sigma_alpha, sigma_beta, sigma_tau, dt=dt)
     >>> x = mu + noise_model.noise_sim(mu, axis=0, seed=1234)
-
-    >>> z = thz.scaleshift(mu, dt=dt, a=a, eta=eta)
     >>> y = z + noise_model.noise_sim(z, axis=0, seed=5678)
 
+    >>> f = thz.freqbase(n, dt=dt)
     >>> h_f = thz.etfe(x, y, window=None, axis=-1)
-    >>> freqs = thz.freqbase(n, dt=dt)
 
     >>> def frfun(omega, a, eta):
     ...     return a * np.exp(-1j * omega * eta)
@@ -3734,32 +3835,23 @@ def etfe(
     ...     frfun, x, y, p0, noise_parms=(sigma_alpha, sigma_beta, sigma_tau), dt=dt
     ... )
 
-    >>> fig, axs = plt.subplots(2, 2, figsize=(10, 6))
-    >>> axs[0, 0].plot(freqs, np.real(h_f), ".", label=r"$\hat{H}_{ETFE}$")
-    >>> axs[0, 0].plot(freqs, np.real(result.frfun_opt), "--", label=r"$\hat{H}_{FIT}$")
-    >>> axs[0, 0].set_ylabel("Re{H}")
-    >>> axs[0, 0].tick_params(labelbottom=False)
-    >>> axs[0, 0].legend(loc="upper left")
-    >>> axs[1, 0].plot(freqs, np.imag(h_f), ".", label=r"$\hat{H}_{ETFE}$")
-    >>> axs[1, 0].plot(freqs, np.imag(result.frfun_opt), "--", label=r"$\hat{H}_{FIT}$")
-    >>> axs[1, 0].set_xlabel("Frequency (THz)")
-    >>> axs[1, 0].set_ylabel(r"Im{H}")
-    >>> axs[1, 0].legend(loc="upper left")
-    >>> axs[0, 1].plot(freqs, np.real(h_f), ".", label=r"$\hat{H}_{ETFE}$")
-    >>> axs[0, 1].plot(freqs, np.real(result.frfun_opt), "--", label=r"$\hat{H}_{FIT}$")
-    >>> axs[0, 1].set_xlim(0, 3)
-    >>> axs[0, 1].set_ylabel(r"Re{H}")
-    >>> axs[0, 1].tick_params(labelbottom=False)
-    >>> axs[0, 1].legend(loc="upper left")
-    >>> axs[1, 1].plot(freqs, np.imag(h_f), ".", label=r"$\hat{H}_{ETFE}$")
-    >>> axs[1, 1].plot(freqs, np.imag(result.frfun_opt), "--", label=r"$\hat{H}_{FIT}$")
-    >>> axs[1, 1].set_xlim(0, 3)
-    >>> axs[1, 1].set_xlabel("Frequency (THz)")
-    >>> axs[1, 1].set_ylabel(r"Im{H}")
-    >>> axs[1, 1].legend(loc="upper left")
-
-    >>> fig.tight_layout()
-    >>> fig.subplots_adjust(hspace=0)
+    >>> fig, axs = plt.subplots(2, 1)
+    >>>
+    >>> axs[0].plot(f, np.real(h_f), ".", label=r"$H_{\mathrm{ETFE}}$")
+    >>> axs[0].plot(
+    ...     f, np.real(result.frfun_opt), "--", label=r"$\hat{H}_{\mathrm{FIT}}$"
+    ... )
+    >>> axs[0].set_ylabel("Re{H}")
+    >>> axs[0].set_ylim(-1.8, 1.8)
+    >>> axs[0].tick_params(labelbottom=False)
+    >>> axs[0].legend(loc="upper right")
+    >>> axs[1].plot(f, np.imag(h_f), ".")
+    >>> axs[1].plot(f, np.imag(result.frfun_opt), "--")
+    >>> axs[1].set_xlabel("Frequency (THz)")
+    >>> axs[1].set_ylabel(r"Im{H}")
+    >>> axs[1].set_ylim(-1.8, 1.8)
+    >>>
+    >>> fig.subplots_adjust(hspace=0.2)
     >>> plt.show()
     """
 

@@ -20,17 +20,24 @@
       .. autosummary::
          :toctree:
 
-         FitResult.p_opt
+         FitResult.mu_err
          FitResult.p_err
+         FitResult.p_opt
          FitResult.p_cov
          FitResult.mu_opt
-         FitResult.mu_err
+         FitResult.mu_cov
          FitResult.psi_opt
+         FitResult.psi_cov
          FitResult.frfun_opt
          FitResult.resnorm
          FitResult.dof
          FitResult.delta
+         FitResult.delta_norm
+         FitResult.delta_norm_cov
          FitResult.epsilon
+         FitResult.epsilon_norm
+         FitResult.epsilon_norm_cov
+         FitResult.delta_norm_epsilon_norm_cov
          FitResult.r_tls
          FitResult.success
          FitResult.diagnostic

@@ -969,7 +969,7 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta=self.scale_eta,
             workers=self.workers,
-        )[: m - 1, m - 1 :]
+        )[: m - 1, m - 1:]
         assert_allclose(hess_a_eta, desired_hess_a_eta, atol=eps, rtol=rtol)
 
     def test_hess_eta_eta(self) -> None:
@@ -1514,7 +1514,7 @@ class TestETFE:
         expected = rfft(windy, n=nfft, axis=axis) / rfft(
             windx, n=nfft, axis=axis
         )
-        result = etfe(x, y)
+        result, f = etfe(x, y)
         assert np.allclose(result, expected)
 
     def test_odd_list(self) -> None:
@@ -1559,7 +1559,7 @@ class TestETFE:
         expected = rfft(windy, n=nfft, axis=axis) / rfft(
             windx, n=nfft, axis=axis
         )
-        result = etfe(x, y)
+        result, f = etfe(x, y)
         assert np.allclose(result, expected)
 
     def test_window_name(self) -> None:
@@ -1602,7 +1602,7 @@ class TestETFE:
         expected = rfft(windy, n=nfft, axis=axis) / rfft(
             windx, n=nfft, axis=axis
         )
-        result = etfe(x, y, window="tukey")
+        result, _ = etfe(x, y, window="tukey")
         assert np.allclose(result, expected)
 
     def test_run_time_warning(
@@ -1668,7 +1668,7 @@ class TestETFE:
         expected = rfft(windy, n=nfft, axis=axis) / rfft(
             windx, n=nfft, axis=axis
         )
-        result = etfe(x, y)
+        result, _ = etfe(x, y)
         assert np.allclose(result, expected)
 
     def test_non_sqaure_matrix(self) -> None:
@@ -1690,7 +1690,7 @@ class TestETFE:
         expected = rfft(windy, n=nfft, axis=axis) / rfft(
             windx, n=nfft, axis=axis
         )
-        result = etfe(x, y)
+        result, _ = etfe(x, y)
         assert np.allclose(result, expected)
 
     def test_n_greater_than_xlen(self) -> None:
@@ -1708,7 +1708,7 @@ class TestETFE:
         expected = rfft(windy, n=nfft, axis=axis) / rfft(
             windx, n=nfft, axis=axis
         )
-        result = etfe(x, y, n=8)
+        result, _ = etfe(x, y, n=8)
         assert np.allclose(result, expected)
 
     def test_n_less_than_xlen(self) -> None:
@@ -1726,5 +1726,39 @@ class TestETFE:
         expected = rfft(windy, n=nfft, axis=axis) / rfft(
             windx, n=nfft, axis=axis
         )
-        result = etfe(x, y, n=5)
+        result, _ = etfe(x, y, n=5)
         assert np.allclose(result, expected)
+
+    @pytest.mark.parametrize(
+        "dt",
+        [
+            None,
+            1.0,
+            2.0,
+        ]
+    )
+    @pytest.mark.parametrize(
+        "n",
+        [
+            9,
+            10
+        ]
+    )
+    def test_etfe_frequency(self, n: int | None, dt: float | None) -> None:
+        x = np.arange(n)
+        y = np.arange(n)
+        _, f = etfe(x, y, dt=dt)
+
+        dt = _assign_sampling_time(dt)
+        f_expected = np.arange(n // 2 + 1) * (1.0 / (n * dt))
+
+        assert np.allclose(f, f_expected)
+
+    def test_etfe_frequency_length(self) -> None:
+        n = 8
+        x = np.arange(n)
+        y = np.arange(n)
+
+        _, f = etfe(x, y)
+
+        assert len(f) == n // 2 + 1

@@ -2614,7 +2614,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
 
         _eta_on_dt = eta_on_dt_scaled0 if fix_eta else _p[: m - 1]
 
@@ -2664,7 +2664,7 @@ def _parse_noisefit_input(
             _epsilon = epsilon0
         else:
             _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
+            _p = _p[m - 1:]
 
         _eta_on_dt_scaled = eta_on_dt_scaled0 if fix_eta else _p[: m - 1]
 
@@ -2783,7 +2783,7 @@ def _parse_noisefit_output(
         a_out = a0
     else:
         a_out = np.concatenate(([1.0], 1.0 + x_out[: m - 1] * scale_delta_a))
-        x_out = x_out[m - 1 :]
+        x_out = x_out[m - 1:]
 
     if fix_eta:
         eta_out = eta0
@@ -2860,7 +2860,7 @@ def _parse_noisefit_output(
 
     if not fix_a:
         err_a = np.concatenate(([0], err[: m - 1]))
-        err = err[m - 1 :]
+        err = err[m - 1:]
 
     if not fix_eta:
         err_eta = np.concatenate(([0], err[: m - 1]))
@@ -2901,18 +2901,18 @@ def _parse_noisefit_output(
 
         if fix_a and not fix_eta:
             var_a_eta = (
-                dmu_deta[1:].T @ hess_inv[-m + 1 :, -m + 1 :] @ dmu_deta[1:]
+                dmu_deta[1:].T @ hess_inv[-m + 1:, -m + 1:] @ dmu_deta[1:]
             )
         elif not fix_a and fix_eta:
             var_a_eta = (
-                dmu_da[1:].T @ hess_inv[-m + 1 :, -m + 1 :] @ dmu_da[1:]
+                dmu_da[1:].T @ hess_inv[-m + 1:, -m + 1:] @ dmu_da[1:]
             )
         elif fix_a and fix_eta:
             var_a_eta = 0
         else:
             var_a_eta = (
                 np.concatenate((dmu_da[1:], dmu_deta[1:])).T
-                @ hess_inv[-2 * m + 2 :, -2 * m + 2 :]
+                @ hess_inv[-2 * m + 2:, -2 * m + 2:]
                 @ np.concatenate((dmu_da[1:], dmu_deta[1:]))
             )
 
@@ -3563,8 +3563,8 @@ def fit(
     def function(
         _w: NDArray[np.float64], /, *_theta: np.float64
     ) -> NDArray[np.complex128]:
-        _a = np.asarray(_theta[n_p : n_p + n_a], dtype=np.float64)
-        _b = np.asarray(_theta[n_p + n_a :], dtype=np.float64)
+        _a = np.asarray(_theta[n_p: n_p + n_a], dtype=np.float64)
+        _b = np.asarray(_theta[n_p + n_a:], dtype=np.float64)
         h_ex = fun_ex(_a, _b)
         h_in = _frfun_local(_w[f_incl_idx], *_theta[:n_p])
         return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
@@ -3625,7 +3625,7 @@ def fit(
                         np.zeros((n_b, 1)),
                         b_circ[:, : n_below - 1],
                         np.zeros((n_b, n_in)),
-                        b_circ[:, n_below - 1 :],
+                        b_circ[:, n_below - 1:],
                         np.zeros((n_b, 1)),
                     ),
                     axis=-1,
@@ -3646,7 +3646,7 @@ def fit(
                             np.zeros((n_b, 1)),
                             b_circ[:, : n_below - 1],
                             np.zeros((n_b, n_in)),
-                            b_circ[:, n_below - 1 :],
+                            b_circ[:, n_below - 1:],
                         ),
                         axis=-1,
                     )
@@ -3662,7 +3662,7 @@ def fit(
 
     def jac_fun(_x: NDArray[np.float64]) -> NDArray[np.float64]:
         p_est = _x[: n_p + n_a + n_b]
-        mu_est = xdata[:] - _x[n_p + n_a + n_b :]
+        mu_est = xdata[:] - _x[n_p + n_a + n_b:]
         jac_tl = np.zeros((n, n_p + n_a + n_b))
         jac_tr = np.diag(1 / sigma_x)
         fft_mu_est = rfft(mu_est)
@@ -3678,7 +3678,7 @@ def fit(
         return _costfuntls(
             function,
             _p[: n_p + n_a + n_b],
-            xdata[:] - _p[n_p + n_a + n_b :],
+            xdata[:] - _p[n_p + n_a + n_b:],
             xdata[:],
             ydata[:],
             sigma_x[:],
@@ -3712,10 +3712,10 @@ def fit(
     p_opt = result.x[:n_p]
     p_cov = cov[:n_p, :n_p]
     p_err = np.sqrt(np.diag(p_cov))
-    delta = result.x[n_p + n_a + n_b :]
+    delta = result.x[n_p + n_a + n_b:]
 
     mu_opt = xdata - delta
-    mu_cov = cov[n_p + n_a + n_b :, n_p + n_a + n_b :]
+    mu_cov = cov[n_p + n_a + n_b:, n_p + n_a + n_b:]
     mu_err = np.sqrt(np.diag(mu_cov))
     psi_opt = apply_frf(function, mu_opt, dt=dt, args=p_opt_all)
     epsilon = ydata - psi_opt
@@ -3772,11 +3772,12 @@ def etfe(
     y: ArrayLike,
     *,
     n: int | None = None,
+    dt: float | None = None,
     window: str | None = None,
     axis: int = -1,
-) -> NDArray[np.complex128]:
+) -> tuple[NDArray[np.complex128], NDArray[np.float64]]:
     r"""
-    Calculate the empirical transfer-function estimate.
+    Calculate the empirical transfer-function estimate and the frequency base.
 
     Given the real input ``x`` and the real output ``y``, returns the ratio of their discrete Fourier
     transforms, ``h_f = scipy.fft.rfft(y) / scipy.fft.rfft(x)``.
@@ -3791,6 +3792,11 @@ def etfe(
         Number of points along transformation axis to use.
         If ``n`` is greater than ``len(x)``, pad the signal with zeroes to ``n``.
         If ``n`` less than ``len(x)``, signal is truncated. Default is None, which sets ``n = len(x)``.
+    dt : float or None, optional
+        Sampling time, normally in picoseconds. Default is None, which sets
+        the sampling time to ``thztools.options.sampling_time``. If both
+        ``dt`` and ``thztools.options.sampling_time`` are ``None``, the
+        sampling time is set to 1.0.
     window : str or None, optional
         Name of a window function from :mod:`scipy.signal.windows`. Default is None, which applies
         a Tukey window with ``alpha = 0.5``.
@@ -3801,11 +3807,27 @@ def etfe(
     ----------
     h_f : complex ndarray
         Empirical transfer function estimate.
+    f : ndarray
+        Array of length ``n//2 + 1`` of frequency samples corresponding to ``numpy.fft.rfftfreq``.
 
     Raises
     ----------
     ValueError
         If ``window`` is not a valid name in :mod:`scipy.signal.windows`.
+
+    Warns
+    -----
+    UserWarning
+        If ``thztools.options.sampling_time`` and the ``dt`` parameter
+        are both not ``None`` and are set to different ``float`` values, the
+        function will set the sampling time to ``dt`` and raise a
+        :class:`UserWarning`.
+
+    Notes
+    -----
+    This function computes the frequency axis for the real FFT:
+
+        ``f = np.fft.rfftfreq(n, d=dt)``
 
     Examples
     ----------
@@ -3824,8 +3846,9 @@ def etfe(
     >>> x = mu + noise_model.noise_sim(mu, axis=0, seed=1234)
     >>> y = z + noise_model.noise_sim(z, axis=0, seed=5678)
 
-    >>> f = thz.freqbase(n, dt=dt)
-    >>> h_f = thz.etfe(x, y, window=None, axis=-1)
+    >>> h_f, f = thz.etfe(x, y, dt=dt, window=None, axis=-1)
+    >>> print(f[:3])
+    [0. 0.078125 0.15625 ]
 
     >>> def frfun(omega, a, eta):
     ...     return a * np.exp(-1j * omega * eta)
@@ -3855,12 +3878,16 @@ def etfe(
     >>> plt.show()
     """
 
+    dt = _assign_sampling_time(dt)
+
     x = np.asarray(x)
     y = np.asarray(y)
 
     ax_len = x.shape[axis]
 
     nfft = ax_len if n is None else n
+
+    f = np.asarray(np.fft.rfftfreq(nfft, d=dt), dtype=np.float64)
 
     if window is None:
         win1d = tukey(ax_len)
@@ -3883,4 +3910,4 @@ def etfe(
     y_fft: np.ndarray[tuple[Any, ...], np.dtype[np.complex128]] = rfft(
         windy, n=nfft, axis=axis
     )
-    return y_fft / x_fft
+    return y_fft / x_fft, f

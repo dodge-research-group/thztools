@@ -944,7 +944,7 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta=self.scale_eta,
             workers=self.workers,
-        )[: m - 1, m - 1:]
+        )[: m - 1, m - 1 :]
         assert_allclose(hess_a_eta, desired_hess_a_eta, atol=eps, rtol=rtol)
 
     def test_hess_eta_eta(self) -> None:
@@ -1710,15 +1710,9 @@ class TestETFE:
             None,
             1.0,
             2.0,
-        ]
+        ],
     )
-    @pytest.mark.parametrize(
-        "n",
-        [
-            9,
-            10
-        ]
-    )
+    @pytest.mark.parametrize("n", [9, 10])
     def test_etfe_frequency(self, n: int | None, dt: float | None) -> None:
         x = np.arange(n)
         y = np.arange(n)

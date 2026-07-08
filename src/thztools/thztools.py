@@ -911,51 +911,6 @@ def timebase(
     return np.asarray(t_init + dt * np.arange(n), dtype=np.float64)
 
 
-def freqbase(n: int, *, dt: float | None = None) -> NDArray[np.float64]:
-    r"""
-    Frequency base for :func:`thztools.etfe`.
-
-    Parameters
-    ----------
-    n : int
-        Number of samples in the time-domain signal.
-    dt : float or None, optional
-        Sampling time, normally in picoseconds. Default is None, which sets
-        the sampling time to ``thztools.options.sampling_time``. If both
-        ``dt`` and ``thztools.options.sampling_time`` are ``None``, the
-        sampling time is set to 1.0.
-
-    Returns
-    -------
-    f : ndarray
-        Array of length ``n//2 + 1`` of frequency samples corresponding to ``numpy.fft.rfftfreq``.
-
-    Warns
-    -----
-    UserWarning
-        If ``thztools.options.sampling_time`` and the ``dt`` parameter
-        are both not ``None`` and are set to different ``float`` values, the
-        function will set the sampling time to ``dt`` and raise a
-        :class:`UserWarning`.
-
-    Notes
-    -----
-    This function computes the frequency axis for the real FFT:
-
-        ``f = np.fft.rfftfreq(n, d=dt)``
-
-    Examples
-    --------
-    >>> import thztools as thz
-    >>> n, dt = 256, 0.05
-    >>> f = thz.freqbase(n, dt=dt)
-    >>> print(f[:3])
-    [0. 0.078125 0.15625 ]
-    """
-    dt = _assign_sampling_time(dt)
-    return np.asarray(np.fft.rfftfreq(n, d=dt), dtype=np.float64)
-
-
 def wave(
     n: int,
     *,

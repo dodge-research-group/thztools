@@ -944,7 +944,7 @@ class TestHessNoiseFit:
             scale_delta_a=self.scale_delta_a,
             scale_eta=self.scale_eta,
             workers=self.workers,
-        )[: m - 1, m - 1:]
+        )[: m - 1, m - 1 :]
         assert_allclose(hess_a_eta, desired_hess_a_eta, atol=eps, rtol=rtol)
 
     def test_hess_eta_eta(self) -> None:

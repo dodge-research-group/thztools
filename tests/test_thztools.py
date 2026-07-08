@@ -1719,7 +1719,7 @@ class TestETFE:
             10
         ]
     )
-    def test_etfe_frequency(self, n, dt: float | None) -> None:
+    def test_etfe_frequency(self, n: int, dt: float | None) -> None:
         dt = _assign_sampling_time(dt)
 
         x = np.arange(n)
@@ -1737,7 +1737,7 @@ class TestETFE:
             10
         ]
     )
-    def test_etfe_frequency_length(self, n, dt: float | None) -> None:
+    def test_etfe_frequency_length(self, n: int, dt: float | None) -> None:
         dt = _assign_sampling_time(dt)
 
         x = np.arange(n)

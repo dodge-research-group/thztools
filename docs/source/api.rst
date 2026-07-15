@@ -44,7 +44,6 @@ Waveform utilities
     :caption: Waveform utilities
 
     apply_frf
-    freqbase
     scaleshift
     timebase
     wave

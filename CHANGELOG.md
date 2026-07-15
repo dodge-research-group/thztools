@@ -5,6 +5,72 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org)
 for maintaining this file.
 
+## [0.6.0] - 2026-07-14
+
+### Changed
+
+- Change default `noisefit` algorithm to estimate `mu` using a weighted
+  average of the measured waveforms after rescaling and shifting, rather
+  than optimizing the cost function with respect to `mu` directly
+  ([#85](https://github.com/dodge-research-group/thztools/issues/85))
+  ([@Roboboy2000](https://github.com/Roboboy2000))
+- Change procedure to evaluate parameter uncertainties, from direct
+  computation of the Hessian to numerical evaluation using `numdifftools`
+  ([#85](https://github.com/dodge-research-group/thztools/issues/85))
+  ([@Roboboy2000](https://github.com/Roboboy2000))
+- Deprecate `mu_err` and `p_err` attributes of `FitResult` class
+  ([#108](https://github.com/dodge-research-group/thztools/issues/108))
+  ([@Roboboy2000](https://github.com/Roboboy2000))
+
+### Added
+
+- Add `etfe` function
+  ([@AugustenFairbairn](https://github.com/AugustenFairbairn),
+  [@japneet-sandhu](https://github.com/japneet-sandhu),
+  [@cmhchan](https://github.com/cmhchan),
+  )
+- Add `workers` parameter to `noisefit` function to allow parallel processing
+  of FFTs ([#78](https://github.com/dodge-research-group/thztools/pull/78))
+  ([@Rab912](https://github.com/Rab912))
+- Add links to top keywords in documentation
+  ([@WesleyXu09](https://github.com/WesleyXu09))
+- Add `est_mu` parameter to `thztools`
+  ([@Roboboy2000](https://github.com/Roboboy2000))
+- Add support for Python 3.14
+  ([#92](https://github.com/dodge-research-group/thztools/issues/92))
+  ([@jsdodge](https://github.com/jsdodge))
+- Add `mu_cov`, `psi_cov`, `delta_norm`, `delta_norm_cov`, `epsilon_norm`,
+  `epsilon_norm_cov`, and `delta_norm_epsilon_norm_cov` attributes to
+  `FitResult` class
+  ([#108](https://github.com/dodge-research-group/thztools/issues/108))
+  ([@Roboboy2000](https://github.com/Roboboy2000))
+
+### Removed
+
+- Remove support for Python 3.9
+  ([#92](https://github.com/dodge-research-group/thztools/issues/92))
+  ([@jsdodge](https://github.com/jsdodge))
+
+### Fixed
+
+- Fix `noisefit` examples in documentation
+  ([#81](https://github.com/dodge-research-group/thztools/pull/81))
+  ([@Roboboy2000](https://github.com/Roboboy2000))
+- Apply Bessel correction to estimated noise model parameter uncertainties
+  returned by `noisefit` ([#86](https://github.com/dodge-research-group/thztools/issues/86))
+  ([@Roboboy2000](https://github.com/Roboboy2000))
+- Fix error in cost function Jacobian used in `noisefit`
+  ([#87](https://github.com/dodge-research-group/thztools/issues/87)))
+  ([@Roboboy2000](https://github.com/Roboboy2000))
+- Fix erroneous warnings when using NumPy <2.3 on Apple Silicon M4 chips
+  [numpy/numpy#28687](https://github.com/numpy/numpy/issues/28687)
+- Fix error in cost function Jacobian when `numpy_sign_convention = False`
+  ([7c11c58](https://github.com/dodge-research-group/thztools/commit/7c11c58))
+  ([@jsdodge](https://github.com/jsdodge))
+- Fix inconsistent internal scaling of `eta` parameter
+  ([c0a725f](https://github.com/dodge-research-group/thztools/commit/c0a725f))
+  ([@jsdodge](https://github.com/jsdodge))
+
 ## [0.5.5.post0] - 2024-12-02
 
 ### Added
@@ -320,6 +386,7 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.6.0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.6.0
 [0.5.5.post0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.5.post0
 [0.5.5]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.5
 [0.5.4]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.4

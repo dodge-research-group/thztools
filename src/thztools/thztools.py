@@ -3759,14 +3759,14 @@ def etfe(
         Fourier transformed axis. If not given, the last axis is used.
 
     Returns
-    ----------
+    -------
     h_f : complex ndarray
         Empirical transfer function estimate.
     f : ndarray
         Array of length ``n//2 + 1`` of frequency samples corresponding to ``numpy.fft.rfftfreq``.
 
     Raises
-    ----------
+    ------
     ValueError
         If ``window`` is not a valid name in :mod:`scipy.signal.windows`.
 
@@ -3785,7 +3785,7 @@ def etfe(
         ``f = np.fft.rfftfreq(n, d=dt)``
 
     Examples
-    ----------
+    --------
     >>> from matplotlib import pyplot as plt
     >>> import numpy as np
     >>> import thztools as thz

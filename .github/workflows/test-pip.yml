@@ -1,4 +1,4 @@
-name: Run PyTest Matrix
+name: Tests
 
 on:
   push:

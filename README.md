@@ -159,6 +159,13 @@ doi = {10.1364/OE.417724},
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.sfu.ca/lux/author/j.-steven-dodge/"><img src="https://avatars.githubusercontent.com/u/4602669?v=4?s=100" width="100px;" alt="J. Steven Dodge"/><br /><sub><b>J. Steven Dodge</b></sub></a><br /><a href="#code-jsdodge" title="Code">💻</a> <a href="#doc-jsdodge" title="Documentation">📖</a> <a href="#example-jsdodge" title="Examples">💡</a> <a href="#ideas-jsdodge" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-jsdodge" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-jsdodge" title="Maintenance">🚧</a> <a href="#mentoring-jsdodge" title="Mentoring">🧑‍🏫</a> <a href="#projectManagement-jsdodge" title="Project Management">📆</a> <a href="#review-jsdodge" title="Reviewed Pull Requests">👀</a> <a href="#tool-jsdodge" title="Tools">🔧</a> <a href="#test-jsdodge" title="Tests">⚠️</a></td>
+    </tr>
+  </tbody>
+</table>
 
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->

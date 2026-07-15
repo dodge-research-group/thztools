@@ -1,4 +1,31 @@
 {
   "projectName": "thztools",
-  "projectOwner": "dodge-research-group"
+  "projectOwner": "dodge-research-group",
+  "files": [
+    "README.md"
+  ],
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributorsPerLine": 7,
+  "contributors": [
+    {
+      "login": "jsdodge",
+      "name": "J. Steven Dodge",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4602669?v=4",
+      "profile": "https://www.sfu.ca/lux/author/j.-steven-dodge/",
+      "contributions": [
+        "code",
+        "doc",
+        "example",
+        "ideas",
+        "infra",
+        "maintenance",
+        "mentoring",
+        "projectManagement",
+        "review",
+        "tool",
+        "test"
+      ]
+    }
+  ]
 }

@@ -1,5 +1,5 @@
 ---
-title: 'THzTools: data analysis software for terahertz time-domain spectroscopy'
+title: "THzTools: data analysis software for terahertz time-domain spectroscopy"
 
 tags:
   - Python
@@ -38,14 +38,16 @@ authors:
     affiliation: 1
 
 affiliations:
- - name: Department of Physics, Simon Fraser University, Canada
-   index: 1
+  - name: Department of Physics, Simon Fraser University, Canada
+    index: 1
 
 date: 4 May 2024
 
 bibliography: paper.bib
 ---
+
 # Summary
+
 Terahertz time-domain spectroscopy (THz-TDS) uses short electromagnetic pulses
 to probe the electromagnetic response of matter over frequencies from about
 0.1 THz to about 10 THz, where
@@ -64,7 +66,7 @@ previously [@mohtashemi2021].
 In the conventional approach to THz-TDS analysis [@neu2018a], one transforms
 the time-domain measurements into the frequency domain for further analysis.
 This approach has well-known problems, however, which can be resolved by
-using a maximum-likelihood estimation procedure in the time 
+using a maximum-likelihood estimation procedure in the time
 domain [@mohtashemi2021]. To support this mode of analysis, the `THzTools`
 package provides functionality and documentation that are unavailable in
 existing THz-TDS analysis software [@peretti2019; @tayvah2021; @lee2023]. It
@@ -79,6 +81,7 @@ this codebase to Python, we introduced new functionality, optimized the code for
 speed and efficiency, and revised the user interface to make it easier to use.
 
 # Acknowledgements
+
 J. P. L. and S. H.-G. acknowledge support from Mitacs Globalink Research
 Internship Program. A. N. acknowledges support from the Natural Sciences and
 Engineering Research Council of Canada Collaborative Research and Training

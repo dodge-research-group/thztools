@@ -1,10 +1,6 @@
-:orphan:
-
 thztools.FitResult.p\_err
 =========================
 
 .. currentmodule:: thztools
 
-attribute
-
-.. autoattribute:: thztools.FitResult.p_err
+.. autoproperty:: FitResult.p_err

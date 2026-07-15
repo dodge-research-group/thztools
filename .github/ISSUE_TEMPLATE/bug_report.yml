@@ -9,7 +9,7 @@ body:
       value: Thank you for taking the time to file a bug report.
   - type: markdown
     attributes:
-        value: Before continuing, please check the issue tracker for existing issues. Your issue could be already fixed on the development version.
+      value: Before continuing, please check the issue tracker for existing issues. Your issue could be already fixed on the development version.
   - type: textarea
     attributes:
       label: Describe your issue.
@@ -18,21 +18,21 @@ body:
   - type: textarea
     attributes:
       label: Reproducing Code Example
-      description: 'Paste the Reproducing code example and it will be rendered as a code block.'
+      description: "Paste the Reproducing code example and it will be rendered as a code block."
       render: python
     validations:
       required: true
   - type: textarea
     attributes:
       label: Error message
-      description: 'If any, paste the *full* error message as above (starting from line Traceback) and it will be rendered as a code block'
+      description: "If any, paste the *full* error message as above (starting from line Traceback) and it will be rendered as a code block"
       render: shell
     validations:
       required: true
   - type: textarea
     attributes:
       label: THzTools/SciPy/NumPy/Python version and system information
-      description: 'Please run the following and paste the result here - `import sys, thztools, scipy, numpy; print(thztools.__version__, scipy.__version__, numpy.__version__, sys.version_info); scipy.show_config()`'
+      description: "Please run the following and paste the result here - `import sys, thztools, scipy, numpy; print(thztools.__version__, scipy.__version__, numpy.__version__, sys.version_info); scipy.show_config()`"
       render: shell
     validations:
       required: true

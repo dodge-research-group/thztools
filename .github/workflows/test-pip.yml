@@ -1,4 +1,4 @@
-name: PyTest with pip
+name: Run PyTest Matrix
 
 on:
   push:
@@ -22,21 +22,33 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install Hatch
-      run: pip install --upgrade hatch
+      - name: Install Hatch
+        run: pip install --upgrade hatch
 
-    - name: Run tests
-      run: hatch run cov
+      - name: Run static analysis
+        run: hatch fmt --check
 
-    - name: Run doctests
-      run: hatch run doctest
+      - name: Run tests
+        run: hatch test --python ${{ matrix.python-version }} --cover --cover-xml --randomize --parallel --retries 2 --retry-delay 1
+
+      - name: Run doctests
+        run: hatch run docs:doctest
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: unittests
+          fail_ci_if_error: false

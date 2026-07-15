@@ -1,10 +1,2 @@
 # Auto detect text files and perform LF normalization
 * text=auto
-
-# Exclude matlab directory from GitHub language detection
-tests/matlab/* linguist-vendored
-
-# Strip Jupyter notebook output
-# See: https://tillahoffmann.github.io/2017/04/17/versioning-jupyter-notebooks-with-git.html
-
-*.ipynb    filter=jupyter_clear_output

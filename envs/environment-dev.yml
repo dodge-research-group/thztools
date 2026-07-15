@@ -19,4 +19,4 @@ dependencies:
   - sphinx
   - tomli
   - pip:
-    - -e ../
+      - -e ../

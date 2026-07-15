@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright Contributors to the THzTools project.
-"""
+r"""
 Data analysis tools for terahertz time-domain spectroscopy.
 
 Classes:
@@ -15,6 +15,7 @@ Functions:
     scaleshift: Rescale and shift waveforms.
     timebase: Timebase for time-domain waveforms.
     wave: Simulate a terahertz waveform.
+    fft: Apply a fourier transform and windowing function.
 
 Other Functions:
     get_option: Get global option.
@@ -51,19 +52,28 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, cast
 
+import numdifftools as nd
 import numpy as np
-import scipy.linalg as la
-import scipy.optimize as opt
 from numpy import pi
-from numpy.fft import irfft, rfft, rfftfreq
 from numpy.random import default_rng
-from scipy import signal
-from scipy.linalg import sqrtm
-from scipy.optimize import OptimizeResult, approx_fprime, minimize
+from scipy.fft import irfft, rfft, rfftfreq
+from scipy.linalg import circulant, inv, sqrtm, svd
+from scipy.optimize import (
+    OptimizeResult,
+    approx_fprime,
+    least_squares,
+    minimize,
+)
+from scipy.signal import unit_impulse
+from scipy.signal.windows import __all__ as windowlist
+from scipy.signal.windows import get_window, tukey
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from typing import Concatenate, Literal
+
     from numpy.typing import ArrayLike, NDArray
 
 NUM_NOISE_PARAMETERS = 3
@@ -81,9 +91,14 @@ class GlobalOptions:
         Global sampling time, normally in picoseconds. When set to None, the
         default, times and frequencies are treated as dimensionless quantities
         that are scaled by the (undetermined) sampling time.
+    workers : int | None, optional
+        Maximum number of workers to use for parallel computation of FFTs. When
+        set to None, the default, this number is equal to ``os.cpu_count()``.
+        When negative, this number wraps around from ``os.cpu_count()``.
     """
 
     sampling_time: float | None = None
+    workers: int | None = None
 
 
 #: Instance of ``GlobalOptions`` that stores global options.
@@ -240,6 +255,28 @@ def _assign_sampling_time(dt: float | None) -> float:
             warnings.warn(msg, category=UserWarning, stacklevel=2)
             dt_out = dt
     return dt_out
+
+
+def _assign_workers(workers: int | None) -> int:
+    workers_out = -1
+    if workers is None and get_option("workers") is not None:
+        workers_out = get_option("workers")
+    elif workers is not None and get_option("workers") is None:
+        workers_out = workers
+    elif workers is not None and get_option("workers") is not None:
+        if workers == get_option("workers") or (
+            workers == -1 and get_option("workers") is None
+        ):
+            workers_out = workers
+        else:
+            opt_workers = get_option("workers")
+            msg = (
+                f"Input workers {workers=} conflicts with "
+                f"{opt_workers=}, using {workers=}"
+            )
+            warnings.warn(msg, category=UserWarning, stacklevel=2)
+            workers_out = workers
+    return workers_out
 
 
 @dataclass
@@ -414,7 +451,7 @@ class NoiseModel:
         w_scaled = 2 * pi * rfftfreq(n)
         xdot = irfft(1j * w_scaled * rfft(x), n=n) / dt
 
-        noise_variance = (
+        noise_variance = np.array(
             self.sigma_alpha**2
             + (self.sigma_beta * x) ** 2
             + (self.sigma_tau * xdot) ** 2
@@ -664,13 +701,16 @@ class NoiseResult:
 
 # noinspection PyShadowingNames
 def apply_frf(
-    frfun: Callable,
+    frfun: Callable[
+        Concatenate[np.ndarray[tuple[int], np.dtype[np.float64]], ...],
+        NDArray[np.complex128],
+    ],
     x: ArrayLike,
     *,
     dt: float | None = None,
     numpy_sign_convention: bool = True,
     args: ArrayLike = (),
-) -> NDArray[np.float64]:
+) -> np.ndarray[tuple[int], np.dtype[np.float64]]:
     r"""
     Apply a frequency response function to a waveform.
 
@@ -800,10 +840,11 @@ def apply_frf(
     w_scaled = 2 * pi * rfftfreq(n)
     h = frfun(w_scaled / dt, *args)
     if numpy_sign_convention:
-        y = np.fft.irfft(np.fft.rfft(x) * h, n=n)
+        y = irfft(rfft(x) * h, n=n)
     else:
-        y = np.fft.irfft(np.fft.rfft(x) * np.conj(h), n=n)
-
+        y = irfft(rfft(x) * np.conj(h), n=n)
+    if TYPE_CHECKING:
+        y = cast("np.ndarray[tuple[int], np.dtype[np.float64]]", y)
     return y
 
 
@@ -867,7 +908,7 @@ def timebase(
     [2.5  2.55 2.6 ]
     """
     dt = _assign_sampling_time(dt)
-    return t_init + dt * np.arange(n)
+    return np.asarray(t_init + dt * np.arange(n), dtype=np.float64)
 
 
 def wave(
@@ -977,7 +1018,7 @@ def wave(
 
     x_unscaled = irfft(np.conj(s), n=n)
 
-    return a * x_unscaled / np.max(x_unscaled)
+    return np.asarray(a * x_unscaled / np.max(x_unscaled), dtype=np.float64)
 
 
 # noinspection PyShadowingNames
@@ -1087,14 +1128,14 @@ def scaleshift(
     w = 2 * pi * f_scaled / dt
     phase = np.expand_dims(eta, axis=eta.ndim) * w
 
-    x_adjusted = np.fft.irfft(
-        np.fft.rfft(x) * np.exp(-1j * phase), n=n
-    ) * np.expand_dims(a, axis=a.ndim)
+    x_adjusted = irfft(rfft(x) * np.exp(-1j * phase), n=n) * np.expand_dims(
+        a, axis=a.ndim
+    )
 
     if x.ndim > 1 and axis != -1:
         x_adjusted = np.moveaxis(x_adjusted, -1, axis)
 
-    return x_adjusted
+    return np.astype(x_adjusted, np.float64)
 
 
 @dataclass
@@ -1146,12 +1187,14 @@ def _nll_common(
     delta_a_scaled: NDArray[np.float64],
     eta_on_dt_scaled: NDArray[np.float64],
     *,
+    est_mu: bool,
     scale_logv_alpha: float,
     scale_logv_beta: float,
     scale_logv_tau: float,
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
-    scale_eta_on_dt: NDArray[np.float64],
+    scale_eta: NDArray[np.float64],
+    workers: int,
 ) -> CommonNLL:
     _, n = x.shape
 
@@ -1159,20 +1202,27 @@ def _nll_common(
     vbeta = np.exp(logv_beta_scaled * scale_logv_beta)
     vtau = np.exp(logv_tau_scaled * scale_logv_tau)
 
-    mu = x[0, :] - delta_mu_scaled * scale_delta_mu
     a = 1.0 + np.insert(delta_a_scaled * scale_delta_a, 0, 0.0)
-    eta_on_dt = np.insert(eta_on_dt_scaled * scale_eta_on_dt, 0, 0.0)
+    eta_on_dt = np.insert(eta_on_dt_scaled * scale_eta, 0, 0.0)
 
     # Compute frequency vector and Fourier coefficients of mu
     f = rfftfreq(n)
     w = 2 * pi * f
-    mu_f = rfft(mu)
 
     exp_iweta = np.exp(1j * np.outer(eta_on_dt, w))
-    zeta_f = ((np.conj(exp_iweta) * mu_f).T * a).T
 
-    zeta = irfft(zeta_f, n=n)
-    dzeta = irfft(1j * w * zeta_f, n=n)
+    if est_mu:
+        scale = np.sum(a**2)
+        x_f = rfft(x, workers=workers)
+        mu_f = np.einsum("j,jk,jk->k", a, exp_iweta, x_f) / scale
+        zeta_f = np.einsum("i,ik,k->ik", a, np.conj(exp_iweta), mu_f)
+    else:
+        mu = x[0, :] - delta_mu_scaled * scale_delta_mu
+        mu_f = rfft(mu, workers=workers)
+        zeta_f = ((np.conj(exp_iweta) * mu_f).T * a).T
+
+    zeta = irfft(zeta_f, n=n, workers=workers)
+    dzeta = irfft(1j * w * zeta_f, n=n, workers=workers)
 
     res = x - zeta
     ressq = res**2
@@ -1198,13 +1248,15 @@ def _nll_noisefit(
     delta_a_scaled: NDArray[np.float64],
     eta_on_dt_scaled: NDArray[np.float64],
     *,
+    est_mu: bool,
     scale_logv_alpha: float,
     scale_logv_beta: float,
     scale_logv_tau: float,
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
-    scale_eta_on_dt: NDArray[np.float64],
-) -> tuple[float, NDArray[np.float64]]:
+    scale_eta: NDArray[np.float64],
+    workers: int,
+) -> float:
     r"""
     Compute the cost function for the time-domain noise model.
 
@@ -1213,7 +1265,7 @@ def _nll_noisefit(
     ``logv_tau_scaled``, ``delta_mu_scaled``, ``delta_a_scaled``,
     ``eta_on_dt_scaled``, ``scale_logv_alpha``, ``scale_logv_beta``,
     ``scale_logv_tau``, ``scale_delta_mu``, ``scale_delta_a``, and
-    ``scale_eta_on_dt``.
+    ``scale_eta``.
 
     Parameters
     ----------
@@ -1227,18 +1279,20 @@ def _nll_noisefit(
         Scaled amplitude deviation vector with shape (m - 1,).
     eta_on_dt_scaled : ndarray
         Scaled delay deviation vector with shape (m - 1,).
+    est_mu : bool
+        Estimate the underlying waveform using a weighted average of the measured waveforms instead of fitting for it when
+        ``True``.
     scale_logv_alpha, scale_logv_beta,  scale_logv_tau: float
         Scale parameters for log variance parameters.
     scale_delta_mu : ndarray
         Array of scale parameters for ``delta`` with shape (n,).
     scale_delta_a : ndarray
         Array of scale parameters for ``alpha`` with shape (m - 1,).
-    scale_eta_on_dt : ndarray
-        Array of scale parameters for ``eta`` with shape (m - 1,). Should be
-        expressed in terms of the sampling time, i.e.,
-        ``scale_sigma_tau_on_dt = scale_sigma_tau / dt``, where ``dt`` is the
-        sampling time and ``scale_eta`` is the scale factor used in
-        ``eta_scaled = eta / scale_eta``.
+    scale_eta : ndarray
+        Array of scale parameters for ``eta`` with shape (m - 1,).
+    workers : int
+        The number of workers to use for parallel computation of FFTs. If
+        negative, this number wraps around from ``os.cpu_count()``.
 
     Returns
     -------
@@ -1254,18 +1308,20 @@ def _nll_noisefit(
         delta_mu_scaled=delta_mu_scaled,
         delta_a_scaled=delta_a_scaled,
         eta_on_dt_scaled=eta_on_dt_scaled,
+        est_mu=est_mu,
         scale_logv_alpha=scale_logv_alpha,
         scale_logv_beta=scale_logv_beta,
         scale_logv_tau=scale_logv_tau,
         scale_delta_mu=scale_delta_mu,
         scale_delta_a=scale_delta_a,
-        scale_eta_on_dt=scale_eta_on_dt,
+        scale_eta=scale_eta,
+        workers=workers,
     )
     ressq = common.ressq
     vtot = common.vtot
     resnormsq_scaled = ressq / vtot
 
-    return 0.5 * (np.sum(np.log(vtot)) + np.sum(resnormsq_scaled))
+    return np.float64(0.5 * (np.sum(np.log(vtot)) + np.sum(resnormsq_scaled)))
 
 
 def _jac_noisefit(
@@ -1280,6 +1336,7 @@ def _jac_noisefit(
     fix_logv_alpha: bool,
     fix_logv_beta: bool,
     fix_logv_tau: bool,
+    est_mu: bool,
     fix_delta_mu: bool,
     fix_delta_a: bool,
     fix_eta: bool,
@@ -1288,7 +1345,8 @@ def _jac_noisefit(
     scale_logv_tau: float,
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
-    scale_eta_on_dt: NDArray[np.float64],
+    scale_eta: NDArray[np.float64],
+    workers: int,
 ) -> NDArray[np.float64]:
     r"""
     Compute the Jacobian of ``_nll_noisefit`` w.r.t. the free parameters.
@@ -1307,6 +1365,9 @@ def _jac_noisefit(
         Scaled delay deviation vector with shape (m - 1,).
     fix_logv_alpha, fix_logv_beta, fix_logv_tau : bool
         Exclude noise parameter from gradiate calculation when ``True``.
+    est_mu : bool
+        Estimate the underlying waveform using a weighted average of the measured waveforms instead of fitting for it when
+        ``True``.
     fix_delta_mu : bool
         Exclude signal deviation vector from gradiate calculation when
         ``True``.
@@ -1322,12 +1383,11 @@ def _jac_noisefit(
         Array of scale parameters for ``delta`` with shape (n,).
     scale_delta_a : ndarray
         Array of scale parameters for ``alpha`` with shape (m - 1,).
-    scale_eta_on_dt : ndarray
-        Array of scale parameters for ``eta`` with shape (m - 1,). Should be
-        expressed in terms of the sampling time, i.e.,
-        ``scale_sigma_tau_on_dt = scale_sigma_tau / dt``, where ``dt`` is the
-        sampling time and ``scale_eta`` is the scale factor used in
-        ``eta_scaled = eta / scale_eta``.
+    scale_eta : ndarray
+        Array of scale parameters for ``eta`` with shape (m - 1,).
+    workers : int
+        The number of workers to use for parallel computation of FFTs. If
+        negative, this number wraps around from ``os.cpu_count()``.
 
     Returns
     -------
@@ -1352,12 +1412,14 @@ def _jac_noisefit(
         delta_mu_scaled=delta_mu_scaled,
         delta_a_scaled=delta_a_scaled,
         eta_on_dt_scaled=eta_on_dt_scaled,
+        est_mu=est_mu,
         scale_logv_alpha=scale_logv_alpha,
         scale_logv_beta=scale_logv_beta,
         scale_logv_tau=scale_logv_tau,
         scale_delta_mu=scale_delta_mu,
         scale_delta_a=scale_delta_a,
-        scale_eta_on_dt=scale_eta_on_dt,
+        scale_eta=scale_eta,
+        workers=workers,
     )
     ressq = common.ressq
     vtot = common.vtot
@@ -1388,38 +1450,89 @@ def _jac_noisefit(
     if fix_logv_tau:
         jac_logv_tau = []
     else:
-        jac_logv_tau = [0.5 * np.sum(dzeta**2 * dvar) * vbeta * scale_logv_tau]
+        jac_logv_tau = [0.5 * np.sum(dzeta**2 * dvar) * vtau * scale_logv_tau]
 
-    if fix_delta_mu:
-        jac_delta_mu = []
+    if fix_delta_mu or est_mu:
+        jac_delta_mu = np.array([])
     else:
-        p = rfft(vbeta * dvar * zeta - reswt) - 1j * vtau * w * rfft(
-            dvar * dzeta
-        )
+        p = rfft(
+            vbeta * dvar * zeta - reswt, workers=workers
+        ) - 1j * vtau * w * rfft(dvar * dzeta, workers=workers)
         jac_delta_mu = (
-            -np.sum((irfft(exp_iweta * p, n=n).T * a).T, axis=0)
+            -np.sum(
+                (irfft(exp_iweta * p, n=n, workers=workers).T * a).T,
+                axis=0,
+            )
             * scale_delta_mu
         )
 
     if fix_delta_a:
-        jac_delta_a = []
+        jac_delta_a = np.array([])
     else:
-        term = (vtot - valpha) * dvar - reswt * zeta
-        dnllda = np.sum(term, axis=1) / a
+        if est_mu:
+            scale = np.sum(a**2)
+            x_f = rfft(x, workers=workers)
+            x_back_forth_f = np.einsum(
+                "ik,jk,jk->ijk", np.conj(exp_iweta), exp_iweta, x_f
+            )
+            dzetada_f = (
+                np.einsum("ij,jn->ijn", np.diag(1 / a), zeta_f)
+                + (
+                    np.einsum("i,ijn->ijn", a, x_back_forth_f)
+                    - 2 * np.einsum("j,in->ijn", a, zeta_f)
+                )
+                / scale
+            )
+            dzetada = irfft(dzetada_f, n=n, workers=workers)
+            ddzetada = irfft(1j * w * dzetada_f, n=n, workers=workers)
+            term = (
+                np.einsum("ijn,in,in->jn", dzetada, zeta, dvar) * vbeta
+                + np.einsum("ijn,in,in->jn", ddzetada, dzeta, dvar) * vtau
+            ) - np.einsum("ijn,in->jn", dzetada, reswt)
+        else:
+            term = np.diag(1 / a) @ ((vtot - valpha) * dvar - reswt * zeta)
+        dnllda = np.sum(term, axis=1)
         # Exclude first term, which is held fixed
         jac_delta_a = dnllda[1:] * scale_delta_a
 
     if fix_eta:
-        jac_eta = []
+        jac_eta = np.array([])
     else:
-        ddzeta = irfft(-(w**2) * zeta_f, n=n)
-        dnlldeta = -np.sum(
-            dvar * (zeta * dzeta * valpha + dzeta * ddzeta * vtau)
-            - reswt * dzeta,
-            axis=1,
-        )
+        if est_mu:
+            scale = np.sum(a**2)
+            x_f = rfft(x, workers=workers)
+            x_back_forth_f = np.einsum(
+                "ik,jk,jk->ijk", np.conj(exp_iweta), exp_iweta, x_f
+            )
+
+            dzetadeta_f = (
+                1j
+                * w
+                * (
+                    -np.einsum("ij,jn->ijn", np.identity(m), zeta_f)
+                    + np.einsum("ij,ijn->ijn", np.outer(a, a), x_back_forth_f)
+                    / scale
+                )
+            )
+
+            dzetadeta = irfft(dzetadeta_f, n, workers=workers)
+            ddzetadeta = irfft(1j * w * dzetadeta_f, n, workers=workers)
+
+            term = (
+                np.einsum("ijn,in,in->jn", dzetadeta, zeta, dvar) * vbeta
+                + np.einsum("ijn,in,in->jn", ddzetadeta, dzeta, dvar) * vtau
+            ) - np.einsum("ijn,in->jn", dzetadeta, reswt)
+            dnlldeta = np.sum(term, axis=1)
+        else:
+            ddzeta = irfft(-(w**2) * zeta_f, n=n, workers=workers)
+            dnlldeta = -np.sum(
+                dvar * (zeta * dzeta * vbeta + dzeta * ddzeta * vtau)
+                - reswt * dzeta,
+                axis=1,
+            )
+
         # Exclude first term, which is held fixed
-        jac_eta = dnlldeta[1:] * scale_eta_on_dt
+        jac_eta = dnlldeta[1:] * scale_eta
 
     # Concatenate subarrays to produce full Jacobian wrt free parameters
     return np.concatenate(
@@ -1446,6 +1559,7 @@ def _hess_noisefit(
     fix_logv_alpha: bool,
     fix_logv_beta: bool,
     fix_logv_tau: bool,
+    est_mu: bool,
     fix_delta_mu: bool,
     fix_delta_a: bool,
     fix_eta: bool,
@@ -1454,7 +1568,8 @@ def _hess_noisefit(
     scale_logv_tau: float,
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
-    scale_eta_on_dt: NDArray[np.float64],
+    scale_eta: NDArray[np.float64],
+    workers: int,
 ) -> NDArray[np.float64]:
     r"""
     Compute the Hessian of ``_nll_noisefit`` w.r.t. the free parameters.
@@ -1473,6 +1588,9 @@ def _hess_noisefit(
         Scaled delay deviation vector with shape (m - 1,).
     fix_logv_alpha, fix_logv_beta, fix_logv_tau : bool
         Exclude noise parameter from gradiate calculation when ``True``.
+    est_mu : bool
+        Estimate the underlying waveform using a weighted average of the measured waveforms instead of fitting for it when
+        ``True``.
     fix_delta_mu : bool
         Exclude signal deviation vector from gradiate calculation when
         ``True``.
@@ -1488,12 +1606,11 @@ def _hess_noisefit(
         Array of scale parameters for ``delta`` with shape (n,).
     scale_delta_a : ndarray
         Array of scale parameters for ``alpha`` with shape (m - 1,).
-    scale_eta_on_dt : ndarray
-        Array of scale parameters for ``eta`` with shape (m - 1,). Should be
-        expressed in terms of the sampling time, i.e.,
-        ``scale_sigma_tau_on_dt = scale_sigma_tau / dt``, where ``dt`` is the
-        sampling time and ``scale_eta`` is the scale factor used in
-        ``eta_scaled = eta / scale_eta``.
+    scale_eta : ndarray
+        Array of scale parameters for ``eta`` with shape (m - 1,).
+    workers : int
+        The number of workers to use for parallel computation of FFTs. If
+        negative, this number wraps around from ``os.cpu_count()``.
 
     Returns
     -------
@@ -1501,7 +1618,7 @@ def _hess_noisefit(
         Gradient of the negative log-likelihood function with respect to
         the free parameters.
     """
-    m, n = x.shape
+    _, n = x.shape
 
     valpha = np.exp(logv_alpha_scaled * scale_logv_alpha)
     vbeta = np.exp(logv_beta_scaled * scale_logv_beta)
@@ -1518,12 +1635,14 @@ def _hess_noisefit(
         delta_mu_scaled=delta_mu_scaled,
         delta_a_scaled=delta_a_scaled,
         eta_on_dt_scaled=eta_on_dt_scaled,
+        est_mu=est_mu,
         scale_logv_alpha=scale_logv_alpha,
         scale_logv_beta=scale_logv_beta,
         scale_logv_tau=scale_logv_tau,
         scale_delta_mu=scale_delta_mu,
         scale_delta_a=scale_delta_a,
-        scale_eta_on_dt=scale_eta_on_dt,
+        scale_eta=scale_eta,
+        workers=workers,
     )
     # Compute residuals and their squares for subsequent computations
     ressq = common.ressq
@@ -1534,8 +1653,8 @@ def _hess_noisefit(
     a = common.a
     exp_iweta = common.exp_iweta
 
-    ddzeta = irfft(-(w**2) * zeta_f, n=n)
-    dddzeta = irfft(-1j * (w**3) * zeta_f, n=n)
+    ddzeta = irfft(-(w**2) * zeta_f, n=n, workers=workers)
+    dddzeta = irfft(-1j * (w**3) * zeta_f, n=n, workers=workers)
 
     res = x - zeta
     dvar = (vtot - ressq) / vtot**2
@@ -1544,8 +1663,9 @@ def _hess_noisefit(
     dzeta_dmu = irfft(
         a[:, np.newaxis, np.newaxis]
         * np.conj(exp_iweta)[:, np.newaxis, :]
-        * rfft(np.eye(n))[np.newaxis, :, :],
+        * rfft(np.eye(n), workers=workers)[np.newaxis, :, :],
         n=n,
+        workers=workers,
     )
 
     ddzeta_dmu = irfft(
@@ -1553,16 +1673,18 @@ def _hess_noisefit(
         * 1j
         * w
         * np.conj(exp_iweta)[:, np.newaxis, :]
-        * rfft(np.eye(n))[np.newaxis, :, :],
+        * rfft(np.eye(n), workers=workers)[np.newaxis, :, :],
         n=n,
+        workers=workers,
     )
 
     dddzeta_dmu = irfft(
         a[:, np.newaxis, np.newaxis]
         * -(w**2)
         * np.conj(exp_iweta)[:, np.newaxis, :]
-        * rfft(np.eye(n))[np.newaxis, :, :],
+        * rfft(np.eye(n), workers=workers)[np.newaxis, :, :],
         n=n,
+        workers=workers,
     )
 
     # Hessian block for (logv, logv)
@@ -1963,14 +2085,14 @@ def _hess_noisefit(
             [scale_logv_tau],
             -scale_delta_mu,
             scale_delta_a,
-            scale_eta_on_dt,
+            scale_eta,
         ],
         dtype=object,
     )
     scale = np.concatenate(scale_block[~fix].tolist())
 
     # Return Hessian in scaled internal variables
-    return np.diag(scale) @ h @ np.diag(scale)
+    return np.astype(np.diag(scale) @ h @ np.diag(scale), np.float64)
 
 
 def noisefit(
@@ -1986,6 +2108,7 @@ def noisefit(
     fix_sigma_alpha: bool = False,
     fix_sigma_beta: bool = False,
     fix_sigma_tau: bool = False,
+    est_mu: bool = True,
     fix_mu: bool = False,
     fix_a: bool = False,
     fix_eta: bool = False,
@@ -1995,7 +2118,8 @@ def noisefit(
     scale_delta_mu: ArrayLike | None = None,
     scale_delta_a: ArrayLike | None = None,
     scale_eta: ArrayLike | None = None,
-    min_options: dict | None = None,
+    min_options: dict[str, Any] | None = None,
+    workers: int | None = None,
 ) -> NoiseResult:
     r"""
     Estimate noise model from a set of nominally identical waveforms.
@@ -2033,6 +2157,8 @@ def noisefit(
         ``np.zeros(m)``.
     fix_sigma_alpha, fix_sigma_beta, fix_sigma_tau : bool, optional
         Fix the associated noise parameter. Default is False.
+    est_mu : bool, optional
+        Estimate signal vector using a weighted average of the data array ``x`` instead of fitting for it. Default is True.
     fix_mu : bool, optional
         Fix signal vector. Default is False.
     fix_a : bool, optional
@@ -2043,7 +2169,7 @@ def noisefit(
     Returns
     -------
     res : NoiseResult
-        Fit result represented as a ``NoiseResult`` object. Important
+        Fit result represented as a :class:`NoiseResult` object. Important
         attributes are: ``noise_model``, an instance of :class:`NoiseModel`
         with the estimated noise parameters; ``mu``, the estimated signal
         vector; ``a``, the estimated signal amplitude drift vector; ``eta``,
@@ -2064,14 +2190,16 @@ def noisefit(
         Scale for varying signal vector. When set to ``None``, the default,
         use ``NoiseModel(sigma_alpha0, sigma_beta0,
         sigma_tau0).noise_amp(mu0)``.
-    scale_delta_a : array_like with shape(n,), optional
+    scale_delta_a : array_like with shape(m - 1,), optional
         Scale for varying signal amplitude drift vector. Default is
-        ``np.max((sigma_min, sigma_beta0))`` for all entries, where
-        ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``.
-    scale_eta : array_like with shape(n,), optional
+        ``np.max((sigma_min / x_max, sigma_beta0))`` for all entries, where
+        ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))`` and
+        ``x_max = np.max(np.abs(x))``.
+    scale_eta : array_like with shape(m - 1,), optional
         Scale for varying signal delay drift vector. Default is
-        ``np.max((sigma_min, sigma_tau0))``, for all entries, where
-        ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``.
+        ``(sigma_min / diff_x_diff_t_max, sigma_tau0 / dt)``, for all entries,
+        where ``sigma_min = np.sqrt(np.min(np.var(x, 1, ddof=1)))``, and
+        ``diff_x_diff_t_max = np.max(np.abs(np.diff(x, axis=0)))``.
     min_options : dict or None, optional
         Keyword options passed to the ``options`` parameter of
         :func:`scipy.optimize.minimize`. See the documentation on the
@@ -2079,6 +2207,11 @@ def noisefit(
         optimize.minimize-bfgs.html#optimize-minimize-bfgs>`_
         method for details. By default, ``gtol=1e-5 * x.size``. The options
         ``eps`` and ``finite_diff_rel_step`` are not used.
+    workers : int or None, optional
+        The number of workers to use for parallel computation of FFTs. Default
+        is None, which sets the number of workers to ``os.cpu_count()``. If
+        both ``workers`` and ``thztools.options.workers`` are ``None``, the
+        number of workers is set to ``os.cpu_count()``.
 
     Raises
     ------
@@ -2159,25 +2292,25 @@ def noisefit(
     >>> t = thz.timebase(n, dt=dt)
     >>> mu = thz.wave(n, dt=dt)
     >>> alpha, beta, tau = 1e-4, 1e-2, 1e-3
+    >>>
     >>> noise_model = thz.NoiseModel(sigma_alpha=alpha, sigma_beta=beta,
-    ...  sigma_tau=tau, dt=dt)
-    >>> a = 1.0 + 1e-2 * np.concatenate(([0.0],
-    ...                                 rng.standard_normal(m - 1)))
+    ...     sigma_tau=tau, dt=dt)
+    >>> a = 1.0 + 1e-2 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
     >>> eta = 1e-3 * np.concatenate(([0.0], rng.standard_normal(m - 1)))
     >>> z = thz.scaleshift(np.repeat(np.atleast_2d(mu), m, axis=0), dt=dt,
-    ...                    a=a, eta=eta).T  # Orient the array columnwise
+    ...     a=a, eta=eta).T  # Orient the array columnwise
     >>> x = z + noise_model.noise_sim(z, axis=0, seed=12345)
-    >>> noise_res = thz.noisefit(x, sigma_alpha0=alpha, sigma_beta0=beta,
-    ...  sigma_tau0=tau, dt=dt)
-    >>> noise_res.noise_model
-    NoiseModel(sigma_alpha=0.000100..., sigma_beta=0.00984...,
-    sigma_tau=0.000899..., dt=0.05)
-
-    >>> plt.plot(t, np.std(thz.scaleshift(x, a=1 / noise_res.a,
-    ... eta=-noise_res.eta, axis=0), axis=1), "-",
-    ... label="Data")
-    >>> plt.plot(t, noise_res.noise_model.noise_amp(noise_res.mu),
-    ...  "--", label="Fit")
+    >>>
+    >>> noise_res_direct = thz.noisefit(x, sigma_alpha0=alpha, sigma_beta0=beta,
+    ...     sigma_tau0=tau, dt=dt)
+    >>> noise_res_direct.noise_model
+    NoiseModel(sigma_alpha=0.000100..., sigma_beta=0.00985...,
+    sigma_tau=0.000892..., dt=0.05)
+    >>>
+    >>> plt.plot(t, np.std(thz.scaleshift(x, a=1/noise_res_direct.a,
+    ...     eta=-noise_res_direct.eta, axis=0), axis=1), "-", label="Data")
+    >>> plt.plot(t, noise_res_direct.noise_model.noise_amp(noise_res_direct.mu),
+    ...     "--", label=r"Direct Fit for $\mu$")
     >>> plt.legend()
     >>> plt.xlabel("t (ps)")
     >>> plt.ylabel(r"$\sigma(t)$")
@@ -2185,6 +2318,7 @@ def noisefit(
     """
     x = np.asarray(x, dtype=np.float64)
     dt = _assign_sampling_time(dt)
+    workers = _assign_workers(workers)
 
     parsed = _parse_noisefit_input(
         x,
@@ -2198,6 +2332,7 @@ def noisefit(
         fix_sigma_alpha=fix_sigma_alpha,
         fix_sigma_beta=fix_sigma_beta,
         fix_sigma_tau=fix_sigma_tau,
+        est_mu=est_mu,
         fix_mu=fix_mu,
         fix_a=fix_a,
         fix_eta=fix_eta,
@@ -2207,18 +2342,21 @@ def noisefit(
         scale_delta_mu=scale_delta_mu,
         scale_delta_a=scale_delta_a,
         scale_eta=scale_eta,
+        workers=workers,
     )
 
     objective, jac, x0, input_parsed = parsed
 
+    method: Literal["BFGS"] = "BFGS"
+
     # Minimize cost function with respect to free parameters
-    out = minimize(
-        objective,
-        x0,
-        method="BFGS",
+    out: OptimizeResult = minimize(
+        fun=objective,
+        x0=x0,
+        method=method,
         jac=jac,
         tol=1e-5 * x.size,
-        options=min_options,
+        options=min_options,  # type: ignore[arg-type]
     )
 
     return _parse_noisefit_output(out, x, dt=dt, **input_parsed)
@@ -2237,6 +2375,7 @@ def _parse_noisefit_input(
     fix_sigma_alpha: bool,
     fix_sigma_beta: bool,
     fix_sigma_tau: bool,
+    est_mu: bool,
     fix_mu: bool,
     fix_a: bool,
     fix_eta: bool,
@@ -2246,7 +2385,13 @@ def _parse_noisefit_input(
     scale_delta_mu: ArrayLike | None,
     scale_delta_a: ArrayLike | None,
     scale_eta: ArrayLike | None,
-) -> tuple[Callable, Callable, NDArray[np.float64], dict]:
+    workers: int,
+) -> tuple[
+    Callable[[NDArray[np.float64]], float],
+    Callable[[NDArray[np.float64]], NDArray[np.float64]],
+    NDArray[np.float64],
+    dict[str, Any],
+]:
     """Parse noisefit inputs"""
     if x.ndim != NUM_NOISE_DATA_DIMENSIONS:
         msg = "Data array x must be 2D"
@@ -2263,6 +2408,11 @@ def _parse_noisefit_input(
     ):
         msg = "All variables are fixed"
         raise ValueError(msg)
+
+    if fix_mu and est_mu:
+        msg = "est_mu and fix_mu cannot be used at the same time. est_mu has been disabled."
+        warnings.warn(msg, category=UserWarning, stacklevel=3)
+        est_mu = False
 
     # Use the first column of x as a default
     if mu0 is None:
@@ -2282,9 +2432,9 @@ def _parse_noisefit_input(
     # estimate all noise parameters with a linear least-squares fit
     # to the time-dependent variance
     if None in [sigma_alpha0, sigma_beta0, sigma_tau0]:
-        mu0_f = np.fft.rfft(mu0)
-        w = 2 * pi * np.fft.rfftfreq(n, dt)
-        dmu0_dt = np.fft.irfft(1j * w * mu0_f, n=n)
+        mu0_f = rfft(mu0, workers=workers)
+        w = 2 * pi * rfftfreq(n, dt)
+        dmu0_dt = irfft(1j * w * mu0_f, n=n, workers=workers)
         a_matrix = np.stack([np.ones(n), mu0**2, dmu0_dt**2], axis=1)
         sol = np.linalg.lstsq(a_matrix, v_t, rcond=None)
         sigma_est = np.ma.sqrt(sol[0]).filled(sigma_min)
@@ -2311,15 +2461,23 @@ def _parse_noisefit_input(
             np.finfo(float).eps
         )
 
+    scale_delta_mu = np.asarray(scale_delta_mu, dtype=np.float64)
+
     if scale_delta_a is None:
-        scale_delta_a_amp = np.max((sigma_min, sigma_beta0))
-        scale_delta_a = scale_delta_a_amp * np.ones(m - 1)
+        # Estimate the appropriate scaling factor from the multiplicative noise amplitude
+        x_max = np.max(np.abs(x))
+        scale_delta_a_amp = np.max((sigma_min / x_max, sigma_beta0))
+        scale_delta_a = np.full((m - 1,), scale_delta_a_amp)
 
     scale_delta_a = np.asarray(scale_delta_a, dtype=np.float64)
 
     if scale_eta is None:
-        scale_eta_amp = np.max((sigma_min, sigma_tau0))
-        scale_eta = scale_eta_amp * np.ones(m - 1)
+        # Estimate the appropriate scaling factor from the timebase noise amplitude
+        diff_x_diff_t_max = np.max(np.abs(np.diff(x, axis=0)))
+        scale_eta_amp = np.max(
+            (sigma_min / diff_x_diff_t_max, sigma_tau0 / dt)
+        )
+        scale_eta = np.full((m - 1,), scale_eta_amp)
 
     scale_eta = np.asarray(scale_eta, dtype=np.float64)
 
@@ -2364,7 +2522,7 @@ def _parse_noisefit_input(
             msg = "Size of eta0 is incompatible with data array x."
             raise ValueError(msg)
 
-    eta_scaled0 = eta0[1:] / scale_eta
+    eta_on_dt_scaled0 = eta0[1:] / dt / scale_eta
 
     # Set initial guesses for all free parameters
     x0 = np.array([], dtype=np.float64)
@@ -2374,32 +2532,36 @@ def _parse_noisefit_input(
         x0 = np.append(x0, logv0_scaled[1])
     if not fix_sigma_tau:
         x0 = np.append(x0, logv0_scaled[2])
-    if not fix_mu:
+    if not fix_mu and not est_mu:
         x0 = np.concatenate((x0, delta0))
     if not fix_a:
         x0 = np.concatenate((x0, epsilon0))
     if not fix_eta:
-        x0 = np.concatenate((x0, eta_scaled0))
+        x0 = np.concatenate((x0, eta_on_dt_scaled0))
 
     # Bundle free parameters together into objective function
-    def objective(_p):
+    def objective(
+        _p: NDArray[np.float64],
+    ) -> float:
         if fix_sigma_alpha:
-            _logv_alpha = logv0_scaled[0]
+            _logv_alpha_scaled = logv0_scaled[0]
         else:
-            _logv_alpha = _p[0]
+            _logv_alpha_scaled = _p[0]
             _p = _p[1:]
         if fix_sigma_beta:
-            _logv_beta = logv0_scaled[1]
+            _logv_beta_scaled = logv0_scaled[1]
         else:
-            _logv_beta = _p[0]
+            _logv_beta_scaled = _p[0]
             _p = _p[1:]
         if fix_sigma_tau:
-            _logv_tau = logv0_scaled[2]
+            _logv_tau_scaled = logv0_scaled[2]
         else:
-            _logv_tau = _p[0]
+            _logv_tau_scaled = _p[0]
             _p = _p[1:]
         if fix_mu:
             _delta = delta0
+        elif est_mu:
+            _delta = []
         else:
             _delta = _p[:n]
             _p = _p[n:]
@@ -2409,43 +2571,47 @@ def _parse_noisefit_input(
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
 
-        _eta = eta_scaled0 if fix_eta else _p[: m - 1]
+        _eta_on_dt = eta_on_dt_scaled0 if fix_eta else _p[: m - 1]
 
         return _nll_noisefit(
             x.T,
-            _logv_alpha,
-            _logv_beta,
-            _logv_tau,
+            _logv_alpha_scaled,
+            _logv_beta_scaled,
+            _logv_tau_scaled,
             _delta,
             _epsilon,
-            _eta,
+            _eta_on_dt,
+            est_mu=est_mu,
             scale_logv_alpha=scale_logv_alpha,
             scale_logv_beta=scale_logv_beta,
             scale_logv_tau=scale_logv_tau,
             scale_delta_mu=scale_delta_mu,
             scale_delta_a=scale_delta_a,
-            scale_eta_on_dt=scale_eta / dt,  # Scale in units of dt
+            scale_eta=scale_eta,
+            workers=workers,
         )
 
     # Bundle free parameters together into objective function
-    def jac(_p):
+    def jac(_p: NDArray[np.float64]) -> NDArray[np.float64]:
         if fix_sigma_alpha:
-            _logv_alpha = logv0_scaled[0]
+            _logv_alpha_scaled = logv0_scaled[0]
         else:
-            _logv_alpha = _p[0]
+            _logv_alpha_scaled = _p[0]
             _p = _p[1:]
         if fix_sigma_beta:
-            _logv_beta = logv0_scaled[1]
+            _logv_beta_scaled = logv0_scaled[1]
         else:
-            _logv_beta = _p[0]
+            _logv_beta_scaled = _p[0]
             _p = _p[1:]
         if fix_sigma_tau:
-            _logv_tau = logv0_scaled[2]
+            _logv_tau_scaled = logv0_scaled[2]
         else:
-            _logv_tau = _p[0]
+            _logv_tau_scaled = _p[0]
             _p = _p[1:]
         if fix_mu:
             _delta = delta0
+        elif est_mu:
+            _delta = []
         else:
             _delta = _p[:n]
             _p = _p[n:]
@@ -2455,19 +2621,20 @@ def _parse_noisefit_input(
             _epsilon = _p[: m - 1]
             _p = _p[m - 1 :]
 
-        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
+        _eta_on_dt_scaled = eta_on_dt_scaled0 if fix_eta else _p[: m - 1]
 
         return _jac_noisefit(
             x.T,
-            _logv_alpha,
-            _logv_beta,
-            _logv_tau,
+            _logv_alpha_scaled,
+            _logv_beta_scaled,
+            _logv_tau_scaled,
             _delta,
             _epsilon,
-            _eta_on_dt,
+            _eta_on_dt_scaled,
             fix_logv_alpha=fix_sigma_alpha,
             fix_logv_beta=fix_sigma_beta,
             fix_logv_tau=fix_sigma_tau,
+            est_mu=est_mu,
             fix_delta_mu=fix_mu,
             fix_delta_a=fix_a,
             fix_eta=fix_eta,
@@ -2476,58 +2643,8 @@ def _parse_noisefit_input(
             scale_logv_tau=scale_logv_tau,
             scale_delta_mu=scale_delta_mu,
             scale_delta_a=scale_delta_a,
-            scale_eta_on_dt=scale_eta / dt,  # Scale in units of dt
-        )
-
-    def hess(_p):
-        if fix_sigma_alpha:
-            _logv_alpha = logv0_scaled[0]
-        else:
-            _logv_alpha = _p[0]
-            _p = _p[1:]
-        if fix_sigma_beta:
-            _logv_beta = logv0_scaled[1]
-        else:
-            _logv_beta = _p[0]
-            _p = _p[1:]
-        if fix_sigma_tau:
-            _logv_tau = logv0_scaled[2]
-        else:
-            _logv_tau = _p[0]
-            _p = _p[1:]
-        if fix_mu:
-            _delta = delta0
-        else:
-            _delta = _p[:n]
-            _p = _p[n:]
-        if fix_a:
-            _epsilon = epsilon0
-        else:
-            _epsilon = _p[: m - 1]
-            _p = _p[m - 1 :]
-
-        _eta_on_dt = eta_scaled0 / dt if fix_eta else _p[: m - 1]
-
-        return _hess_noisefit(
-            x.T,
-            _logv_alpha,
-            _logv_beta,
-            _logv_tau,
-            _delta,
-            _epsilon,
-            _eta_on_dt,
-            fix_logv_alpha=fix_sigma_alpha,
-            fix_logv_beta=fix_sigma_beta,
-            fix_logv_tau=fix_sigma_tau,
-            fix_delta_mu=fix_mu,
-            fix_delta_a=fix_a,
-            fix_eta=fix_eta,
-            scale_logv_alpha=scale_logv_alpha,
-            scale_logv_beta=scale_logv_beta,
-            scale_logv_tau=scale_logv_tau,
-            scale_delta_mu=scale_delta_mu,
-            scale_delta_a=scale_delta_a,
-            scale_eta_on_dt=scale_eta / dt,  # Scale in units of dt
+            scale_eta=scale_eta,
+            workers=workers,
         )
 
     input_parsed = {
@@ -2540,6 +2657,7 @@ def _parse_noisefit_input(
         "fix_sigma_alpha": fix_sigma_alpha,
         "fix_sigma_beta": fix_sigma_beta,
         "fix_sigma_tau": fix_sigma_tau,
+        "est_mu": est_mu,
         "fix_mu": fix_mu,
         "fix_a": fix_a,
         "fix_eta": fix_eta,
@@ -2549,7 +2667,8 @@ def _parse_noisefit_input(
         "scale_delta_mu": scale_delta_mu,
         "scale_delta_a": scale_delta_a,
         "scale_eta": scale_eta,
-        "hess": hess,
+        "workers": workers,
+        "jac": jac,
     }
     return objective, jac, x0, input_parsed
 
@@ -2568,6 +2687,7 @@ def _parse_noisefit_output(
     fix_sigma_alpha: bool,
     fix_sigma_beta: bool,
     fix_sigma_tau: bool,
+    est_mu: bool,
     fix_mu: bool,
     fix_a: bool,
     fix_eta: bool,
@@ -2577,7 +2697,8 @@ def _parse_noisefit_output(
     scale_delta_mu: NDArray[np.float64],
     scale_delta_a: NDArray[np.float64],
     scale_eta: NDArray[np.float64],
-    hess: Callable[[NDArray[np.float64]], NDArray[np.float64]],
+    workers: int,
+    jac: Callable[[NDArray[np.float64]], NDArray[np.float64]],
 ) -> NoiseResult:
     """Parse noisefit output"""
     # Parse output
@@ -2609,7 +2730,7 @@ def _parse_noisefit_output(
 
     if fix_mu:
         mu_out = mu0
-    else:
+    elif not est_mu:
         mu_out = x[:, 0] - x_out[:n] * scale_delta_mu
         x_out = x_out[n:]
 
@@ -2622,7 +2743,7 @@ def _parse_noisefit_output(
     if fix_eta:
         eta_out = eta0
     else:
-        eta_out = np.concatenate(([0.0], x_out[: m - 1] * scale_eta))
+        eta_out = np.concatenate(([0.0], x_out[: m - 1] * scale_eta * dt))
 
     diagnostic = out
     fun = out.fun
@@ -2636,7 +2757,7 @@ def _parse_noisefit_output(
                     fix_sigma_alpha,
                     fix_sigma_beta,
                     fix_sigma_tau,
-                    fix_mu,
+                    fix_mu or est_mu,
                     fix_a,
                     fix_eta,
                 ],
@@ -2646,15 +2767,16 @@ def _parse_noisefit_output(
                     [scale_logv_tau * tau / 2],
                     scale_delta_mu,
                     scale_delta_a,
-                    scale_eta,
+                    scale_eta * dt,
                 ],
+                strict=False,
             )
             if not tf
         ]
     )
 
     # Get or compute the inverse hessian
-    hess_inv_scaled = np.linalg.inv(hess(out.x))
+    hess_inv_scaled = inv(nd.Jacobian(jac)(out.x))
 
     # Convert inverse Hessian into unscaled parameters
     hess_inv = (
@@ -2670,24 +2792,24 @@ def _parse_noisefit_output(
     # Parse error vector
     # Propagate error from log(V) to sigma
     if not fix_sigma_alpha:
-        err_sigma_alpha = err[0]
+        err_sigma_alpha = err[0] * bias_correction
         err = err[1:]
     else:
         err_sigma_alpha = 0.0
 
     if not fix_sigma_beta:
-        err_sigma_beta = err[0]
+        err_sigma_beta = err[0] * bias_correction
         err = err[1:]
     else:
         err_sigma_beta = 0.0
 
     if not fix_sigma_tau:
-        err_sigma_tau = err[0]
+        err_sigma_tau = err[0] * bias_correction
         err = err[1:]
     else:
         err_sigma_tau = 0.0
 
-    if not fix_mu:
+    if not fix_mu and not est_mu:
         err_mu = err[:n]
         err = err[n:]
 
@@ -2697,6 +2819,60 @@ def _parse_noisefit_output(
 
     if not fix_eta:
         err_eta = np.concatenate(([0], err[: m - 1]))
+
+    # Parse mu_out and err_mu if est_mu
+    if not fix_mu and est_mu:
+        scale = np.sum(a_out**2)
+        f = rfftfreq(n)
+        w = 2 * pi * f
+
+        exp_iweta = np.exp(1j * np.outer(eta_out, w / dt))
+        x_f = rfft(x.T)
+        x_back_f = exp_iweta * x_f
+
+        mu_f = np.einsum("j,jk->k", a_out, x_back_f) / scale
+
+        delay_impulse = irfft(
+            rfft(unit_impulse(n)) * exp_iweta, n, workers=workers
+        )
+
+        delay_matrix = circulant(delay_impulse)
+
+        var_x = noise_model.noise_var(x.T)
+        var_x_average = (
+            np.einsum(
+                "ijk,ik,ikj,i->jk", delay_matrix, var_x, delay_matrix, a_out**2
+            )
+            / scale**2
+        )
+
+        dmu_da_f = (x_back_f - 2 * np.einsum("j,k->jk", a_out, mu_f)) / scale
+        dmu_da = irfft(dmu_da_f, n, workers=workers)
+
+        dmu_deta_f = (
+            np.einsum("j,jk->jk", a_out, 1j * (w / dt) * x_back_f) / scale
+        )
+        dmu_deta = irfft(dmu_deta_f, n, workers=workers)
+
+        if fix_a and not fix_eta:
+            var_a_eta = (
+                dmu_deta[1:].T @ hess_inv[-m + 1 :, -m + 1 :] @ dmu_deta[1:]
+            )
+        elif not fix_a and fix_eta:
+            var_a_eta = (
+                dmu_da[1:].T @ hess_inv[-m + 1 :, -m + 1 :] @ dmu_da[1:]
+            )
+        elif fix_a and fix_eta:
+            var_a_eta = 0
+        else:
+            var_a_eta = (
+                np.concatenate((dmu_da[1:], dmu_deta[1:])).T
+                @ hess_inv[-2 * m + 2 :, -2 * m + 2 :]
+                @ np.concatenate((dmu_da[1:], dmu_deta[1:]))
+            )
+
+        mu_out = irfft(mu_f, n, workers=workers)
+        err_mu = np.sqrt(np.diag(var_a_eta + var_x_average))
 
     # Cast fun as a Python float in case it is a NumPy constant
     return NoiseResult(
@@ -2728,16 +2904,32 @@ class FitResult:
     p_err : ndarray
         Uncertainty estimate for ``p_opt``,
         ``p_err = np.sqrt(np.diag(p_cov))``.
+
+        .. deprecated:: 0.6.0
+            This option is deprecated and will be removed in version 0.8.0.
+
     p_cov : ndarray
         Covariance matrix estimate for ``p_opt``, determined from the curvature
-        of the cost function at ``(p_opt, mu_opt)``.
+        of the cost function at ``(p_opt, mu_opt)``. To compute one standard
+        deviation errors on the parameters, use ``p_err = np.sqrt(np.diag(p_cov))``.
     mu_opt : ndarray
         Optimal estimate of the input waveform.
     mu_err : ndarray
         Estimated uncertainty in ``mu_opt``, determined from the curvature of
         the cost function at ``(p_opt, mu_opt)``.
+
+        .. deprecated:: 0.6.0
+            This option is deprecated and will be removed in version 0.8.0.
+
+    mu_cov : ndarray
+        Covariance matrix estimate for ``mu_opt``, determined from the curvature
+        of the cost function at ``(p_opt, mu_opt)``. To compute one standard
+        deviation errors of the input waveform, use ``mu_err = np.sqrt(np.diag(mu_cov))``.
     psi_opt : ndarray
         Optimal estimate of the output waveform.
+    psi_cov : ndarray
+        Covariance matrix estimate for ``psi_opt``. To compute one standard
+        deviation errors of the output waveform, use ``psi_err = np.sqrt(np.diag(psi_cov))``.
     frfun_opt : complex ndarray
         Estimated values of the frequency response function at non-negative
         frequencies.
@@ -2753,11 +2945,24 @@ class FitResult:
         frequencies.
     delta : ndarray
         Residuals of the input waveform ``x``, defined as ``x - mu_opt``.
+    delta_norm : ndarray
+        Normalized residuals of the input waveform ``x``, defined as
+        ``delta/noise_model.noise_amp(xdata)``.
+    delta_norm_cov : ndarray
+        Covariance matrix estimate for ``delta_norm``.
     epsilon : ndarray
         Residuals of the output waveform ``y``, defined as ``y - psi_opt``,
         where ``psi_opt = thztools.apply_frf(frfun, mu, dt=dt, args=p_opt)``,
         ``frfun`` is the parameterized frequency response function, and
         ``p_opt`` is the array of optimized parameters.
+    epsilon_norm : ndarray
+        Normalized residuals of the output waveform ``y``, defined as
+        ``epsilon/noise_model.noise_amp(ydata)``.
+    epsilon_norm_cov : ndarray
+        Covariance matrix estimate for ``epsilon_norm``.
+    delta_norm_epsilon_norm_cov : ndarray
+        Cross-covariance matrix of the normalized residuals ``delta_norm``
+        and ``epsilon_norm``.
     r_tls : ndarray
         Normalized total least-squares residuals.
     success : bool
@@ -2775,14 +2980,22 @@ class FitResult:
         ``p_err = np.sqrt(np.diag(p_cov))``.
     p_cov : ndarray
         Covariance matrix estimate for ``p_opt``, determined from the curvature
-        of the cost function at ``(p_opt, mu_opt)``.
+        of the cost function at ``(p_opt, mu_opt)``. To compute the standard
+        errors for the parameters, use ``p_err = np.sqrt(np.diag(p_cov))``.
     mu_opt : ndarray
         Optimal estimate of the input waveform.
     mu_err : ndarray
         Estimated uncertainty in ``mu_opt``, determined from the curvature of
         the cost function at ``(p_opt, mu_opt)``.
+    mu_cov : ndarray
+        Covariance matrix estimate for ``mu_opt``, determined from the curvature
+        of the cost function at ``(p_opt, mu_opt)``. To compute the standard
+        errors for the input waveform, use ``mu_err = np.sqrt(np.diag(mu_cov))``.
     psi_opt : ndarray
         Optimal estimate of the output waveform.
+    psi_cov : ndarray
+        Covariance matrix estimate for ``psi_opt``. To compute the standard
+        errors for the output waveform, use ``psi_err = np.sqrt(np.diag(psi_cov))``.
     frfun_opt : complex ndarray
         Estimated values of the frequency response function at non-negative
         frequencies.
@@ -2798,11 +3011,24 @@ class FitResult:
         frequencies.
     delta : ndarray
         Residuals of the input waveform ``x``, defined as ``x - mu_opt``.
+    delta_norm : ndarray
+        Normalized residuals of the input waveform ``x``, defined as
+        ``delta/noise_model.noise_amp(xdata)``.
+    delta_norm_cov : ndarray
+        Covariance matrix estimate for ``delta_norm``.
     epsilon : ndarray
         Residuals of the output waveform ``y``, defined as ``y - psi_opt``,
         where ``psi_opt = thztools.apply_frf(frfun, mu, dt=dt, args=p_opt)``,
         ``frfun`` is the parameterized frequency response function, and
         ``p_opt`` is the array of optimized parameters.
+    epsilon_norm : ndarray
+        Normalized residuals of the output waveform ``y``, defined as
+        ``epsilon/noise_model.noise_amp(ydata)``.
+    epsilon_norm_cov : ndarray
+        Covariance matrix estimate for ``epsilon_norm``.
+    delta_norm_epsilon_norm_cov : ndarray
+        Cross-covariance matrix of the normalized residuals ``delta_norm``
+        and ``epsilon_norm``.
     r_tls : ndarray
         Normalized total least-squares residuals.
     success : bool
@@ -2817,23 +3043,56 @@ class FitResult:
     """
 
     p_opt: NDArray[np.float64]
-    p_err: NDArray[np.float64]
+    _p_err: NDArray[np.float64]
     p_cov: NDArray[np.float64]
     mu_opt: NDArray[np.float64]
-    mu_err: NDArray[np.float64]
+    _mu_err: NDArray[np.float64]
+    mu_cov: NDArray[np.float64]
     psi_opt: NDArray[np.float64]
+    psi_cov: NDArray[np.float64]
     frfun_opt: NDArray[np.complex128]
     resnorm: float
     dof: int
     delta: NDArray[np.float64]
+    delta_norm: NDArray[np.float64]
+    delta_norm_cov: NDArray[np.float64]
     epsilon: NDArray[np.float64]
+    epsilon_norm: NDArray[np.float64]
+    epsilon_norm_cov: NDArray[np.float64]
+    delta_norm_epsilon_norm_cov: NDArray[np.float64]
     r_tls: NDArray[np.float64]
     success: bool
     diagnostic: OptimizeResult
 
+    @property
+    def p_err(self) -> NDArray[np.float64]:
+        msg = (
+            "\np_err is deprecated since version 0.6.0 and will be removed in version 0.8.0. \n"
+            "Use numpy.sqrt(numpy.diag(p_cov)) instead."
+        )
+        warnings.warn(
+            msg,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._p_err
+
+    @property
+    def mu_err(self) -> NDArray[np.float64]:
+        msg = (
+            "\nmu_err is deprecated since version 0.6.0 and will be removed in version 0.8.0. \n"
+            "Use numpy.sqrt(numpy.diag(mu_cov)) instead."
+        )
+        warnings.warn(
+            msg,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self._mu_err
+
 
 def _costfuntls(
-    frfun: Callable,
+    frfun: Callable[..., NDArray[np.complex128]],
     theta: ArrayLike,
     mu: ArrayLike,
     x: ArrayLike,
@@ -2904,7 +3163,7 @@ def _costfuntls(
 
 
 def fit(
-    frfun: Callable,
+    frfun: Callable[..., NDArray[np.complex128]],
     xdata: ArrayLike,
     ydata: ArrayLike,
     p0: ArrayLike,
@@ -2912,12 +3171,15 @@ def fit(
     *,
     dt: float | None = None,
     numpy_sign_convention: bool = True,
-    args: tuple = (),
-    kwargs: dict | None = None,
+    args: tuple[float, ...] = (),
+    kwargs: dict[str, Any] | None = None,
     f_bounds: ArrayLike | None = None,
     p_bounds: ArrayLike | None = None,
-    jac: Callable | None = None,
-    lsq_options: dict | None = None,
+    jac: Callable[
+        Concatenate[NDArray[np.float64], ...], NDArray[np.complex128]
+    ]
+    | None = None,
+    lsq_options: dict[str, Any] | None = None,
 ) -> FitResult:
     r"""
     Fit a parameterized frequency response function to time-domain data.
@@ -2930,7 +3192,7 @@ def fit(
     ----------
     frfun : callable
         Frequency response function with signature ``frfun(omega, *p, *args,
-        **kwargs)`` that returns an ``ndarray``. Assumes the
+        **kwargs)`` that returns a complex ``ndarray``. Assumes the
         :math:`+i\omega t` convention for harmonic time dependence when
         ``numpy_sign_convention`` is ``True``, the default. All elements of
         ``p`` and ``args`` and all values of ``kwargs`` must be real
@@ -3073,7 +3335,7 @@ def fit(
     and ``mu`` as free parameters. It minimizes the Euclidean norm of the
     residual vector
 
-        ``np.concat((delta / sigma_x, epsilon / sigma_y)``,
+        ``np.concatenate((delta / sigma_x, epsilon / sigma_y)``,
 
     where
 
@@ -3125,9 +3387,8 @@ def fit(
     >>> ax.set_ylabel(r"$r_\mathrm{TLS}$")
     >>> plt.show()
     """
-    fit_method = "trf"
+    fit_method: Literal["lm", "trf"] = "trf"
 
-    args = np.atleast_1d(args)
     if kwargs is None:
         kwargs = {}
 
@@ -3169,7 +3430,7 @@ def fit(
     f_excl_hi_idx = f > f_bounds[1]
     f_incl_idx = ~f_excl_lo_idx * ~f_excl_hi_idx
 
-    w = 2 * pi * f
+    w = np.asarray(2 * pi * f, dtype=np.float64)
 
     n_below = np.sum(f_excl_lo_idx)
     n_in = np.sum(f_incl_idx)
@@ -3187,13 +3448,16 @@ def fit(
         elif n % 2 == 1 and n_below == 0:
             n_b += 1
 
-    alpha, beta, tau = noise_parms.tolist()
-    # noinspection PyArgumentList
+    alpha = noise_parms[0]
+    beta = noise_parms[1]
+    tau = noise_parms[2]
     noise_model = NoiseModel(alpha, beta, tau, dt=dt)
     sigma_x = noise_model.noise_amp(xdata)
     sigma_y = noise_model.noise_amp(ydata)
     v_x = np.diag(sigma_x**2)
     v_y = np.diag(sigma_y**2)
+    sigma_x_inv = np.diag(1 / sigma_x)
+    sigma_y_inv = np.diag(1 / sigma_y)
     p0_est = np.concatenate((p0, np.zeros(n_a), np.zeros(n_b), np.zeros(n)))
 
     if p_bounds is None:
@@ -3252,7 +3516,7 @@ def fit(
         return _a + _b * 1j
 
     def function(
-        _w: NDArray[np.float64], *_theta: np.float64
+        _w: NDArray[np.float64], /, *_theta: np.float64
     ) -> NDArray[np.complex128]:
         _a = np.asarray(_theta[n_p : n_p + n_a], dtype=np.float64)
         _b = np.asarray(_theta[n_p + n_a :], dtype=np.float64)
@@ -3260,7 +3524,7 @@ def fit(
         h_in = _frfun_local(_w[f_incl_idx], *_theta[:n_p])
         return np.concatenate((h_ex[:n_below], h_in, h_ex[n_below:]))
 
-    def function_flat(_x: NDArray[np.float64]) -> NDArray[np.float64]:
+    def function_flat(_x: NDArray[np.float64], /) -> NDArray[np.float64]:
         _tf = _frfun_local(w[f_incl_idx], *_x)
         return np.concatenate((np.real(_tf), np.imag(_tf)))
 
@@ -3269,14 +3533,15 @@ def fit(
             # If Jacobian is not supplied, compute it numerically
             _tf_prime = approx_fprime(_p, function_flat)
             _tf_prime_complex = _tf_prime[0:n_in] + 1j * _tf_prime[n_in:]
-            out = np.atleast_2d(_tf_prime_complex).T
+            out = np.astype(np.atleast_2d(_tf_prime_complex).T, np.complex128)
         else:
             # Otherwise, return supplied Jacobian
-            out = np.atleast_2d(jac(w[f_incl_idx], *_p, *args, **kwargs))[
-                :, :n_p
-            ].T
-        if not numpy_sign_convention:
-            return np.conj(out)
+            out = np.astype(
+                np.atleast_2d(jac(w[f_incl_idx], *_p, *args, **kwargs))[
+                    :, :n_p
+                ].T,
+                np.complex128,
+            )
         return out
 
     def jacobian_bl(
@@ -3290,9 +3555,11 @@ def fit(
             ),
             axis=-1,
         )
-        jac_bl = irfft(fft_jac_bl * _fft_mu, n=n)
+        jac_bl: np.ndarray[tuple[Any, ...], np.dtype[np.float64]] = irfft(
+            fft_jac_bl * _fft_mu, n=n
+        )
         if n_a > 0:
-            a_circ = la.circulant(signal.unit_impulse(n_a))
+            a_circ = circulant(unit_impulse(n_a))
             jac_a = np.concatenate(
                 (
                     a_circ[:, :n_below],
@@ -3302,9 +3569,11 @@ def fit(
                 axis=-1,
             )
             jac_bl_a = irfft(jac_a * _fft_mu, n=n)
-            jac_bl = np.concatenate((jac_bl, jac_bl_a), axis=0)
+            jac_bl = np.concatenate(
+                (jac_bl, jac_bl_a), axis=0, dtype=np.float64
+            )
         if n_b > 0:
-            b_circ = la.circulant(signal.unit_impulse(n_b) * 1j)
+            b_circ = circulant(unit_impulse(n_b) * 1j)
             if n_a - n_b == 2:  # noqa: PLR2004
                 jac_b = np.concatenate(
                     (
@@ -3341,7 +3610,9 @@ def fit(
                     (np.zeros((n_b, n_in)), b_circ[:, :]), axis=-1
                 )
             jac_bl_b = irfft(jac_b * _fft_mu, n=n)
-            jac_bl = np.concatenate((jac_bl, jac_bl_b), axis=0)
+            jac_bl = np.concatenate(
+                (jac_bl, jac_bl_b), axis=0, dtype=np.float64
+            )
         return jac_bl
 
     def jac_fun(_x: NDArray[np.float64]) -> NDArray[np.float64]:
@@ -3352,14 +3623,14 @@ def fit(
         fft_mu_est = rfft(mu_est)
         jac_bl = -(jacobian_bl(p_est[:n_p], fft_mu_est) / sigma_y).T
         impulse_response = apply_frf(
-            function, signal.unit_impulse(n), dt=dt, args=p_est
+            function, unit_impulse(n), dt=dt, args=p_est
         )
-        jac_br = (la.circulant(impulse_response).T / sigma_y).T
+        jac_br = (circulant(impulse_response).T / sigma_y).T
 
         return np.block([[jac_tl, jac_tr], [jac_bl, jac_br]])
 
-    result = opt.least_squares(
-        lambda _p: _costfuntls(
+    def cfun_tls(_p: NDArray[np.float64]) -> NDArray[np.float64]:
+        return _costfuntls(
             function,
             _p[: n_p + n_a + n_b],
             xdata[:] - _p[n_p + n_a + n_b :],
@@ -3368,7 +3639,10 @@ def fit(
             sigma_x[:],
             sigma_y[:],
             dt,
-        ),
+        )
+
+    result = least_squares(
+        cfun_tls,
         p0_est,
         jac=jac_fun,
         bounds=p_bounds,
@@ -3378,7 +3652,12 @@ def fit(
     )
 
     # Parse output
-    _, s, vt = la.svd(result.jac, full_matrices=False)
+    #
+    # The type information for least_squares allows the jac attribute to be a dense
+    # ndarray, a sparse csr_array, or a LinearOperator. Here, jac is dense, so cast
+    # it that way before sending it to svd, which expects a dense array.
+    jac_dense = cast("np.ndarray", result.jac)
+    _, s, vt = svd(jac_dense, full_matrices=False)
     threshold = np.finfo(float).eps * max(result.jac.shape) * s[0]
     s = s[s > threshold]
     vt = vt[: s.size]
@@ -3391,18 +3670,28 @@ def fit(
     delta = result.x[n_p + n_a + n_b :]
 
     mu_opt = xdata - delta
-    mu_err = np.sqrt(np.diag(cov)[n_p + n_a + n_b :])
+    mu_cov = cov[n_p + n_a + n_b :, n_p + n_a + n_b :]
+    mu_err = np.sqrt(np.diag(mu_cov))
     psi_opt = apply_frf(function, mu_opt, dt=dt, args=p_opt_all)
     epsilon = ydata - psi_opt
     resnorm = 2 * result.cost
     dof = n - n_p - n_a - n_b
 
-    h_circ = la.circulant(
-        apply_frf(function, signal.unit_impulse(n), dt=dt, args=p_opt_all)
+    h_circ = circulant(
+        apply_frf(function, unit_impulse(n), dt=dt, args=p_opt_all)
     )
     h_delta = apply_frf(function, delta, dt=dt, args=p_opt_all)
     u_x = h_circ @ v_x @ h_circ.T
-    r_tls = sqrtm(np.linalg.inv(v_y + u_x)) @ (epsilon - h_delta)
+    r_tls = sqrtm(inv(v_y + u_x)) @ (epsilon - h_delta)
+
+    psi_cov = h_circ @ mu_cov @ h_circ.T
+    delta_norm = delta / sigma_x
+    epsilon_norm = epsilon / sigma_y
+    delta_norm_cov = np.identity(n) - sigma_x_inv @ mu_cov @ sigma_x_inv
+    epsilon_norm_cov = np.identity(n) - sigma_y_inv @ psi_cov @ sigma_y_inv
+    delta_norm_epsilon_norm_cov = (
+        -sigma_x_inv @ mu_cov @ h_circ.T @ sigma_y_inv
+    )
 
     frfun_opt = function(w, *p_opt_all)
 
@@ -3410,17 +3699,170 @@ def fit(
     # either is a NumPy constant
     return FitResult(
         p_opt=p_opt,
-        p_err=p_err,
+        _p_err=p_err,
         p_cov=p_cov,
         mu_opt=mu_opt,
-        mu_err=mu_err,
+        _mu_err=mu_err,
+        mu_cov=mu_cov,
         psi_opt=psi_opt,
+        psi_cov=psi_cov,
         frfun_opt=frfun_opt,
         resnorm=float(resnorm),
         dof=dof,
         delta=delta,
+        delta_norm=delta_norm,
+        delta_norm_cov=delta_norm_cov,
         epsilon=epsilon,
+        epsilon_norm=epsilon_norm,
+        epsilon_norm_cov=epsilon_norm_cov,
+        delta_norm_epsilon_norm_cov=delta_norm_epsilon_norm_cov,
         r_tls=r_tls,
         success=bool(result.success),
         diagnostic=result,
     )
+
+
+def etfe(
+    x: ArrayLike,
+    y: ArrayLike,
+    *,
+    n: int | None = None,
+    dt: float | None = None,
+    window: str | None = None,
+    axis: int = -1,
+) -> tuple[NDArray[np.complex128], NDArray[np.float64]]:
+    r"""
+    Calculate the empirical transfer-function estimate and the frequency base.
+
+    Given the real input ``x`` and the real output ``y``, returns the ratio of their discrete Fourier
+    transforms, ``h_f = scipy.fft.rfft(y) / scipy.fft.rfft(x)``.
+
+    Parameters
+    ----------
+    x : array_like
+        Input waveform.
+    y : array_like
+        Output waveform.
+    n : int or None, optional
+        Number of points along transformation axis to use.
+        If ``n`` is greater than ``len(x)``, pad the signal with zeroes to ``n``.
+        If ``n`` less than ``len(x)``, signal is truncated. Default is None, which sets ``n = len(x)``.
+    dt : float or None, optional
+        Sampling time, normally in picoseconds. Default is None, which sets
+        the sampling time to ``thztools.options.sampling_time``. If both
+        ``dt`` and ``thztools.options.sampling_time`` are ``None``, the
+        sampling time is set to 1.0.
+    window : str or None, optional
+        Name of a window function from :mod:`scipy.signal.windows`. Default is None, which applies
+        a Tukey window with ``alpha = 0.5``.
+    axis : int or None, optional
+        Fourier transformed axis. If not given, the last axis is used.
+
+    Returns
+    -------
+    h_f : complex ndarray
+        Empirical transfer function estimate.
+    f : ndarray
+        Array of length ``n//2 + 1`` of frequency samples corresponding to ``numpy.fft.rfftfreq``.
+
+    Raises
+    ------
+    ValueError
+        If ``window`` is not a valid name in :mod:`scipy.signal.windows`.
+
+    Warns
+    -----
+    UserWarning
+        If ``thztools.options.sampling_time`` and the ``dt`` parameter
+        are both not ``None`` and are set to different ``float`` values, the
+        function will set the sampling time to ``dt`` and raise a
+        :class:`UserWarning`.
+
+    Notes
+    -----
+    This function computes the frequency axis for the real FFT:
+
+        ``f = np.fft.rfftfreq(n, d=dt)``
+
+    Examples
+    --------
+    >>> from matplotlib import pyplot as plt
+    >>> import numpy as np
+    >>> import thztools as thz
+
+    >>> n, dt = 256, 0.05
+    >>> a, eta = 0.5, 1
+    >>> sigma_alpha, sigma_beta, sigma_tau = 1e-4, 1e-2, 1e-3
+
+    >>> t = thz.timebase(n, dt=dt)
+    >>> mu = thz.wave(n, dt=dt)
+    >>> z = thz.scaleshift(mu, dt=dt, a=a, eta=eta)
+    >>> noise_model = thz.NoiseModel(sigma_alpha, sigma_beta, sigma_tau, dt=dt)
+    >>> x = mu + noise_model.noise_sim(mu, axis=0, seed=1234)
+    >>> y = z + noise_model.noise_sim(z, axis=0, seed=5678)
+
+    >>> h_f, f = thz.etfe(x, y, dt=dt, window=None, axis=-1)
+    >>> print(f[:3])
+    [0. 0.078125 0.15625 ]
+
+    >>> def frfun(omega, a, eta):
+    ...     return a * np.exp(-1j * omega * eta)
+    >>>
+    >>> p0 = (a, eta)
+    >>> result = thz.fit(
+    ...     frfun, x, y, p0, noise_parms=(sigma_alpha, sigma_beta, sigma_tau), dt=dt
+    ... )
+
+    >>> fig, axs = plt.subplots(2, 1)
+    >>>
+    >>> axs[0].plot(f, np.real(h_f), ".", label=r"$H_{\mathrm{ETFE}}$")
+    >>> axs[0].plot(
+    ...     f, np.real(result.frfun_opt), "--", label=r"$\hat{H}_{\mathrm{FIT}}$"
+    ... )
+    >>> axs[0].set_ylabel("Re{H}")
+    >>> axs[0].set_ylim(-1.8, 1.8)
+    >>> axs[0].tick_params(labelbottom=False)
+    >>> axs[0].legend(loc="upper right")
+    >>> axs[1].plot(f, np.imag(h_f), ".")
+    >>> axs[1].plot(f, np.imag(result.frfun_opt), "--")
+    >>> axs[1].set_xlabel("Frequency (THz)")
+    >>> axs[1].set_ylabel(r"Im{H}")
+    >>> axs[1].set_ylim(-1.8, 1.8)
+    >>>
+    >>> fig.subplots_adjust(hspace=0.2)
+    >>> plt.show()
+    """
+
+    dt = _assign_sampling_time(dt)
+
+    x = np.asarray(x)
+    y = np.asarray(y)
+
+    ax_len = x.shape[axis]
+
+    nfft = ax_len if n is None else n
+
+    f = np.asarray(np.fft.rfftfreq(nfft, d=dt), dtype=np.float64)
+
+    if window is None:
+        win1d = tukey(ax_len)
+    elif window not in windowlist:
+        wind_out_of_range = (
+            "Window parameter only accepts functions in {windowlist}"
+        )
+        raise ValueError(wind_out_of_range)
+    else:
+        win1d = get_window(window, ax_len, fftbins=False)
+
+    shape = [1] * x.ndim
+    shape[axis] = ax_len
+    win = win1d.reshape(shape)
+    windx = x * win
+    windy = y * win
+    x_fft: np.ndarray[tuple[Any, ...], np.dtype[np.complex128]] = rfft(
+        windx, n=nfft, axis=axis
+    )
+    y_fft: np.ndarray[tuple[Any, ...], np.dtype[np.complex128]] = rfft(
+        windy, n=nfft, axis=axis
+    )
+    return y_fft / x_fft, f

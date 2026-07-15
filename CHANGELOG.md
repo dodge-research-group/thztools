@@ -5,24 +5,94 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org)
 for maintaining this file.
 
+## [0.6.0] - 2026-07-14
+
+### Changed
+
+- Change default `noisefit` algorithm to estimate `mu` using a weighted
+  average of the measured waveforms after rescaling and shifting, rather
+  than optimizing the cost function with respect to `mu` directly
+  ([#85](https://github.com/dodge-research-group/thztools/issues/85))
+  ([Alireza Noori](https://github.com/Roboboy2000))
+- Change procedure to evaluate parameter uncertainties, from direct
+  computation of the Hessian to numerical evaluation using `numdifftools`
+  ([#85](https://github.com/dodge-research-group/thztools/issues/85))
+  ([Alireza Noori](https://github.com/Roboboy2000))
+- Deprecate `mu_err` and `p_err` attributes of `FitResult` class
+  ([#108](https://github.com/dodge-research-group/thztools/issues/108))
+  ([Alireza Noori](https://github.com/Roboboy2000))
+
+### Added
+
+- Add `etfe` function
+  ([Augusten Fairbairn](https://github.com/AugustenFairbairn),
+  [Japneet Sandhu](https://github.com/japneet-sandhu),
+  [Chloe Chan](https://github.com/cmhchan),
+  )
+- Add `workers` parameter to `noisefit` function to allow parallel processing
+  of FFTs ([#78](https://github.com/dodge-research-group/thztools/pull/78))
+  ([Rabin Meetarbhan](https://github.com/Rab912))
+- Add links to top keywords in documentation
+  ([Wesley Xu](https://github.com/WesleyXu09))
+- Add `est_mu` parameter to `thztools`
+  ([Alireza Noori](https://github.com/Roboboy2000))
+- Add support for Python 3.14
+  ([#92](https://github.com/dodge-research-group/thztools/issues/92))
+  ([Steve Dodge](https://github.com/jsdodge))
+- Add `mu_cov`, `psi_cov`, `delta_norm`, `delta_norm_cov`, `epsilon_norm`,
+  `epsilon_norm_cov`, and `delta_norm_epsilon_norm_cov` attributes to
+  `FitResult` class
+  ([#108](https://github.com/dodge-research-group/thztools/issues/108))
+  ([Alireza Noori](https://github.com/Roboboy2000))
+
+### Removed
+
+- Remove support for Python 3.9
+  ([#92](https://github.com/dodge-research-group/thztools/issues/92))
+  ([Steve Dodge](https://github.com/jsdodge))
+
+### Fixed
+
+- Fix `noisefit` examples in documentation
+  ([#81](https://github.com/dodge-research-group/thztools/pull/81))
+  ([Alireza Noori](https://github.com/Roboboy2000))
+- Apply Bessel correction to estimated noise model parameter uncertainties
+  returned by `noisefit` ([#86](https://github.com/dodge-research-group/thztools/issues/86))
+  ([Alireza Noori](https://github.com/Roboboy2000))
+- Fix error in cost function Jacobian used in `noisefit`
+  ([#87](https://github.com/dodge-research-group/thztools/issues/87)))
+  ([Alireza Noori](https://github.com/Roboboy2000))
+- Fix erroneous warnings when using NumPy <2.3 on Apple Silicon M4 chips
+  [numpy/numpy#28687](https://github.com/numpy/numpy/issues/28687)
+- Fix error in cost function Jacobian when `numpy_sign_convention = False`
+  ([7c11c58](https://github.com/dodge-research-group/thztools/commit/7c11c58))
+  ([Steve Dodge](https://github.com/jsdodge))
+- Fix inconsistent internal scaling of `eta` parameter
+  ([c0a725f](https://github.com/dodge-research-group/thztools/commit/c0a725f))
+  ([Steve Dodge](https://github.com/jsdodge))
+
 ## [0.5.5.post0] - 2024-12-02
 
 ### Added
+
 - Add pyOpenSci badge to `README.md`
 - Add JOSS badge to `README.md`
 
 ### Changed
+
 - Update `CITATION.cff`
 - Change citation information in `README.md`
 
 ## [0.5.5] - 2024-11-19
 
 ### Added
+
 - Add list of related software to README
 
 ## [0.5.4] - 2024-10-19
 
 ### Added
+
 - Add CITATION.cff file
 - Add citation information to README
 - Add links to README that point to online documentation examples
@@ -31,16 +101,19 @@ for maintaining this file.
 - Add support for Python 3.13
 
 ### Removed
+
 - Remove support for Python 3.8
 
 ## [0.5.3] - 2024-10-12
 
 ### Fixed
+
 - Fix documentation error in the Contributing section
   ([#59](https://github.com/dodge-research-group/thztools/issues/59))
 - Fix typographical errors in JOSS paper
 
 ### Added
+
 - Add [repostatus.org](https://www.repostatus.org/) badge
   ([#58](https://github.com/dodge-research-group/thztools/issues/58))
 - Add documentation on type checking in the Contributing section
@@ -50,23 +123,28 @@ for maintaining this file.
 ## [0.5.2] - 2024-09-11
 
 ### Changed
+
 - Replace Black badge with Ruff badge in `README.md`
 
 ### Fixed
+
 - Fix documentation error in `fit`
 
 ## [0.5.1] - 2024-08-15
 
 ### Added
+
 - Add `CONTRIBUTING.md` file
-- Add *Installation* section to `README.md`
+- Add _Installation_ section to `README.md`
 
 ### Fixed
+
 - Fix error in `bug_report` issue template
 
 ## [0.5.0] - 2024-08-01
 
 ### Changed
+
 - Change development status to beta
 - Change `mu_var` attribute of `FitResult` to `mu_err`
 - Change `p_var` attribute of `FitResult` to `p_cov`
@@ -79,8 +157,9 @@ for maintaining this file.
 - Reorganize tests
 
 ### Added
+
 - Add configuration file for doctests with PyTest
-- Add example of appling a frequency response function
+- Add example of applying a frequency response function
 - Add example of estimating noise model parameters
 - Add example of fitting a parameterized frequency response function model
 - Add example of rescaling and shifting a waveform
@@ -90,10 +169,12 @@ for maintaining this file.
 - Add tests for new functionality
 
 ### Removed
+
 - Remove `examples` directory from top level
 - Remove unused lint options from `pyproject.toml`
 
 ### Fixed
+
 - Correct total least-squares residual computation
 
 ## [0.4.2] - 2024-06-30
@@ -105,7 +186,7 @@ for maintaining this file.
 - Set tolerance parameter in `minimize` function used in `noisefit`
 - Change `fft_sign` options to `numpy_sign_convention`
 - Restore factor of `0.5` in cost function computation and gradient
-- Replace `scale_sigma_*` parameters (which simply adds a constant to the log) 
+- Replace `scale_sigma_*` parameters (which simply adds a constant to the log)
   with `scale_logv_*` parameters
 - Refactor `noisefit` to encapsulate cost function computations in separate
   functions, `_nll_noisefit`, `_jac_noisefit`, and `_hess_noisefit`
@@ -166,7 +247,7 @@ for maintaining this file.
   `noise_amp`, `noise_sim`, and `noise_var`, respectively
 - Revise `noisefit` and associated functions to treat each of the 3 noise
   parameters separately instead of as a 3-component array, so that each may
-  fixed independently in the optimization process
+  be fixed independently in the optimization process
 - Adjust internal scaling in `noisefit`
 - Reorganize `NoiseResult` class as output for `noisefit`
 - Revise `NoiseResult` docstring
@@ -180,7 +261,7 @@ for maintaining this file.
 - Improve type annotations
 - Update tests
 - Update dependencies in `environment-dev.yml` and `pyproject.toml`
-- Revise *Getting Started* page
+- Revise _Getting Started_ page
 - Revise documentation, including Sphinx format and project-specific layout
 
 ### Added
@@ -305,6 +386,7 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.6.0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.6.0
 [0.5.5.post0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.5.post0
 [0.5.5]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.5
 [0.5.4]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.4

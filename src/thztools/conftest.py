@@ -9,5 +9,5 @@ from thztools import reset_option
 
 # Reset options before each test
 @pytest.fixture(autouse=True)
-def global_reset():
+def global_reset() -> None:
     reset_option()

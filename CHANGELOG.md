@@ -5,7 +5,7 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org)
 for maintaining this file.
 
-## [0.6.0] - 2026-07-14
+## [0.6.0] - 2026-07-15
 
 ### Changed
 

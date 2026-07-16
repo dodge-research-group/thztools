@@ -42,6 +42,17 @@
         "review",
         "test"
       ]
+    },
+    {
+      "login": "rhall14",
+      "name": "Randon Hall",
+      "avatar_url": "https://avatars.githubusercontent.com/u/69925806?v=4",
+      "profile": "https://github.com/rhall14",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
     }
   ]
 }

@@ -26,6 +26,22 @@
         "tool",
         "test"
       ]
+    },
+    {
+      "login": "Roboboy2000",
+      "name": "Alireza Noori",
+      "avatar_url": "https://avatars.githubusercontent.com/u/129424791?v=4",
+      "profile": "https://github.com/Roboboy2000",
+      "contributions": [
+        "bug",
+        "code",
+        "doc",
+        "ideas",
+        "maintenance",
+        "mentoring",
+        "review",
+        "test"
+      ]
     }
   ]
 }

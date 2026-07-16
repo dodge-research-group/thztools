@@ -42,6 +42,17 @@
         "review",
         "test"
       ]
+    },
+    {
+      "login": "AugustenFairbairn",
+      "name": "AugustenFairbairn",
+      "avatar_url": "https://avatars.githubusercontent.com/u/181790442?v=4",
+      "profile": "https://github.com/AugustenFairbairn",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
     }
   ]
 }

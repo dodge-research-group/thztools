@@ -115,6 +115,15 @@
       "contributions": [
         "test"
       ]
+    },
+    {
+      "login": "KaiBlomquist",
+      "name": "KaiBlomquist",
+      "avatar_url": "https://avatars.githubusercontent.com/u/198497249?v=4",
+      "profile": "https://github.com/KaiBlomquist",
+      "contributions": [
+        "maintenance"
+      ]
     }
   ]
 }

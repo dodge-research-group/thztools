@@ -171,6 +171,7 @@ doi = {10.1364/OE.417724},
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/AugustenFairbairn"><img src="https://avatars.githubusercontent.com/u/181790442?v=4?s=100" width="100px;" alt="AugustenFairbairn"/><br /><sub><b>AugustenFairbairn</b></sub></a><br /><a href="#code-AugustenFairbairn" title="Code">💻</a> <a href="#doc-AugustenFairbairn" title="Documentation">📖</a> <a href="#test-AugustenFairbairn" title="Tests">⚠️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Rab912"><img src="https://avatars.githubusercontent.com/u/108383356?v=4?s=100" width="100px;" alt="Rab912"/><br /><sub><b>Rab912</b></sub></a><br /><a href="#code-Rab912" title="Code">💻</a> <a href="#doc-Rab912" title="Documentation">📖</a> <a href="#test-Rab912" title="Tests">⚠️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/japneet-sandhu"><img src="https://avatars.githubusercontent.com/u/194871382?v=4?s=100" width="100px;" alt="japneet-sandhu"/><br /><sub><b>japneet-sandhu</b></sub></a><br /><a href="#test-japneet-sandhu" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/KaiBlomquist"><img src="https://avatars.githubusercontent.com/u/198497249?v=4?s=100" width="100px;" alt="KaiBlomquist"/><br /><sub><b>KaiBlomquist</b></sub></a><br /><a href="#maintenance-KaiBlomquist" title="Maintenance">🚧</a></td>
     </tr>
   </tbody>
 </table>

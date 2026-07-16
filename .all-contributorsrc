@@ -42,6 +42,17 @@
         "review",
         "test"
       ]
+    },
+    {
+      "login": "cmhchan",
+      "name": "cmhchan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/181681576?v=4",
+      "profile": "https://github.com/cmhchan",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
     }
   ]
 }

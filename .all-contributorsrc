@@ -44,6 +44,28 @@
       ]
     },
     {
+      "login": "rhall14",
+      "name": "Randon Hall",
+      "avatar_url": "https://avatars.githubusercontent.com/u/69925806?v=4",
+      "profile": "https://github.com/rhall14",
+      "contributions": [
+        "code",
+        "doc",
+      ]
+    },
+    {
+      "login": "jonathanpl20",
+      "name": "jonathanpl20",
+      "avatar_url": "https://avatars.githubusercontent.com/u/106832536?v=4",
+      "profile": "https://github.com/jonathanpl20",
+      "contributions": [
+        "code",
+        "doc",
+        "ideas",
+        "test"
+      ]
+    },
+    {
       "login": "cmhchan",
       "name": "cmhchan",
       "avatar_url": "https://avatars.githubusercontent.com/u/181681576?v=4",

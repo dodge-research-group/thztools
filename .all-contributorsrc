@@ -42,6 +42,17 @@
         "review",
         "test"
       ]
+    },
+    {
+      "login": "Rab912",
+      "name": "Rab912",
+      "avatar_url": "https://avatars.githubusercontent.com/u/108383356?v=4",
+      "profile": "https://github.com/Rab912",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
     }
   ]
 }

@@ -169,6 +169,7 @@ doi = {10.1364/OE.417724},
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/cmhchan"><img src="https://avatars.githubusercontent.com/u/181681576?v=4?s=100" width="100px;" alt="cmhchan"/><br /><sub><b>cmhchan</b></sub></a><br /><a href="#code-cmhchan" title="Code">💻</a> <a href="#doc-cmhchan" title="Documentation">📖</a> <a href="#test-cmhchan" title="Tests">⚠️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/WesleyXu09"><img src="https://avatars.githubusercontent.com/u/232458075?v=4?s=100" width="100px;" alt="WesleyXu09"/><br /><sub><b>WesleyXu09</b></sub></a><br /><a href="#doc-WesleyXu09" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/AugustenFairbairn"><img src="https://avatars.githubusercontent.com/u/181790442?v=4?s=100" width="100px;" alt="AugustenFairbairn"/><br /><sub><b>AugustenFairbairn</b></sub></a><br /><a href="#code-AugustenFairbairn" title="Code">💻</a> <a href="#doc-AugustenFairbairn" title="Documentation">📖</a> <a href="#test-AugustenFairbairn" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Rab912"><img src="https://avatars.githubusercontent.com/u/108383356?v=4?s=100" width="100px;" alt="Rab912"/><br /><sub><b>Rab912</b></sub></a><br /><a href="#code-Rab912" title="Code">💻</a> <a href="#doc-Rab912" title="Documentation">📖</a> <a href="#test-Rab912" title="Tests">⚠️</a></td>
     </tr>
   </tbody>
 </table>

@@ -15,18 +15,18 @@ repos:
       - id: requirements-txt-fixer
       - id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.9"
+    rev: "v0.15.22"
     hooks:
       - id: ruff-check
         args: ["--fix"]
       - id: ruff-format
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: "1.19.1"
+    rev: "1.20.0"
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==24.*]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.19.1"
+    rev: "v2.3.0"
     hooks:
       - id: mypy
         files: src/thztools|tests
@@ -41,7 +41,7 @@ repos:
         additional_dependencies: [numpy, pytest>6.0, scipy-stubs]
         verbose: true
   - repo: https://github.com/codespell-project/codespell
-    rev: "v2.4.2"
+    rev: "v2.4.3"
     hooks:
       - id: codespell
   #        args: ["-L", "ois"]
@@ -52,7 +52,7 @@ repos:
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.8.1"
+    rev: "v3.9.5"
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]

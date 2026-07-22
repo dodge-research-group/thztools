@@ -3682,7 +3682,9 @@ def fit(
     )
     h_delta = apply_frf(function, delta, dt=dt, args=p_opt_all)
     u_x = h_circ @ v_x @ h_circ.T
-    r_tls = sqrtm(inv(v_y + u_x)) @ (epsilon - h_delta)
+    r_tls = np.asarray(
+        sqrtm(inv(v_y + u_x)) @ (epsilon - h_delta), dtype=np.float64
+    )
 
     psi_cov = h_circ @ mu_cov @ h_circ.T
     delta_norm = delta / sigma_x

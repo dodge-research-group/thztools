@@ -58,7 +58,7 @@ Hatch
 ^^^^^
 
 Follow the instructions at this `link <https://hatch.pypa.io/latest/install/>`__
-to install Hatch.
+to install Hatch. The instructions below are based on version 1.17.1.
 
 Enter the environment by typing the following command from the top
 directory of the project (ie, ``~/thztools``)::
@@ -72,13 +72,17 @@ To execute tests with ``pytest``::
 
   hatch test
 
+To format the code base with ``ruff``::
+
+  hatch check fmt --fix
+
 To lint the code base with ``ruff``::
 
-  hatch fmt
+  hatch check code --fix
 
-To run type checking with ``mypy``::
+To run type checking with ``pyrefly``::
 
-  hatch run types:check
+  hatch check types
 
 To build the documentation with ``sphinx``::
 

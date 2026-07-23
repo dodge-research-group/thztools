@@ -44,6 +44,7 @@ THzTools development relies on the following tools:
 - Linter: `ruff <https://docs.astral.sh/ruff/linter/>`_
 - Code format: `black <https://black.readthedocs.io>`_
 - Type checker: `mypy <https://mypy.readthedocs.io>`_
+- Pre-commit hooks: `pre-commit <https://pre-commit.com/>`_
 
 Configuration metadata for each of these tools is stored in ``pyproject.toml``.
 
@@ -58,7 +59,7 @@ Hatch
 ^^^^^
 
 Follow the instructions at this `link <https://hatch.pypa.io/latest/install/>`__
-to install Hatch.
+to install Hatch. The instructions below are based on version 1.17.1.
 
 Enter the environment by typing the following command from the top
 directory of the project (ie, ``~/thztools``)::
@@ -68,17 +69,25 @@ directory of the project (ie, ``~/thztools``)::
 This will update any changes to the dependencies and enable several script
 shortcuts that can be used for testing, linting, and building documentation.
 
+To install ``pre-commit``::
+
+  pre-commit install
+
 To execute tests with ``pytest``::
 
   hatch test
 
+To format the code base with ``ruff``::
+
+  hatch check fmt --fix
+
 To lint the code base with ``ruff``::
 
-  hatch fmt
+  hatch check code --fix
 
-To run type checking with ``mypy``::
+To run type checking with ``pyrefly``::
 
-  hatch run types:check
+  hatch check types
 
 To build the documentation with ``sphinx``::
 
@@ -90,7 +99,7 @@ To test docstring examples with ``doctest``::
 
 To execute tests with ``pytest`` and generate a code coverage report with ``coverage``::
 
-  hatch run coverage:cov
+  hatch test --cover
 
 To exit the ``hatch`` environment::
 

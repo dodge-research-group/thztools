@@ -59,7 +59,7 @@ import numpy as np
 from numpy import pi
 from numpy.random import default_rng
 from scipy.fft import irfft, rfft, rfftfreq
-from scipy.linalg import circulant, inv, sqrtm, svd
+from scipy.linalg import circulant, inv, svd
 from scipy.optimize import (
     OptimizeResult,
     approx_fprime,
@@ -443,7 +443,6 @@ class NoiseModel:
         """
         dt = _assign_sampling_time(self.dt)
         x = np.asarray(x, dtype=np.float64)
-        axis = int(axis)
         if x.ndim > 1 and axis != -1:
             x = np.moveaxis(x, axis, -1)
 
@@ -601,7 +600,6 @@ class NoiseModel:
         >>> plt.show()
         """
         x = np.asarray(x, dtype=np.float64)
-        axis = int(axis)
         if x.ndim > 1 and axis != -1:
             x = np.moveaxis(x, axis, -1)
 
@@ -1095,7 +1093,6 @@ def scaleshift(
 
     dt = _assign_sampling_time(dt)
 
-    axis = int(axis)
     if x.ndim > 1 and axis != -1:
         x = np.moveaxis(x, axis, -1)
 
@@ -2452,7 +2449,7 @@ def _parse_noisefit_input(
         float(sigma_alpha0),
         float(sigma_beta0),
         float(sigma_tau0),
-        dt=float(dt),
+        dt=dt,
     )
 
     if scale_delta_mu is None:
@@ -2561,7 +2558,7 @@ def _parse_noisefit_input(
         if fix_mu:
             _delta = delta0
         elif est_mu:
-            _delta = []
+            _delta = np.array([], dtype=np.float64)
         else:
             _delta = _p[:n]
             _p = _p[n:]
@@ -2611,7 +2608,7 @@ def _parse_noisefit_input(
         if fix_mu:
             _delta = delta0
         elif est_mu:
-            _delta = []
+            _delta = np.array([], dtype=np.float64)
         else:
             _delta = _p[:n]
             _p = _p[n:]
@@ -2724,9 +2721,7 @@ def _parse_noisefit_output(
         )
         x_out = x_out[1:]
 
-    noise_model = NoiseModel(
-        float(alpha), float(beta), float(tau), dt=float(dt)
-    )
+    noise_model = NoiseModel(float(alpha), float(beta), float(tau), dt=dt)
 
     if fix_mu:
         mu_out = mu0
@@ -3413,7 +3408,7 @@ def fit(
         msg = f"sigma_parms must be a tuple of length {NUM_NOISE_PARAMETERS:d}"
         raise ValueError(msg)
 
-    dt = float(_assign_sampling_time(dt))
+    dt = _assign_sampling_time(dt)
 
     n = ydata.shape[-1]
     n_p = len(p0)
@@ -3500,20 +3495,24 @@ def fit(
     ) -> NDArray[np.complex128]:
         # Transfer function is purely real at the first and last frequencies
         if n_a - n_b == 2:  # noqa: PLR2004
-            return np.concatenate(([_a[0]], _a[1:-1] + _b * 1j, [_a[-1]]))
+            return np.concatenate(
+                ([_a[0]], _a[1:-1] + _b * 1j, [_a[-1]]), dtype=np.complex128
+            )
 
         # Transfer function is purely real at either the first or last
         # frequency
         if n_a - n_b == 1:
             # TF is real at last frequency
             if n_below == 0:
-                return np.concatenate((_a[:-1] + _b * 1j, [_a[-1]]))
+                return np.concatenate(
+                    (_a[:-1] + _b * 1j, [_a[-1]]), dtype=np.complex128
+                )
 
             # Otherwise TF is real at first frequency
             return np.concatenate(([_a[0]], _a[1:] + _b * 1j))
 
         # Transfer function is complex at all excluded frequencies
-        return _a + _b * 1j
+        return np.asarray(_a + _b * 1j, dtype=np.complex128)
 
     def function(
         _w: NDArray[np.float64], /, *_theta: np.float64
@@ -3682,9 +3681,12 @@ def fit(
     )
     h_delta = apply_frf(function, delta, dt=dt, args=p_opt_all)
     u_x = h_circ @ v_x @ h_circ.T
-    r_tls = np.asarray(
-        sqrtm(inv(v_y + u_x)) @ (epsilon - h_delta), dtype=np.float64
-    )
+
+    # Use the eigenvalue decomposition to take the inverse matrix square root
+    # of (v_y + u_x). Assumes np.all(evals > 0).
+    evals, evecs = np.linalg.eigh(v_y + u_x)
+    inv_sqrt_cov = evecs @ np.diag(1 / np.sqrt(evals)) @ evecs.T
+    r_tls = np.asarray(inv_sqrt_cov @ (epsilon - h_delta), dtype=np.float64)
 
     psi_cov = h_circ @ mu_cov @ h_circ.T
     delta_norm = delta / sigma_x

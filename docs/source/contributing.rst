@@ -44,6 +44,7 @@ THzTools development relies on the following tools:
 - Linter: `ruff <https://docs.astral.sh/ruff/linter/>`_
 - Code format: `black <https://black.readthedocs.io>`_
 - Type checker: `mypy <https://mypy.readthedocs.io>`_
+- Pre-commit hooks: `pre-commit <https://pre-commit.com/>`_
 
 Configuration metadata for each of these tools is stored in ``pyproject.toml``.
 
@@ -67,6 +68,10 @@ directory of the project (ie, ``~/thztools``)::
 
 This will update any changes to the dependencies and enable several script
 shortcuts that can be used for testing, linting, and building documentation.
+
+To install ``pre-commit``::
+
+  pre-commit install
 
 To execute tests with ``pytest``::
 

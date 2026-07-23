@@ -5,6 +5,23 @@
 Please follow the guidelines at [Common Changelog](https://common-changelog.org)
 for maintaining this file.
 
+## [0.6.0] - 2026-07-23
+
+### Changed
+
+- Change method to compute the covariance matrix in `fit`, from
+  `scipy.linalg.sqrtm` to an eigenvalue decomposition method
+  ([8930f4a](https://github.com/dodge-research-group/thztools/commit/8930f4a))
+  ([Steve Dodge](https://github.com/jsdodge))
+
+- Update documentation for contributors with commands from Hatch version
+  1.17.1 and instructions to use pre-commit hooks
+  ([c3763a0](https://github.com/dodge-research-group/thztools/commit/c3763a0),
+  [8930f4a](https://github.com/dodge-research-group/thztools/commit/8930f4a),
+  [3dd20e6](https://github.com/dodge-research-group/thztools/commit/3dd20e6)
+  )
+  ([Steve Dodge](https://github.com/jsdodge))
+
 ## [0.6.0] - 2026-07-15
 
 ### Changed
@@ -386,6 +403,7 @@ _Changelog introduced._
 
 - Remove `tdtf`
 
+[0.6.1]: https://github.com/dodge-research-group/thztools/releases/tag/v0.6.1
 [0.6.0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.6.0
 [0.5.5.post0]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.5.post0
 [0.5.5]: https://github.com/dodge-research-group/thztools/releases/tag/v0.5.5

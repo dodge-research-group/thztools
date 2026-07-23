@@ -59,7 +59,7 @@ import numpy as np
 from numpy import pi
 from numpy.random import default_rng
 from scipy.fft import irfft, rfft, rfftfreq
-from scipy.linalg import circulant, inv, sqrtm, svd
+from scipy.linalg import circulant, inv, svd
 from scipy.optimize import (
     OptimizeResult,
     approx_fprime,
@@ -3681,9 +3681,12 @@ def fit(
     )
     h_delta = apply_frf(function, delta, dt=dt, args=p_opt_all)
     u_x = h_circ @ v_x @ h_circ.T
-    r_tls = np.asarray(
-        sqrtm(inv(v_y + u_x)) @ (epsilon - h_delta), dtype=np.float64
-    )
+
+    # Use the eigenvalue decomposition to take the inverse matrix square root
+    # of (v_y + u_x). Assumes np.all(evals > 0).
+    evals, evecs = np.linalg.eigh(v_y + u_x)
+    inv_sqrt_cov = evecs @ np.diag(1 / np.sqrt(evals)) @ evecs.T
+    r_tls = np.asarray(inv_sqrt_cov @ (epsilon - h_delta), dtype=np.float64)
 
     psi_cov = h_circ @ mu_cov @ h_circ.T
     delta_norm = delta / sigma_x

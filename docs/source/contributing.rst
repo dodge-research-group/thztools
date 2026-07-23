@@ -94,7 +94,7 @@ To test docstring examples with ``doctest``::
 
 To execute tests with ``pytest`` and generate a code coverage report with ``coverage``::
 
-  hatch run coverage:cov
+  hatch test --cover
 
 To exit the ``hatch`` environment::
 

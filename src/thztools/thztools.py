@@ -3460,7 +3460,7 @@ def fit(
         fit_method = "lm"
     else:
         p_bounds = np.asarray(p_bounds, dtype=np.float64)
-        if p_bounds.shape[0] == 2:  # noqa: PLR2004
+        if p_bounds.shape[0] == 2:
             p_bounds = (
                 np.concatenate(
                     (p_bounds[0], np.full((n_a + n_b + n,), -np.inf))
@@ -3494,7 +3494,7 @@ def fit(
         _a: NDArray[np.float64], _b: NDArray[np.float64]
     ) -> NDArray[np.complex128]:
         # Transfer function is purely real at the first and last frequencies
-        if n_a - n_b == 2:  # noqa: PLR2004
+        if n_a - n_b == 2:
             return np.concatenate(
                 ([_a[0]], _a[1:-1] + _b * 1j, [_a[-1]]), dtype=np.complex128
             )
@@ -3573,7 +3573,7 @@ def fit(
             )
         if n_b > 0:
             b_circ = circulant(unit_impulse(n_b) * 1j)
-            if n_a - n_b == 2:  # noqa: PLR2004
+            if n_a - n_b == 2:
                 jac_b = np.concatenate(
                     (
                         np.zeros((n_b, 1)),
